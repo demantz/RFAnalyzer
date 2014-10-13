@@ -28,7 +28,8 @@ public class MainActivity extends Activity {
 		fl_analyzerFrame.addView(analyzerSurface);
 
 		// Create the analyzer loop (start on resume):
-		analyzerProcessingLoop = new AnalyzerProcessingLoop(analyzerSurface, 2000000, 1);
+		analyzerProcessingLoop = new AnalyzerProcessingLoop(analyzerSurface, 2000000, 5);
+		//analyzerProcessingLoop.setFftSize(4096);
 	}
 
 
@@ -55,5 +56,11 @@ public class MainActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 		analyzerProcessingLoop.start();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		analyzerProcessingLoop.stopLoop();
 	}
 }

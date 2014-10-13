@@ -89,6 +89,13 @@ public class AnalyzerProcessingLoop extends Thread {
 		this.fftBlock = new FFT(fftSize);
 	}
 
+	/**
+	 * Will set the stopRequested flag so that the processing loop will terminate
+	 */
+	public void stopLoop() {
+		this.stopRequested = true;
+	}
+
 	@Override
 	public void run() {
 		long startTime;		// timestamp when signal processing is started
@@ -99,7 +106,7 @@ public class AnalyzerProcessingLoop extends Thread {
 			startTime = System.currentTimeMillis();
 
 			// fetch the next samples from the queue:
-			SamplePacket testSamples = new SamplePacket(new double[1024], new double[1024]);
+			SamplePacket testSamples = new SamplePacket(new double[fftSize], new double[fftSize]);
 			for (int i = 0; i < testSamples.size(); i++) {
 				testSamples.re()[i] = Math.cos(2 * Math.PI * 0.25 * i);
 				testSamples.im()[0] = 0;
