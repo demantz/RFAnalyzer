@@ -30,7 +30,7 @@ public class SamplePacket {
 	private double[] im;	// imag values
 
 	/**
-	 * Constructor.
+	 * Constructor. This constructor wraps existing arrays.
 	 *
 	 * @param re	array of real parts of the sample values
 	 * @param im	array of imaginary parts of the sample values
@@ -40,6 +40,16 @@ public class SamplePacket {
 			throw new IllegalArgumentException("Arrays must be of the same length");
 		this.re = re;
 		this.im = im;
+	}
+
+	/**
+	 * Constructor. This constructor allocates two fresh arrays
+	 *
+	 * @param size	Number of samples in this packet
+	 */
+	public SamplePacket(int size) {
+		this.re = new double[size];
+		this.im = new double[size];
 	}
 
 	public double[] re() {

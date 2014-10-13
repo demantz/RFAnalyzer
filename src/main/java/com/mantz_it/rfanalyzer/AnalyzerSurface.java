@@ -112,7 +112,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			int blue = i <= 255 ? i : 511 - i;
 			int red  = i <= 255 ? 0 : i - 256;
 			waterfallColorMap[i] = Color.argb(0xff, red, 0, blue);
-			Log.d(logtag,"Color["+i+"]= RED:"+red+"  BLUE:"+blue);
 		}
 	}
 

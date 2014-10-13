@@ -3,6 +3,9 @@ package com.mantz_it.rfanalyzer;
 import android.graphics.Canvas;
 import android.util.Log;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 /**
  * <h1>RF Analyzer - Analyzer Processing Loop</h1>
  *
@@ -35,11 +38,13 @@ public class AnalyzerProcessingLoop extends Thread {
 	private long basebandFrequency = 0;		// Center Frequency of the incoming samples
 	private int frameRate = 1;				// Frames per Second
 	private double load = 0;				// Time_for_processing_and_drawing / Time_per_Frame
-	private boolean stopRequested = false;	// Will stop the thread when set to true
+	private boolean stopRequested = true;	// Will stop the thread when set to true
 	private static final String logtag = "AnalyzerProcessingLoop";
 
 	private AnalyzerSurface view;
 	private FFT fftBlock = null;
+	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// queue that delivers sample packets
+	private ArrayBlockingQueue<SamplePacket> returnQueue = null;	// queue to return unused buffers
 
 	/**
 	 * Constructor. Will initialize the member attributes.
@@ -48,11 +53,14 @@ public class AnalyzerProcessingLoop extends Thread {
 	 * @param sampleRate	sampleRate that was used to record the samples
 	 * @param frameRate		fixed frame rate at which the fft should be drawn
 	 */
-	public AnalyzerProcessingLoop(AnalyzerSurface view, int sampleRate, int frameRate) {
+	public AnalyzerProcessingLoop(AnalyzerSurface view, int sampleRate, int frameRate,
+				ArrayBlockingQueue<SamplePacket> inputQueue, ArrayBlockingQueue<SamplePacket> returnQueue) {
 		this.view = view;
 		this.sampleRate = sampleRate;
 		this.frameRate = frameRate;
 		this.fftBlock = new FFT(fftSize);
+		this.inputQueue = inputQueue;
+		this.returnQueue = returnQueue;
 	}
 
 	public int getFrameRate() {
@@ -90,14 +98,31 @@ public class AnalyzerProcessingLoop extends Thread {
 	}
 
 	/**
+	 * Will start the processing loop
+	 */
+	@Override
+	public void start() {
+		this.stopRequested = false;
+		super.start();
+	}
+
+	/**
 	 * Will set the stopRequested flag so that the processing loop will terminate
 	 */
 	public void stopLoop() {
 		this.stopRequested = true;
 	}
 
+	/**
+	 * @return true if loop is running; false if not.
+	 */
+	public boolean isRunning() {
+		return !stopRequested;
+	}
+
 	@Override
 	public void run() {
+		Log.i(logtag,"Processing loop started. (Thread: " + this.getName() + ")");
 		long startTime;		// timestamp when signal processing is started
 		long sleepTime;		// time (in ms) to sleep before the next run to meet the frame rate
 
@@ -105,16 +130,34 @@ public class AnalyzerProcessingLoop extends Thread {
 			// store the current timestamp
 			startTime = System.currentTimeMillis();
 
+			//<DEBUG>
+//			SamplePacket samples = new SamplePacket(new double[fftSize], new double[fftSize]);
+//			for (int i = 0; i < samples.size(); i++) {
+//				samples.re()[i] = Math.cos(2 * Math.PI * 0.01 * i);
+//				samples.im()[i] = 0; //Math.sin(2 * Math.PI * 0.01 * i);
+//			}
+			//</DEBUG>
+
 			// fetch the next samples from the queue:
-			SamplePacket testSamples = new SamplePacket(new double[fftSize], new double[fftSize]);
-			for (int i = 0; i < testSamples.size(); i++) {
-				testSamples.re()[i] = Math.cos(2 * Math.PI * 0.25 * i);
-				testSamples.im()[0] = 0;
+			SamplePacket samples = null;
+			try {
+				samples = inputQueue.poll(1000 / frameRate, TimeUnit.MILLISECONDS);
+				if (samples == null) {
+					Log.e(logtag, "run: Timeout while waiting on input data. stop.");
+					this.stopLoop();
+					break;
+				}
+			} catch (InterruptedException e) {
+				Log.e(logtag, "run: Interrupted while polling from input queue. stop.");
+				this.stopLoop();
+				break;
 			}
-			// TODO fetch fresh samples from the queue
+
 			// do the signal processing:
-			double[] mag = this.doProcessing(testSamples);
-			// TODO return samples to the buffer pool
+			double[] mag = this.doProcessing(samples);
+
+			// return samples to the buffer pool
+			returnQueue.offer(samples);
 
 			// Draw the results on the surface:
 			Canvas c = null;
@@ -156,6 +199,8 @@ public class AnalyzerProcessingLoop extends Thread {
 				Log.e(logtag,"Error while calling sleep()");
 			}
 		}
+		this.stopRequested = true;
+		Log.i(logtag,"Processing loop stopped. (Thread: " + this.getName() + ")");
 	}
 
 	/**
@@ -175,9 +220,12 @@ public class AnalyzerProcessingLoop extends Thread {
 
 		// Calculate the logarithmic magnitude:
 		for (int i = 0; i < samples.size(); i++) {
+			// We have to flip both sides of the fft to draw it centered on the screen:
+			int targetIndex = (i+samples.size()/2) % samples.size();
+
 			// Calc the magnitude = log(  re^2 + im^2  )
 			// note that we still have to divide re and im by the fft size
-			mag[i] = Math.log(Math.pow(samples.re(i)/fftSize,2) + Math.pow(samples.im(i)/fftSize,2));
+			mag[targetIndex] = Math.log(Math.pow(samples.re(i)/fftSize,2) + Math.pow(samples.im(i)/fftSize,2));
 		}
 		return mag;
 	}

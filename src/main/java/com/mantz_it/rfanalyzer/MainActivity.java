@@ -2,9 +2,12 @@ package com.mantz_it.rfanalyzer;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
+
+import java.io.File;
 
 
 public class MainActivity extends Activity {
@@ -12,6 +15,8 @@ public class MainActivity extends Activity {
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
+	private IQSourceInterface source = null;
+	private Scheduler scheduler = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -27,9 +32,23 @@ public class MainActivity extends Activity {
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
 
+
+		int fftSize = 1024;
+		int frameRate = 5;
+		// Create IQ Source (filesource)
+		File file = new File(Environment.getExternalStorageDirectory() + "/Test_HackRF", "hackrf_android.io");
+		source = new FileIQSource(file, 2000000, 16384, true);
+		// Create Scheduler (start on resume)
+		scheduler = new Scheduler(frameRate, fftSize, source);
+
 		// Create the analyzer loop (start on resume):
-		analyzerProcessingLoop = new AnalyzerProcessingLoop(analyzerSurface, 2000000, 5);
-		//analyzerProcessingLoop.setFftSize(4096);
+		analyzerProcessingLoop = new AnalyzerProcessingLoop(
+				analyzerSurface, 			// Reference to the Analyzer Surface
+				2000000, 					// Sample Rate
+				frameRate,					// Frame Rate
+				scheduler.getOutputQueue(), // Reference to the input queue for the processing loop
+				scheduler.getInputQueue()); // Reference to the buffer-pool-return queue
+		analyzerProcessingLoop.setFftSize(fftSize);
 	}
 
 
@@ -55,12 +74,16 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		analyzerProcessingLoop.start();
+		if(!scheduler.isRunning())
+			scheduler.start();
+		if(!analyzerProcessingLoop.isRunning())
+			analyzerProcessingLoop.start();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		scheduler.stopScheduler();
 		analyzerProcessingLoop.stopLoop();
 	}
 }

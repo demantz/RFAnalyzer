@@ -1,0 +1,127 @@
+package com.mantz_it.rfanalyzer;
+
+import android.util.Log;
+
+import java.util.concurrent.ArrayBlockingQueue;
+
+/**
+ * <h1>RF Analyzer - Scheduler</h1>
+ *
+ * Module:      Scheduler.java
+ * Description: This Thread is responsible for forwarding the samples from the input hardware
+ *              to the Processing Loop at the correct speed and format.
+ *
+ * @author Dennis Mantz
+ *
+ * Copyright (C) 2014 Dennis Mantz
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+public class Scheduler extends Thread {
+	private int frameRate = 0;		// Frame Rate of the Analyzer View
+	private int fftSize = 0;		// FFT size of the Analyzer View
+	private IQSourceInterface source = null;	// Reference to the source of the IQ samples
+	private ArrayBlockingQueue<SamplePacket> outputQueue = null;	// Queue that delivers samples to the Processing Loop
+	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// Queue that collects used buffers from the Processing Loop
+	private boolean stopRequested = true;
+
+	// Define the size of the output and input Queues. Note that the value 10 means that at
+	// a frame rate of 10 FPS the queue will buffer for exactly one second.
+	private static final int queueSize = 10;
+	private static final String logtag = "Scheduler";
+
+	public Scheduler(int frameRate, int fftSize, IQSourceInterface source) {
+		this.fftSize = fftSize;
+		this.frameRate = frameRate;
+		this.source = source;
+
+		// Create the input- and output queues and allocate the buffer packets.
+		this.outputQueue = new ArrayBlockingQueue<SamplePacket>(queueSize);
+		this.inputQueue = new ArrayBlockingQueue<SamplePacket>(queueSize);
+		for (int i = 0; i < queueSize; i++)
+			inputQueue.offer(new SamplePacket(fftSize));
+	}
+
+	public void stopScheduler() {
+		this.stopRequested = true;
+		this.source.stopSampling();
+	}
+
+	public void start() {
+		this.stopRequested = false;
+		this.source.startSampling();
+		super.start();
+	}
+
+	/**
+	 * @return true if scheduler is running; false if not.
+	 */
+	public boolean isRunning() {
+		return !stopRequested;
+	}
+
+	public ArrayBlockingQueue<SamplePacket> getOutputQueue() {
+		return outputQueue;
+	}
+
+	public ArrayBlockingQueue<SamplePacket> getInputQueue() {
+		return inputQueue;
+	}
+
+	@Override
+	public void run() {
+		Log.i(logtag,"Scheduler started. (Thread: " + this.getName() + ")");
+		SamplePacket buffer = null;		// reference to a buffer we got from the input queue to fill
+		int bufferIndex = 0;			// fill level of the buffer. ==> next index to insert into the buffer
+
+		while(!stopRequested) {
+			// Get a new packet from the source:
+			byte[] packet = source.getPacket(1000);
+			if(packet == null) {
+				Log.e(logtag, "run: No more packets from source. Shutting down...");
+				this.stopScheduler();
+				break;
+			}
+
+			// If buffer is null we request a new buffer from the input queue:
+			if(buffer == null)
+				buffer = inputQueue.poll();
+
+			// If we got a buffer, fill it!
+			if(buffer != null)
+			{
+				// fill the packet into the buffer at bufferIndex:
+				int sampleCount = source.fillPacketIntoSamplePacket(packet,buffer,bufferIndex);
+				bufferIndex += sampleCount;
+
+				// check if the buffer is now full and if so: deliver it to the output queue
+				if(bufferIndex == buffer.size()) {
+					outputQueue.offer(buffer);
+					buffer = null;
+					bufferIndex = 0;
+				}
+				// otherwise we would just go for another round...
+			}
+			// If buffer was null we currently have no buffer available, which means we
+			// simply throw the samples away (this will happen most of the time).
+
+			// In both cases: Return the packet back to the source buffer pool:
+			source.returnPacket(packet);
+		}
+		this.stopRequested = true;
+		Log.i(logtag,"Scheduler stopped. (Thread: " + this.getName() + ")");
+	}
+}
