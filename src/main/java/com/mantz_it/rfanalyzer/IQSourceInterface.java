@@ -1,5 +1,7 @@
 package com.mantz_it.rfanalyzer;
 
+import android.content.Context;
+
 /**
  * <h1>RF Analyzer - IQ Source Interface</h1>
  *
@@ -29,9 +31,47 @@ package com.mantz_it.rfanalyzer;
 public interface IQSourceInterface {
 
 	/**
+	 * Will open the device. This is usually an asynchronous action and therefore uses the
+	 * callback function onIQSourceReady() from the Callback interface to notify the application
+	 * when the IQSource is ready to use.
+	 *
+	 * @param context		needed to open external devices
+	 * @param callback		reference to a class that implements the Callback interface for notification
+	 * @return false if an error occurred.
+	 */
+	public boolean open(Context context, Callback callback);
+
+	/**
+	 * Will close the device.
+	 *
+	 * @return false if an error occurred.
+	 */
+	public boolean close();
+
+	/**
+	 * @return a human readable Name of the source
+	 */
+	public String getName();
+
+	/**
 	 * @return the rate at which this source receives samples
 	 */
 	public int getSampleRate();
+
+	/**
+	 * @param sampleRate	sample rate that should be set for the IQ source
+	 */
+	public void setSampleRate(int sampleRate);
+
+	/**
+	 * @return the Frequency to which the source is tuned
+	 */
+	public long getFrequency();
+
+	/**
+	 * @param frequency		frequency to which the IQ source should be tuned
+	 */
+	public void setFrequency(long frequency);
 
 	/**
 	 * @return the size (in byte) of a packet that is returned by getPacket()
@@ -76,4 +116,25 @@ public interface IQSourceInterface {
 	 * @return the number of samples filled into the samplePacket.
 	 */
 	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int startIndex);
+
+	/**
+	 * Callback interface for asynchronous interactions with the source.
+	 */
+	public static interface Callback {
+		/**
+		 * This method will be called when the source is ready to use after the application
+		 * called open()
+		 *
+		 * @param source	A reference to the IQSource that is now ready
+		 */
+		public void onIQSourceReady(IQSourceInterface source);
+
+		/**
+		 * This method will be called when there is an error with the source
+		 *
+		 * @param source	A reference to the IQSource that caused the error
+		 * @param message	Description of the error
+		 */
+		public void onIQSourceError(IQSourceInterface source, String message);
+	}
 }

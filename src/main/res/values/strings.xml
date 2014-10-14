@@ -4,5 +4,7 @@
     <string name="app_name">RF Analyzer</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="bt_start_text">Start</string>
+    <string name="action_start">Start</string>
 
 </resources>

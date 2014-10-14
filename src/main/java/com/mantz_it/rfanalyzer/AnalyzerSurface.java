@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.Shader;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -44,6 +45,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Paint waterfallPaint = null; 	// Paint object to draw the waterfall bitmaps
 	private Paint waterfallLinePaint = null;// Paint object to draw one waterfall pixel
 	private Paint textPaint = null;			// Paint object to draw text on the canvas
+	private Paint gridPaint = null;			// Paint object to draw the grid bitmaps
 	private int width;						// current width (in pixels) of the SurfaceView
 	private int height;						// current height (in pixels) of the SurfaceView
 	private static final String logtag = "AnalyzerSurface";
@@ -53,6 +55,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Bitmap[] waterfallBitmaps = null;	// Each array element holds one line in the waterfall plot
 	private int waterfallBitmapTopIndex = 0;	// Indicates which array index in waterfallBitmaps
 												// is the most recent (circular array)
+
+	private Bitmap frequencyGrid = null;		// Grid that is drawn on the surface showing the frequency
+	private Bitmap powerGrid = null;			// Grid that is drawn on the surface showing the signal power in dB
+	private boolean redrawFrequencyGrid = true;	// Indicates whether the frequency grid has to be redrawn or is still valid
+	private boolean redrawPowerGrid = true;	// Indicates whether the frequency grid has to be redrawn or is still valid
 
 	/**
 	 * Constructor. Will initialize the Paint instances and register the callback
@@ -141,6 +148,18 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 		// Recreate the waterfall bitmaps:
 		this.createWaterfallBitmaps(width,height-getFFTBaseline(),getPixelPerWaterfallLine());
+
+		// Recreate the grid bitmaps
+		// First calculate the height of the frequency grid / width of the powerGrid according to
+		// the screen density:
+		int gridSize = (int) (75 * getResources().getDisplayMetrics().xdpi/200);
+		this.frequencyGrid = Bitmap.createBitmap(width,gridSize, Bitmap.Config.ARGB_8888);
+		this.powerGrid = Bitmap.createBitmap(gridSize,getFFTBaseline()-frequencyGrid.getHeight(), Bitmap.Config.ARGB_8888);
+		this.redrawFrequencyGrid = true;
+		this.redrawPowerGrid = true;
+
+		// Fix the text size:
+		this.textPaint.setTextSize((int) (frequencyGrid.getHeight()/2.1));
 	}
 
 	/**
@@ -182,17 +201,21 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param load			current load (number from 0 to 1). (only to draw it on the canvas)
 	 */
 	public void drawFrame(Canvas c, double[] mag, int sampleRate, long basebandFrequency, int frameRate, double load) {
+		// these should be configurable later:
+		int maxDB = -5;
+		int minDB = -35;
+
 		// clear the canvas:
 		c.drawColor(Color.BLACK);
 
 		// draw the fft:
-		drawFFT(c, mag);
+		drawFFT(c, mag, minDB, maxDB);
 
 		// draw the waterfall:
-		drawWaterfall(c, mag);
+		drawWaterfall(c, mag, minDB, maxDB);
 
 		// draw the grid (and some more information):
-		drawGrid(c, sampleRate, basebandFrequency, frameRate, load);
+		drawGrid(c, sampleRate, basebandFrequency, frameRate, load, minDB, maxDB);
 	}
 
 	/**
@@ -200,12 +223,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 *
 	 * @param c				canvas object to draw on
 	 * @param mag			array of magnitude values that represent the fft
+	 * @param minDB			dB level of the bottom line of the fft
+	 * @param maxDB			dB level of the top line of the fft
 	 */
-	private void drawFFT(Canvas c, double[] mag) {
-		// these should be configurable later:
-		float maxDB = 0;
-		float minDB = -50;
-
+	private void drawFFT(Canvas c, double[] mag, int minDB, int maxDB) {
 		float baseline = getFFTBaseline();	// y coordinate of the bottom line of the fft
 		float sampleWidth 	= (float) this.width / (float) mag.length;	// Size (in pixel) per one fft sample
 		float dbWidth 		= baseline / (float) Math.abs(maxDB - minDB); 	// Size (in pixel) per 1dB
@@ -227,12 +248,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 *
 	 * @param c				canvas object to draw on
 	 * @param mag			array of magnitude values that represent the fft
+	 * @param minDB			dB level of the bottom line of the fft
+	 * @param maxDB			dB level of the top line of the fft
 	 */
-	private void drawWaterfall(Canvas c, double[] mag) {
-		// these should be configurable later:
-		float maxDB = 0;
-		float minDB = -50;
-
+	private void drawWaterfall(Canvas c, double[] mag, int minDB, int maxDB) {
 		float dbDiff = maxDB - minDB;
 		float scale = this.waterfallColorMap.length / dbDiff;
 		float sampleWidth 	= (float) this.width / (float) mag.length;	// Size (in pixel) per one fft sample
@@ -274,10 +293,105 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param basebandFrequency		absolute frequency that should be used as center for the grid
 	 * @param frameRate		current frame rate (only to draw it on the canvas)
 	 * @param load			current load (number from 0 to 1). (only to draw it on the canvas)
+	 * @param minDB			dB level of the bottom line of the fft
+	 * @param maxDB			dB level of the top line of the fft
 	 */
-	private void drawGrid(Canvas c, int sampleRate, long basebandFrequency, int frameRate, double load) {
-		c.drawText(frameRate+" FPS",10,15,textPaint);
+	private void drawGrid(Canvas c, int sampleRate, long basebandFrequency, int frameRate, double load, int minDB, int maxDB) {
+		// Performance information:
+		c.drawText(frameRate+" FPS",width-120,40,textPaint);
 		String loadStr = String.format("%3.1f %%", load * 100);
-		c.drawText(loadStr,10,30,textPaint);
+		c.drawText(loadStr,width-120,70,textPaint);
+
+		// Frequency Grid
+		if(redrawFrequencyGrid) {
+			redrawFrequencyGrid = false;
+			generateFrequencyGrid(sampleRate, basebandFrequency);
+		}
+
+		if(redrawPowerGrid) {
+			redrawPowerGrid = false;
+			generatePowerGrid(minDB, maxDB);
+		}
+
+		// Put the bitmaps on the canvas:
+		c.drawBitmap(frequencyGrid, 0, getFFTBaseline()-frequencyGrid.getHeight(), gridPaint);
+		c.drawBitmap(powerGrid, 0, 0, gridPaint);
+	}
+
+	/**
+	 * This method will draw the frequency grid into the frequencyGrid bitmap
+	 *
+	 * @param sampleRate	sampleRate that was used to record the samples used to create the fft
+	 * @param basebandFrequency		absolute frequency that should be used as center for the grid
+	 */
+	private void generateFrequencyGrid(int sampleRate, long basebandFrequency) {
+		// Calculate pixel width of a minor tick (100KHz)
+		float pixelPerMinorTick = (float) (width / (sampleRate/100000.0));
+
+		// Calculate the frequency at the left most point of the fft:
+		long startFrequency = (long) (basebandFrequency - (sampleRate/2.0));
+
+		// Calculate the frequency and position of the first Tick (ticks are every 100KHz)
+		long tickFreq = (long) Math.ceil(startFrequency/10000.0) * 10000;
+		float tickPos = (float) (pixelPerMinorTick / 100000.0 * (tickFreq-startFrequency));
+
+		// Clear the bitmap
+		Canvas c = new Canvas(frequencyGrid);
+		c.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+		// Draw the ticks
+		for (int i = 0; i < sampleRate/100000; i++) {
+			float tickHeight = 0;
+			if(tickFreq % 1000000 == 0) {
+				// Major Tick (1MHZ)
+				tickHeight = (float) (frequencyGrid.getHeight() / 2.0);
+				// Draw Frequency Text:
+				c.drawText("" + tickFreq/1000000, tickPos, (float)(frequencyGrid.getHeight()/2.1), textPaint);
+			} else if(tickFreq % 500000 == 0) {
+				// Half MHz tick
+				tickHeight = (float) (frequencyGrid.getHeight() / 3.0);
+			} else {
+				// Minor tick
+				tickHeight = (float) (frequencyGrid.getHeight() / 4.0);
+			}
+			c.drawLine(tickPos, frequencyGrid.getHeight(), tickPos, frequencyGrid.getHeight() - tickHeight, textPaint);
+			tickFreq += 100000;
+			tickPos += pixelPerMinorTick;
+		}
+	}
+
+	/**
+	 * This method will draw the power grid into the powerGrid bitmap
+	 *
+	 * @param minDB		smallest dB value on the scale
+	 * @param maxDB		highest dB value on the scale
+	 */
+	private void generatePowerGrid(int minDB, int maxDB) {
+		// Calculate pixel height of a minor tick (1dB)
+		float pixelPerMinorTick = (float) (getFFTBaseline() / (maxDB-minDB));
+
+		// Clear the bitmap
+		Canvas c = new Canvas(powerGrid);
+		c.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+		// Draw the ticks from the top to the bottom
+		float tickPos = 0;
+		for (int tickDB = maxDB; tickDB > minDB; tickDB--) {
+			float tickWidth = 0;
+			if(tickDB % 10 == 0) {
+				// Major Tick (10dB)
+				tickWidth = (float) (powerGrid.getWidth() / 3.0);
+				// Draw Frequency Text:
+				c.drawText("" + tickDB, (float) (powerGrid.getWidth() / 2.9), tickPos, textPaint);
+			} else if(tickDB % 5 == 0) {
+				// 5 dB tick
+				tickWidth = (float) (powerGrid.getWidth() / 3.5);
+			} else {
+				// Minor tick
+				tickWidth = (float) (powerGrid.getWidth() / 5.0);
+			}
+			c.drawLine(0, tickPos, tickWidth, tickPos, textPaint);
+			tickPos += pixelPerMinorTick;
+		}
 	}
 }

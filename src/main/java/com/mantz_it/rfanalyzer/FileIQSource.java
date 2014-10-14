@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -34,25 +35,86 @@ import java.io.IOException;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class FileIQSource implements IQSourceInterface {
+	private Callback callback = null;
 	private boolean repeat = false;
 	private int sampleRate = 0;
+	private long frequency = 0;
 	private int packetSize = 0;
 	private byte[] buffer = null;
 	private File file = null;
 	private BufferedInputStream bufferedInputStream = null;
 	private static final String logtag = "FileIQSource";
 
-	public FileIQSource(File file, int sampleRate, int packetSize, boolean repeat) {
+	public FileIQSource(File file, int sampleRate, long frequency, int packetSize, boolean repeat) {
 		this.file = file;
 		this.repeat = repeat;
 		this.sampleRate = sampleRate;
+		this.frequency = frequency;
 		this.packetSize = packetSize;
 		this.buffer = new byte[packetSize];
+	}
+
+	private void reportError(String msg) {
+		if(callback != null)
+			callback.onIQSourceError(this,msg);
+		else
+			Log.e(logtag,"Callback is null when reporting Error (" + msg + ")");
+	}
+
+	@Override
+	public boolean open(Context context, Callback callback) {
+		this.callback = callback;
+		// open the file
+		try {
+			this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
+			callback.onIQSourceReady(this);
+			return true;
+		}catch (IOException e) {
+			Log.e(logtag, "open: Error while opening file: " + e.getMessage());
+			reportError("Error while opening file: " + e.getMessage());
+			return false;
+		}
+	}
+
+	@Override
+	public boolean close() {
+		// close the file
+		try {
+			if(bufferedInputStream != null)
+				bufferedInputStream.close();
+			return true;
+		} catch (IOException e) {
+			Log.e(logtag, "stopSampling: Error while closing file: " + e.getMessage());
+			reportError("Unexpected error while closing file: " + e.getMessage());
+			return false;
+		}
+	}
+
+	@Override
+	public String getName() {
+		return "IQ-File: " + file.getName();
 	}
 
 	@Override
 	public int getSampleRate() {
 		return sampleRate;
+	}
+
+	@Override
+	public void setSampleRate(int sampleRate) {
+		Log.e(logtag,"Setting the sample rate is not supported on a file source");
+		reportError("Setting the sample rate is not supported on a file source");
+	}
+
+	@Override
+	public long getFrequency() {
+		return frequency;
+	}
+
+	@Override
+	public void setFrequency(long frequency) {
+		Log.e(logtag,"Setting the frequency is not supported on a file source");
+		reportError("Setting the frequency is not supported on a file source");
 	}
 
 	@Override
@@ -81,10 +143,13 @@ public class FileIQSource implements IQSourceInterface {
 					if (bufferedInputStream.read(buffer, 0, buffer.length) != buffer.length)
 						return null;
 				} else
+					Log.i(logtag,"getPacket: End of File");
+					reportError("End of File");
 					return null;
 			}
 		} catch (IOException e) {
 			Log.e(logtag,"getPacket: Error while reading from file: " + e.getMessage());
+			reportError("Unexpected error while reading file: " + e.getMessage());
 		}
 
 		return buffer;
@@ -97,23 +162,12 @@ public class FileIQSource implements IQSourceInterface {
 
 	@Override
 	public void startSampling() {
-		// open the file
-		try {
-			this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
-		}catch (IOException e) {
-			Log.e(logtag, "startSampling: Error while opening file: " + e.getMessage());
-		}
+		// nothing to do here...
 	}
 
 	@Override
 	public void stopSampling() {
-		// close the file
-		try {
-			if(bufferedInputStream != null)
-				bufferedInputStream.close();
-		} catch (IOException e) {
-			Log.e(logtag, "stopSampling: Error while closing file: " + e.getMessage());
-		}
+		// nothing to do here...
 	}
 
 	@Override
