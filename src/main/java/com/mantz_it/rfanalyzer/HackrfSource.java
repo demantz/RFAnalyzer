@@ -68,7 +68,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public boolean close() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -85,6 +85,18 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	@Override
+	public boolean isOpen() {
+		if(hackrf == null)
+			return false;
+		try {
+			int boardID = hackrf.getBoardID();
+			return true;	// no exception was thrown --> hackrf is open!
+		} catch (HackrfUsbException e) {
+			return false;	// exception was thrown --> hackrf is not open
+		}
+	}
+
+	@Override
 	public String getName() {
 		// todo return exact name by getting the board id from the hackrf
 		return "HackRF";
@@ -97,6 +109,14 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	public void setFrequency(long frequency) {
 		this.frequency = frequency;
+		if(hackrf != null) {
+			try {
+				hackrf.setFrequency(frequency);
+			} catch (HackrfUsbException e) {
+				Log.e(logtag, "setFrequency: Error while setting frequency: " + e.getMessage());
+				reportError("Error while setting frequency");
+			}
+		}
 	}
 
 	@Override
@@ -214,7 +234,6 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 				this.queue = hackrf.startRX();
 			} catch (HackrfUsbException e) {
 				Log.e(logtag, "startSampling: Error while set up hackrf: " + e.getMessage());
-				reportError("Error while set up HackRF: " + e.getMessage());
 			}
 		} else {
 			Log.e(logtag, "startSampling: Hackrf instance is null");
@@ -228,7 +247,6 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 				hackrf.stop();
 			} catch (HackrfUsbException e) {
 				Log.e(logtag, "stopSampling: Error while tear down hackrf: " + e.getMessage());
-				reportError("Error while tear down HackRF: " + e.getMessage());
 			}
 		} else {
 			Log.e(logtag, "stopSampling: Hackrf instance is null");

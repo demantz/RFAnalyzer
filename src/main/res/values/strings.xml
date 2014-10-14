@@ -2,9 +2,14 @@
 <resources>
 
     <string name="app_name">RF Analyzer</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="bt_start_text">Start</string>
     <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_setFrequency">Set Frequency</string>
+    <string name="save_state_running">save_state_running</string>
+    <string name="prefs_frequency">prefs_frequency</string>
+    <string name="prefs_sampleRate">prefs_sampleRate</string>
+    <string name="prefs_hackrf_vgaRxGain">prefs_hackrf_vgaRxGain</string>
+    <string name="prefs_hackrf_lnaGain">prefs_hackrf_lnaGain</string>
 
 </resources>

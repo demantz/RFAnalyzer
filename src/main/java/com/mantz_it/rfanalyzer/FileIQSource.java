@@ -77,6 +77,19 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
+	public boolean isOpen() {
+		if(bufferedInputStream == null)
+			return false;
+		try {
+			if(bufferedInputStream.available() > 0)
+				return true;
+		} catch (IOException e) {
+
+		}
+		return false;
+	}
+
+	@Override
 	public boolean close() {
 		// close the file
 		try {

@@ -34,8 +34,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class AnalyzerProcessingLoop extends Thread {
 	private int fftSize = 1024;				// Size of the FFT
-	private int sampleRate = 0;				// Sample Rate of the incoming samples
-	private long basebandFrequency = 0;		// Center Frequency of the incoming samples
 	private int frameRate = 1;				// Frames per Second
 	private double load = 0;				// Time_for_processing_and_drawing / Time_per_Frame
 	private boolean stopRequested = true;	// Will stop the thread when set to true
@@ -50,13 +48,13 @@ public class AnalyzerProcessingLoop extends Thread {
 	 * Constructor. Will initialize the member attributes.
 	 *
 	 * @param view			reference to the AnalyzerSurface for drawing
-	 * @param sampleRate	sampleRate that was used to record the samples
 	 * @param frameRate		fixed frame rate at which the fft should be drawn
+	 * @param inputQueue	queue that delivers sample packets
+	 * @param returnQueue	queue to return unused buffers
 	 */
-	public AnalyzerProcessingLoop(AnalyzerSurface view, int sampleRate, int frameRate,
+	public AnalyzerProcessingLoop(AnalyzerSurface view, int frameRate,
 				ArrayBlockingQueue<SamplePacket> inputQueue, ArrayBlockingQueue<SamplePacket> returnQueue) {
 		this.view = view;
-		this.sampleRate = sampleRate;
 		this.frameRate = frameRate;
 		this.fftBlock = new FFT(fftSize);
 		this.inputQueue = inputQueue;
@@ -76,16 +74,6 @@ public class AnalyzerProcessingLoop extends Thread {
 	}
 
 	public int getFftSize() { return fftSize; }
-
-	public int getSampleRate() { return sampleRate; }
-
-	public void setSampleRate(int sampleRate) { this.sampleRate = sampleRate; }
-
-	public long getBasebandFrequency() { return basebandFrequency; }
-
-	public void setBasebandFrequency(long basebandFrequency) {
-		this.basebandFrequency = basebandFrequency;
-	}
 
 	public void setFftSize(int fftSize) {
 		int order = (int)(Math.log(fftSize) / Math.log(2));
@@ -130,14 +118,6 @@ public class AnalyzerProcessingLoop extends Thread {
 			// store the current timestamp
 			startTime = System.currentTimeMillis();
 
-			//<DEBUG>
-//			SamplePacket samples = new SamplePacket(new double[fftSize], new double[fftSize]);
-//			for (int i = 0; i < samples.size(); i++) {
-//				samples.re()[i] = Math.cos(2 * Math.PI * 0.01 * i);
-//				samples.im()[i] = 0; //Math.sin(2 * Math.PI * 0.01 * i);
-//			}
-			//</DEBUG>
-
 			// fetch the next samples from the queue:
 			SamplePacket samples = null;
 			try {
@@ -166,7 +146,7 @@ public class AnalyzerProcessingLoop extends Thread {
 
 				synchronized (view.getHolder()) {
 					if(c != null)
-						view.drawFrame(c, mag, sampleRate, basebandFrequency, frameRate, load);
+						view.drawFrame(c, mag, frameRate, load);
 					else
 						Log.d(logtag, "run: Canvas is null.");
 				}

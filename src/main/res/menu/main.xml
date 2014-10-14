@@ -6,6 +6,15 @@
           android:title="@string/action_start"
           android:orderInCategory="1"
           android:showAsAction="always" />
+    <item android:id="@+id/action_setFrequency"
+          android:title="@string/action_setFrequency"
+          android:orderInCategory="2"
+          android:showAsAction="ifRoom" />
+    <item android:id="@+id/action_stop"
+          android:icon="@drawable/ic_action_pause"
+          android:title="@string/action_stop"
+          android:orderInCategory="50"
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

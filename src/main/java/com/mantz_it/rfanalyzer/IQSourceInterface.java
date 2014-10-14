@@ -42,6 +42,13 @@ public interface IQSourceInterface {
 	public boolean open(Context context, Callback callback);
 
 	/**
+	 * Will return true if the source is opened and ready to use
+	 *
+	 * @return true if open, false if not open
+	 */
+	public boolean isOpen();
+
+	/**
 	 * Will close the device.
 	 *
 	 * @return false if an error occurred.

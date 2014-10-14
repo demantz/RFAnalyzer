@@ -61,6 +61,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private boolean redrawFrequencyGrid = true;	// Indicates whether the frequency grid has to be redrawn or is still valid
 	private boolean redrawPowerGrid = true;	// Indicates whether the frequency grid has to be redrawn or is still valid
 
+	private long frequency = 0;				// Center frequency of the fft (baseband)
+	private int sampleRate = 0;				// Sample Rate of the fft
+
 	/**
 	 * Constructor. Will initialize the Paint instances and register the callback
 	 * functions of the SurfaceHolder
@@ -82,6 +85,26 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 		// Create the color map for the waterfall plot (should be customizable later)
 		this.createWaterfallColorMap();
+	}
+
+	/**
+	 * Sets the sample rate, that is used to draw the frequency grid.
+	 *
+	 * @param sampleRate	new sample rate (in Sps)
+	 */
+	public void setSampleRate(int sampleRate) {
+		this.sampleRate = sampleRate;
+		this.redrawFrequencyGrid = true;
+	}
+
+	/**
+	 * Sets the center frequency, that is used to draw the frequency grid.
+	 *
+	 * @param frequency		new baseband frequency (in Hz)
+	 */
+	public void setFrequency(long frequency) {
+		this.frequency = frequency;
+		this.redrawFrequencyGrid = true;
 	}
 
 	/**
@@ -195,12 +218,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 *
 	 * @param c				canvas object to draw on
 	 * @param mag			array of magnitude values that represent the fft
-	 * @param sampleRate	sampleRate that was used to record the samples used to create the fft
-	 * @param basebandFrequency		absolute frequency that should be used as center for the grid
 	 * @param frameRate		current frame rate (only to draw it on the canvas)
 	 * @param load			current load (number from 0 to 1). (only to draw it on the canvas)
 	 */
-	public void drawFrame(Canvas c, double[] mag, int sampleRate, long basebandFrequency, int frameRate, double load) {
+	public void drawFrame(Canvas c, double[] mag, int frameRate, double load) {
 		// these should be configurable later:
 		int maxDB = -5;
 		int minDB = -35;
@@ -215,7 +236,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		drawWaterfall(c, mag, minDB, maxDB);
 
 		// draw the grid (and some more information):
-		drawGrid(c, sampleRate, basebandFrequency, frameRate, load, minDB, maxDB);
+		drawGrid(c, frameRate, load, minDB, maxDB);
 	}
 
 	/**
@@ -289,14 +310,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * This method will draw the grid and some additional information onto the given canvas
 	 *
 	 * @param c				canvas object to draw on
-	 * @param sampleRate	sampleRate that was used to record the samples used to create the fft
-	 * @param basebandFrequency		absolute frequency that should be used as center for the grid
 	 * @param frameRate		current frame rate (only to draw it on the canvas)
 	 * @param load			current load (number from 0 to 1). (only to draw it on the canvas)
 	 * @param minDB			dB level of the bottom line of the fft
 	 * @param maxDB			dB level of the top line of the fft
 	 */
-	private void drawGrid(Canvas c, int sampleRate, long basebandFrequency, int frameRate, double load, int minDB, int maxDB) {
+	private void drawGrid(Canvas c, int frameRate, double load, int minDB, int maxDB) {
 		// Performance information:
 		c.drawText(frameRate+" FPS",width-120,40,textPaint);
 		String loadStr = String.format("%3.1f %%", load * 100);
@@ -305,7 +324,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		// Frequency Grid
 		if(redrawFrequencyGrid) {
 			redrawFrequencyGrid = false;
-			generateFrequencyGrid(sampleRate, basebandFrequency);
+			generateFrequencyGrid();
 		}
 
 		if(redrawPowerGrid) {
@@ -320,16 +339,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	/**
 	 * This method will draw the frequency grid into the frequencyGrid bitmap
-	 *
-	 * @param sampleRate	sampleRate that was used to record the samples used to create the fft
-	 * @param basebandFrequency		absolute frequency that should be used as center for the grid
 	 */
-	private void generateFrequencyGrid(int sampleRate, long basebandFrequency) {
+	private void generateFrequencyGrid() {
 		// Calculate pixel width of a minor tick (100KHz)
 		float pixelPerMinorTick = (float) (width / (sampleRate/100000.0));
 
 		// Calculate the frequency at the left most point of the fft:
-		long startFrequency = (long) (basebandFrequency - (sampleRate/2.0));
+		long startFrequency = (long) (frequency - (sampleRate/2.0));
 
 		// Calculate the frequency and position of the first Tick (ticks are every 100KHz)
 		long tickFreq = (long) Math.ceil(startFrequency/10000.0) * 10000;
