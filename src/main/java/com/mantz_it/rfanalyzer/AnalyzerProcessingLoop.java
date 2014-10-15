@@ -144,7 +144,7 @@ public class AnalyzerProcessingLoop extends Thread {
 			returnQueue.offer(samples);
 
 			// Push the results on the surface:
-			view.update(mag, frameRate, load);
+			view.draw(mag, frameRate, load);
 
 			// Calculate the remaining time in this frame (according to the frame rate) and sleep
 			// for that time:
