@@ -9,7 +9,9 @@ import java.util.concurrent.ArrayBlockingQueue;
  *
  * Module:      Scheduler.java
  * Description: This Thread is responsible for forwarding the samples from the input hardware
- *              to the Processing Loop at the correct speed and format.
+ *              to the Processing Loop at the correct speed and format. Therefore it has to
+ *              drop incoming samples that won't be used in order to keep the buffer of the
+ *              hackrf_android library from beeing filled up.
  *
  * @author Dennis Mantz
  *
@@ -38,9 +40,12 @@ public class Scheduler extends Thread {
 	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// Queue that collects used buffers from the Processing Loop
 	private boolean stopRequested = true;
 
-	// Define the size of the output and input Queues. Note that the value 10 means that at
-	// a frame rate of 10 FPS the queue will buffer for exactly one second.
-	private static final int queueSize = 10;
+	// Define the size of the output and input Queues. By setting this value to 2 we basically end up
+	// with double buffering. Maybe the two queues are overkill, but it works pretty well like this and
+	// it handles the synchronization between the scheduler thread and the processing loop for us.
+	// Note that setting the size to 1 will not work well and any number higher than 2 will cause
+	// higher delays when switching frequencies.
+	private static final int queueSize = 2;
 	private static final String logtag = "Scheduler";
 
 	public Scheduler(int frameRate, int fftSize, IQSourceInterface source) {

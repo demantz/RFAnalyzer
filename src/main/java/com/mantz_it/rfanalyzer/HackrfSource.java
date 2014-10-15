@@ -60,7 +60,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public boolean open(Context context, Callback callback) {
-		int queueSize = 15000000 * 2;	// max. 15 Msps with 2 byte each ==> will buffer for 1 second
+		int queueSize = 1000000;
 		this.callback = callback;
 		// Initialize the HackRF (i.e. open the USB device, which requires the user to give permissions)
 		return Hackrf.initHackrf(context, this, queueSize);

@@ -10,8 +10,12 @@ import java.util.concurrent.TimeUnit;
  * <h1>RF Analyzer - Analyzer Processing Loop</h1>
  *
  * Module:      AnalyzerProcessingLoop.java
- * Description: This Thread will fetch samples from the incoming queue, do the signal processing
- *              (fft) and then draw the result on the AnalyzerSurface at a fixed frame rate.
+ * Description: This Thread will fetch samples from the incoming queue (provided by the scheduler),
+ *              do the signal processing (fft) and then forward the result to the AnalyzerSurface at a
+ *              fixed rate. It stabilises the rate at which the fft is generated to give the
+ *              waterfall display a linear time scale. The frame rate of the AnalyzerSurface might
+ *              be higher e.g. if the user scrolls the view, causing the the AnalyzerSurface to
+ *              do animation.
  *
  * @author Dennis Mantz
  *
@@ -139,27 +143,8 @@ public class AnalyzerProcessingLoop extends Thread {
 			// return samples to the buffer pool
 			returnQueue.offer(samples);
 
-			// Draw the results on the surface:
-			Canvas c = null;
-			try {
-				c = view.getHolder().lockCanvas();
-
-				synchronized (view.getHolder()) {
-					if(c != null)
-						view.drawFrame(c, mag, frameRate, load);
-					else
-						Log.d(logtag, "run: Canvas is null.");
-				}
-			} catch (Exception e)
-			{
-				Log.e(logtag,"run: Error while drawing on the canvas. Stop!");
-				e.printStackTrace();
-				break;
-			} finally {
-				if (c != null) {
-					view.getHolder().unlockCanvasAndPost(c);
-				}
-			}
+			// Push the results on the surface:
+			view.update(mag, frameRate, load);
 
 			// Calculate the remaining time in this frame (according to the frame rate) and sleep
 			// for that time:

@@ -44,7 +44,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Create a analyzer surface:
 		analyzerSurface = new AnalyzerSurface(this);
 		analyzerSurface.setFrequency(preferences.getLong(getString(R.string.prefs_frequency),97000000));
-		analyzerSurface.setSampleRate(preferences.getInt(getString(R.string.prefs_sampleRate), 2000000));
+		analyzerSurface.setSampleRate(preferences.getInt(getString(R.string.prefs_sampleRate), 20000000));
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
@@ -141,7 +141,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						// Create HackrfSource
 						source = new HackrfSource();
 						source.setFrequency(preferences.getLong(getString(R.string.prefs_frequency),97000000));
-						source.setSampleRate(preferences.getInt(getString(R.string.prefs_sampleRate), 2000000));
+						source.setSampleRate(preferences.getInt(getString(R.string.prefs_sampleRate), 20000000));
 						((HackrfSource) source).setVgaRxGain(preferences.getInt(getString(R.string.prefs_hackrf_vgaRxGain), 10));
 						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.prefs_hackrf_lnaGain), 40));
 						break;
