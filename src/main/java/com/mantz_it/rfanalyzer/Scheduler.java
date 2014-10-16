@@ -33,8 +33,6 @@ import java.util.concurrent.ArrayBlockingQueue;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class Scheduler extends Thread {
-	private int frameRate = 0;		// Frame Rate of the Analyzer View
-	private int fftSize = 0;		// FFT size of the Analyzer View
 	private IQSourceInterface source = null;	// Reference to the source of the IQ samples
 	private ArrayBlockingQueue<SamplePacket> outputQueue = null;	// Queue that delivers samples to the Processing Loop
 	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// Queue that collects used buffers from the Processing Loop
@@ -48,9 +46,7 @@ public class Scheduler extends Thread {
 	private static final int queueSize = 2;
 	private static final String logtag = "Scheduler";
 
-	public Scheduler(int frameRate, int fftSize, IQSourceInterface source) {
-		this.fftSize = fftSize;
-		this.frameRate = frameRate;
+	public Scheduler(int fftSize, IQSourceInterface source) {
 		this.source = source;
 
 		// Create the input- and output queues and allocate the buffer packets.
@@ -110,6 +106,8 @@ public class Scheduler extends Thread {
 			{
 				// fill the packet into the buffer at bufferIndex:
 				int sampleCount = source.fillPacketIntoSamplePacket(packet,buffer,bufferIndex);
+				buffer.setFrequency(source.getFrequency());
+				buffer.setSampleRate(source.getSampleRate());
 				bufferIndex += sampleCount;
 
 				// check if the buffer is now full and if so: deliver it to the output queue

@@ -26,20 +26,26 @@ package com.mantz_it.rfanalyzer;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class SamplePacket {
-	private double[] re;	// real values
-	private double[] im;	// imag values
+	private double[] re;		// real values
+	private double[] im;		// imag values
+	private long frequency;		// center frequency
+	private int sampleRate;		// sample rate
 
 	/**
 	 * Constructor. This constructor wraps existing arrays.
 	 *
 	 * @param re	array of real parts of the sample values
 	 * @param im	array of imaginary parts of the sample values
+	 * @param frequency		center frequency
+	 * @param sampleRate	sample rate
 	 */
-	public SamplePacket(double[] re, double im[]) {
+	public SamplePacket(double[] re, double im[], long frequency, int sampleRate) {
 		if(re.length != im.length)
 			throw new IllegalArgumentException("Arrays must be of the same length");
 		this.re = re;
 		this.im = im;
+		this.frequency = frequency;
+		this.sampleRate = sampleRate;
 	}
 
 	/**
@@ -50,6 +56,8 @@ public class SamplePacket {
 	public SamplePacket(int size) {
 		this.re = new double[size];
 		this.im = new double[size];
+		this.frequency = 0;
+		this.sampleRate = 0;
 	}
 
 	public double[] re() {
@@ -70,5 +78,21 @@ public class SamplePacket {
 
 	public int size() {
 		return re.length;
+	}
+
+	public long getFrequency() {
+		return frequency;
+	}
+
+	public int getSampleRate() {
+		return sampleRate;
+	}
+
+	public void setFrequency(long frequency) {
+		this.frequency = frequency;
+	}
+
+	public void setSampleRate(int sampleRate) {
+		this.sampleRate = sampleRate;
 	}
 }

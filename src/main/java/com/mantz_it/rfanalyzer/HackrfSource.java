@@ -89,7 +89,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		if(hackrf == null)
 			return false;
 		try {
-			int boardID = hackrf.getBoardID();
+			hackrf.getBoardID();
 			return true;	// no exception was thrown --> hackrf is open!
 		} catch (HackrfUsbException e) {
 			return false;	// exception was thrown --> hackrf is not open
@@ -108,15 +108,22 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	public void setFrequency(long frequency) {
-		this.frequency = frequency;
+		// re-tune the hackrf:
 		if(hackrf != null) {
 			try {
 				hackrf.setFrequency(frequency);
 			} catch (HackrfUsbException e) {
 				Log.e(logtag, "setFrequency: Error while setting frequency: " + e.getMessage());
 				reportError("Error while setting frequency");
+				return;
 			}
 		}
+
+		// Flush the queue:
+		this.flushQueue();
+
+		// Store the new frequency
+		this.frequency = frequency;
 	}
 
 	@Override
@@ -125,9 +132,25 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	public void setSampleRate(int sampleRate) {
-		this.sampleRate = sampleRate;
 		if(isAutomaticBBFilterCalculation())
 			setBasebandFilterWidth((int)(sampleRate * 0.75));
+
+		// set the hackrf to the new sample rate:
+		if(hackrf != null) {
+			try {
+				hackrf.setSampleRate(sampleRate,1);
+				hackrf.setBasebandFilterBandwidth(basebandFilterWidth);
+			} catch (HackrfUsbException e) {
+				Log.e(logtag, "setSampleRate: Error while setting sample rate: " + e.getMessage());
+				reportError("Error while setting sample rate");
+				return;
+			}
+		}
+
+		// Flush the queue
+		this.flushQueue();
+
+		this.sampleRate = sampleRate;
 	}
 
 	public int getBasebandFilterWidth() {
@@ -275,5 +298,22 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 				break;
 		}
 		return count;
+	}
+
+	/**
+	 * Will empty the queue
+	 */
+	public void flushQueue() {
+		byte[] buffer;
+
+		if(hackrf == null || queue == null)
+			return; // nothing to flush...
+
+		for (int i = 0; i < queue.size(); i++) {
+			buffer = queue.poll();
+			if(buffer == null)
+				return; // we are done; the queue is empty.
+			hackrf.returnBufferToBufferPool(buffer);
+		}
 	}
 }

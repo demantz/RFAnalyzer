@@ -11,7 +11,6 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -19,7 +18,7 @@ import android.widget.Toast;
 import java.io.File;
 
 
-public class MainActivity extends Activity implements IQSourceInterface.Callback {
+public class MainActivity extends Activity implements IQSourceInterface.Callback, AnalyzerSurface.UserInputListener {
 
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
@@ -42,9 +41,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		preferences = getPreferences(Context.MODE_PRIVATE);
 
 		// Create a analyzer surface:
-		analyzerSurface = new AnalyzerSurface(this);
-		analyzerSurface.setFrequency(preferences.getLong(getString(R.string.prefs_frequency),97000000));
-		analyzerSurface.setSampleRate(preferences.getInt(getString(R.string.prefs_sampleRate), 20000000));
+		analyzerSurface = new AnalyzerSurface(this,this);
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
@@ -94,6 +91,19 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			default:
 		}
 		return true;
+	}
+
+	/**
+	 * Called by the AnalyzerSurface when the user double taps on the screen, requesting to
+	 * set the frequency and sample rate
+	 *
+	 * @param frequency     Requested frequency to tune to
+	 * @param sampleRate    Requested sample rate to set
+	 */
+	@Override
+	public void onSetFrequencyAndSampleRate(long frequency, int sampleRate) {
+		source.setFrequency(frequency);
+		source.setSampleRate(sampleRate);
 	}
 
 	@Override
@@ -200,14 +210,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// Create a new instance of Scheduler and Processing Loop:
 		int fftSize = 1024;
-		int frameRate = 5;
-		scheduler = new Scheduler(frameRate, fftSize, source);
+		scheduler = new Scheduler(fftSize, source);
 		analyzerProcessingLoop = new AnalyzerProcessingLoop(
 				analyzerSurface, 			// Reference to the Analyzer Surface
-				frameRate,					// Frame Rate
+				fftSize,					// FFT size
 				scheduler.getOutputQueue(), // Reference to the input queue for the processing loop
 				scheduler.getInputQueue()); // Reference to the buffer-pool-return queue
-		analyzerProcessingLoop.setFftSize(fftSize);
+		analyzerProcessingLoop.setFrameRate(10);
 
 		// Start both threads:
 		scheduler.start();
@@ -227,7 +236,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					try {
 						long newFreq = Long.valueOf(et_input.getText().toString());
 						source.setFrequency(newFreq);
-						analyzerSurface.setFrequency(newFreq);
+						analyzerSurface.centerAroundFrequency(newFreq);
 					} catch (NumberFormatException e) {
 						Log.e(logtag, "tuneToFrequency: Error while setting frequency: " + e.getMessage());
 					}
