@@ -80,6 +80,27 @@ public interface IQSourceInterface {
 	 */
 	public void setFrequency(long frequency);
 
+
+	/**
+	 * @return the maximum frequency to which the source can be tuned
+	 */
+	public long getMaxFrequency();
+
+	/**
+	 * @return the minimum frequency to which the source can be tuned
+	 */
+	public long getMinFrequency();
+
+	/**
+	 * @return the maximum sample rate to which the source can be set
+	 */
+	public long getMaxSampleRate();
+
+	/**
+	 * @return the minimum sample rate to which the source can be set
+	 */
+	public long getMinSampleRate();
+
 	/**
 	 * @return the size (in byte) of a packet that is returned by getPacket()
 	 */

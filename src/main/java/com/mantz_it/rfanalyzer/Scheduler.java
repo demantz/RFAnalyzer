@@ -44,7 +44,7 @@ public class Scheduler extends Thread {
 	// Note that setting the size to 1 will not work well and any number higher than 2 will cause
 	// higher delays when switching frequencies.
 	private static final int queueSize = 2;
-	private static final String logtag = "Scheduler";
+	private static final String LOGTAG = "Scheduler";
 
 	public Scheduler(int fftSize, IQSourceInterface source) {
 		this.source = source;
@@ -84,7 +84,7 @@ public class Scheduler extends Thread {
 
 	@Override
 	public void run() {
-		Log.i(logtag,"Scheduler started. (Thread: " + this.getName() + ")");
+		Log.i(LOGTAG,"Scheduler started. (Thread: " + this.getName() + ")");
 		SamplePacket buffer = null;		// reference to a buffer we got from the input queue to fill
 		int bufferIndex = 0;			// fill level of the buffer. ==> next index to insert into the buffer
 
@@ -92,7 +92,7 @@ public class Scheduler extends Thread {
 			// Get a new packet from the source:
 			byte[] packet = source.getPacket(1000);
 			if(packet == null) {
-				Log.e(logtag, "run: No more packets from source. Shutting down...");
+				Log.e(LOGTAG, "run: No more packets from source. Shutting down...");
 				this.stopScheduler();
 				break;
 			}
@@ -125,6 +125,6 @@ public class Scheduler extends Thread {
 			source.returnPacket(packet);
 		}
 		this.stopRequested = true;
-		Log.i(logtag,"Scheduler stopped. (Thread: " + this.getName() + ")");
+		Log.i(LOGTAG,"Scheduler stopped. (Thread: " + this.getName() + ")");
 	}
 }

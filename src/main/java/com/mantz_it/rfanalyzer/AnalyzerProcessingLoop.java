@@ -1,6 +1,5 @@
 package com.mantz_it.rfanalyzer;
 
-import android.graphics.Canvas;
 import android.util.Log;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -39,7 +38,7 @@ public class AnalyzerProcessingLoop extends Thread {
 	private int frameRate = 1;				// Frames per Second
 	private double load = 0;				// Time_for_processing_and_drawing / Time_per_Frame
 	private boolean stopRequested = true;	// Will stop the thread when set to true
-	private static final String logtag = "AnalyzerProcessingLoop";
+	private static final String LOGTAG = "AnalyzerProcessingLoop";
 
 	private AnalyzerSurface view;
 	private FFT fftBlock = null;
@@ -104,7 +103,7 @@ public class AnalyzerProcessingLoop extends Thread {
 
 	@Override
 	public void run() {
-		Log.i(logtag,"Processing loop started. (Thread: " + this.getName() + ")");
+		Log.i(LOGTAG,"Processing loop started. (Thread: " + this.getName() + ")");
 		long startTime;		// timestamp when signal processing is started
 		long sleepTime;		// time (in ms) to sleep before the next run to meet the frame rate
 		long frequency;		// center frequency of the incoming samples
@@ -119,12 +118,12 @@ public class AnalyzerProcessingLoop extends Thread {
 			try {
 				samples = inputQueue.poll(1000 / frameRate, TimeUnit.MILLISECONDS);
 				if (samples == null) {
-					Log.e(logtag, "run: Timeout while waiting on input data. stop.");
+					Log.e(LOGTAG, "run: Timeout while waiting on input data. stop.");
 					this.stopLoop();
 					break;
 				}
 			} catch (InterruptedException e) {
-				Log.e(logtag, "run: Interrupted while polling from input queue. stop.");
+				Log.e(LOGTAG, "run: Interrupted while polling from input queue. stop.");
 				this.stopLoop();
 				break;
 			}
@@ -148,19 +147,19 @@ public class AnalyzerProcessingLoop extends Thread {
 				if (sleepTime > 0) {
 					// load = processing_time / frame_duration
 					load = (System.currentTimeMillis() - startTime) / (1000.0 / frameRate);
-					Log.d(logtag,"Load: " + load + "; Sleep for " + sleepTime + "ms.");
+					Log.d(LOGTAG,"Load: " + load + "; Sleep for " + sleepTime + "ms.");
 					sleep(sleepTime);
 				}
 				else {
-					Log.w(logtag, "Couldn't meet requested frame rate!");
+					Log.w(LOGTAG, "Couldn't meet requested frame rate!");
 					load = 1;
 				}
 			} catch (Exception e) {
-				Log.e(logtag,"Error while calling sleep()");
+				Log.e(LOGTAG,"Error while calling sleep()");
 			}
 		}
 		this.stopRequested = true;
-		Log.i(logtag,"Processing loop stopped. (Thread: " + this.getName() + ")");
+		Log.i(LOGTAG,"Processing loop stopped. (Thread: " + this.getName() + ")");
 	}
 
 	/**

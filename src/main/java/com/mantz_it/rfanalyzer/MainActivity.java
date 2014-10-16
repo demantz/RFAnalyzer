@@ -18,7 +18,7 @@ import android.widget.Toast;
 import java.io.File;
 
 
-public class MainActivity extends Activity implements IQSourceInterface.Callback, AnalyzerSurface.UserInputListener {
+public class MainActivity extends Activity implements IQSourceInterface.Callback {
 
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
@@ -26,7 +26,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private IQSourceInterface source = null;
 	private Scheduler scheduler = null;
 	SharedPreferences preferences = null;
-	private static final String logtag = "MainActivity";
+	private static final String LOGTAG = "MainActivity";
 	private boolean running = false;
 
 	@Override
@@ -41,7 +41,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		preferences = getPreferences(Context.MODE_PRIVATE);
 
 		// Create a analyzer surface:
-		analyzerSurface = new AnalyzerSurface(this,this);
+		analyzerSurface = new AnalyzerSurface(this);
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
@@ -91,19 +91,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			default:
 		}
 		return true;
-	}
-
-	/**
-	 * Called by the AnalyzerSurface when the user double taps on the screen, requesting to
-	 * set the frequency and sample rate
-	 *
-	 * @param frequency     Requested frequency to tune to
-	 * @param sampleRate    Requested sample rate to set
-	 */
-	@Override
-	public void onSetFrequencyAndSampleRate(long frequency, int sampleRate) {
-		source.setFrequency(frequency);
-		source.setSampleRate(sampleRate);
 	}
 
 	@Override
@@ -161,7 +148,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// open the source:
 		if(!source.open(this, this)) {
-			Log.w(logtag, "openSource: Couldn't open source (maybe not available)");
+			Log.w(LOGTAG, "openSource: Couldn't open source (maybe not available)");
 		}
 		// will call onIQSourceReady...
 	}
@@ -180,7 +167,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			try {
 				scheduler.join();
 			} catch (InterruptedException e) {
-				Log.e(logtag, "startAnalyzer: Error while stopping Scheduler.");
+				Log.e(LOGTAG, "startAnalyzer: Error while stopping Scheduler.");
 			}
 		}
 
@@ -189,7 +176,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			try {
 				analyzerProcessingLoop.join();
 			} catch (InterruptedException e) {
-				Log.e(logtag, "startAnalyzer: Error while stopping Processing Loop.");
+				Log.e(LOGTAG, "startAnalyzer: Error while stopping Processing Loop.");
 			}
 		}
 
@@ -210,6 +197,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 			return;	// we have to wait for the source to become ready... onIQSourceReady() will call startAnalyzer() again...
 		}
+
+		analyzerSurface.setSource(source);
 
 		// Create a new instance of Scheduler and Processing Loop:
 		int fftSize = 1024;
@@ -241,7 +230,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						source.setFrequency(newFreq);
 						analyzerSurface.centerAroundFrequency(newFreq);
 					} catch (NumberFormatException e) {
-						Log.e(logtag, "tuneToFrequency: Error while setting frequency: " + e.getMessage());
+						Log.e(LOGTAG, "tuneToFrequency: Error while setting frequency: " + e.getMessage());
 					}
 				}
 			})

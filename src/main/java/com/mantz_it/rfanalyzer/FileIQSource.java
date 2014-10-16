@@ -43,7 +43,7 @@ public class FileIQSource implements IQSourceInterface {
 	private byte[] buffer = null;
 	private File file = null;
 	private BufferedInputStream bufferedInputStream = null;
-	private static final String logtag = "FileIQSource";
+	private static final String LOGTAG = "FileIQSource";
 
 	public FileIQSource(File file, int sampleRate, long frequency, int packetSize, boolean repeat) {
 		this.file = file;
@@ -58,7 +58,7 @@ public class FileIQSource implements IQSourceInterface {
 		if(callback != null)
 			callback.onIQSourceError(this,msg);
 		else
-			Log.e(logtag,"Callback is null when reporting Error (" + msg + ")");
+			Log.e(LOGTAG,"Callback is null when reporting Error (" + msg + ")");
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class FileIQSource implements IQSourceInterface {
 			callback.onIQSourceReady(this);
 			return true;
 		}catch (IOException e) {
-			Log.e(logtag, "open: Error while opening file: " + e.getMessage());
+			Log.e(LOGTAG, "open: Error while opening file: " + e.getMessage());
 			reportError("Error while opening file: " + e.getMessage());
 			return false;
 		}
@@ -97,7 +97,7 @@ public class FileIQSource implements IQSourceInterface {
 				bufferedInputStream.close();
 			return true;
 		} catch (IOException e) {
-			Log.e(logtag, "stopSampling: Error while closing file: " + e.getMessage());
+			Log.e(LOGTAG, "stopSampling: Error while closing file: " + e.getMessage());
 			reportError("Unexpected error while closing file: " + e.getMessage());
 			return false;
 		}
@@ -115,7 +115,7 @@ public class FileIQSource implements IQSourceInterface {
 
 	@Override
 	public void setSampleRate(int sampleRate) {
-		Log.e(logtag,"Setting the sample rate is not supported on a file source");
+		Log.e(LOGTAG,"Setting the sample rate is not supported on a file source");
 		reportError("Setting the sample rate is not supported on a file source");
 	}
 
@@ -126,8 +126,28 @@ public class FileIQSource implements IQSourceInterface {
 
 	@Override
 	public void setFrequency(long frequency) {
-		Log.e(logtag,"Setting the frequency is not supported on a file source");
+		Log.e(LOGTAG,"Setting the frequency is not supported on a file source");
 		reportError("Setting the frequency is not supported on a file source");
+	}
+
+	@Override
+	public long getMaxFrequency() {
+		return frequency;
+	}
+
+	@Override
+	public long getMinFrequency() {
+		return frequency;
+	}
+
+	@Override
+	public long getMaxSampleRate() {
+		return sampleRate;
+	}
+
+	@Override
+	public long getMinSampleRate() {
+		return sampleRate;
 	}
 
 	@Override
@@ -144,7 +164,7 @@ public class FileIQSource implements IQSourceInterface {
 		try {
 			Thread.sleep(packetSize/sampleRate * 1000);
 		} catch (InterruptedException e) {
-			Log.w(logtag, "getPacket: Interrupted while sleeping!");
+			Log.w(LOGTAG, "getPacket: Interrupted while sleeping!");
 		}
 
 		try {
@@ -156,12 +176,12 @@ public class FileIQSource implements IQSourceInterface {
 					if (bufferedInputStream.read(buffer, 0, buffer.length) != buffer.length)
 						return null;
 				} else
-					Log.i(logtag,"getPacket: End of File");
+					Log.i(LOGTAG,"getPacket: End of File");
 					reportError("End of File");
 					return null;
 			}
 		} catch (IOException e) {
-			Log.e(logtag,"getPacket: Error while reading from file: " + e.getMessage());
+			Log.e(LOGTAG,"getPacket: Error while reading from file: " + e.getMessage());
 			reportError("Unexpected error while reading file: " + e.getMessage());
 		}
 

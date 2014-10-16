@@ -49,13 +49,17 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private int lnaGain = 0;
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
-	private static final String logtag = "HackRFSource";
+	private static final String LOGTAG = "HackRFSource";
+	private static final long MIN_FREQUENCY = 10000000l;
+	private static final long MAX_FREQUENCY = 6000000000l;
+	private static final int MAX_SAMPLERATE = 20000000;
+	private static final int MIN_SAMPLERATE = 10000;
 
 	private void reportError(String msg) {
 		if(callback != null)
 			callback.onIQSourceError(this,msg);
 		else
-			Log.e(logtag,"Callback is null when reporting Error (" + msg + ")");
+			Log.e(LOGTAG,"Callback is null when reporting Error (" + msg + ")");
 	}
 
 	@Override
@@ -80,7 +84,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public void onHackrfError(String message) {
-		Log.e(logtag, "Error while opening HackRF: " + message);
+		Log.e(LOGTAG, "Error while opening HackRF: " + message);
 		reportError(message);
 	}
 
@@ -113,7 +117,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 			try {
 				hackrf.setFrequency(frequency);
 			} catch (HackrfUsbException e) {
-				Log.e(logtag, "setFrequency: Error while setting frequency: " + e.getMessage());
+				Log.e(LOGTAG, "setFrequency: Error while setting frequency: " + e.getMessage());
 				reportError("Error while setting frequency");
 				return;
 			}
@@ -124,6 +128,26 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 		// Store the new frequency
 		this.frequency = frequency;
+	}
+
+	@Override
+	public long getMaxFrequency() {
+		return MAX_FREQUENCY;
+	}
+
+	@Override
+	public long getMinFrequency() {
+		return MIN_FREQUENCY;
+	}
+
+	@Override
+	public long getMaxSampleRate() {
+		return MAX_SAMPLERATE;
+	}
+
+	@Override
+	public long getMinSampleRate() {
+		return MIN_SAMPLERATE;
 	}
 
 	@Override
@@ -141,7 +165,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 				hackrf.setSampleRate(sampleRate,1);
 				hackrf.setBasebandFilterBandwidth(basebandFilterWidth);
 			} catch (HackrfUsbException e) {
-				Log.e(logtag, "setSampleRate: Error while setting sample rate: " + e.getMessage());
+				Log.e(LOGTAG, "setSampleRate: Error while setting sample rate: " + e.getMessage());
 				reportError("Error while setting sample rate");
 				return;
 			}
@@ -214,7 +238,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		if(hackrf != null)
 			return hackrf.getPacketSize();
 		else {
-			Log.e(logtag, "getPacketSize: Hackrf instance is null");
+			Log.e(LOGTAG, "getPacketSize: Hackrf instance is null");
 			return 0;
 		}
 	}
@@ -225,11 +249,11 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 			try {
 				return queue.poll(timeout, TimeUnit.MILLISECONDS);
 			} catch (InterruptedException e) {
-				Log.e(logtag, "getPacket: Interrupted while waiting on queue");
+				Log.e(LOGTAG, "getPacket: Interrupted while waiting on queue");
 				return null;
 			}
 		else {
-			Log.e(logtag, "getPacket: Queue is null");
+			Log.e(LOGTAG, "getPacket: Queue is null");
 			return null;
 		}
 	}
@@ -239,7 +263,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		if(hackrf != null)
 			hackrf.returnBufferToBufferPool(buffer);
 		else {
-			Log.e(logtag, "returnPacket: Hackrf instance is null");
+			Log.e(LOGTAG, "returnPacket: Hackrf instance is null");
 		}
 	}
 
@@ -256,10 +280,10 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 				hackrf.setAntennaPower(antennaPower);
 				this.queue = hackrf.startRX();
 			} catch (HackrfUsbException e) {
-				Log.e(logtag, "startSampling: Error while set up hackrf: " + e.getMessage());
+				Log.e(LOGTAG, "startSampling: Error while set up hackrf: " + e.getMessage());
 			}
 		} else {
-			Log.e(logtag, "startSampling: Hackrf instance is null");
+			Log.e(LOGTAG, "startSampling: Hackrf instance is null");
 		}
 	}
 
@@ -269,10 +293,10 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 			try {
 				hackrf.stop();
 			} catch (HackrfUsbException e) {
-				Log.e(logtag, "stopSampling: Error while tear down hackrf: " + e.getMessage());
+				Log.e(LOGTAG, "stopSampling: Error while tear down hackrf: " + e.getMessage());
 			}
 		} else {
-			Log.e(logtag, "stopSampling: Hackrf instance is null");
+			Log.e(LOGTAG, "stopSampling: Hackrf instance is null");
 		}
 	}
 

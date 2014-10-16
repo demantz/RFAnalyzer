@@ -50,7 +50,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private ScaleGestureDetector scaleGestureDetector = null;
 	private GestureDetector gestureDetector = null;
 
-	private UserInputListener userInputListener = null;
+	private IQSourceInterface source = null;
 
 	private Paint defaultPaint = null;		// Paint object to draw bitmaps on the canvas
 	private Paint blackPaint = null;		// Paint object to draw black (erase)
@@ -60,13 +60,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private int width;						// current width (in pixels) of the SurfaceView
 	private int height;						// current height (in pixels) of the SurfaceView
 
-	private static final String logtag = "AnalyzerSurface";
-	private static final long MIN_FREQUENCY = 10000000l;
-	private static final long MAX_FREQUENCY = 6000000000l;
+	private static final String LOGTAG = "AnalyzerSurface";
 	private static final int MIN_DB = -100;
 	private static final int MAX_DB = 10;
-	private static final int MAX_SAMPLERATE = 20000000;
-	private static final int MIN_SAMPLERATE = 10000;
 
 	private int[] waterfallColorMap = null;		// Colors used to draw the waterfall plot.
 												// idx 0 -> weak signal   idx max -> strong signal
@@ -89,9 +85,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 *
 	 * @param context
 	 */
-	public AnalyzerSurface(Context context, UserInputListener userInputListener) {
+	public AnalyzerSurface(Context context) {
 		super(context);
-		this.userInputListener = userInputListener;
 		this.defaultPaint = new Paint();
 		this.blackPaint = new Paint();
 		this.blackPaint.setColor(Color.BLACK);
@@ -111,6 +106,22 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		// Instantiate the gesture detector:
 		this.scaleGestureDetector = new ScaleGestureDetector(context, this);
 		this.gestureDetector = new GestureDetector(context, this);
+	}
+
+	/**
+	 * Set the source attribute of the analyzer view.
+	 * Parameters like max. sample rate, ... are derived from the source instance. It will
+	 * also be used to set sample rate and frequency on double tap.
+	 *
+	 * @param source	IQSource instance
+	 */
+	public void setSource(IQSourceInterface source) {
+		if(source == null)
+			return;
+
+		this.source = source;
+		this.virtualFrequency = source.getFrequency();
+		this.virtualSampleRate = source.getSampleRate();
 	}
 
 	/**
@@ -222,8 +233,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		long frequencyFocus = virtualFrequency + (int)((detector.getFocusX()/width - 0.5)*virtualSampleRate);
 		float dBFocus = maxDB - (maxDB-minDB) * (detector.getFocusY() / getFftHeight());
 
-		virtualSampleRate = (int) Math.min( Math.max(virtualSampleRate / xScale, MIN_SAMPLERATE), MAX_SAMPLERATE);
-		virtualFrequency = Math.min(Math.max( frequencyFocus + (long) ((virtualFrequency-frequencyFocus)/xScale), MIN_FREQUENCY), MAX_FREQUENCY) ;
+		virtualSampleRate = (int) Math.min( Math.max(virtualSampleRate / xScale, 1), source.getMaxSampleRate());
+		virtualFrequency = Math.min( Math.max( frequencyFocus + (long) ((virtualFrequency-frequencyFocus)/xScale),
+				source.getMinFrequency() - source.getSampleRate()/2), source.getMaxFrequency() + source.getSampleRate()/2) ;
 
 		float newMinDB = Math.min(Math.max(dBFocus - (dBFocus - minDB) / yScale, MIN_DB), MAX_DB-10);
 		float newMaxDB = Math.min(Math.max(dBFocus - (dBFocus - maxDB) / yScale, newMinDB + 10), MAX_DB);
@@ -260,7 +272,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 
-		virtualFrequency = Math.min(Math.max(virtualFrequency + (long)((virtualSampleRate / width) * distanceX), MIN_FREQUENCY), MAX_FREQUENCY);
+		virtualFrequency = Math.min(Math.max(virtualFrequency + (long)((virtualSampleRate / width) * distanceX),
+				source.getMinFrequency() - source.getSampleRate()/2), source.getMaxFrequency() + source.getSampleRate()/2);
 
 		float yDiff = (maxDB-minDB) * (distanceY/(float)getFftHeight());
 
@@ -293,9 +306,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onDoubleTap(MotionEvent e) {
-		if(userInputListener != null && virtualFrequency > 0 && virtualSampleRate > 0) {
-			userInputListener.onSetFrequencyAndSampleRate(virtualFrequency, virtualSampleRate);
-		}
+		if(source != null
+				&& virtualFrequency >= source.getMinFrequency()
+				&& virtualFrequency <= source.getMaxFrequency()
+				&& virtualSampleRate >= source.getMinSampleRate()
+				&& virtualSampleRate <= source.getMaxSampleRate()) {
+			source.setFrequency(virtualFrequency);
+			source.setSampleRate(virtualSampleRate);
+		} else
+			Log.e(LOGTAG,"onDoubleTap: Source is not set!");
 		return true;
 	}
 
@@ -387,11 +406,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 					drawPowerGrid(c);
 					drawPerformanceInfo(c, frameRate, load);
 				} else
-					Log.d(logtag, "draw: Canvas is null.");
+					Log.d(LOGTAG, "draw: Canvas is null.");
 			}
 		} catch (Exception e)
 		{
-			Log.e(logtag,"draw: Error while drawing on the canvas. Stop!");
+			Log.e(LOGTAG,"draw: Error while drawing on the canvas. Stop!");
 			e.printStackTrace();
 		} finally {
 			if (c != null) {
@@ -601,19 +620,5 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		text = String.format("%3.1f %%", load * 100);
 		textPaint.getTextBounds(text,0 , text.length(), bounds);
 		c.drawText(text,width-bounds.width(),bounds.height() * 2,textPaint);
-	}
-
-	/**
-	 * Listener Interface for user input
-	 */
-	public static interface UserInputListener {
-		/**
-		 * This method will be called when the user double taps the screen and wants to
-		 * set the frequency and sample rate of the source accordingly
-		 *
-		 * @param frequency		Requested frequency to tune to
-		 * @param sampleRate	Requested sample rate to set
-		 */
-		public void onSetFrequencyAndSampleRate(long frequency, int sampleRate);
 	}
 }
