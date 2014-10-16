@@ -81,7 +81,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		switch (id) {
-			case R.id.action_start:			startReceiving();
+			case R.id.action_start:			startAnalyzer();
 											break;
 			case R.id.action_stop:			stopAnalyzer();
 											break;
@@ -110,14 +110,16 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	protected void onStart() {
 		super.onStart();
 		if (running) {
-			startReceiving();
+			startAnalyzer();
 		}
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		stopAnalyzer();			// will stop the processing loop, scheduler and source
+		boolean runningSaved = running;	// save the running state, to restore it after the app re-starts...
+		stopAnalyzer();					// will stop the processing loop, scheduler and source
+		running = runningSaved;			// running will be saved in onSaveInstanceState()
 	}
 
 	@Override
@@ -135,7 +137,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		});
 		stopAnalyzer();
-		running = false;
 	}
 
 	public void createSource() {
@@ -165,18 +166,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// will call onIQSourceReady...
 	}
 
-	public void startReceiving() {
-		running = true;
-		if(source.isOpen())
-			startAnalyzer();	// will start the processing loop, scheduler and source
-		else {
-			if (!source.open(this, this)) {
-				Toast.makeText(MainActivity.this, "Source not available", Toast.LENGTH_LONG).show();
-				running = false;
-			}
-		}
-	}
-
 	public void stopAnalyzer() {
 		// Stop the Scheduler if running:
 		if(scheduler != null)
@@ -203,10 +192,24 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				Log.e(logtag, "startAnalyzer: Error while stopping Processing Loop.");
 			}
 		}
+
+		running = false;
 	}
 
 	public void startAnalyzer() {
-		this.stopAnalyzer();	// Stop if running
+		this.stopAnalyzer();	// Stop if running; This asures that we don't end up with multiple instances of the thread loops
+
+		running = true;
+
+		// check if the source is open. if not, open it!
+		if(!source.isOpen()) {
+			if (!source.open(this, this)) {
+				Toast.makeText(MainActivity.this, "Source not available", Toast.LENGTH_LONG).show();
+				running = false;
+				return;
+			}
+			return;	// we have to wait for the source to become ready... onIQSourceReady() will call startAnalyzer() again...
+		}
 
 		// Create a new instance of Scheduler and Processing Loop:
 		int fftSize = 1024;
