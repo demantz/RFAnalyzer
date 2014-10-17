@@ -6,7 +6,10 @@
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
     <string name="action_setFrequency">Set Frequency</string>
+    <string name="action_setGain">Set Gain</string>
+    <string name="action_autoscale">Autoscale</string>
     <string name="save_state_running">save_state_running</string>
+    <string name="prefs_sourceType">prefs_sourceType</string>
     <string name="prefs_frequency">prefs_frequency</string>
     <string name="prefs_sampleRate">prefs_sampleRate</string>
     <string name="prefs_hackrf_vgaRxGain">prefs_hackrf_vgaRxGain</string>

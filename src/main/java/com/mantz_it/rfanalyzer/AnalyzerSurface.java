@@ -494,9 +494,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	private void drawFrequencyGrid(Canvas c) {
 		String frequencyStr;
-		float MHZ = 1000000f;
-		float tickFreqMHz;
+		double MHZ = 1000000F;
+		double tickFreqMHz;
 		float lastTextEndPos = -99999;	// will indicate the horizontal pixel pos where the last text ended
+		float textPos;
 
 		// Calculate the min space (in px) between text if we want it separated by at least
 		// the same space as two dashes would consume.
@@ -505,54 +506,65 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		float minFreeSpaceBetweenText = bounds.width();
 
 		// Calculate span of a minor tick (must be a power of 10KHz)
-		float tickSize = 10;	// we start with 10KHz
+		int tickSize = 10;	// we start with 10KHz
 		float helperVar = virtualSampleRate / 20f;
-		while(helperVar > 10) {
+		while(helperVar > 100) {
 			helperVar = helperVar / 10f;
-			tickSize = tickSize * 10f;
+			tickSize = tickSize * 10;
 		}
 
 		// Calculate pixel width of a minor tick
-		float pixelPerMinorTick = width / (virtualSampleRate/tickSize);
+		float pixelPerMinorTick = width / (virtualSampleRate/(float)tickSize);
 
 		// Calculate the frequency at the left most point of the fft:
 		long startFrequency = (long) (virtualFrequency - (virtualSampleRate/2.0));
 
 		// Calculate the frequency and position of the first Tick (ticks are every <tickSize> KHz)
-		long tickFreq = (long) (Math.ceil(startFrequency/tickSize) * tickSize);
-		float tickPos = pixelPerMinorTick / tickSize * (tickFreq-startFrequency);
+		long tickFreq = (long) (Math.ceil((double) startFrequency/(float)tickSize) * tickSize);
+		float tickPos = pixelPerMinorTick / (float) tickSize * (tickFreq-startFrequency);
 
 		// Draw the ticks
-		for (int i = 0; i < virtualSampleRate/tickSize; i++) {
+		for (int i = 0; i < virtualSampleRate/(float)tickSize; i++) {
 			float tickHeight;
 			if(tickFreq % (tickSize*10) == 0) {
 				// Major Tick (10x <tickSize> KHz)
 				tickHeight = (float) (getGridSize() / 2.0);
 
-				// Draw Frequency Text (always in MHz) only if not overlapping with the last text:
-				if(lastTextEndPos+minFreeSpaceBetweenText < tickPos) {
-					tickFreqMHz = tickFreq/MHZ;
-					if(tickFreqMHz == (int) tickFreqMHz)
-						frequencyStr = String.format("%d" + tickFreqMHz);
-					else
-						frequencyStr = String.format("%s" + tickFreqMHz);
-					c.drawText(frequencyStr, tickPos, getFftHeight() - tickHeight, textPaint);
-					textPaint.getTextBounds(frequencyStr, 0, frequencyStr.length(), bounds);
-					lastTextEndPos = tickPos + bounds.width();
+				// Draw Frequency Text (always in MHz)
+				tickFreqMHz = tickFreq/MHZ;
+				if(tickFreqMHz == (int) tickFreqMHz)
+					frequencyStr = String.format("%d", (int)tickFreqMHz);
+				else
+					frequencyStr = String.format("%s", tickFreqMHz);
+				textPaint.getTextBounds(frequencyStr, 0, frequencyStr.length(), bounds);
+				textPos = tickPos - bounds.width()/2;
+
+				// ...only if not overlapping with the last text:
+				if(lastTextEndPos+minFreeSpaceBetweenText < textPos) {
+					c.drawText(frequencyStr, textPos, getFftHeight() - tickHeight, textPaint);
+					lastTextEndPos = textPos + bounds.width();
 				}
 			} else if(tickFreq % (tickSize*5) == 0) {
 				// Half major tick (5x <tickSize> KHz)
 				tickHeight = (float) (getGridSize() / 3.0);
 
-				// Draw Frequency Text (always in MHz) only if enough space to the next major tick:
-				tickFreqMHz = tickFreq/MHZ;
-				if(tickFreqMHz == (int) tickFreqMHz)
-					frequencyStr = String.format("%d" + tickFreqMHz);
+				// Draw Frequency Text (always in MHz)...
+				tickFreqMHz = tickFreq / MHZ;
+				if (tickFreqMHz == (int) tickFreqMHz)
+					frequencyStr = String.format("%d", (int) tickFreqMHz);
 				else
-					frequencyStr = String.format("%s" + tickFreqMHz);
+					frequencyStr = String.format("%s", tickFreqMHz);
 				textPaint.getTextBounds(frequencyStr, 0, frequencyStr.length(), bounds);
-				if(bounds.width() < tickPos*5)
-					c.drawText(frequencyStr, tickPos, getFftHeight() - tickHeight, textPaint);
+				textPos = tickPos - bounds.width()/2;
+
+				// ...only if not overlapping with the last text:
+				if(lastTextEndPos+minFreeSpaceBetweenText < textPos) {
+					// ... if enough space between the major ticks:
+					if (bounds.width() < pixelPerMinorTick * 4) {
+						c.drawText(frequencyStr, textPos, getFftHeight() - tickHeight, textPaint);
+						lastTextEndPos = textPos + bounds.width();
+					}
+				}
 			} else {
 				// Minor tick (<tickSize> KHz)
 				tickHeight = (float) (getGridSize() / 4.0);

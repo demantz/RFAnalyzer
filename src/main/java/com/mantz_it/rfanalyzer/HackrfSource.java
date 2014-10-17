@@ -50,10 +50,13 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
 	private static final String LOGTAG = "HackRFSource";
-	private static final long MIN_FREQUENCY = 10000000l;
-	private static final long MAX_FREQUENCY = 6000000000l;
-	private static final int MAX_SAMPLERATE = 20000000;
-	private static final int MIN_SAMPLERATE = 10000;
+	public static final long MIN_FREQUENCY = 10000000l;
+	public static final long MAX_FREQUENCY = 6000000000l;
+	public static final int MAX_SAMPLERATE = 20000000;
+	public static final int MIN_SAMPLERATE = 10000;
+	public static final int MAX_VGA_RX_GAIN = 62;
+	public static final int MAX_VGA_TX_GAIN = 47;
+	public static final int MAX_LNA_GAIN = 40;
 
 	private void reportError(String msg) {
 		if(callback != null)
@@ -102,7 +105,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public String getName() {
-		// todo return exact name by getting the board id from the hackrf
+		if(hackrf != null) {
+			try {
+				return Hackrf.convertBoardIdToString(hackrf.getBoardID());
+			} catch (HackrfUsbException e) {
+			}
+		}
 		return "HackRF";
 	}
 
@@ -206,7 +214,15 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	public void setBasebandFilterWidth(int basebandFilterWidth) {
-		this.basebandFilterWidth = basebandFilterWidth;
+		this.basebandFilterWidth = hackrf.computeBasebandFilterBandwidth(basebandFilterWidth);
+		if(hackrf != null) {
+			try {
+				hackrf.setBasebandFilterBandwidth(this.basebandFilterWidth);
+			} catch (HackrfUsbException e) {
+				Log.e(LOGTAG, "setBasebandFilterWidth: Error while setting base band filter width: " + e.getMessage());
+				reportError("Error while setting base band filter width");
+			}
+		}
 	}
 
 	public void setAutomaticBBFilterCalculation(boolean automaticBBFilterCalculation) {
@@ -214,22 +230,82 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	public void setVgaRxGain(int vgaRxGain) {
+		if(vgaRxGain > MAX_VGA_RX_GAIN) {
+			Log.e(LOGTAG, "setVgaRxGain: Value (" + vgaRxGain + ") too high. Maximum is: " + MAX_VGA_RX_GAIN);
+			return;
+		}
+
+		if(hackrf != null) {
+			try {
+				hackrf.setRxVGAGain(vgaRxGain);
+			} catch (HackrfUsbException e) {
+				Log.e(LOGTAG, "setVgaRxGain: Error while setting vga gain: " + e.getMessage());
+				reportError("Error while setting vga gain");
+				return;
+			}
+		}
 		this.vgaRxGain = vgaRxGain;
 	}
 
 	public void setVgaTxGain(int vgaTxGain) {
+		if(vgaTxGain > MAX_VGA_TX_GAIN) {
+			Log.e(LOGTAG, "setVgaTxGain: Value (" + vgaTxGain + ") too high. Maximum is: " + MAX_VGA_TX_GAIN);
+			return;
+		}
+
+		if(hackrf != null) {
+			try {
+				hackrf.setTxVGAGain(vgaTxGain);
+			} catch (HackrfUsbException e) {
+				Log.e(LOGTAG, "setVgaTxGain: Error while setting vga gain: " + e.getMessage());
+				reportError("Error while setting vga gain");
+				return;
+			}
+		}
 		this.vgaTxGain = vgaTxGain;
 	}
 
 	public void setLnaGain(int lnaGain) {
+		if(lnaGain > MAX_LNA_GAIN) {
+			Log.e(LOGTAG, "setLnaGain: Value (" + lnaGain + ") too high. Maximum is: " + MAX_LNA_GAIN);
+			return;
+		}
+
+		if(hackrf != null) {
+			try {
+				hackrf.setRxLNAGain(lnaGain);
+			} catch (HackrfUsbException e) {
+				Log.e(LOGTAG, "setLnaGain: Error while setting lna gain: " + e.getMessage());
+				reportError("Error while setting lna gain");
+				return;
+			}
+		}
 		this.lnaGain = lnaGain;
 	}
 
 	public void setAmplifier(boolean amplifier) {
+		if(hackrf != null) {
+			try {
+				hackrf.setAmp(amplifier);
+			} catch (HackrfUsbException e) {
+				Log.e(LOGTAG, "setAmplifier: Error while setting amplifier: " + e.getMessage());
+				reportError("Error while setting amplifier state");
+				return;
+			}
+		}
 		this.amplifier = amplifier;
 	}
 
 	public void setAntennaPower(boolean antennaPower) {
+		if(hackrf != null) {
+			try {
+				hackrf.setAntennaPower(antennaPower);
+			} catch (HackrfUsbException e) {
+				Log.e(LOGTAG, "setAntennaPower: Error while setting antenna power: " + e.getMessage());
+				reportError("Error while setting antenna power state");
+				return;
+			}
+		}
 		this.antennaPower = antennaPower;
 	}
 
@@ -279,6 +355,9 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 				hackrf.setAmp(amplifier);
 				hackrf.setAntennaPower(antennaPower);
 				this.queue = hackrf.startRX();
+				Log.i(LOGTAG, "startSampling: Started HackRF with: sampleRate="+sampleRate+" frequency="+frequency
+							+ " basebandFilterWidth="+basebandFilterWidth+" rxVgaGain="+vgaRxGain+" lnaGain="+lnaGain
+							+ " amplifier="+amplifier+" antennaPower="+antennaPower);
 			} catch (HackrfUsbException e) {
 				Log.e(LOGTAG, "startSampling: Error while set up hackrf: " + e.getMessage());
 			}

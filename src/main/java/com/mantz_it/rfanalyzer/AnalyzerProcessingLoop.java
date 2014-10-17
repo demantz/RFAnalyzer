@@ -34,11 +34,16 @@ import java.util.concurrent.TimeUnit;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class AnalyzerProcessingLoop extends Thread {
-	private int fftSize = 0;				// Size of the FFT
-	private int frameRate = 1;				// Frames per Second
-	private double load = 0;				// Time_for_processing_and_drawing / Time_per_Frame
-	private boolean stopRequested = true;	// Will stop the thread when set to true
+	private int fftSize = 0;					// Size of the FFT
+	private int frameRate = 1;					// Frames per Second
+	private double load = 0;					// Time_for_processing_and_drawing / Time_per_Frame
+	private boolean dynamicFrameRate = true;	// Turns on and off the automatic frame rate control
+	private boolean stopRequested = true;		// Will stop the thread when set to true
+
 	private static final String LOGTAG = "AnalyzerProcessingLoop";
+	private static final int MAX_FRAMERATE = 30;
+	private static final double LOW_THRESHOLD = 0.65;
+	private static final double HIGH_THRESHOLD = 0.85;
 
 	private AnalyzerSurface view;
 	private FFT fftBlock = null;
@@ -74,6 +79,14 @@ public class AnalyzerProcessingLoop extends Thread {
 
 	public void setFrameRate(int frameRate) {
 		this.frameRate = frameRate;
+	}
+
+	public boolean isDynamicFrameRate() {
+		return dynamicFrameRate;
+	}
+
+	public void setDynamicFrameRate(boolean dynamicFrameRate) {
+		this.dynamicFrameRate = dynamicFrameRate;
 	}
 
 	public int getFftSize() { return fftSize; }
@@ -147,7 +160,14 @@ public class AnalyzerProcessingLoop extends Thread {
 				if (sleepTime > 0) {
 					// load = processing_time / frame_duration
 					load = (System.currentTimeMillis() - startTime) / (1000.0 / frameRate);
-					Log.d(LOGTAG,"Load: " + load + "; Sleep for " + sleepTime + "ms.");
+
+					// Automatic frame rate control:
+					if(dynamicFrameRate && load < LOW_THRESHOLD && frameRate < MAX_FRAMERATE)
+						frameRate++;
+					if(dynamicFrameRate && load > HIGH_THRESHOLD && frameRate > 1)
+						frameRate--;
+
+					Log.d(LOGTAG,"FrameRate: " + frameRate + ";  Load: " + load + "; Sleep for " + sleepTime + "ms.");
 					sleep(sleepTime);
 				}
 				else {
