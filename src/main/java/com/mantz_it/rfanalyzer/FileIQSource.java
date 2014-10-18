@@ -42,11 +42,13 @@ public class FileIQSource implements IQSourceInterface {
 	private int packetSize = 0;
 	private byte[] buffer = null;
 	private File file = null;
+	private String filename = null;
 	private BufferedInputStream bufferedInputStream = null;
 	private static final String LOGTAG = "FileIQSource";
 
-	public FileIQSource(File file, int sampleRate, long frequency, int packetSize, boolean repeat) {
-		this.file = file;
+	public FileIQSource(String filename, int sampleRate, long frequency, int packetSize, boolean repeat) {
+		this.filename = filename;
+		this.file = new File(filename);
 		this.repeat = repeat;
 		this.sampleRate = sampleRate;
 		this.frequency = frequency;
@@ -108,6 +110,20 @@ public class FileIQSource implements IQSourceInterface {
 		return "IQ-File: " + file.getName();
 	}
 
+	/**
+	 * @return the file name of the file
+	 */
+	public String getFilename() {
+		return filename;
+	}
+
+	/**
+	 * @return true if repeat is enabled; false if not
+	 */
+	public boolean isRepeat() {
+		return repeat;
+	}
+
 	@Override
 	public int getSampleRate() {
 		return sampleRate;
@@ -160,29 +176,35 @@ public class FileIQSource implements IQSourceInterface {
 		if(bufferedInputStream == null)
 			return null;
 
-		// Simulate sample rate of real hardware:
 		try {
-			Thread.sleep(packetSize/sampleRate * 1000);
-		} catch (InterruptedException e) {
-			Log.w(LOGTAG, "getPacket: Interrupted while sleeping!");
-		}
+			// Simulate sample rate of real hardware:
+			int sleepTime = Math.min((int)(packetSize/(float)sampleRate * 1000), timeout);
+			Thread.sleep(sleepTime);
 
-		try {
+			// Read the samples.
 			if(bufferedInputStream.read(buffer, 0 , buffer.length) != buffer.length) {
-				if(repeat) {
+				if (repeat) {
 					// rewind and try again:
+					Log.i(LOGTAG,"getPacket: End of File. Rewind!");
 					bufferedInputStream.close();
 					this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
 					if (bufferedInputStream.read(buffer, 0, buffer.length) != buffer.length)
 						return null;
-				} else
-					Log.i(LOGTAG,"getPacket: End of File");
+					else
+						return buffer;
+				} else {
+					Log.i(LOGTAG, "getPacket: End of File");
 					reportError("End of File");
 					return null;
+				}
 			}
 		} catch (IOException e) {
 			Log.e(LOGTAG,"getPacket: Error while reading from file: " + e.getMessage());
 			reportError("Unexpected error while reading file: " + e.getMessage());
+			return null;
+		} catch (InterruptedException e) {
+			Log.w(LOGTAG, "getPacket: Interrupted while sleeping!");
+			return null;
 		}
 
 		return buffer;

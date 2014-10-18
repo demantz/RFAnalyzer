@@ -58,11 +58,16 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public static final int MAX_VGA_TX_GAIN = 47;
 	public static final int MAX_LNA_GAIN = 40;
 
+	/**
+	 * Will forward an error message to the callback object
+	 *
+	 * @param msg	error message
+	 */
 	private void reportError(String msg) {
 		if(callback != null)
 			callback.onIQSourceError(this,msg);
 		else
-			Log.e(LOGTAG,"Callback is null when reporting Error (" + msg + ")");
+			Log.e(LOGTAG,"reportError: Callback is null. (Error: " + msg + ")");
 	}
 
 	@Override
@@ -96,7 +101,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		if(hackrf == null)
 			return false;
 		try {
-			hackrf.getBoardID();
+			hackrf.getBoardID();	// this will only succeed if the hackrf is ready/open
 			return true;	// no exception was thrown --> hackrf is open!
 		} catch (HackrfUsbException e) {
 			return false;	// exception was thrown --> hackrf is not open
@@ -119,6 +124,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		return frequency;
 	}
 
+	@Override
 	public void setFrequency(long frequency) {
 		// re-tune the hackrf:
 		if(hackrf != null) {
@@ -163,6 +169,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		return sampleRate;
 	}
 
+	@Override
 	public void setSampleRate(int sampleRate) {
 		if(isAutomaticBBFilterCalculation())
 			setBasebandFilterWidth((int)(sampleRate * 0.75));

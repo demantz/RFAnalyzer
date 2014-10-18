@@ -2,11 +2,13 @@ package com.mantz_it.rfanalyzer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -14,7 +16,6 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import java.io.File;
@@ -44,14 +45,15 @@ import java.io.File;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback {
+public class MainActivity extends Activity implements IQSourceInterface.Callback  {
 
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
 	private IQSourceInterface source = null;
 	private Scheduler scheduler = null;
-	SharedPreferences preferences = null;
+	private SharedPreferences preferences = null;
+	private Bundle savedInstanceState = null;
 	private boolean running = false;
 
 	private static final String LOGTAG = "MainActivity";
@@ -63,18 +65,32 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		this.savedInstanceState = savedInstanceState;
+
+		// Set default Settings on first run:
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
 		// Get references to the GUI components:
 		fl_analyzerFrame = (FrameLayout) findViewById(R.id.fl_analyzerFrame);
 
 		// Get reference to the shared preferences:
-		preferences = getPreferences(Context.MODE_PRIVATE);
+		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
 		// Create a analyzer surface:
 		analyzerSurface = new AnalyzerSurface(this);
+		analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
+		analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
+
+		// Restore / Initialize the running state:
+		if(savedInstanceState != null) {
+			running = savedInstanceState.getBoolean(getString(R.string.save_state_running));
+		} else {
+			// Set running to true if autostart is enabled (this will start the analyzer in onStart() )
+			running = preferences.getBoolean((getString(R.string.pref_autostart)), false);
+		}
 	}
 
 	@Override
@@ -87,11 +103,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putBoolean(getString(R.string.save_state_running), running);
-	}
-
-	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		running = savedInstanceState.getBoolean(getString(R.string.save_state_running));
+		if(analyzerSurface != null) {
+			outState.putLong(getString(R.string.save_state_virtualFrequency), analyzerSurface.getVirtualFrequency());
+			outState.putInt(getString(R.string.save_state_virtualSampleRate), analyzerSurface.getVirtualSampleRate());
+			outState.putFloat(getString(R.string.save_state_minDB), analyzerSurface.getMinDB());
+			outState.putFloat(getString(R.string.save_state_maxDB), analyzerSurface.getMaxDB());
+		}
 	}
 
 	@Override
@@ -116,9 +133,15 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 											break;
 			case R.id.action_setGain:		adjustGain();
 											break;
-			case R.id.action_autoscale:		//analyzerSurface.autoscale();
+			case R.id.action_autoscale:		analyzerSurface.autoscale();
 											break;
-			case R.id.action_settings:
+			case R.id.action_settings:		Intent intentShowSettings = new Intent(getApplicationContext(), SettingsActivity.class);
+											startActivity(intentShowSettings);
+											break;
+			case R.id.action_help:			Intent intentShowHelp = new Intent(Intent.ACTION_VIEW);
+											intentShowHelp.setData(Uri.parse(getString(R.string.help_url)));
+											startActivity(intentShowHelp);
+											break;
 			default:
 		}
 		return true;
@@ -127,9 +150,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	protected void onStart() {
 		super.onStart();
-		if (running) {
+		// Check if the user changed the preferences:
+		checkForChangedPreferences();
+
+		// Start the analyzer if running is true:
+		if (running)
 			startAnalyzer();
-		}
 	}
 
 	@Override
@@ -138,12 +164,18 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		boolean runningSaved = running;	// save the running state, to restore it after the app re-starts...
 		stopAnalyzer();					// will stop the processing loop, scheduler and source
 		running = runningSaved;			// running will be saved in onSaveInstanceState()
+
+		// safe preferences:
+		SharedPreferences.Editor edit = preferences.edit();
+		edit.putLong(getString(R.string.pref_frequency), source.getFrequency());
+		edit.putInt(getString(R.string.pref_sampleRate), source.getSampleRate());
+		edit.commit();
 	}
 
 	@Override
 	public void onIQSourceReady(IQSourceInterface source) {	// is called after source.open()
 		if (running)
-			startAnalyzer();	// will start the processing loop, scheduler and source
+			startAnalyzer();    // will start the processing loop, scheduler and source
 	}
 
 	@Override
@@ -151,41 +183,108 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		this.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-			Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + message, Toast.LENGTH_LONG).show();
+				Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + message, Toast.LENGTH_LONG).show();
+				stopAnalyzer();
 			}
 		});
-		stopAnalyzer();
 	}
 
 	/**
-	 * Will create a IQ Source instance according to the user settings. May pop up dialogs to
-	 * let the user choose.
+	 * Will check if any preference conflicts with the current state of the app and fix it
+	 */
+	public void checkForChangedPreferences() {
+		// Source Type (this is pretty complex as we have to check each type individually):
+		int sourceType = Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1"));
+		if(source != null) {
+			switch (sourceType) {
+				case FILE_SOURCE:
+					if(!(source instanceof FileIQSource))
+						createSource();
+
+					long freq = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
+					int sampRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
+					String fileName = preferences.getString(getString(R.string.pref_filesource_file), "");
+					boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
+					if(freq != source.getFrequency() || sampRate != source.getSampleRate()
+							|| !fileName.equals(((FileIQSource) source).getFilename())
+							|| repeat != ((FileIQSource) source).isRepeat()) {
+						createSource();
+					}
+					break;
+				case HACKRF_SOURCE:
+					if(!(source instanceof HackrfSource))
+						createSource();
+					break;
+				case RTLSDR_SOURCE:
+					break;
+				default:
+			}
+		}
+
+		// All GUI settings will just be overwritten:
+		if(analyzerSurface != null) {
+			analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
+			analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
+		}
+	}
+
+	/**
+	 * Will create a IQ Source instance according to the user settings.
 	 *
 	 * @return true on success; false on error
 	 */
 	public boolean createSource() {
-		int sourceType = preferences.getInt(getString(R.string.prefs_sourceType),1);
+		int sourceType = Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1"));
 
 		switch (sourceType) {
 			case FILE_SOURCE:
 						// Create IQ Source (filesource)
-						File file = new File(Environment.getExternalStorageDirectory() + "/Test_HackRF", "hackrf_android.iq");
-						source = new FileIQSource(file, 2000000, 931000000, 16384, true);
-						return true;
+						long frequency;
+						int sampleRate;
+						try {
+							frequency = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
+							sampleRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
+						} catch (NumberFormatException e) {
+							this.runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									Toast.makeText(MainActivity.this, "File Source: Wrong format of frequency or sample rate", Toast.LENGTH_LONG).show();
+								}
+							});
+							return false;
+						}
+						String filename = preferences.getString(getString(R.string.pref_filesource_file), "");
+						boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
+						source = new FileIQSource(filename, sampleRate, frequency, 16384, repeat);
+						break;
 			case HACKRF_SOURCE:
 						// Create HackrfSource
 						source = new HackrfSource();
-						source.setFrequency(preferences.getLong(getString(R.string.prefs_frequency),97000000));
-						source.setSampleRate(preferences.getInt(getString(R.string.prefs_sampleRate), HackrfSource.MAX_SAMPLERATE));
-						((HackrfSource) source).setVgaRxGain(preferences.getInt(getString(R.string.prefs_hackrf_vgaRxGain), HackrfSource.MAX_VGA_RX_GAIN/2));
-						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.prefs_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN/2));
-						return true;
+						source.setFrequency(preferences.getLong(getString(R.string.pref_frequency),97000000));
+						source.setSampleRate(preferences.getInt(getString(R.string.pref_sampleRate), HackrfSource.MAX_SAMPLERATE));
+						((HackrfSource) source).setVgaRxGain(preferences.getInt(getString(R.string.pref_hackrf_vgaRxGain), HackrfSource.MAX_VGA_RX_GAIN/2));
+						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.pref_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN/2));
+						break;
 			case RTLSDR_SOURCE:
 						Log.e(LOGTAG, "createSource: RTLSDR is not implemented!");
 						Toast.makeText(this, "RTL-SDR is not implemented!", Toast.LENGTH_LONG).show();
+						return false;
 			default:	Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
 						return false;
 		}
+
+		// inform the analyzer surface about the new source
+		analyzerSurface.setSource(source);
+		// on the first time after the app was killed by the system, savedInstanceState will be
+		// non-null and we restore the settings:
+		if(savedInstanceState != null) {
+			analyzerSurface.setVirtualFrequency(savedInstanceState.getLong(getString(R.string.save_state_virtualFrequency)));
+			analyzerSurface.setVirtualSampleRate(savedInstanceState.getInt(getString(R.string.save_state_virtualSampleRate)));
+			analyzerSurface.setDBScale(savedInstanceState.getFloat(getString(R.string.save_state_minDB)),
+					savedInstanceState.getFloat(getString(R.string.save_state_maxDB)));
+			savedInstanceState = null; // not needed any more...
+		}
+		return true;
 	}
 
 	/**
@@ -230,6 +329,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	public void startAnalyzer() {
 		this.stopAnalyzer();	// Stop if running; This assures that we don't end up with multiple instances of the thread loops
 
+		// Retrieve fft size and frame rate from the preferences
+		int fftSize = Integer.valueOf(preferences.getString(getString(R.string.pref_fftSize), "1024"));
+		int frameRate = Integer.valueOf(preferences.getString(getString(R.string.pref_frameRate), "1"));
+		boolean dynamicFrameRate = preferences.getBoolean(getString(R.string.pref_dynamicFrameRate), true);
+
 		running = true;
 
 		if(source == null) {
@@ -247,17 +351,19 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			return;	// we have to wait for the source to become ready... onIQSourceReady() will call startAnalyzer() again...
 		}
 
-		analyzerSurface.setSource(source);
-
 		// Create a new instance of Scheduler and Processing Loop:
-		int fftSize = 1024;
 		scheduler = new Scheduler(fftSize, source);
 		analyzerProcessingLoop = new AnalyzerProcessingLoop(
 				analyzerSurface, 			// Reference to the Analyzer Surface
 				fftSize,					// FFT size
 				scheduler.getOutputQueue(), // Reference to the input queue for the processing loop
 				scheduler.getInputQueue()); // Reference to the buffer-pool-return queue
-		analyzerProcessingLoop.setFrameRate(10);
+		if(dynamicFrameRate)
+			analyzerProcessingLoop.setDynamicFrameRate(true);
+		else {
+			analyzerProcessingLoop.setDynamicFrameRate(false);
+			analyzerProcessingLoop.setFrameRate(frameRate);
+		}
 
 		// Start both threads:
 		scheduler.start();
@@ -282,7 +388,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					try {
 						long newFreq = Long.valueOf(et_input.getText().toString());
 						source.setFrequency(newFreq);
-						analyzerSurface.centerAroundFrequency(newFreq);
+						analyzerSurface.setVirtualFrequency(newFreq);
 					} catch (NumberFormatException e) {
 						Log.e(LOGTAG, "tuneToFrequency: Error while setting frequency: " + e.getMessage());
 					}
@@ -303,8 +409,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		if(source == null)
 			return;
 
-		int sourceType = preferences.getInt(getString(R.string.prefs_sourceType),-1);
+		int sourceType = Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1"));
 		switch (sourceType) {
+			case FILE_SOURCE:
+				Toast.makeText(this, getString(R.string.filesource_doesnt_support_gain), Toast.LENGTH_LONG).show();
 			case HACKRF_SOURCE:
 				final LinearLayout view = null;//this.getLayoutInflater().inflate(R.layout.hackrf_adjust_gain);
 				new AlertDialog.Builder(this)
@@ -331,4 +439,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				break;
 		}
 	}
+
+
 }

@@ -60,38 +60,73 @@ public class SamplePacket {
 		this.sampleRate = 0;
 	}
 
+	/**
+	 * @return the reference to the array of real parts
+	 */
 	public double[] re() {
 		return re;
 	}
 
+	/**
+	 * Returns the real part at the specified index
+	 *
+	 * @param i		index
+	 * @return real part of the sample with the given index
+	 */
 	public double re(int i) {
 		return re[i];
 	}
 
+	/**
+	 * @return the reference to the array of imaginary parts
+	 */
 	public double[] im() {
 		return im;
 	}
 
+	/**
+	 * Returns the imaginary part at the specified index
+	 *
+	 * @param i		index
+	 * @return imaginary part of the sample with the given index
+	 */
 	public double im(int i) {
 		return im[i];
 	}
 
+	/**
+	 * @return the size of the arrays (number of samples in this packet)
+	 */
 	public int size() {
 		return re.length;
 	}
 
+	/**
+	 * @return center frequency at which these samples where recorded
+	 */
 	public long getFrequency() {
 		return frequency;
 	}
 
+	/**
+	 * @return sample rate at which these samples were recorded
+	 */
 	public int getSampleRate() {
 		return sampleRate;
 	}
 
+	/**
+	 * Sets the center frequency for this sample packet
+	 * @param frequency		center frequency at which these samples were recorded
+	 */
 	public void setFrequency(long frequency) {
 		this.frequency = frequency;
 	}
 
+	/**
+	 * Sets the sample rate for this sample packet
+	 * @param sampleRate		sample rate at which these samples were recorded
+	 */
 	public void setSampleRate(int sampleRate) {
 		this.sampleRate = sampleRate;
 	}

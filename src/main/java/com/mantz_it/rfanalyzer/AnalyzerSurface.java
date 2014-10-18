@@ -47,10 +47,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 															GestureDetector.OnGestureListener,
 															GestureDetector.OnDoubleTapListener {
 
+	// Gesture detectors to detect scaling, scrolling double tapping, ...
 	private ScaleGestureDetector scaleGestureDetector = null;
 	private GestureDetector gestureDetector = null;
 
-	private IQSourceInterface source = null;
+	private IQSourceInterface source = null;	// Reference to the IQ source for tuning and retrieving properties
 
 	private Paint defaultPaint = null;		// Paint object to draw bitmaps on the canvas
 	private Paint blackPaint = null;		// Paint object to draw black (erase)
@@ -59,10 +60,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Paint textPaint = null;			// Paint object to draw text on the canvas
 	private int width;						// current width (in pixels) of the SurfaceView
 	private int height;						// current height (in pixels) of the SurfaceView
+	private boolean doAutoscaleInNextDraw = false;	// will cause draw() to adjust minDB and maxDB according to the samples
+	private boolean verticalZoomEnabled = true;		// Enables vertical zooming (dB scale)
+	private boolean verticalScrollEnabled = true;	// Enables vertical scrolling (dB scale)
 
 	private static final String LOGTAG = "AnalyzerSurface";
-	private static final int MIN_DB = -100;
-	private static final int MAX_DB = 10;
+	private static final int MIN_DB = -100;	// Smallest dB value the vertical scale can start
+	private static final int MAX_DB = 10;	// Highest dB value the vertical scale can start
 
 	private int[] waterfallColorMap = null;		// Colors used to draw the waterfall plot.
 												// idx 0 -> weak signal   idx max -> strong signal
@@ -72,7 +76,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	// virtual frequency and sample rate indicate the current visible viewport of the fft. they vary from
 	// the actual values when the user does scrolling and zooming
 	private long virtualFrequency = -1;		// Center frequency of the fft (baseband) AS SHOWN ON SCREEN
-	private int virtualSampleRate = -1;		// Sample Rate of the fft
+	private int virtualSampleRate = -1;		// Sample Rate of the fft AS SHOWN ON SCREEN
 	private float minDB = -35;				// Lowest dB on the scale
 	private float maxDB = -5;					// Highest dB on the scale
 
@@ -140,12 +144,75 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
-	 * Will move the frequency scale so that the desired frequency is centered
+	 * Will cause the surface to automatically adjust the dB scale at the
+	 * next call of draw() so that it fits the incoming fft samples perfectly
+	 */
+	public void autoscale() {
+		this.doAutoscaleInNextDraw = true;
+	}
+
+	/**
+	 * Will enable/disable the vertical scrolling (dB scale)
+	 *
+	 * @param enable	true for scrolling enabled; false for disabled
+	 */
+	public void setVerticalScrollEnabled(boolean enable) {
+		this.verticalScrollEnabled = enable;
+	}
+
+	/**
+	 * Will enable/disable the vertical zooming (dB scale)
+	 *
+	 * @param enable	true for zooming enabled; false for disabled
+	 */
+	public void setVerticalZoomEnabled(boolean enable) {
+		this.verticalZoomEnabled = enable;
+	}
+
+	/**
+	 * Will move the frequency scale so that the given frequency is centered
 	 *
 	 * @param frequency		frequency that should be centered on the screen
 	 */
-	public void centerAroundFrequency(long frequency) {
+	public void setVirtualFrequency(long frequency) {
 		this.virtualFrequency = frequency;
+	}
+
+	/**
+	 * Will scale the frequency scale so that the given bandwidth is shown
+	 *
+	 * @param sampleRate	sample rate / bandwidth to show on the screen
+	 */
+	public void setVirtualSampleRate(int sampleRate) {
+		this.virtualSampleRate = sampleRate;
+	}
+
+	/**
+	 * @return		The center frequency as shown on the screen
+	 */
+	public long getVirtualFrequency() {
+		return virtualFrequency;
+	}
+
+	/**
+	 * @return		The sample rate as shown on the screen
+	 */
+	public int getVirtualSampleRate() {
+		return virtualSampleRate;
+	}
+
+	/**
+	 * @return		The lowest dB value on the vertical scale
+	 */
+	public float getMinDB() {
+		return minDB;
+	}
+
+	/**
+	 * @return		The highest dB value on the vertical scale
+	 */
+	public float getMaxDB() {
+		return maxDB;
 	}
 
 	/**
@@ -201,17 +268,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-		this.width = width;
-		this.height = height;
+		if(this.width != width || this.height != height) {
+			this.width = width;
+			this.height = height;
 
-		// Recreate the shaders:
-		this.fftPaint.setShader(new LinearGradient(0, 0, 0, getFftHeight(), Color.WHITE, Color.BLUE, Shader.TileMode.MIRROR));
+			// Recreate the shaders:
+			this.fftPaint.setShader(new LinearGradient(0, 0, 0, getFftHeight(), Color.WHITE, Color.BLUE, Shader.TileMode.MIRROR));
 
-		// Recreate the waterfall bitmaps:
-		this.createWaterfallLineBitmaps();
+			// Recreate the waterfall bitmaps:
+			this.createWaterfallLineBitmaps();
 
-		// Fix the text size:
-		this.textPaint.setTextSize((int) (getGridSize()/2.1));
+			// Fix the text size:
+			this.textPaint.setTextSize((int) (getGridSize() / 2.1));
+		}
 	}
 
 	/**
@@ -228,18 +297,22 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 //------------------- <OnScaleGestureListener> ------------------------------//
 	@Override
 	public boolean onScale(ScaleGestureDetector detector) {
-		float xScale = detector.getCurrentSpanX()/detector.getPreviousSpanX();
-		float yScale = detector.getCurrentSpanY()/detector.getPreviousSpanY();
-		long frequencyFocus = virtualFrequency + (int)((detector.getFocusX()/width - 0.5)*virtualSampleRate);
-		float dBFocus = maxDB - (maxDB-minDB) * (detector.getFocusY() / getFftHeight());
+		if(source != null) {
+			float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
+			long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
+			virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, 1), source.getMaxSampleRate());
+			virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
+					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
 
-		virtualSampleRate = (int) Math.min( Math.max(virtualSampleRate / xScale, 1), source.getMaxSampleRate());
-		virtualFrequency = Math.min( Math.max( frequencyFocus + (long) ((virtualFrequency-frequencyFocus)/xScale),
-				source.getMinFrequency() - source.getSampleRate()/2), source.getMaxFrequency() + source.getSampleRate()/2) ;
+			if (verticalZoomEnabled) {
+				float yScale = detector.getCurrentSpanY() / detector.getPreviousSpanY();
+				float dBFocus = maxDB - (maxDB - minDB) * (detector.getFocusY() / getFftHeight());
+				float newMinDB = Math.min(Math.max(dBFocus - (dBFocus - minDB) / yScale, MIN_DB), MAX_DB - 10);
+				float newMaxDB = Math.min(Math.max(dBFocus - (dBFocus - maxDB) / yScale, newMinDB + 10), MAX_DB);
+				this.setDBScale(newMinDB, newMaxDB);
+			}
+		}
 
-		float newMinDB = Math.min(Math.max(dBFocus - (dBFocus - minDB) / yScale, MIN_DB), MAX_DB-10);
-		float newMaxDB = Math.min(Math.max(dBFocus - (dBFocus - maxDB) / yScale, newMinDB + 10), MAX_DB);
-		this.setDBScale(newMinDB, newMaxDB);
 		return true;
 	}
 
@@ -271,19 +344,21 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+		if (source != null) {
+			virtualFrequency = Math.min(Math.max(virtualFrequency + (long) ((virtualSampleRate / width) * distanceX),
+					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
 
-		virtualFrequency = Math.min(Math.max(virtualFrequency + (long)((virtualSampleRate / width) * distanceX),
-				source.getMinFrequency() - source.getSampleRate()/2), source.getMaxFrequency() + source.getSampleRate()/2);
+			if (verticalScrollEnabled) {
+				float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
+				// Make sure we stay in the boundaries:
+				if (maxDB - yDiff > MAX_DB)
+					yDiff = MAX_DB - maxDB;
+				if (minDB - yDiff < MIN_DB)
+					yDiff = MIN_DB - minDB;
+				this.setDBScale(minDB - yDiff, maxDB - yDiff);
+			}
+		}
 
-		float yDiff = (maxDB-minDB) * (distanceY/(float)getFftHeight());
-
-		// Make sure we stay in the boundaries:
-		if(maxDB - yDiff > MAX_DB)
-			yDiff = MAX_DB - maxDB;
-		if(minDB - yDiff < MIN_DB)
-			yDiff = MIN_DB - minDB;
-
-		this.setDBScale(minDB-yDiff, maxDB-yDiff);
 		return true;
 	}
 
@@ -384,6 +459,21 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			virtualFrequency = frequency;
 		if(virtualSampleRate < 0)
 			virtualSampleRate = sampleRate;
+
+		// Autoscale
+		if(doAutoscaleInNextDraw) {
+			doAutoscaleInNextDraw = false;
+			float min = MAX_DB;
+			float max = MIN_DB;
+			for(double sample: mag) {
+				min = Math.min((float)sample, min);
+				max = Math.max((float)sample, max);
+			}
+			if(min<max){
+				minDB = Math.max(min, MIN_DB);
+				maxDB = Math.min(max, MAX_DB);
+			}
+		}
 
 		// Calculate the start and end index to draw mag according to frequency and sample rate and
 		// the virtual frequency and sample rate:

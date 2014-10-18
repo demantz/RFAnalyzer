@@ -35,15 +35,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class AnalyzerProcessingLoop extends Thread {
 	private int fftSize = 0;					// Size of the FFT
-	private int frameRate = 1;					// Frames per Second
+	private int frameRate = 10;					// Frames per Second
 	private double load = 0;					// Time_for_processing_and_drawing / Time_per_Frame
 	private boolean dynamicFrameRate = true;	// Turns on and off the automatic frame rate control
 	private boolean stopRequested = true;		// Will stop the thread when set to true
 
 	private static final String LOGTAG = "AnalyzerProcessingLoop";
-	private static final int MAX_FRAMERATE = 30;
-	private static final double LOW_THRESHOLD = 0.65;
-	private static final double HIGH_THRESHOLD = 0.85;
+	private static final int MAX_FRAMERATE = 30;		// Upper limit for the automatic frame rate control
+	private static final double LOW_THRESHOLD = 0.65;	// at every load value below this threshold we increase the frame rate
+	private static final double HIGH_THRESHOLD = 0.85;	// at every load value above this threshold we decrease the frame rate
 
 	private AnalyzerSurface view;
 	private FFT fftBlock = null;
@@ -120,7 +120,7 @@ public class AnalyzerProcessingLoop extends Thread {
 		long startTime;		// timestamp when signal processing is started
 		long sleepTime;		// time (in ms) to sleep before the next run to meet the frame rate
 		long frequency;		// center frequency of the incoming samples
-		int sampleRate;	// sample rate of the incoming samples
+		int sampleRate;		// sample rate of the incoming samples
 
 		while(!stopRequested) {
 			// store the current timestamp
@@ -171,6 +171,10 @@ public class AnalyzerProcessingLoop extends Thread {
 					sleep(sleepTime);
 				}
 				else {
+					// Automatic frame rate control:
+					if(dynamicFrameRate && frameRate > 1)
+						frameRate--;
+
 					Log.w(LOGTAG, "Couldn't meet requested frame rate!");
 					load = 1;
 				}
