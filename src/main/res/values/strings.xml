@@ -10,6 +10,8 @@
     <string name="action_setGain">Set Gain</string>
     <string name="action_autoscale">Autoscale</string>
     <string name="help_url">http://tech.mantz-it.com</string>
+    <string name="hackrf_vga_gain_label">VGA Gain:</string>
+    <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
     <string name="save_state_running">save_state_running</string>
     <string name="save_state_virtualFrequency">save_state_virtualFrequency</string>

@@ -10,13 +10,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -429,14 +434,56 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		switch (sourceType) {
 			case FILE_SOURCE:
 				Toast.makeText(this, getString(R.string.filesource_doesnt_support_gain), Toast.LENGTH_LONG).show();
+				break;
 			case HACKRF_SOURCE:
-				final LinearLayout view = null;//this.getLayoutInflater().inflate(R.layout.hackrf_adjust_gain);
+				// Prepare layout:
+				final LinearLayout view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.hackrf_gain, null);
+				final SeekBar sb_vga = (SeekBar) view.findViewById(R.id.sb_hackrf_vga_gain);
+				final SeekBar sb_lna = (SeekBar) view.findViewById(R.id.sb_hackrf_lna_gain);
+				final TextView tv_vga = (TextView) view.findViewById(R.id.tv_hackrf_vga_gain);
+				final TextView tv_lna = (TextView) view.findViewById(R.id.tv_hackrf_lna_gain);
+				sb_vga.setMax(HackrfSource.MAX_VGA_RX_GAIN);
+				sb_lna.setMax(HackrfSource.MAX_LNA_GAIN);
+				sb_vga.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					@Override
+					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+						tv_vga.setText("" + progress);
+					}
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
+					}
+				});
+				sb_lna.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					@Override
+					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+						tv_lna.setText("" + progress);
+					}
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
+					}
+				});
+				sb_vga.setProgress(((HackrfSource)source).getVgaRxGain());
+				sb_lna.setProgress(((HackrfSource)source).getLnaGain());
+
+				// Show dialog:
 				new AlertDialog.Builder(this)
 						.setTitle("Adjust Gain Settings")
 						.setView(view)
 						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int whichButton) {
-								//todo
+								((HackrfSource)source).setVgaRxGain(sb_vga.getProgress());
+								((HackrfSource)source).setLnaGain(sb_lna.getProgress());
+								// safe preferences:
+								SharedPreferences.Editor edit = preferences.edit();
+								edit.putInt(getString(R.string.pref_hackrf_vgaRxGain), sb_vga.getProgress());
+								edit.putInt(getString(R.string.pref_hackrf_lnaGain), sb_lna.getProgress());
+								edit.apply();
 							}
 						})
 						.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -444,7 +491,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 								// do nothing
 							}
 						})
-						.show();
+						.show()
+						.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 				break;
 			case RTLSDR_SOURCE:
 				Log.e(LOGTAG, "adjustGain: RTLSDR is not implemented!");
