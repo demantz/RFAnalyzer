@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_sourceType_entries">
+        <item>File Source</item>
+        <item>HackRF</item>
+        <item>RTL-SDR</item>
+    </string-array>
+    <string-array name="pref_sourceType_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="pref_screenOrientation_entries">
+        <item>Auto</item>
+        <item>Landscape</item>
+        <item>Portrait</item>
+        <item>Reverse Landscape</item>
+        <item>Reverse Portrait</item>
+    </string-array>
+    <string-array name="pref_screenOrientation_values">
+        <item>auto</item>
+        <item>landscape</item>
+        <item>portrait</item>
+        <item>reverse_landscape</item>
+        <item>reverse_portrait</item>
+    </string-array>
+    <string-array name="pref_frameRate_entries">
+        <item>1 FPS</item>
+        <item>2 FPS</item>
+        <item>3 FPS</item>
+        <item>4 FPS</item>
+        <item>5 FPS</item>
+        <item>6 FPS</item>
+        <item>7 FPS</item>
+        <item>8 FPS</item>
+        <item>9 FPS</item>
+        <item>10 FPS</item>
+        <item>12 FPS</item>
+        <item>15 FPS</item>
+        <item>20 FPS</item>
+        <item>25 FPS</item>
+        <item>30 FPS</item>
+    </string-array>
+    <string-array name="pref_frameRate_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>12</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+    </string-array>
+    <string-array name="pref_fftSize_entries">
+        <item>256</item>
+        <item>512</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>8192</item>
+        <item>16384</item>
+        <item>32768</item>
+        <item>65536</item>
+    </string-array>
+    <string-array name="pref_fftSize_values">
+        <item>256</item>
+        <item>512</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>8192</item>
+        <item>16384</item>
+        <item>32768</item>
+        <item>65536</item>
+    </string-array>
+</resources>

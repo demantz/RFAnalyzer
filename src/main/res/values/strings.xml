@@ -48,6 +48,10 @@
     <string name="pref_fftSize_title">FFT Size</string>
     <string name="pref_fftSize_default">1024</string>
     <string name="pref_fftSize_summ">FFT size is set to: %s</string>
+    <string name="pref_screenOrientation">pref_screenOrientation</string>
+    <string name="pref_screenOrientation_title">Screen orientation</string>
+    <string name="pref_screenOrientation_default">auto</string>
+    <string name="pref_screenOrientation_summ">Screen orientation is set to: %s</string>
     <string name="pref_autostart">pref_autostart</string>
     <string name="pref_autostart_title">Auto start</string>
     <string name="pref_autostart_summ_on">FFT starts at application start</string>

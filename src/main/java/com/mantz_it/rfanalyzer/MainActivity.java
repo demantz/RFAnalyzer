@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -166,10 +167,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		running = runningSaved;			// running will be saved in onSaveInstanceState()
 
 		// safe preferences:
-		SharedPreferences.Editor edit = preferences.edit();
-		edit.putLong(getString(R.string.pref_frequency), source.getFrequency());
-		edit.putInt(getString(R.string.pref_sampleRate), source.getSampleRate());
-		edit.commit();
+		if(source != null) {
+			SharedPreferences.Editor edit = preferences.edit();
+			edit.putLong(getString(R.string.pref_frequency), source.getFrequency());
+			edit.putInt(getString(R.string.pref_sampleRate), source.getSampleRate());
+			edit.commit();
+		}
 	}
 
 	@Override
@@ -226,6 +229,19 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 			analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 		}
+
+		// Screen Orientation:
+		String screenOrientation = preferences.getString(getString(R.string.pref_screenOrientation), "auto");
+		if(screenOrientation.equals("auto"))
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+		else if(screenOrientation.equals("landscape"))
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		else if(screenOrientation.equals("portrait"))
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		else if(screenOrientation.equals("reverse_landscape"))
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+		else if(screenOrientation.equals("reverse_portrait"))
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
 	}
 
 	/**
