@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -17,6 +18,8 @@ import android.preference.SwitchPreference;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Toast;
+
+import java.io.File;
 
 /**
  * <h1>RF Analyzer - Settings Fragment</h1>
@@ -53,8 +56,12 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 
-		EditTextPreference filesource = (EditTextPreference) findPreference(getString(R.string.pref_filesource_file));
-		filesource.setOnPreferenceClickListener(this);
+		// Add click listener to preferences which use external apps:
+		Preference pref = findPreference(getString(R.string.pref_filesource_file));
+		pref.setOnPreferenceClickListener(this);
+		pref = findPreference(getString(R.string.pref_showLog));
+		pref.setOnPreferenceClickListener(this);
+
 	}
 
 	@Override
@@ -76,6 +83,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 	@Override
 	public boolean onPreferenceClick(Preference preference) {
+		// FileSource file:
 		if(preference.getKey().equals(getString(R.string.pref_filesource_file))) {
 			try {
 				Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -91,6 +99,21 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 			} catch (ActivityNotFoundException e) {
 				Toast.makeText(SettingsFragment.this.getActivity(), "No file browser is installed!", Toast.LENGTH_LONG).show();
 				// Note that there is still the text dialog visible for the user to input a file path... so no more error handling necessary
+			}
+			return false;
+		}
+		// Show Log:
+		else if (preference.getKey().equals(getString(R.string.pref_showLog))) {
+			try {
+				String logfile = ((EditTextPreference) findPreference(getString(R.string.pref_logfile))).getText();
+				Uri uri = Uri.fromFile(new File(logfile));
+				Intent intent = new Intent(Intent.ACTION_VIEW);
+				intent.setDataAndType(uri, "text/plain");
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				this.startActivity(intent);
+				return true;
+			} catch (ActivityNotFoundException e) {
+				Toast.makeText(SettingsFragment.this.getActivity(), "No text viewer is installed!", Toast.LENGTH_LONG).show();
 			}
 			return false;
 		}
@@ -161,6 +184,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 			listPref.setSummary(getString(R.string.pref_frameRate_summ, "auto"));
 		else
 			listPref.setSummary(getString(R.string.pref_frameRate_summ, listPref.getEntry()));
+
+		// Logfile
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_logfile));
+		editTextPref.setSummary(getString(R.string.pref_logfile_summ, editTextPref.getText()));
 	}
 
 	/**

@@ -84,5 +84,21 @@
         android:summaryOn="@string/pref_scrollDB_summ_on"
         android:summaryOff="@string/pref_scrollDB_summ_off"
         android:defaultValue="true" />
+    <SwitchPreference
+        android:key="@string/pref_logging"
+        android:title="@string/pref_logging_title"
+        android:summaryOn="@string/pref_logging_summ_on"
+        android:summaryOff="@string/pref_logging_summ_off"
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="@string/pref_logfile"
+        android:title="@string/pref_logfile_title"
+        android:dependency="@string/pref_logging"
+        android:defaultValue="@string/pref_logfile_default" />
+    <Preference
+        android:key="@string/pref_showLog"
+        android:title="@string/pref_showLog_title"
+        android:dependency="@string/pref_logging"
+        android:persistent="false" />
 
 </PreferenceScreen>

@@ -60,6 +60,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private Scheduler scheduler = null;
 	private SharedPreferences preferences = null;
 	private Bundle savedInstanceState = null;
+	private Process logcat = null;
 	private boolean running = false;
 
 	private static final String LOGTAG = "MainActivity";
@@ -76,11 +77,34 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Set default Settings on first run:
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-		// Get references to the GUI components:
-		fl_analyzerFrame = (FrameLayout) findViewById(R.id.fl_analyzerFrame);
-
 		// Get reference to the shared preferences:
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+		// Overwrite defaults for file paths in the preferences:
+		String extStorage = Environment.getExternalStorageDirectory().getAbsolutePath();	// get the path to the ext. storage
+		// File Source file:
+		String defaultFile = getString(R.string.pref_filesource_file_default);
+		if(preferences.getString(getString(R.string.pref_filesource_file), "").equals(defaultFile))
+			preferences.edit().putString(getString(R.string.pref_filesource_file), extStorage + "/" + defaultFile).apply();
+		// Log file:
+		defaultFile = getString(R.string.pref_logfile_default);
+		if(preferences.getString(getString(R.string.pref_logfile), "").equals(defaultFile))
+			preferences.edit().putString(getString(R.string.pref_logfile), extStorage + "/" + defaultFile).apply();
+
+		// Start logging if enabled:
+		if(preferences.getBoolean(getString(R.string.pref_logging), false)) {
+			try{
+				File logfile = new File(preferences.getString(getString(R.string.pref_logfile), ""));
+				logfile.getParentFile().mkdir();	// Create folder
+				logcat = Runtime.getRuntime().exec("logcat -f " + logfile);
+				Log.i("MainActivity", "onCreate: started logcat ("+logcat.toString()+") to " + logfile);
+			} catch (Exception e) {
+				Log.e("MainActivity", "onCreate: Failed to start logging!");
+			}
+		}
+
+		// Get references to the GUI components:
+		fl_analyzerFrame = (FrameLayout) findViewById(R.id.fl_analyzerFrame);
 
 		// Create a analyzer surface:
 		analyzerSurface = new AnalyzerSurface(this);
@@ -104,6 +128,15 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		super.onDestroy();
 		if(source != null && source.isOpen())
 			source.close();
+		if(logcat != null) {
+			try {
+				logcat.destroy();
+				logcat.waitFor();
+				Log.i(LOGTAG, "onDestroy: logcat exit value: " + logcat.exitValue());
+			} catch (Exception e) {
+				Log.e(LOGTAG, "onDestroy: couldn't stop logcat: " + e.getMessage());
+			}
+		}
 	}
 
 	@Override

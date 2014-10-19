@@ -167,7 +167,7 @@ public class AnalyzerProcessingLoop extends Thread {
 					if(dynamicFrameRate && load > HIGH_THRESHOLD && frameRate > 1)
 						frameRate--;
 
-					Log.d(LOGTAG,"FrameRate: " + frameRate + ";  Load: " + load + "; Sleep for " + sleepTime + "ms.");
+					//Log.d(LOGTAG,"FrameRate: " + frameRate + ";  Load: " + load + "; Sleep for " + sleepTime + "ms.");
 					sleep(sleepTime);
 				}
 				else {
