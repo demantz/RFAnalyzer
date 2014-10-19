@@ -9,7 +9,8 @@ received by a HackRF.
 
 (photo by Dennis Mantz)
 
-See [http://tech.mantz-it.com](http://tech.mantz-it.com) and @dennismantz for updates.
+See [http://tech.mantz-it.com](http://tech.mantz-it.com) and [@dennismantz]
+(https://twitter.com/dennismantz) for updates.
 
 
 Implemented Features
