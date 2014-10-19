@@ -9,7 +9,7 @@
     <string name="action_setFrequency">Set Frequency</string>
     <string name="action_setGain">Set Gain</string>
     <string name="action_autoscale">Autoscale</string>
-    <string name="help_url">http://tech.mantz-it.com</string>
+    <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
