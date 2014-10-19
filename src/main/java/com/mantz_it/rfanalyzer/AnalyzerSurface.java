@@ -460,21 +460,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		if(virtualSampleRate < 0)
 			virtualSampleRate = sampleRate;
 
-		// Autoscale
-		if(doAutoscaleInNextDraw) {
-			doAutoscaleInNextDraw = false;
-			float min = MAX_DB;
-			float max = MIN_DB;
-			for(double sample: mag) {
-				min = Math.min((float)sample, min);
-				max = Math.max((float)sample, max);
-			}
-			if(min<max){
-				minDB = Math.max(min, MIN_DB);
-				maxDB = Math.min(max, MAX_DB);
-			}
-		}
-
 		// Calculate the start and end index to draw mag according to frequency and sample rate and
 		// the virtual frequency and sample rate:
 		float samplesPerHz = (float) mag.length/ (float) sampleRate;	// indicates how many samples in mag cover 1 Hz
@@ -483,6 +468,25 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		int start = (int)((frequencyDiff - sampleRateDiff/2.0) * samplesPerHz);
 		int end = mag.length + (int)((frequencyDiff + sampleRateDiff/2.0) * samplesPerHz);
 
+		// Autoscale
+		if(doAutoscaleInNextDraw) {
+			doAutoscaleInNextDraw = false;
+			float min = MAX_DB;
+			float max = MIN_DB;
+			for(int i = Math.max(0,start); i < Math.min(mag.length,end); i++) {
+				// try to avoid the DC peak (which is always exactly in the middle of mag:
+				if(i == (mag.length/2)-5)
+					i+=10;	// This effectively skips the DC offset peak
+				min = Math.min((float)mag[i], min);
+				max = Math.max((float)mag[i], max);
+			}
+			if(min<max){
+				minDB = Math.max(min, MIN_DB);
+				maxDB = Math.min(max, MAX_DB);
+			}
+		}
+
+		// Draw:
 		Canvas c = null;
 		try {
 			c = this.getHolder().lockCanvas();
