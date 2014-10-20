@@ -10,9 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.text.Editable;
 import android.text.InputType;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -53,6 +51,7 @@ import java.io.File;
  */
 public class MainActivity extends Activity implements IQSourceInterface.Callback  {
 
+	private MenuItem mi_startStop = null;
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
@@ -154,6 +153,17 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
+		// Get a reference to the start-stop button:
+		mi_startStop = menu.findItem(R.id.action_startStop);
+
+		// Set title and icon according to the state:
+		if(running) {
+			mi_startStop.setTitle(R.string.action_stop);
+			mi_startStop.setIcon(R.drawable.ic_action_pause);
+		} else {
+			mi_startStop.setTitle(R.string.action_start);
+			mi_startStop.setIcon(R.drawable.ic_action_play);
+		}
 		return true;
 	}
 
@@ -164,9 +174,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		switch (id) {
-			case R.id.action_start:			startAnalyzer();
-											break;
-			case R.id.action_stop:			stopAnalyzer();
+			case R.id.action_startStop:		if(running)
+												stopAnalyzer();
+											else
+												startAnalyzer();
 											break;
 			case R.id.action_setFrequency:	tuneToFrequency();
 											break;
@@ -372,6 +383,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		}
 
+		// Change stop button in action bar into a start button:
+		if(mi_startStop != null) {
+			mi_startStop.setTitle(R.string.action_start);
+			mi_startStop.setIcon(R.drawable.ic_action_play);
+		}
+
 		running = false;
 	}
 
@@ -422,6 +439,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Start both threads:
 		scheduler.start();
 		analyzerProcessingLoop.start();
+
+		// Change start button in action bar into a stop button:
+		if(mi_startStop != null) {
+			mi_startStop.setTitle(R.string.action_stop);
+			mi_startStop.setIcon(R.drawable.ic_action_pause);
+		}
 	}
 
 	/**

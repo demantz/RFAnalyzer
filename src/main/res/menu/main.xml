@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity" >
-    <item android:id="@+id/action_start"
+    <item android:id="@+id/action_startStop"
           android:icon="@drawable/ic_action_play"
           android:title="@string/action_start"
           android:orderInCategory="1"
@@ -20,11 +20,6 @@
           android:icon="@drawable/ic_action_gain"
           android:title="@string/action_setGain"
           android:orderInCategory="4"
-          android:showAsAction="ifRoom" />
-    <item android:id="@+id/action_stop"
-          android:icon="@drawable/ic_action_pause"
-          android:title="@string/action_stop"
-          android:orderInCategory="50"
           android:showAsAction="ifRoom" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
