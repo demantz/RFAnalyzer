@@ -67,6 +67,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private static final String LOGTAG = "AnalyzerSurface";
 	private static final int MIN_DB = -100;	// Smallest dB value the vertical scale can start
 	private static final int MAX_DB = 10;	// Highest dB value the vertical scale can start
+	private static final int MIN_VIRTUAL_SAMPLERATE = 64;	// Smallest virtual sample rate
 
 	private int[] waterfallColorMap = null;		// Colors used to draw the waterfall plot.
 												// idx 0 -> weak signal   idx max -> strong signal
@@ -300,7 +301,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		if(source != null) {
 			float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
 			long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
-			virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, 1), source.getMaxSampleRate());
+			virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), source.getMaxSampleRate());
 			virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
 					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
 
@@ -345,8 +346,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if (source != null) {
-			virtualFrequency = Math.min(Math.max(virtualFrequency + (long) ((virtualSampleRate / width) * distanceX),
+			virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (((virtualSampleRate / (float) width) * distanceX)),
 					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+
+			if(virtualFrequency <= 0)
+				virtualFrequency = 1;
 
 			if (verticalScrollEnabled) {
 				float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
@@ -389,7 +393,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			source.setFrequency(virtualFrequency);
 			source.setSampleRate(virtualSampleRate);
 		} else
-			Log.e(LOGTAG,"onDoubleTap: Source is not set!");
+			Log.e(LOGTAG,"onDoubleTap: Source is not set or out of range!");
 		return true;
 	}
 

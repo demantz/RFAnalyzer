@@ -50,8 +50,8 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
 	private static final String LOGTAG = "HackRFSource";
-	public static final long MIN_FREQUENCY = 10000000l;
-	public static final long MAX_FREQUENCY = 6000000000l;
+	public static final long MIN_FREQUENCY = 1l;
+	public static final long MAX_FREQUENCY = 7250000000l;
 	public static final int MAX_SAMPLERATE = 20000000;
 	public static final int MIN_SAMPLERATE = 10000;
 	public static final int MAX_VGA_RX_GAIN = 62;

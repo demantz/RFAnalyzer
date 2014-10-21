@@ -464,8 +464,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				public void onClick(DialogInterface dialog, int whichButton) {
 					try {
 						long newFreq = Long.valueOf(et_input.getText().toString());
-						source.setFrequency(newFreq);
-						analyzerSurface.setVirtualFrequency(newFreq);
+						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
+							source.setFrequency(newFreq);
+							analyzerSurface.setVirtualFrequency(newFreq);
+						} else {
+							Toast.makeText(MainActivity.this, "Frequency is out of the valid range!", Toast.LENGTH_LONG).show();
+						}
 					} catch (NumberFormatException e) {
 						Log.e(LOGTAG, "tuneToFrequency: Error while setting frequency: " + e.getMessage());
 					}
