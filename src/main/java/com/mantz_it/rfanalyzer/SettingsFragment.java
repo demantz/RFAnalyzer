@@ -173,6 +173,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		listPref = (ListPreference) findPreference(getString(R.string.pref_fftSize));
 		listPref.setSummary(getString(R.string.pref_fftSize_summ, listPref.getEntry()));
 
+		// Color map type
+		listPref = (ListPreference) findPreference(getString(R.string.pref_colorMapType));
+		listPref.setSummary(getString(R.string.pref_colorMapType_summ, listPref.getEntry()));
+
 		// Screen Orientation
 		listPref = (ListPreference) findPreference(getString(R.string.pref_screenOrientation));
 		listPref.setSummary(getString(R.string.pref_screenOrientation_summ, listPref.getEntry()));

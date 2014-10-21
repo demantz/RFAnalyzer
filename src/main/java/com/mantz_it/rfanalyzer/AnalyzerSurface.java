@@ -73,6 +73,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 												// idx 0 -> weak signal   idx max -> strong signal
 	private Bitmap[] waterfallLines = null;		// Each array element holds one line in the waterfall plot
 	private int waterfallLinesTopIndex = 0;		// Indicates which array index in waterfallLines is the most recent (circular array)
+	private int waterfallColorMapType = COLORMAP_GQRX;
+	private static final int COLORMAP_JET = 1;		// BLUE(0,0,1) - LIGHT_BLUE(0,1,1) - GREEN(0,1,0) - YELLOW(1,1,0) - RED(1,0,0)
+	private static final int COLORMAP_HOT = 2;		// BLACK (0,0,0) - RED (1,0,0) - YELLOW (1,1,0) - WHITE (1,1,1)
+	private static final int COLORMAP_OLD = 3;		// from version 1.00 :)
+	private static final int COLORMAP_GQRX = 4;		// from https://github.com/csete/gqrx  -> qtgui/plotter.cpp
 
 	// virtual frequency and sample rate indicate the current visible viewport of the fft. they vary from
 	// the actual values when the user does scrolling and zooming
@@ -217,6 +222,22 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
+	 * Will create a new color map corresponding to the given typ
+	 * @param type		COLORMAP_JET, _HOT, _OLD, _GQRX
+	 */
+	public void setWaterfallColorMapType(int type) {
+		this.waterfallColorMapType = type;
+		this.createWaterfallColorMap();
+	}
+
+	/**
+	 * @return		The waterfall color map type: COLORMAP_JET, _HOT, _OLD, _GQRX
+	 */
+	public int getWaterfallColorMapType() {
+		return waterfallColorMapType;
+	}
+
+	/**
 	 * Will initialize the waterfallLines array for the given width and height of the waterfall plot.
 	 * If the array is not null, it will be recycled first.
 	 */
@@ -238,11 +259,42 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * Will populate the waterfallColorMap array with color instances
 	 */
 	private void createWaterfallColorMap() {
-		this.waterfallColorMap = new int[512];
-		for (int i = 0; i < 512; i++) {
-			int blue = i <= 255 ? i : 511 - i;
-			int red  = i <= 255 ? 0 : i - 256;
-			waterfallColorMap[i] = Color.argb(0xff, red, 0, blue);
+		synchronized (this.getHolder()) {
+			switch (this.waterfallColorMapType) {
+				case COLORMAP_JET:	// BLUE(0,0,1) - LIGHT_BLUE(0,1,1) - GREEN(0,1,0) - YELLOW(1,1,0) - RED(1,0,0)
+					this.waterfallColorMap = new int[256*4];
+					for (int i = 0; i < 256; i++) waterfallColorMap[i]     = Color.argb(0xff, 0, i, 255);
+					for (int i = 0; i < 256; i++) waterfallColorMap[256+i] = Color.argb(0xff, 0, 255, 255-i);
+					for (int i = 0; i < 256; i++) waterfallColorMap[512+i] = Color.argb(0xff, i, 255, 0);
+					for (int i = 0; i < 256; i++) waterfallColorMap[768+i] = Color.argb(0xff, 255, 255-i, 0);
+					break;
+				case COLORMAP_HOT:	// BLACK (0,0,0) - RED (1,0,0) - YELLOW (1,1,0) - WHITE (1,1,1)
+					this.waterfallColorMap = new int[256*3];
+					for (int i = 0; i < 256; i++) waterfallColorMap[i]     = Color.argb(0xff, i, 0, 0);
+					for (int i = 0; i < 256; i++) waterfallColorMap[256+i] = Color.argb(0xff, 255, i, 0);
+					for (int i = 0; i < 256; i++) waterfallColorMap[512+i] = Color.argb(0xff, 255, 255, i);
+					break;
+				case COLORMAP_OLD:
+					this.waterfallColorMap = new int[512];
+					for (int i = 0; i < 512; i++) {
+						int blue = i <= 255 ? i : 511 - i;
+						int red = i <= 255 ? 0 : i - 256;
+						waterfallColorMap[i] = Color.argb(0xff, red, 0, blue);
+					}
+					break;
+				case COLORMAP_GQRX:
+					this.waterfallColorMap = new int[256];
+					for (int i = 0; i < 256; i++) {
+						if (i < 20) 						waterfallColorMap[i] = Color.argb(0xff,0, 0, 0); // level 0: black background
+						else if ((i >= 20) && (i < 70)) 	waterfallColorMap[i] = Color.argb(0xff,0, 0, 140*(i-20)/50); // level 1: black -> blue
+						else if ((i >= 70) && (i < 100)) 	waterfallColorMap[i] = Color.argb(0xff,60*(i-70)/30, 125*(i-70)/30, 115*(i-70)/30 + 140); // level 2: blue -> light-blue / greenish
+						else if ((i >= 100) && (i < 150)) 	waterfallColorMap[i] = Color.argb(0xff,195*(i-100)/50 + 60, 130*(i-100)/50 + 125, 255-(255*(i-100)/50)); // level 3: light blue -> yellow
+						else if ((i >= 150) && (i < 250)) 	waterfallColorMap[i] = Color.argb(0xff,255, 255-255*(i-150)/100, 0); // level 4: yellow -> red
+						else if (i >= 250) 					waterfallColorMap[i] = Color.argb(0xff,255, 255*(i-250)/5, 255*(i-250)/5); // level 5: red -> white
+					}
+				default:
+					Log.e(LOGTAG,"createWaterfallColorMap: Unknown color map type: " + waterfallColorMapType);
+			}
 		}
 	}
 

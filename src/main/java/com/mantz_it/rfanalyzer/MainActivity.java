@@ -109,6 +109,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		analyzerSurface = new AnalyzerSurface(this);
 		analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 		analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
+		analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
@@ -273,10 +274,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		}
 
-		// All GUI settings will just be overwritten:
 		if(analyzerSurface != null) {
+			// All GUI settings will just be overwritten:
 			analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 			analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
+			analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 		}
 
 		// Screen Orientation:

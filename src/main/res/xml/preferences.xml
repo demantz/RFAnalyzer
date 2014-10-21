@@ -45,6 +45,13 @@
         android:entryValues="@array/pref_fftSize_values"
         android:defaultValue="@string/pref_fftSize_default" />
     <ListPreference
+        android:key="@string/pref_colorMapType"
+        android:title="@string/pref_colorMapType_title"
+        android:dialogTitle="@string/pref_colorMapType_title"
+        android:entries="@array/pref_colorMapType_entries"
+        android:entryValues="@array/pref_colorMapType_values"
+        android:defaultValue="@string/pref_colorMapType_default" />
+    <ListPreference
         android:key="@string/pref_screenOrientation"
         android:title="@string/pref_screenOrientation_title"
         android:dialogTitle="@string/pref_screenOrientation_title"
