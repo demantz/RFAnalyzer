@@ -39,6 +39,7 @@ public class AnalyzerProcessingLoop extends Thread {
 	private double load = 0;					// Time_for_processing_and_drawing / Time_per_Frame
 	private boolean dynamicFrameRate = true;	// Turns on and off the automatic frame rate control
 	private boolean stopRequested = true;		// Will stop the thread when set to true
+	private double[] mag = null;				// Magnitude of the frequency spectrum
 
 	private static final String LOGTAG = "AnalyzerProcessingLoop";
 	private static final int MAX_FRAMERATE = 30;		// Upper limit for the automatic frame rate control
@@ -69,6 +70,7 @@ public class AnalyzerProcessingLoop extends Thread {
 		this.fftSize = fftSize;
 
 		this.fftBlock = new FFT(fftSize);
+		this.mag = new double[fftSize];
 		this.inputQueue = inputQueue;
 		this.returnQueue = returnQueue;
 	}
@@ -145,7 +147,7 @@ public class AnalyzerProcessingLoop extends Thread {
 			sampleRate = samples.getSampleRate();
 
 			// do the signal processing:
-			double[] mag = this.doProcessing(samples);
+			this.doProcessing(samples);
 
 			// return samples to the buffer pool
 			returnQueue.offer(samples);
@@ -190,11 +192,8 @@ public class AnalyzerProcessingLoop extends Thread {
 	 * This method will do the signal processing (fft) on the given samples
 	 *
 	 * @param samples	input samples for the signal processing
-	 * @return array with the magnitudes of the frequency spectrum (logarithmic)
 	 */
-	public double[] doProcessing(SamplePacket samples) {
-		double[] mag = new double[samples.size()];		// Magnitude of the frequency spectrum
-
+	public void doProcessing(SamplePacket samples) {
 		// Multiply the samples with a Window function:
 		this.fftBlock.applyWindow(samples.re(), samples.im());
 
@@ -210,6 +209,5 @@ public class AnalyzerProcessingLoop extends Thread {
 			// note that we still have to divide re and im by the fft size
 			mag[targetIndex] = Math.log(Math.pow(samples.re(i)/fftSize,2) + Math.pow(samples.im(i)/fftSize,2));
 		}
-		return mag;
 	}
 }
