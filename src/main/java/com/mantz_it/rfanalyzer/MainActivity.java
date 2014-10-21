@@ -449,26 +449,36 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 	/**
 	 * Will pop up a dialog to let the user input a new frequency.
+	 * Note: A frequency can be entered either in Hz or in MHz. If the input value
+	 * is a number smaller than the maximum frequency of the source in MHz, then it
+	 * is interpreted as a frequency in MHz. Otherwise it will be handled as frequency
+	 * in Hz.
 	 */
 	private void tuneToFrequency() {
 		if(source == null)
 			return;
 
+		// calculate max frequency of the source in MHz:
+		final double maxFreqMHz = source.getMaxFrequency() / 1000000f;
+
 		final EditText et_input = new EditText(this);
-		et_input.setInputType(InputType.TYPE_CLASS_NUMBER);
+		et_input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
-			.setMessage("Frequency is " + source.getFrequency() + "Hz. Type new Frequency in Hz: ")
+			.setMessage("Frequency is " + source.getFrequency()/1000000f + "Hz. Type a new Frequency (Values below "
+					+ maxFreqMHz + " will be interpreted as MHz, higher values as Hz): ")
 			.setView(et_input)
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
 					try {
-						long newFreq = Long.valueOf(et_input.getText().toString());
+						double newFreq = Double.valueOf(et_input.getText().toString());
+						if (newFreq < maxFreqMHz)
+							newFreq = newFreq * 1000000;
 						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
-							source.setFrequency(newFreq);
-							analyzerSurface.setVirtualFrequency(newFreq);
+							source.setFrequency((long)newFreq);
+							analyzerSurface.setVirtualFrequency((long)newFreq);
 						} else {
-							Toast.makeText(MainActivity.this, "Frequency is out of the valid range!", Toast.LENGTH_LONG).show();
+							Toast.makeText(MainActivity.this, "Frequency is out of the valid range: " + (long)newFreq + " Hz", Toast.LENGTH_LONG).show();
 						}
 					} catch (NumberFormatException e) {
 						Log.e(LOGTAG, "tuneToFrequency: Error while setting frequency: " + e.getMessage());
