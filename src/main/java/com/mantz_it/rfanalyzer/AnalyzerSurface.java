@@ -74,10 +74,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Bitmap[] waterfallLines = null;		// Each array element holds one line in the waterfall plot
 	private int waterfallLinesTopIndex = 0;		// Indicates which array index in waterfallLines is the most recent (circular array)
 	private int waterfallColorMapType = COLORMAP_GQRX;
-	private static final int COLORMAP_JET = 1;		// BLUE(0,0,1) - LIGHT_BLUE(0,1,1) - GREEN(0,1,0) - YELLOW(1,1,0) - RED(1,0,0)
-	private static final int COLORMAP_HOT = 2;		// BLACK (0,0,0) - RED (1,0,0) - YELLOW (1,1,0) - WHITE (1,1,1)
-	private static final int COLORMAP_OLD = 3;		// from version 1.00 :)
-	private static final int COLORMAP_GQRX = 4;		// from https://github.com/csete/gqrx  -> qtgui/plotter.cpp
+	public static final int COLORMAP_JET = 1;		// BLUE(0,0,1) - LIGHT_BLUE(0,1,1) - GREEN(0,1,0) - YELLOW(1,1,0) - RED(1,0,0)
+	public static final int COLORMAP_HOT = 2;		// BLACK (0,0,0) - RED (1,0,0) - YELLOW (1,1,0) - WHITE (1,1,1)
+	public static final int COLORMAP_OLD = 3;		// from version 1.00 :)
+	public static final int COLORMAP_GQRX = 4;		// from https://github.com/csete/gqrx  -> qtgui/plotter.cpp
+
+	private int fftDrawingType = FFT_DRAWING_TYPE_LINE;	// Indicates how the fft should be drawn
+	public static final int FFT_DRAWING_TYPE_BAR = 1;	// draw as bars
+	public static final int FFT_DRAWING_TYPE_LINE = 2;	// draw as line
 
 	// virtual frequency and sample rate indicate the current visible viewport of the fft. they vary from
 	// the actual values when the user does scrolling and zooming
@@ -237,6 +241,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public int getWaterfallColorMapType() {
 		return waterfallColorMapType;
+	}
+
+	/**
+	 * Will change the drawing type of the fft to the given type
+	 * @param fftDrawingType	FFT_DRAWING_TYPE_BAR, FFT_DRAWING_TYPE_LINE
+	 */
+	public void setFftDrawingType(int fftDrawingType) {
+		this.fftDrawingType = fftDrawingType;
 	}
 
 	/**
@@ -584,10 +596,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param end		last index to draw from mag (may be > mag.length)
 	 */
 	private void drawFFT(Canvas c, double[] mag, int start, int end) {
+		float previousY		 = getFftHeight();	// y coordinate of the previously processed pixel (only used with drawing type line)
+		float currentY;							// y coordinate of the currently processed pixel
 		float samplesPerPx 	= (float) (end-start) / (float) width;		// number of fft samples per one pixel
 		float dbDiff 		= maxDB - minDB;
 		float dbWidth 		= getFftHeight() / dbDiff; 	// Size (in pixel) per 1dB in the fft
 		float scale 		= this.waterfallColorMap.length / dbDiff;	// scale for the color mapping of the waterfall
+		float avg;		// Used to calculate the average of multiple values in mag
+		int counter;	// Used to calculate the average of multiple values in mag
 
 		// Get a canvas from the bitmap of the current waterfall line and clear it:
 		Canvas newline = new Canvas(waterfallLines[waterfallLinesTopIndex]);
@@ -606,8 +622,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		// We start at firstPixel+1 because of integer round off error
 		for (int i = firstPixel + 1; i < lastPixel; i++) {
 			// Calculate the average value for this pixel:
-			float avg = 0;
-			int counter = 0;
+			avg = 0;
+			counter = 0;
 			for (int j = (int)(i*samplesPerPx); j < (i+1)*samplesPerPx; j++) {
 				avg += mag[j + start];
 				counter++;
@@ -616,10 +632,24 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// FFT:
 			if(avg > minDB) {
-				float topPixel = getFftHeight() - (avg - minDB) * dbWidth;
-				if(topPixel < 0 )
-					topPixel = 0;
-				c.drawLine(i, getFftHeight(), i, topPixel, fftPaint);
+				currentY = getFftHeight() - (avg - minDB) * dbWidth;
+				if(currentY < 0 )
+					currentY = 0;
+				switch (fftDrawingType) {
+					case FFT_DRAWING_TYPE_BAR:
+						c.drawLine(i, getFftHeight(), i, currentY, fftPaint);
+						break;
+					case FFT_DRAWING_TYPE_LINE:
+						c.drawLine(i-1,previousY,i,currentY, fftPaint);
+						previousY = currentY;
+
+						// We have to draw the last line to the bottom if we're in the last round:
+						if(i+1 == lastPixel)
+							c.drawLine(i,previousY,i+1,getFftHeight(), fftPaint);
+						break;
+					default:
+						Log.e(LOGTAG,"drawFFT: Invalid fft drawing type: " + fftDrawingType);
+				}
 			}
 
 			// Waterfall:

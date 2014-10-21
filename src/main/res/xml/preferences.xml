@@ -52,6 +52,13 @@
         android:entryValues="@array/pref_colorMapType_values"
         android:defaultValue="@string/pref_colorMapType_default" />
     <ListPreference
+        android:key="@string/pref_fftDrawingType"
+        android:title="@string/pref_fftDrawingType_title"
+        android:dialogTitle="@string/pref_fftDrawingType_title"
+        android:entries="@array/pref_fftDrawingType_entries"
+        android:entryValues="@array/pref_fftDrawingType_values"
+        android:defaultValue="@string/pref_fftDrawingType_default" />
+    <ListPreference
         android:key="@string/pref_screenOrientation"
         android:title="@string/pref_screenOrientation_title"
         android:dialogTitle="@string/pref_screenOrientation_title"

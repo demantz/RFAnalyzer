@@ -48,12 +48,16 @@
     <string name="pref_filesource_repeat_summ_off">Stop after end of file</string>
     <string name="pref_fftSize">pref_fftSize</string>
     <string name="pref_fftSize_title">FFT Size</string>
-    <string name="pref_fftSize_default">1024</string>
+    <string name="pref_fftSize_default">4096</string>
     <string name="pref_fftSize_summ">FFT size is set to: %s</string>
     <string name="pref_colorMapType">pref_colorMapType</string>
     <string name="pref_colorMapType_title">Color map type</string>
     <string name="pref_colorMapType_default">4</string>
     <string name="pref_colorMapType_summ">Color map type is set to: %s</string>
+    <string name="pref_fftDrawingType">pref_fftDrawingType</string>
+    <string name="pref_fftDrawingType_title">FFT drawing type</string>
+    <string name="pref_fftDrawingType_default">2</string>
+    <string name="pref_fftDrawingType_summ">FFT drawing type is set to: %s</string>
     <string name="pref_screenOrientation">pref_screenOrientation</string>
     <string name="pref_screenOrientation_title">Screen orientation</string>
     <string name="pref_screenOrientation_default">auto</string>
