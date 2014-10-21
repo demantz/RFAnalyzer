@@ -1,0 +1,10 @@
+CHANGELOG - RF Analyzer
+
+version 1.03:
+ - Fixed bug: Strange behaviour when tuning to very low frequencies
+ - Fixed bug: Zooming too close breaks zooming mechanism
+ - Added different color mappings for the waterfall plot: JET, HOT, GQRX
+ - Optimized drawing process
+ - Added new drawing mode 'line' for FFT which also increases performance
+ - Added UP navigation in settings activity
+ - The frequency dialog now also accepts values in MHz
