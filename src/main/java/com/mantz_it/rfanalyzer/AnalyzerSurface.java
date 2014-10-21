@@ -226,8 +226,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param type		COLORMAP_JET, _HOT, _OLD, _GQRX
 	 */
 	public void setWaterfallColorMapType(int type) {
-		this.waterfallColorMapType = type;
-		this.createWaterfallColorMap();
+		if(this.waterfallColorMapType != type) {
+			this.waterfallColorMapType = type;
+			this.createWaterfallColorMap();
+		}
 	}
 
 	/**
@@ -292,6 +294,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 						else if ((i >= 150) && (i < 250)) 	waterfallColorMap[i] = Color.argb(0xff,255, 255-255*(i-150)/100, 0); // level 4: yellow -> red
 						else if (i >= 250) 					waterfallColorMap[i] = Color.argb(0xff,255, 255*(i-250)/5, 255*(i-250)/5); // level 5: red -> white
 					}
+					break;
 				default:
 					Log.e(LOGTAG,"createWaterfallColorMap: Unknown color map type: " + waterfallColorMapType);
 			}
