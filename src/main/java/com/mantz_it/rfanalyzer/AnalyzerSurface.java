@@ -584,7 +584,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param end		last index to draw from mag (may be > mag.length)
 	 */
 	private void drawFFT(Canvas c, double[] mag, int start, int end) {
-		float sampleWidth 	= (float) width / (float) (end-start);		// Size (in pixel) per one fft sample
+		float samplesPerPx 	= (float) (end-start) / (float) width;		// number of fft samples per one pixel
 		float dbDiff 		= maxDB - minDB;
 		float dbWidth 		= getFftHeight() / dbDiff; 	// Size (in pixel) per 1dB in the fft
 		float scale 		= this.waterfallColorMap.length / dbDiff;	// scale for the color mapping of the waterfall
@@ -597,28 +597,39 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		c.drawRect(0, 0, width, getFftHeight(), blackPaint);
 
 		// The start position to draw is either 0 or greater 0, if start is negative:
-		float position = start>=0 ? 0 : sampleWidth * start * -1;
+		int firstPixel = start>=0 ? 0 : (int)((start * -1) / samplesPerPx);
 
-		// Draw sample by sample:
-		for (int i = Math.max(start,0); i < mag.length; i++) {
+		// We will only draw to the end of mag, not beyond:
+		int lastPixel = end>=mag.length ? (int) ((mag.length-start) / samplesPerPx) : (int) ((end-start) / samplesPerPx);
+
+		// Draw pixel by pixel:
+		// We start at firstPixel+1 because of integer round off error
+		for (int i = firstPixel + 1; i < lastPixel; i++) {
+			// Calculate the average value for this pixel:
+			float avg = 0;
+			int counter = 0;
+			for (int j = (int)(i*samplesPerPx); j < (i+1)*samplesPerPx; j++) {
+				avg += mag[j + start];
+				counter++;
+			}
+			avg = avg / counter;
+
 			// FFT:
-			if(mag[i] > minDB) {
-				float topPixel = (float) (getFftHeight() - (mag[i] - minDB) * dbWidth);
-				if(topPixel < 0 ) topPixel = 0;
-				c.drawRect(position, topPixel, position + sampleWidth, getFftHeight(), fftPaint);
+			if(avg > minDB) {
+				float topPixel = getFftHeight() - (avg - minDB) * dbWidth;
+				if(topPixel < 0 )
+					topPixel = 0;
+				c.drawLine(i, getFftHeight(), i, topPixel, fftPaint);
 			}
 
 			// Waterfall:
-			if(mag[i] <= minDB)
+			if(avg <= minDB)
 				waterfallLinePaint.setColor(waterfallColorMap[0]);
-			else if(mag[i] >= maxDB)
+			else if(avg >= maxDB)
 				waterfallLinePaint.setColor(waterfallColorMap[waterfallColorMap.length-1]);
 			else
-				waterfallLinePaint.setColor(waterfallColorMap[(int)((mag[i]-minDB)*scale)]);
-			newline.drawRect(position, 0, position + sampleWidth, getPixelPerWaterfallLine(), waterfallLinePaint);
-
-			// Shift position:
-			position += sampleWidth;
+				waterfallLinePaint.setColor(waterfallColorMap[(int)((avg-minDB)*scale)]);
+			newline.drawLine(i, 0, i, getPixelPerWaterfallLine(), waterfallLinePaint);
 		}
 	}
 
