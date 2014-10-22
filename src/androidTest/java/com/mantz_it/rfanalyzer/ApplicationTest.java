@@ -4,6 +4,7 @@ import android.app.Application;
 import android.test.ApplicationTestCase;
 
 import java.nio.ByteBuffer;
+import java.sql.SQLOutput;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -18,6 +19,37 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 	public void setUp() throws Exception {
 		super.setUp();
 
+	}
+
+	public void testFirFilter() {
+		int samples = 128;
+		float[] reIn = new float[samples];
+		float[] imIn = new float[samples];
+		float[] reOut = new float[samples/4];
+		float[] imOut = new float[samples/4];
+		int sampleRate = 1000;
+		int f1 = 50;
+		int f2 = 200;
+
+		for (int i = 0; i < reIn.length; i++) {
+			reIn[i] = (float) (Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate));
+			imIn[i] = (float) (Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate));
+		}
+
+		FirFilter filter = FirFilter.createLowPass(4, 1, sampleRate, 100, 50, 60);
+		System.out.println("Created filter with " + filter.getNumberOfTaps() + " taps!");
+
+		FFT fft1 = new FFT(samples);
+
+		System.out.println("Before FILTER:");
+		spectrum(fft1, reIn, imIn);
+
+		filter.filter(reIn, imIn, reOut, imOut, 0, 0, reIn.length, reOut.length);
+
+		FFT fft2 = new FFT(samples/4);
+
+		System.out.println("After FILTER:");
+		spectrum(fft2, reOut, imOut);
 	}
 
 	public void testFFT() throws Exception {
@@ -83,6 +115,35 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		for(int i=0; i<im.length; i++)
 			System.out.print(((int)(im[i]*1000)/1000.0) + " ");
 
+		System.out.println("]");
+	}
+
+	protected static void spectrum(FFT fft, float[] re, float[] im) {
+		//fft.applyWindow(re, im);
+		int length = re.length;
+		double[] reDouble = new double[length];
+		double[] imDouble = new double[length];
+		double[] mag = new double[length];
+		for (int i = 0; i < length; i++) {
+			reDouble[i] = (double) re[i];
+			imDouble[i] = (double) im[i];
+		}
+
+		fft.fft(reDouble, imDouble);
+		// Calculate the logarithmic magnitude:
+		for (int i = 0; i < length; i++) {
+			// We have to flip both sides of the fft to draw it centered on the screen:
+			int targetIndex = (i+length/2) % length;
+
+			// Calc the magnitude = log(  re^2 + im^2  )
+			// note that we still have to divide re and im by the fft size
+			mag[targetIndex] = Math.log(Math.pow(reDouble[i]/fft.n,2) + Math.pow(imDouble[i]/fft.n,2));
+		}
+
+		System.out.print("Spectrum: [");
+		for (int i = 0; i < length; i++) {
+			System.out.print(" " + (int) mag[i]);
+		}
 		System.out.println("]");
 	}
 
