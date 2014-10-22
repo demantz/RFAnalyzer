@@ -30,17 +30,17 @@ import android.util.Log;
  */
 public class FirFilter {
 	private int tapCounter = 0;
-	private float[] taps;
-	private float[] delaysReal;
-	private float[] delaysImag;
+	private double[] taps;
+	private double[] delaysReal;
+	private double[] delaysImag;
 	private int decimation;
 	private int decimationCounter = 1;
 	private static final String LOGTAG = "FirFilter";
 
-	private FirFilter(float[] taps, int decimation) {
+	private FirFilter(double[] taps, int decimation) {
 		this.taps = taps;
-		this.delaysReal = new float[taps.length];
-		this.delaysImag = new float[taps.length];
+		this.delaysReal = new double[taps.length];
+		this.delaysImag = new double[taps.length];
 		this.decimation = decimation;
 	}
 
@@ -48,7 +48,7 @@ public class FirFilter {
 		return taps.length;
 	}
 
-	public int filter(float[] reIn, float[] imIn, float[] reOut, float[] imOut,
+	public int filter(double[] reIn, double[] imIn, double[] reOut, double[] imOut,
 					  int offsetIn, int offsetOut, int lengthIn, int lengthOut) {
 		int index;
 
@@ -67,7 +67,7 @@ public class FirFilter {
 				reOut[offsetOut] = 0;
 				imOut[offsetOut] = 0;
 				index = tapCounter;
-				for (float tap : taps) {
+				for (double tap : taps) {
 					reOut[offsetOut] += tap * delaysReal[index];
 					imOut[offsetOut] += tap * delaysImag[index];
 					index--;
@@ -123,17 +123,17 @@ public class FirFilter {
 		// construct the truncated ideal impulse response
 		// [sin(x)/x for the low pass case]
 
-		float[] taps = new float[ntaps];
-		float[] w = makeWindow(ntaps);
+		double[] taps = new double[ntaps];
+		double[] w = makeWindow(ntaps);
 
 		int M = (ntaps - 1) / 2;
 		double fwT0 = 2 * Math.PI * cutoff_freq / sampling_freq;
 		for (int n = -M; n <= M; n++) {
 			if (n == 0)
-				taps[n + M] = (float) (fwT0 / Math.PI * w[n + M]);
+				taps[n + M] = fwT0 / Math.PI * w[n + M];
 			else {
 				// a little algebra gets this into the more familiar sin(x)/x form
-				taps[n + M] = (float) (Math.sin(n * fwT0) / (n * Math.PI) * w[n + M]);
+				taps[n + M] = Math.sin(n * fwT0) / (n * Math.PI) * w[n + M];
 			}
 		}
 
@@ -152,13 +152,13 @@ public class FirFilter {
 		return new FirFilter(taps, decimation);
 	}
 
-	private static float[] makeWindow(int ntabs) {
+	private static double[] makeWindow(int ntabs) {
 		// Make a blackman window:
 		// w(n)=0.42-0.5cos{(2*PI*n)/(N-1)}+0.08cos{(4*PI*n)/(N-1)};
-		float[] window = new float[ntabs];
+		double[] window = new double[ntabs];
 		for (int i = 0; i < window.length; i++)
-			window[i] = (float) (0.42 - 0.5 * Math.cos(2 * Math.PI * i / (ntabs - 1))
-					+ 0.08 * Math.cos(4 * Math.PI * i / (ntabs - 1)));
+			window[i] = 0.42 - 0.5 * Math.cos(2 * Math.PI * i / (ntabs - 1))
+					+ 0.08 * Math.cos(4 * Math.PI * i / (ntabs - 1));
 		return window;
 	}
 

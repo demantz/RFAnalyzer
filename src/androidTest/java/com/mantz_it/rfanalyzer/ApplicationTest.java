@@ -23,17 +23,17 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 	public void testFirFilter() {
 		int samples = 128;
-		float[] reIn = new float[samples];
-		float[] imIn = new float[samples];
-		float[] reOut = new float[samples/4];
-		float[] imOut = new float[samples/4];
+		double[] reIn = new double[samples];
+		double[] imIn = new double[samples];
+		double[] reOut = new double[samples/4];
+		double[] imOut = new double[samples/4];
 		int sampleRate = 1000;
 		int f1 = 50;
 		int f2 = 200;
 
 		for (int i = 0; i < reIn.length; i++) {
-			reIn[i] = (float) (Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate));
-			imIn[i] = (float) (Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate));
+			reIn[i] = Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
+			imIn[i] = Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
 		}
 
 		FirFilter filter = FirFilter.createLowPass(4, 1, sampleRate, 100, 50, 60);
@@ -118,15 +118,15 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		System.out.println("]");
 	}
 
-	protected static void spectrum(FFT fft, float[] re, float[] im) {
+	protected static void spectrum(FFT fft, double[] re, double[] im) {
 		//fft.applyWindow(re, im);
 		int length = re.length;
 		double[] reDouble = new double[length];
 		double[] imDouble = new double[length];
 		double[] mag = new double[length];
 		for (int i = 0; i < length; i++) {
-			reDouble[i] = (double) re[i];
-			imDouble[i] = (double) im[i];
+			reDouble[i] = re[i];
+			imDouble[i] = im[i];
 		}
 
 		fft.fft(reDouble, imDouble);
