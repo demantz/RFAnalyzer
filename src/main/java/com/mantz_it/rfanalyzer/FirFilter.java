@@ -35,61 +35,129 @@ public class FirFilter {
 	private double[] delaysImag;
 	private int decimation;
 	private int decimationCounter = 1;
+	private double gain;
+	private double sampleRate;
+	private double cutOffFrequency;
+	private double transitionWidth;
+	private double attenuation;
 	private static final String LOGTAG = "FirFilter";
 
-	private FirFilter(double[] taps, int decimation) {
+	/**
+	 * Private Constructor. Creates a new FIR Filter with the given taps and decimation.
+	 * Use create*Filter() to calculate taps and create the filter.
+	 * @param taps					filter taps (double)
+	 * @param decimation			decimation factor
+	 * @param gain					filter pass band gain
+	 * @param sampleRate			sample rate
+	 * @param cutOffFrequency		cut off frequency (end of pass band)
+	 * @param transitionWidth		width from end of pass band to start stop band
+	 * @param attenuation			attenuation of stop band
+	 */
+	private FirFilter(double[] taps, int decimation, double gain, double sampleRate, double cutOffFrequency, double transitionWidth, double attenuation) {
 		this.taps = taps;
 		this.delaysReal = new double[taps.length];
 		this.delaysImag = new double[taps.length];
 		this.decimation = decimation;
+		this.gain = gain;
+		this.sampleRate = sampleRate;
+		this.cutOffFrequency = cutOffFrequency;
+		this.transitionWidth = transitionWidth;
+		this.attenuation = attenuation;
 	}
 
+	/**
+	 * @return length of the taps array
+	 */
 	public int getNumberOfTaps() {
 		return taps.length;
 	}
 
-	public int filter(double[] reIn, double[] imIn, double[] reOut, double[] imOut,
-					  int offsetIn, int offsetOut, int lengthIn, int lengthOut) {
+	public int getDecimation() {
+		return decimation;
+	}
+
+	public double getGain() {
+		return gain;
+	}
+
+	public double getSampleRate() {
+		return sampleRate;
+	}
+
+	public double getCutOffFrequency() {
+		return cutOffFrequency;
+	}
+
+	public double getTransitionWidth() {
+		return transitionWidth;
+	}
+
+	public double getAttenuation() {
+		return attenuation;
+	}
+
+	/**
+	 * Filters the samples from the input sample packet and appends filter output to the output
+	 * sample packet. Stops automatically if output sample packet is full.
+	 * @param in		input sample packet
+	 * @param out		output sample packet
+	 * @param offset	offset to use as start index for the input packet
+	 * @param length	max number of samples processed from the input packet
+	 * @return number of samples consumed from the input packet
+	 */
+	public int filter(SamplePacket in, SamplePacket out, int offset, int length) {
 		int index;
+		int indexOut = out.size();
+		double[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
 		// insert each input sample into the delay line:
-		for (int i = 0; i < lengthIn; i++) {
-			delaysReal[tapCounter] = reIn[offsetIn + i];
-			delaysImag[tapCounter] = imIn[offsetIn + i];
+		for (int i = 0; i < length; i++) {
+			delaysReal[tapCounter] = reIn[offset + i];
+			delaysImag[tapCounter] = imIn[offset + i];
 
 			// Calculate the filter output for every Mth element (were M = decimation)
 			if(decimationCounter == 0) {
 				// first check if we have enough space in the output buffers:
-				if(lengthOut <= 0)
-					return i;	// We return the number of consumed samples from the input buffers
+				if(indexOut == out.capacity()) {
+					out.setSize(indexOut);	// update size of output sample packet
+					return i;    // We return the number of consumed samples from the input buffers
+				}
 
 				// Calculate the results:
-				reOut[offsetOut] = 0;
-				imOut[offsetOut] = 0;
+				reOut[indexOut] = 0;
+				imOut[indexOut] = 0;
 				index = tapCounter;
 				for (double tap : taps) {
-					reOut[offsetOut] += tap * delaysReal[index];
-					imOut[offsetOut] += tap * delaysImag[index];
+					reOut[indexOut] += tap * delaysReal[index];
+					imOut[indexOut] += tap * delaysImag[index];
 					index--;
 					if (index < 0)
 						index = taps.length - 1;
 				}
 
-				// update offsetOut and lengthOut:
-				offsetOut++;
-				lengthOut--;
+				// increase indexOut:
+				indexOut++;
 			}
 			// update counters:
 			decimationCounter = (decimationCounter + 1) % decimation;
 			tapCounter = (tapCounter + 1) % taps.length;
 		}
-		return lengthIn;
+		out.setSize(indexOut);	// update size of output sample packet
+		return length;			// We return the number of consumed samples from the input buffers
 	}
 
 	/**
 	 * FROM GNU Radio firdes::low_pass_2:
-	 * <p/>
+	 *
 	 * Will calculate the tabs for the specified low pass filter and return a FirFilter instance
+	 *
+	 * @param decimation			decimation factor
+	 * @param gain					filter pass band gain
+	 * @param sampling_freq			sample rate
+	 * @param cutoff_freq			cut off frequency (end of pass band)
+	 * @param transition_width		width from end of pass band to start stop band
+	 * @param attenuation_dB		attenuation of stop band
+	 * @return instance of FirFilter
 	 */
 	public static FirFilter createLowPass(int decimation,
 										  double gain,
@@ -149,9 +217,15 @@ public class FirFilter {
 		for (int i = 0; i < ntaps; i++)
 			taps[i] *= gain;
 
-		return new FirFilter(taps, decimation);
+		return new FirFilter(taps, decimation, gain, sampling_freq, cutoff_freq, transition_width, attenuation_dB);
 	}
 
+	/**
+	 * Creates a Blackman Window for a FIR Filter
+	 *
+	 * @param ntabs number of taps of the filter
+	 * @return window samples
+	 */
 	private static double[] makeWindow(int ntabs) {
 		// Make a blackman window:
 		// w(n)=0.42-0.5cos{(2*PI*n)/(N-1)}+0.08cos{(4*PI*n)/(N-1)};

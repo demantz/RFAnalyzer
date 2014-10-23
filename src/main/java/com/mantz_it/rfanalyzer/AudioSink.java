@@ -95,7 +95,7 @@ public class AudioSink extends Thread {
 			return outputQueue.poll(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			Log.e(LOGTAG,"getPacketBuffer: Interrupted. return null...");
-			return null
+			return null;
 		}
 	}
 

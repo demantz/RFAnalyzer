@@ -28,6 +28,9 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		double[] reOut = new double[samples/4];
 		double[] imOut = new double[samples/4];
 		int sampleRate = 1000;
+		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
+		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate/4);
+		out.setSize(0);
 		int f1 = 50;
 		int f2 = 200;
 
@@ -44,7 +47,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		System.out.println("Before FILTER:");
 		spectrum(fft1, reIn, imIn);
 
-		filter.filter(reIn, imIn, reOut, imOut, 0, 0, reIn.length, reOut.length);
+		filter.filter(in, out, 0, in.size());
 
 		FFT fft2 = new FFT(samples/4);
 

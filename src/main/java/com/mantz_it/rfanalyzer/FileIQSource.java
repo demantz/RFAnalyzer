@@ -226,7 +226,7 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
-	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int startIndex) {
+	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
 		/**
 		 * The HackRF delivers samples in the following format:
 		 * The bytes are interleaved, 8-bit, signed IQ samples (in-phase
@@ -237,15 +237,17 @@ public class FileIQSource implements IQSourceInterface {
 		 *  receivedBytes[0]   receivedBytes[1]   receivedBytes[2]       ...
 		 */
 		int count = 0;
+		int startIndex = samplePacket.size();
 		double[] re = samplePacket.re();
 		double[] im = samplePacket.im();
 		for (int i = 0; i < packet.length; i+=2) {
 			re[startIndex+count] = packet[i] / 128.0;
 			im[startIndex+count] = packet[i+1] / 128.0;
 			count++;
-			if(startIndex+count >= samplePacket.size())
+			if(startIndex+count >= samplePacket.capacity())
 				break;
 		}
+		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
 		return count;
 	}
 }

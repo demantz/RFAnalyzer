@@ -86,7 +86,6 @@ public class Scheduler extends Thread {
 	public void run() {
 		Log.i(LOGTAG,"Scheduler started. (Thread: " + this.getName() + ")");
 		SamplePacket buffer = null;		// reference to a buffer we got from the input queue to fill
-		int bufferIndex = 0;			// fill level of the buffer. ==> next index to insert into the buffer
 
 		while(!stopRequested) {
 			// Get a new packet from the source:
@@ -105,16 +104,15 @@ public class Scheduler extends Thread {
 			if(buffer != null)
 			{
 				// fill the packet into the buffer at bufferIndex:
-				int sampleCount = source.fillPacketIntoSamplePacket(packet,buffer,bufferIndex);
+				buffer.setSize(0);	// mark buffer as empty
+				source.fillPacketIntoSamplePacket(packet,buffer);
 				buffer.setFrequency(source.getFrequency());
 				buffer.setSampleRate(source.getSampleRate());
-				bufferIndex += sampleCount;
 
 				// check if the buffer is now full and if so: deliver it to the output queue
-				if(bufferIndex == buffer.size()) {
+				if(buffer.capacity() == buffer.size()) {
 					outputQueue.offer(buffer);
 					buffer = null;
-					bufferIndex = 0;
 				}
 				// otherwise we would just go for another round...
 			}

@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -122,6 +123,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			// Set running to true if autostart is enabled (this will start the analyzer in onStart() )
 			running = preferences.getBoolean((getString(R.string.pref_autostart)), false);
 		}
+
+		// Set the hardware volume keys to work on the music audio stream:
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 	}
 
 	@Override
@@ -280,7 +284,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 			analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 			analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
-			analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
+			analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType), "2")));
 		}
 
 		// Screen Orientation:
