@@ -18,11 +18,16 @@ Implemented Features
 * Browse the spectrum by scrolling horizontally
 * Zoom in and out, both horizontally and vertically
 * Adjust the sample rate and center frequency to match the current view of the screen by double tapping
+* Automatic re-tune while scrolling and zooming
 * Auto scale the vertical axis
 * Jump directly to a frequency
 * Adjust the gain settings of the HackRF
 * Select a pre-recorded file as source instead of a real HackRF
 * Change the FFT size
+* Change FFT drawing mode: Line or Bars
+* Waterfall color maps: JET, HOT, GQRX
+* Peak hold
+* Averaging
 * Setting the frame rate either to a fixed value or to automatic control
 * Activate logging and showing the log file
 
