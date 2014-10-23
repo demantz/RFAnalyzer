@@ -58,6 +58,14 @@
     <string name="pref_fftDrawingType_title">FFT drawing type</string>
     <string name="pref_fftDrawingType_default">2</string>
     <string name="pref_fftDrawingType_summ">FFT drawing type is set to: %s</string>
+    <string name="pref_averaging">pref_averaging</string>
+    <string name="pref_averaging_title">Averaging</string>
+    <string name="pref_averaging_default">0</string>
+    <string name="pref_averaging_summ">Averaging is set to: %s</string>
+    <string name="pref_peakHold">pref_peakHold</string>
+    <string name="pref_peakHold_title">Peak hold</string>
+    <string name="pref_peakHold_summ_on">Peak hold is turned on</string>
+    <string name="pref_peakHold_summ_off">Peak hold is turned off</string>
     <string name="pref_screenOrientation">pref_screenOrientation</string>
     <string name="pref_screenOrientation_title">Screen orientation</string>
     <string name="pref_screenOrientation_default">auto</string>
