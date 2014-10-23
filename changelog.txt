@@ -1,5 +1,11 @@
 CHANGELOG - RF Analyzer
 
+version 1.04:
+ - Optimized sample rates for HackRF: allow only 4, 6, 8, 10, 12.5, 16 and 20 Msps
+ - Automatically re-tune while scrolling and zooming
+ - Added peak hold option
+ - Added averaging option
+
 version 1.03:
  - Fixed bug: Strange behaviour when tuning to very low frequencies
  - Fixed bug: Zooming too close breaks zooming mechanism

@@ -94,12 +94,24 @@ public interface IQSourceInterface {
 	/**
 	 * @return the maximum sample rate to which the source can be set
 	 */
-	public long getMaxSampleRate();
+	public int getMaxSampleRate();
 
 	/**
 	 * @return the minimum sample rate to which the source can be set
 	 */
-	public long getMinSampleRate();
+	public int getMinSampleRate();
+
+	/**
+	 * @param sampleRate	initial sample rate for the lookup
+	 * @return next optimal sample rate that is higher than sampleRate
+	 */
+	public int getNextHigherOptimalSampleRate(int sampleRate);
+
+	/**
+	 * @param sampleRate	initial sample rate for the lookup
+	 * @return next optimal sample rate that is lower than sampleRate
+	 */
+	public int getNextLowerOptimalSampleRate(int sampleRate);
 
 	/**
 	 * @return the size (in byte) of a packet that is returned by getPacket()

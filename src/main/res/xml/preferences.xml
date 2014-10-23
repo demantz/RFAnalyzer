@@ -59,6 +59,19 @@
         android:entryValues="@array/pref_fftDrawingType_values"
         android:defaultValue="@string/pref_fftDrawingType_default" />
     <ListPreference
+        android:key="@string/pref_averaging"
+        android:title="@string/pref_averaging_title"
+        android:dialogTitle="@string/pref_averaging_title"
+        android:entries="@array/pref_averaging_entries"
+        android:entryValues="@array/pref_averaging_values"
+        android:defaultValue="@string/pref_averaging_default" />
+    <SwitchPreference
+        android:key="@string/pref_peakHold"
+        android:title="@string/pref_peakHold_title"
+        android:summaryOn="@string/pref_peakHold_summ_on"
+        android:summaryOff="@string/pref_peakHold_summ_off"
+        android:defaultValue="false" />
+    <ListPreference
         android:key="@string/pref_screenOrientation"
         android:title="@string/pref_screenOrientation_title"
         android:dialogTitle="@string/pref_screenOrientation_title"

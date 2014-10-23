@@ -56,6 +56,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Paint defaultPaint = null;		// Paint object to draw bitmaps on the canvas
 	private Paint blackPaint = null;		// Paint object to draw black (erase)
 	private Paint fftPaint = null;			// Paint object to draw the fft lines
+	private Paint peakHoldPaint = null;		// Paint object to draw the fft peak hold points
 	private Paint waterfallLinePaint = null;// Paint object to draw one waterfall pixel
 	private Paint textPaint = null;			// Paint object to draw text on the canvas
 	private int width;						// current width (in pixels) of the SurfaceView
@@ -83,12 +84,20 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	public static final int FFT_DRAWING_TYPE_BAR = 1;	// draw as bars
 	public static final int FFT_DRAWING_TYPE_LINE = 2;	// draw as line
 
+	private int averageLength = 0;				// indicates whether or not peak hold points should be drawn
+	private double[][] historySamples;			// array that holds the last averageLength fft sample packets
+	private int oldesthistoryIndex;				// index in historySamples which holds the oldest samples
+	private boolean peakHoldEnabled = false;	// indicates if peak hold should be enabled or disabled
+	private double[] peaks;						// peak hold points
+
 	// virtual frequency and sample rate indicate the current visible viewport of the fft. they vary from
 	// the actual values when the user does scrolling and zooming
 	private long virtualFrequency = -1;		// Center frequency of the fft (baseband) AS SHOWN ON SCREEN
 	private int virtualSampleRate = -1;		// Sample Rate of the fft AS SHOWN ON SCREEN
 	private float minDB = -35;				// Lowest dB on the scale
-	private float maxDB = -5;					// Highest dB on the scale
+	private float maxDB = -5;				// Highest dB on the scale
+	private long lastFrequency;				// Center frequency of the last packet of fft samples
+	private int lastSampleRate;				// Sample rate of the last packet of fft samples
 
 	private float fftRatio = 0.5f;					// percentage of the height the fft consumes on the surface
 	private float waterfallRatio = 1 - fftRatio;	// percentage of the height the waterfall consumes on the surface
@@ -107,6 +116,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.fftPaint = new Paint();
 		this.fftPaint.setColor(Color.BLUE);
 		this.fftPaint.setStyle(Paint.Style.FILL);
+		this.peakHoldPaint = new Paint();
+		this.peakHoldPaint.setColor(Color.YELLOW);
 		this.textPaint = new Paint();
 		this.textPaint.setColor(Color.WHITE);
 		this.waterfallLinePaint = new Paint();
@@ -252,6 +263,21 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
+	 * Will change the number of history packets used to calculate the average.
+	 * @param length	number of history packets; 0 for no averaging
+	 */
+	public void setAverageLength(int length) {
+		this.averageLength = length;
+	}
+
+	/**
+	 * @param enable	true turns peak hold on; false turns it off
+	 */
+	public void setPeakHoldEnabled(boolean enable) {
+		this.peakHoldEnabled = enable;
+	}
+
+	/**
 	 * Will initialize the waterfallLines array for the given width and height of the waterfall plot.
 	 * If the array is not null, it will be recycled first.
 	 */
@@ -379,8 +405,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				float newMaxDB = Math.min(Math.max(dBFocus - (dBFocus - maxDB) / yScale, newMinDB + 10), MAX_DB);
 				this.setDBScale(newMinDB, newMaxDB);
 			}
-		}
 
+			// Automatically re-adjust the sample rate of the source if we zoom too far out or in
+			if(source.getSampleRate() < virtualSampleRate && virtualSampleRate < source.getMaxSampleRate())
+				source.setSampleRate(source.getNextHigherOptimalSampleRate(virtualSampleRate));
+			int nextLower = source.getNextLowerOptimalSampleRate(source.getSampleRate());
+			if( (virtualSampleRate < nextLower) && (source.getSampleRate() > nextLower)) {
+				source.setSampleRate(nextLower);
+			}
+		}
 		return true;
 	}
 
@@ -413,12 +446,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if (source != null) {
+			// scroll horizontally
 			virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (((virtualSampleRate / (float) width) * distanceX)),
 					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
 
 			if(virtualFrequency <= 0)
 				virtualFrequency = 1;
 
+			// scroll vertically
 			if (verticalScrollEnabled) {
 				float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
 				// Make sure we stay in the boundaries:
@@ -427,6 +462,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				if (minDB - yDiff < MIN_DB)
 					yDiff = MIN_DB - minDB;
 				this.setDBScale(minDB - yDiff, maxDB - yDiff);
+			}
+
+			// Automatically re-tune the source if we scrolled the samples out of the visible window:
+			if(source.getFrequency() + source.getSampleRate()/2 < virtualFrequency + virtualSampleRate/3 ||
+						source.getFrequency() - source.getSampleRate()/2 > virtualFrequency - virtualSampleRate/3) {
+				if(virtualFrequency >= source.getMinFrequency() && virtualFrequency <= source.getMaxFrequency())
+					source.setFrequency(virtualFrequency);
 			}
 		}
 
@@ -452,13 +494,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onDoubleTap(MotionEvent e) {
+		// calculate the next higher possible sample rate for virtual sample rate:
+		int newSampleRate = source.getNextHigherOptimalSampleRate(virtualSampleRate);
 		if(source != null
 				&& virtualFrequency >= source.getMinFrequency()
 				&& virtualFrequency <= source.getMaxFrequency()
-				&& virtualSampleRate >= source.getMinSampleRate()
-				&& virtualSampleRate <= source.getMaxSampleRate()) {
+				&& newSampleRate >= source.getMinSampleRate()
+				&& newSampleRate <= source.getMaxSampleRate()) {
 			source.setFrequency(virtualFrequency);
-			source.setSampleRate(virtualSampleRate);
+			source.setSampleRate(newSampleRate);
 		} else
 			Log.e(LOGTAG,"onDoubleTap: Source is not set or out of range!");
 		return true;
@@ -539,6 +583,38 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		int start = (int)((frequencyDiff - sampleRateDiff/2.0) * samplesPerHz);
 		int end = mag.length + (int)((frequencyDiff + sampleRateDiff/2.0) * samplesPerHz);
 
+		// Averaging
+		if(averageLength > 0) {
+			// verify that the history samples array is correctly initialized:
+			if(historySamples == null || historySamples.length != averageLength || historySamples[0].length != mag.length) {
+				historySamples = new double[averageLength][mag.length];
+				for (int i = 0; i < averageLength; i++) {
+					for (int j = 0; j < mag.length; j++) {
+						historySamples[i][j] = mag[j];
+					}
+				}
+				oldesthistoryIndex = 0;
+			}
+			// Check if the frequency or sample rate of the incoming signals is different from the ones before:
+			if(frequency != lastFrequency || sampleRate != lastSampleRate) {
+				for (int i = 0; i < averageLength; i++) {
+					for (int j = 0; j < mag.length; j++) {
+						historySamples[i][j] = mag[j];    // reset history. We could also shift and scale. But for now they are simply reset.
+					}
+				}
+			}
+			// calculate the averages (store them into mag). copy mag to oldest history index
+			double tmp;
+			for (int i = 0; i < mag.length; i++) {
+				tmp = mag[i];
+				for (int j = 0; j < historySamples.length; j++)
+					tmp += historySamples[j][i];
+				historySamples[oldesthistoryIndex][i] = mag[i];
+				mag[i] = tmp / (historySamples.length+1);
+			}
+			oldesthistoryIndex = (oldesthistoryIndex + 1) % historySamples.length;
+		}
+
 		// Autoscale
 		if(doAutoscaleInNextDraw) {
 			doAutoscaleInNextDraw = false;
@@ -555,6 +631,26 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				minDB = Math.max(min, MIN_DB);
 				maxDB = Math.min(max, MAX_DB);
 			}
+		}
+
+		// Update Peak Hold
+		if(peakHoldEnabled) {
+			// First verify that the array is initialized correctly:
+			if(peaks == null || peaks.length != mag.length) {
+				peaks = new double[mag.length];
+				for (int i = 0; i < peaks.length; i++)
+					peaks[i] = -999999F;    // == no peak ;)
+			}
+			// Check if the frequency or sample rate of the incoming signals is different from the ones before:
+			if(frequency != lastFrequency || sampleRate != lastSampleRate) {
+				for (int i = 0; i < peaks.length; i++)
+					peaks[i] = -999999F;    // reset peaks. We could also shift and scale. But for now they are simply reset.
+			}
+			// Update the peaks:
+			for (int i = 0; i < mag.length; i++)
+				peaks[i] = Math.max(peaks[i], mag[i]);
+		} else {
+			peaks = null;
 		}
 
 		// Draw:
@@ -582,6 +678,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				this.getHolder().unlockCanvasAndPost(c);
 			}
 		}
+
+		// Update last frequency and sample rate:
+		this.lastFrequency = frequency;
+		this.lastSampleRate = sampleRate;
 	}
 
 	/**
@@ -603,7 +703,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		float dbWidth 		= getFftHeight() / dbDiff; 	// Size (in pixel) per 1dB in the fft
 		float scale 		= this.waterfallColorMap.length / dbDiff;	// scale for the color mapping of the waterfall
 		float avg;		// Used to calculate the average of multiple values in mag
-		int counter;	// Used to calculate the average of multiple values in mag
+		float peakAvg;	// Used to calculate the average of multiple values in peaks
+		int counter;	// Used to calculate the average of multiple values in mag and peaks
 
 		// Get a canvas from the bitmap of the current waterfall line and clear it:
 		Canvas newline = new Canvas(waterfallLines[waterfallLinesTopIndex]);
@@ -623,12 +724,17 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		for (int i = firstPixel + 1; i < lastPixel; i++) {
 			// Calculate the average value for this pixel:
 			avg = 0;
+			peakAvg = 0;
 			counter = 0;
 			for (int j = (int)(i*samplesPerPx); j < (i+1)*samplesPerPx; j++) {
 				avg += mag[j + start];
+				if(peaks != null)
+					peakAvg += peaks[j + start];
 				counter++;
 			}
 			avg = avg / counter;
+			if(peaks != null)
+				peakAvg = peakAvg / counter;
 
 			// FFT:
 			if(avg > minDB) {
@@ -649,6 +755,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 						break;
 					default:
 						Log.e(LOGTAG,"drawFFT: Invalid fft drawing type: " + fftDrawingType);
+				}
+			}
+
+			// Peak:
+			if(peaks != null) {
+				if(peakAvg > minDB) {
+					peakAvg = getFftHeight() - (peakAvg - minDB) * dbWidth;
+					if(peakAvg > 0 )
+						c.drawPoint(i,peakAvg,peakHoldPaint);
 				}
 			}
 

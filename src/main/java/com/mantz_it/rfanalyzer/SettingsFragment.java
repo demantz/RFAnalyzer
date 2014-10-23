@@ -181,6 +181,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		listPref = (ListPreference) findPreference(getString(R.string.pref_fftDrawingType));
 		listPref.setSummary(getString(R.string.pref_fftDrawingType_summ, listPref.getEntry()));
 
+		// Averaging
+		listPref = (ListPreference) findPreference(getString(R.string.pref_averaging));
+		listPref.setSummary(getString(R.string.pref_averaging_summ, listPref.getEntry()));
+
 		// Screen Orientation
 		listPref = (ListPreference) findPreference(getString(R.string.pref_screenOrientation));
 		listPref.setSummary(getString(R.string.pref_screenOrientation_summ, listPref.getEntry()));
