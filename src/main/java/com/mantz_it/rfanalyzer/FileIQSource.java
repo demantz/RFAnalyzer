@@ -157,13 +157,23 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
-	public long getMaxSampleRate() {
+	public int getMaxSampleRate() {
 		return sampleRate;
 	}
 
 	@Override
-	public long getMinSampleRate() {
+	public int getMinSampleRate() {
 		return sampleRate;
+	}
+
+	@Override
+	public int getNextHigherOptimalSampleRate(int sampleRate) {
+		return this.sampleRate;
+	}
+
+	@Override
+	public int getNextLowerOptimalSampleRate(int sampleRate) {
+		return this.sampleRate;
 	}
 
 	@Override

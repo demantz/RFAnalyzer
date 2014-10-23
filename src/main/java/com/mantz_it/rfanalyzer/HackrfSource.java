@@ -53,10 +53,11 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public static final long MIN_FREQUENCY = 1l;
 	public static final long MAX_FREQUENCY = 7250000000l;
 	public static final int MAX_SAMPLERATE = 20000000;
-	public static final int MIN_SAMPLERATE = 10000;
+	public static final int MIN_SAMPLERATE = 4000000;
 	public static final int MAX_VGA_RX_GAIN = 62;
 	public static final int MAX_VGA_TX_GAIN = 47;
 	public static final int MAX_LNA_GAIN = 40;
+	public static final int[] OPTIMAL_SAMPLE_RATES = { 4000000, 6000000, 8000000, 10000000, 12500000, 16000000, 20000000};
 
 	/**
 	 * Will forward an error message to the callback object
@@ -155,18 +156,36 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	@Override
-	public long getMaxSampleRate() {
+	public int getMaxSampleRate() {
 		return MAX_SAMPLERATE;
 	}
 
 	@Override
-	public long getMinSampleRate() {
+	public int getMinSampleRate() {
 		return MIN_SAMPLERATE;
 	}
 
 	@Override
 	public int getSampleRate() {
 		return sampleRate;
+	}
+
+	@Override
+	public int getNextHigherOptimalSampleRate(int sampleRate) {
+		for (int opt : OPTIMAL_SAMPLE_RATES) {
+			if (sampleRate < opt)
+				return opt;
+		}
+		return OPTIMAL_SAMPLE_RATES[OPTIMAL_SAMPLE_RATES.length-1];
+	}
+
+	@Override
+	public int getNextLowerOptimalSampleRate(int sampleRate) {
+		for (int i = 1; i < OPTIMAL_SAMPLE_RATES.length; i++) {
+			if(sampleRate <= OPTIMAL_SAMPLE_RATES[i])
+				return OPTIMAL_SAMPLE_RATES[i-1];
+		}
+		return OPTIMAL_SAMPLE_RATES[OPTIMAL_SAMPLE_RATES.length-1];
 	}
 
 	@Override
@@ -188,7 +207,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 		// Flush the queue
 		this.flushQueue();
-
+		Log.d(LOGTAG,"setSampleRate: setting sample rate to " + sampleRate);
 		this.sampleRate = sampleRate;
 	}
 
@@ -222,6 +241,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	public void setBasebandFilterWidth(int basebandFilterWidth) {
 		this.basebandFilterWidth = hackrf.computeBasebandFilterBandwidth(basebandFilterWidth);
+		Log.d(LOGTAG,"setBasebandFilterWidth: Setting BB filter width to " + this.basebandFilterWidth);
 		if(hackrf != null) {
 			try {
 				hackrf.setBasebandFilterBandwidth(this.basebandFilterWidth);

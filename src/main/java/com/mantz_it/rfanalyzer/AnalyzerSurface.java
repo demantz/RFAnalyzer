@@ -379,8 +379,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				float newMaxDB = Math.min(Math.max(dBFocus - (dBFocus - maxDB) / yScale, newMinDB + 10), MAX_DB);
 				this.setDBScale(newMinDB, newMaxDB);
 			}
-		}
 
+			// Automatically re-adjust the sample rate of the source if we zoom too far out or in
+			if(source.getSampleRate() < virtualSampleRate && virtualSampleRate < source.getMaxSampleRate())
+				source.setSampleRate(source.getNextHigherOptimalSampleRate(virtualSampleRate));
+			int nextLower = source.getNextLowerOptimalSampleRate(source.getSampleRate());
+			if( (virtualSampleRate < nextLower) && (source.getSampleRate() > nextLower)) {
+				source.setSampleRate(nextLower);
+			}
+		}
 		return true;
 	}
 
@@ -413,12 +420,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if (source != null) {
+			// scroll horizontally
 			virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (((virtualSampleRate / (float) width) * distanceX)),
 					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
 
 			if(virtualFrequency <= 0)
 				virtualFrequency = 1;
 
+			// scroll vertically
 			if (verticalScrollEnabled) {
 				float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
 				// Make sure we stay in the boundaries:
@@ -427,6 +436,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				if (minDB - yDiff < MIN_DB)
 					yDiff = MIN_DB - minDB;
 				this.setDBScale(minDB - yDiff, maxDB - yDiff);
+			}
+
+			// Automatically re-tune the source if we scrolled the samples out of the visible window:
+			if(source.getFrequency() + source.getSampleRate()/2 < virtualFrequency + virtualSampleRate/3 ||
+						source.getFrequency() - source.getSampleRate()/2 > virtualFrequency - virtualSampleRate/3) {
+				if(virtualFrequency >= source.getMinFrequency() && virtualFrequency <= source.getMaxFrequency())
+					source.setFrequency(virtualFrequency);
 			}
 		}
 
@@ -452,13 +468,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onDoubleTap(MotionEvent e) {
+		// calculate the next higher possible sample rate for virtual sample rate:
+		int newSampleRate = source.getNextHigherOptimalSampleRate(virtualSampleRate);
 		if(source != null
 				&& virtualFrequency >= source.getMinFrequency()
 				&& virtualFrequency <= source.getMaxFrequency()
-				&& virtualSampleRate >= source.getMinSampleRate()
-				&& virtualSampleRate <= source.getMaxSampleRate()) {
+				&& newSampleRate >= source.getMinSampleRate()
+				&& newSampleRate <= source.getMaxSampleRate()) {
 			source.setFrequency(virtualFrequency);
-			source.setSampleRate(virtualSampleRate);
+			source.setSampleRate(newSampleRate);
 		} else
 			Log.e(LOGTAG,"onDoubleTap: Source is not set or out of range!");
 		return true;
