@@ -44,10 +44,9 @@ import android.view.SurfaceView;
  */
 public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callback,
 															ScaleGestureDetector.OnScaleGestureListener,
-															GestureDetector.OnGestureListener,
-															GestureDetector.OnDoubleTapListener {
+															GestureDetector.OnGestureListener {
 
-	// Gesture detectors to detect scaling, scrolling double tapping, ...
+	// Gesture detectors to detect scaling, scrolling ...
 	private ScaleGestureDetector scaleGestureDetector = null;
 	private GestureDetector gestureDetector = null;
 
@@ -465,8 +464,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			}
 
 			// Automatically re-tune the source if we scrolled the samples out of the visible window:
-			if(source.getFrequency() + source.getSampleRate()/2 < virtualFrequency + virtualSampleRate/3 ||
-						source.getFrequency() - source.getSampleRate()/2 > virtualFrequency - virtualSampleRate/3) {
+			if(source.getFrequency() + source.getSampleRate()/2 < virtualFrequency + virtualSampleRate/2 ||
+						source.getFrequency() - source.getSampleRate()/2 > virtualFrequency - virtualSampleRate/2) {
 				if(virtualFrequency >= source.getMinFrequency() && virtualFrequency <= source.getMaxFrequency())
 					source.setFrequency(virtualFrequency);
 			}
@@ -485,34 +484,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		return true;
 	}
 //------------------- </OnGestureListener> ----------------------------------//
-
-//------------------- <OnDoubleTapListener> ---------------------------------//
-	@Override
-	public boolean onSingleTapConfirmed(MotionEvent e) {
-		return true;	// not used
-	}
-
-	@Override
-	public boolean onDoubleTap(MotionEvent e) {
-		// calculate the next higher possible sample rate for virtual sample rate:
-		int newSampleRate = source.getNextHigherOptimalSampleRate(virtualSampleRate);
-		if(source != null
-				&& virtualFrequency >= source.getMinFrequency()
-				&& virtualFrequency <= source.getMaxFrequency()
-				&& newSampleRate >= source.getMinSampleRate()
-				&& newSampleRate <= source.getMaxSampleRate()) {
-			source.setFrequency(virtualFrequency);
-			source.setSampleRate(newSampleRate);
-		} else
-			Log.e(LOGTAG,"onDoubleTap: Source is not set or out of range!");
-		return true;
-	}
-
-	@Override
-	public boolean onDoubleTapEvent(MotionEvent e) {
-		return true;	// not used
-	}
-//------------------- </OnDoubleTapListener> --------------------------------//
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
