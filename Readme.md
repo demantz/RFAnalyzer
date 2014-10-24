@@ -41,8 +41,8 @@ repository for information about supported devices:
 
 Known Issues
 ------------
-* still needs a lot of optimazation to reduce CPU load and achieve higher frame rates
-* not much testing so far
+* Strong aliasing images in some rare situations. Must be something wrong with the
+  baseband filter width. But it's hard to reproduce.
 
 
 Installation / Usage
