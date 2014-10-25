@@ -108,6 +108,7 @@ public class FirFilter {
 	public int filter(SamplePacket in, SamplePacket out, int offset, int length) {
 		int index;
 		int indexOut = out.size();
+		int outputCapacity = out.capacity();
 		double[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
 		// insert each input sample into the delay line:
@@ -118,8 +119,9 @@ public class FirFilter {
 			// Calculate the filter output for every Mth element (were M = decimation)
 			if(decimationCounter == 0) {
 				// first check if we have enough space in the output buffers:
-				if(indexOut == out.capacity()) {
+				if(indexOut == outputCapacity) {
 					out.setSize(indexOut);	// update size of output sample packet
+					out.setSampleRate(in.getSampleRate()/decimation);	// update the sample rate of the output sample packet
 					return i;    // We return the number of consumed samples from the input buffers
 				}
 
@@ -138,11 +140,17 @@ public class FirFilter {
 				// increase indexOut:
 				indexOut++;
 			}
+
 			// update counters:
-			decimationCounter = (decimationCounter + 1) % decimation;
-			tapCounter = (tapCounter + 1) % taps.length;
+			decimationCounter++;
+			if(decimationCounter >= decimation)
+				decimationCounter = 0;
+			tapCounter++;
+			if(tapCounter >= taps.length)
+				tapCounter = 0;
 		}
 		out.setSize(indexOut);	// update size of output sample packet
+		out.setSampleRate(in.getSampleRate()/decimation);	// update the sample rate of the output sample packet
 		return length;			// We return the number of consumed samples from the input buffers
 	}
 

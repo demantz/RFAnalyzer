@@ -38,25 +38,26 @@ import java.util.concurrent.TimeUnit;
 public class AudioSink extends Thread {
 	private AudioTrack audioTrack = null;
 	private boolean stopRequested = true;
-	private ArrayBlockingQueue<short[]> inputQueue = null;
-	private ArrayBlockingQueue<short[]> outputQueue = null;
+	private ArrayBlockingQueue<SamplePacket> inputQueue = null;
+	private ArrayBlockingQueue<SamplePacket> outputQueue = null;
 	private int packetSize;
-	private static final int SAMPLE_RATE = 32000;
+	private int sampleRate;
 	private static final int QUEUE_SIZE = 2;	// This results in a double buffer. see Scheduler...
 	private static final String LOGTAG = "AudioSink";
 
-	public AudioSink (int packetSize) {
+	public AudioSink (int packetSize, int sampleRate) {
 		this.packetSize = packetSize;
+		this.sampleRate = sampleRate;
 
 		// Create the queues and fill them with
-		this.inputQueue = new ArrayBlockingQueue<short[]>(QUEUE_SIZE);
-		this.outputQueue = new ArrayBlockingQueue<short[]>(QUEUE_SIZE);
+		this.inputQueue = new ArrayBlockingQueue<SamplePacket>(QUEUE_SIZE);
+		this.outputQueue = new ArrayBlockingQueue<SamplePacket>(QUEUE_SIZE);
 		for (int i = 0; i < QUEUE_SIZE; i++)
-			this.outputQueue.offer(new short[packetSize]);
+			this.outputQueue.offer(new SamplePacket(packetSize));
 
 		// Create an instance of the AudioTrack class:
-		int bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-		this.audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
+		int bufferSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+		this.audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO,
 									AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
 	}
 
@@ -90,7 +91,7 @@ public class AudioSink extends Thread {
 	 * @param timeout	max time this method will block
 	 * @return free buffer or null if no buffer available
 	 */
-	public short[] getPacketBuffer(int timeout) {
+	public SamplePacket getPacketBuffer(int timeout) {
 		try {
 			return outputQueue.poll(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
@@ -105,7 +106,7 @@ public class AudioSink extends Thread {
 	 * @param packet	the packet buffer from getPacketBuffer() filled with samples
 	 * @return true if success, false if error
 	 */
-	public boolean enqueuePacket(short[] packet) {
+	public boolean enqueuePacket(SamplePacket packet) {
 		if(packet == null) {
 			Log.e(LOGTAG, "enqueuePacket: Packet is null.");
 			return false;
@@ -119,7 +120,9 @@ public class AudioSink extends Thread {
 
 	@Override
 	public void run() {
-		short[] packet;
+		SamplePacket packet;
+		double[] doublePacket;
+		short[] shortPacket = new short[packetSize];
 
 		// start audio playback:
 		audioTrack.play();
@@ -136,8 +139,14 @@ public class AudioSink extends Thread {
 					break;
 				}
 
+				// Convert doubles to shorts [expect doubles to be in [-1...1]
+				doublePacket = packet.re();
+				for (int i = 0; i < packet.size(); i++) {
+					shortPacket[i] = (short) (doublePacket[i] * 32767);
+				}
+
 				// Write it to the audioTrack:
-				if(audioTrack.write(packet, 0, packet.length) != packet.length) {
+				if(audioTrack.write(shortPacket, 0, packet.size()) != packet.size()) {
 					Log.e(LOGTAG,"run: write() returned with error! stop");
 					stopRequested = true;
 				}

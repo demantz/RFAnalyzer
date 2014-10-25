@@ -58,6 +58,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public static final int MAX_VGA_TX_GAIN = 47;
 	public static final int MAX_LNA_GAIN = 40;
 	public static final int[] OPTIMAL_SAMPLE_RATES = { 4000000, 6000000, 8000000, 10000000, 12500000, 16000000, 20000000};
+	public double[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
+	public double[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
+	public double[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
+	public int cosineFrequency;							// Frequency of the cosine that is mixed to the signal
+	public int cosineIndex;								// current index within the cosine
+	public static final int MAX_COSINE_LENGTH = 10000;	// Max length of the cosine lookup table
 
 	/**
 	 * Will forward an error message to the callback object
@@ -417,18 +423,78 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		 *         I                  Q                  I                Q ...
 		 *  receivedBytes[0]   receivedBytes[1]   receivedBytes[2]       ...
 		 */
+
+		// If lookupTable is null, we create it:
+		if(lookupTable == null) {
+			lookupTable = new double[256];
+			for (int i = 0; i < 256; i++)
+				lookupTable[i] = (i-128) / 128.0;
+		}
+
+		int capacity = samplePacket.capacity();
 		int count = 0;
 		int startIndex = samplePacket.size();
 		double[] re = samplePacket.re();
 		double[] im = samplePacket.im();
 		for (int i = 0; i < packet.length; i+=2) {
-			re[startIndex+count] = packet[i] / 128.0;
-			im[startIndex+count] = packet[i+1] / 128.0;
+			re[startIndex+count] = lookupTable[packet[i]+128];
+			im[startIndex+count] = lookupTable[packet[i+1]+128];
 			count++;
-			if(startIndex+count >= samplePacket.capacity())
+			if(startIndex+count >= capacity)
 				break;
 		}
 		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
+		samplePacket.setSampleRate(sampleRate);				// update the sample rate
+		samplePacket.setFrequency(frequency);				// update the frequency
+		return count;
+	}
+
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int mixFrequency) {
+		// If mix frequency is too low, just skip mixing:
+		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
+			return fillPacketIntoSamplePacket(packet, samplePacket);
+
+		// If lookupTable is null or is invalid, we create it:
+		if(cosineRealLookupTable == null || cosineFrequency != mixFrequency) {
+			cosineFrequency = mixFrequency;
+			// look for the best fitting array size to hold one or more full cosine cycles:
+			double cycleLength = sampleRate / Math.abs((double)mixFrequency);
+			int bestLength = (int) cycleLength;
+			double bestLengthError = Math.abs(bestLength-cycleLength);
+			for (int i = 0; i*cycleLength < MAX_COSINE_LENGTH ; i++) {
+				if(Math.abs(i*cycleLength - (int)(i*cycleLength)) < bestLengthError) {
+					bestLength = (int)(i*cycleLength);
+					bestLengthError = Math.abs(bestLength - (i*cycleLength));
+				}
+			}
+			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array. Length="+bestLength + " Error="+bestLengthError);
+			cosineRealLookupTable = new double[bestLength][256];
+			cosineImagLookupTable = new double[bestLength][256];
+			for (int t = 0; t < bestLength; t++) {
+				for (int i = 0; i < 256; i++) {
+					cosineRealLookupTable[t][i] = (i-128)/128.0 * Math.cos(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+					cosineImagLookupTable[t][i] = (i-128)/128.0 * Math.sin(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+				}
+			}
+		}
+
+		// Mix the samples from packet and store the results in the samplePacket
+		int capacity = samplePacket.capacity();
+		int count = 0;
+		int startIndex = samplePacket.size();
+		double[] re = samplePacket.re();
+		double[] im = samplePacket.im();
+		for (int i = 0; i < packet.length; i+=2) {
+			re[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i]+128] - cosineImagLookupTable[cosineIndex][packet[i+1]+128];
+			im[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i+1]+128] + cosineImagLookupTable[cosineIndex][packet[i]+128];
+			cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
+			count++;
+			if(startIndex+count >= capacity)
+				break;
+		}
+		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
+		samplePacket.setSampleRate(sampleRate);				// update the sample rate
+		samplePacket.setFrequency(frequency);				// update the frequency
 		return count;
 	}
 

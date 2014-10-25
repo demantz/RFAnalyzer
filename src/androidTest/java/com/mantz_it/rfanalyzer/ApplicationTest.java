@@ -1,6 +1,7 @@
 package com.mantz_it.rfanalyzer;
 
 import android.app.Application;
+import android.os.Debug;
 import android.test.ApplicationTestCase;
 
 import java.nio.ByteBuffer;
@@ -55,6 +56,29 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		spectrum(fft2, reOut, imOut);
 	}
 
+	public void testFirFilterPerformance() {
+		int sampleRate = 4000000;
+		int packetSize = 16384;
+		int loopCycles = 1000;
+		SamplePacket in = new SamplePacket(packetSize);
+		SamplePacket out = new SamplePacket(packetSize);
+		out.setSize(0);
+		in.setSize(in.capacity());
+
+		//Debug.startMethodTracing("FirFilter");
+		FirFilter filter = FirFilter.createLowPass(4, 1, sampleRate, 100000, 800000, 40);
+		System.out.println("Created filter with " + filter.getNumberOfTaps() + " taps!");
+
+		System.out.println("##### START ...");
+		long startTime = System.currentTimeMillis();
+		for (int i = 0; i < loopCycles; i++) {
+			filter.filter(in, out, 0, in.size());
+			out.setSize(0);
+		}
+		System.out.println("##### DONE. Time needed for 1 sec of samples: " + (System.currentTimeMillis() - startTime)/(packetSize*loopCycles/4000000.0));
+		//Debug.stopMethodTracing();
+	}
+	
 	public void testFFT() throws Exception {
 		// Test the FFT to make sure it's working
 		int N = 8;

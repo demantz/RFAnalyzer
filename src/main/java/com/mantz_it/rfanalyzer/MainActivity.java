@@ -58,6 +58,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
 	private IQSourceInterface source = null;
 	private Scheduler scheduler = null;
+	private Demodulator demodulator = null;
 	private SharedPreferences preferences = null;
 	private Bundle savedInstanceState = null;
 	private Process logcat = null;
@@ -364,7 +365,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 	/**
 	 * Will stop the RF Analyzer. This includes shutting down the scheduler (which turns of the
-	 * source) and the processing loop.
+	 * source), the processing loop and the demodulator if running.
 	 */
 	public void stopAnalyzer() {
 		// Stop the Scheduler if running:
@@ -374,6 +375,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Stop the Processing Loop if running:
 		if(analyzerProcessingLoop != null)
 			analyzerProcessingLoop.stopLoop();
+
+		// Stop the Demodulator if running:
+		if(demodulator != null)
+			demodulator.stopDemodulator();
 
 		// Wait for the scheduler to stop:
 		if(scheduler != null) {
@@ -390,6 +395,15 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				analyzerProcessingLoop.join();
 			} catch (InterruptedException e) {
 				Log.e(LOGTAG, "startAnalyzer: Error while stopping Processing Loop.");
+			}
+		}
+
+		// Wait for the demodulator to stop
+		if(demodulator != null) {
+			try {
+				demodulator.join();
+			} catch (InterruptedException e) {
+				Log.e(LOGTAG, "startAnalyzer: Error while stopping Demodulator.");
 			}
 		}
 
@@ -437,8 +451,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		analyzerProcessingLoop = new AnalyzerProcessingLoop(
 				analyzerSurface, 			// Reference to the Analyzer Surface
 				fftSize,					// FFT size
-				scheduler.getOutputQueue(), // Reference to the input queue for the processing loop
-				scheduler.getInputQueue()); // Reference to the buffer-pool-return queue
+				scheduler.getFftOutputQueue(), // Reference to the input queue for the processing loop
+				scheduler.getFftInputQueue()); // Reference to the buffer-pool-return queue
 		if(dynamicFrameRate)
 			analyzerProcessingLoop.setDynamicFrameRate(true);
 		else {
@@ -455,6 +469,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			mi_startStop.setTitle(R.string.action_stop);
 			mi_startStop.setIcon(R.drawable.ic_action_pause);
 		}
+
+		///// DEBUG ///////
+		scheduler.setMixFrequency(100000);
+		demodulator = new Demodulator(scheduler.getDemodOutputQueue(), scheduler.getDemodInputQueue(), source.getPacketSize());
+		demodulator.start();
+		///// DEBUG ///////
 	}
 
 	/**
