@@ -1,5 +1,9 @@
 CHANGELOG - RF Analyzer
 
+version 1.05:
+ - Fixed crash on application start when double tapping the screen
+ - Optimized auto-retuning on scrolling
+
 version 1.04:
  - Optimized sample rates for HackRF: allow only 4, 6, 8, 10, 12.5, 16 and 20 Msps
  - Automatically re-tune while scrolling and zooming
