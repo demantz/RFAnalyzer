@@ -6,6 +6,10 @@
     <string name="action_help">Help</string>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="action_demodulation_off">Demodulation: off</string>
+    <string name="action_demodulation_am">Demodulation: AM</string>
+    <string name="action_demodulation_nfm">Demodulation: narrow FM</string>
+    <string name="action_demodulation_wfm">Demodulation: wide FM</string>
     <string name="action_setFrequency">Set Frequency</string>
     <string name="action_setGain">Set Gain</string>
     <string name="action_autoscale">Autoscale</string>
@@ -14,6 +18,7 @@
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
     <string name="save_state_running">save_state_running</string>
+    <string name="save_state_demodulatorMode">save_state_demodulatorMode</string>
     <string name="save_state_virtualFrequency">save_state_virtualFrequency</string>
     <string name="save_state_virtualSampleRate">save_state_virtualSampleRate</string>
     <string name="save_state_minDB">save_state_minDB</string>

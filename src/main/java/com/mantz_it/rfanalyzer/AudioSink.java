@@ -124,6 +124,8 @@ public class AudioSink extends Thread {
 		double[] doublePacket;
 		short[] shortPacket = new short[packetSize];
 
+		Log.i(LOGTAG,"AudioSink started. (Thread: " + this.getName() + ")");
+
 		// start audio playback:
 		audioTrack.play();
 
@@ -134,9 +136,8 @@ public class AudioSink extends Thread {
 				packet = inputQueue.poll(1000, TimeUnit.MILLISECONDS);
 
 				if(packet == null) {
-					Log.e(LOGTAG, "run: Queue is empty. stop.");
-					stopRequested = true;
-					break;
+					Log.d(LOGTAG, "run: Queue is empty. skip this round");
+					continue;
 				}
 
 				// Convert doubles to shorts [expect doubles to be in [-1...1]
@@ -161,5 +162,7 @@ public class AudioSink extends Thread {
 
 		// stop audio playback:
 		audioTrack.stop();
+		this.stopRequested = true;
+		Log.i(LOGTAG,"AudioSink stopped. (Thread: " + this.getName() + ")");
 	}
 }

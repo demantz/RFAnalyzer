@@ -53,6 +53,7 @@ import java.io.File;
 public class MainActivity extends Activity implements IQSourceInterface.Callback  {
 
 	private MenuItem mi_startStop = null;
+	private MenuItem mi_demodulationMode = null;
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
@@ -63,6 +64,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private Bundle savedInstanceState = null;
 	private Process logcat = null;
 	private boolean running = false;
+	private int demodulationMode = Demodulator.DEMODULATION_OFF;
 
 	private static final String LOGTAG = "MainActivity";
 	private static final int FILE_SOURCE = 0;
@@ -117,9 +119,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
 
-		// Restore / Initialize the running state:
+		// Restore / Initialize the running state and the demodulator mode:
 		if(savedInstanceState != null) {
 			running = savedInstanceState.getBoolean(getString(R.string.save_state_running));
+			demodulationMode = savedInstanceState.getInt(getString(R.string.save_state_demodulatorMode));
 		} else {
 			// Set running to true if autostart is enabled (this will start the analyzer in onStart() )
 			running = preferences.getBoolean((getString(R.string.pref_autostart)), false);
@@ -148,6 +151,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putBoolean(getString(R.string.save_state_running), running);
+		outState.putInt(getString(R.string.save_state_demodulatorMode), demodulationMode);
 		if(analyzerSurface != null) {
 			outState.putLong(getString(R.string.save_state_virtualFrequency), analyzerSurface.getVirtualFrequency());
 			outState.putInt(getString(R.string.save_state_virtualSampleRate), analyzerSurface.getVirtualSampleRate());
@@ -162,15 +166,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		getMenuInflater().inflate(R.menu.main, menu);
 		// Get a reference to the start-stop button:
 		mi_startStop = menu.findItem(R.id.action_startStop);
+		mi_demodulationMode = menu.findItem(R.id.action_setDemodulation);
 
-		// Set title and icon according to the state:
-		if(running) {
-			mi_startStop.setTitle(R.string.action_stop);
-			mi_startStop.setIcon(R.drawable.ic_action_pause);
-		} else {
-			mi_startStop.setTitle(R.string.action_start);
-			mi_startStop.setIcon(R.drawable.ic_action_play);
-		}
+		// update the action bar icons and titles according to the app state:
+		updateActionBar();
 		return true;
 	}
 
@@ -181,10 +180,15 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		switch (id) {
-			case R.id.action_startStop:		if(running)
+			case R.id.action_startStop:		if(running) {
 												stopAnalyzer();
+												// Stop demodulating:
+												this.setDemodulationMode(Demodulator.DEMODULATION_OFF);
+											}
 											else
 												startAnalyzer();
+											break;
+			case R.id.action_setDemodulation: showDemodulationDialog();
 											break;
 			case R.id.action_setFrequency:	tuneToFrequency();
 											break;
@@ -204,6 +208,55 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		return true;
 	}
 
+	/**
+	 * Will update the action bar icons and titles according to the current app state
+	 */
+	private void updateActionBar() {
+		// Set title and icon of the start/stop button according to the state:
+		if(mi_startStop != null) {
+			if (running) {
+				mi_startStop.setTitle(R.string.action_stop);
+				mi_startStop.setIcon(R.drawable.ic_action_pause);
+			} else {
+				mi_startStop.setTitle(R.string.action_start);
+				mi_startStop.setIcon(R.drawable.ic_action_play);
+			}
+		}
+
+		// Set title and icon for the demodulator mode button
+		if(mi_demodulationMode != null) {
+			int iconRes;
+			int titleRes;
+			switch (demodulationMode) {
+				case Demodulator.DEMODULATION_OFF:
+					iconRes = R.drawable.ic_action_demod_off;
+					titleRes = R.string.action_demodulation_off;
+					break;
+				case Demodulator.DEMODULATION_AM:
+					iconRes = R.drawable.ic_action_demod_am;
+					titleRes = R.string.action_demodulation_am;
+					break;
+				case Demodulator.DEMODULATION_NFM:
+					iconRes = R.drawable.ic_action_demod_nfm;
+					titleRes = R.string.action_demodulation_nfm;
+					break;
+				case Demodulator.DEMODULATION_WFM:
+					iconRes = R.drawable.ic_action_demod_wfm;
+					titleRes = R.string.action_demodulation_wfm;
+					break;
+				default:
+					Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
+					iconRes = -1;
+					titleRes = -1;
+					break;
+			}
+			if(titleRes > 0 && iconRes > 0) {
+				mi_demodulationMode.setTitle(titleRes);
+				mi_demodulationMode.setIcon(iconRes);
+			}
+		}
+	}
+
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -213,6 +266,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Start the analyzer if running is true:
 		if (running)
 			startAnalyzer();
+
+		// Set the demodulator mode (to restore settings)
+		this.setDemodulationMode(demodulationMode);
 	}
 
 	@Override
@@ -407,13 +463,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		}
 
-		// Change stop button in action bar into a start button:
-		if(mi_startStop != null) {
-			mi_startStop.setTitle(R.string.action_start);
-			mi_startStop.setIcon(R.drawable.ic_action_play);
-		}
-
 		running = false;
+
+		// update action bar icons and titles:
+		updateActionBar();
 	}
 
 	/**
@@ -464,17 +517,73 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		scheduler.start();
 		analyzerProcessingLoop.start();
 
-		// Change start button in action bar into a stop button:
-		if(mi_startStop != null) {
-			mi_startStop.setTitle(R.string.action_stop);
-			mi_startStop.setIcon(R.drawable.ic_action_pause);
-		}
+		scheduler.setMixFrequency(100000); ///// DEBUG ///////
 
-		///// DEBUG ///////
-		scheduler.setMixFrequency(100000);
+		// Start the demodulator thread:
 		demodulator = new Demodulator(scheduler.getDemodOutputQueue(), scheduler.getDemodInputQueue(), source.getPacketSize());
 		demodulator.start();
-		///// DEBUG ///////
+
+		// update the action bar icons and titles:
+		updateActionBar();
+	}
+
+	/**
+	 * Will pop up a dialog to let the user choose a demodulation mode.
+	 */
+	private void showDemodulationDialog() {
+		if(scheduler == null || demodulator == null || source == null) {
+			Toast.makeText(MainActivity.this, "FFT must be running to change modulation mode", Toast.LENGTH_LONG).show();
+			return;
+		}
+
+		new AlertDialog.Builder(this)
+				.setTitle("Select a demodulation mode:")
+				.setSingleChoiceItems(R.array.demodulation_modes, demodulator.getDemodulationMode(), new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						setDemodulationMode(which);
+						dialog.dismiss();
+					}
+				})
+				.show();
+	}
+
+	/**
+	 * Will set the modulation mode to the given value. Takes care of adjusting the
+	 * scheduler and the demodulator respectively and updates the action bar menu item.
+	 *
+	 * @param mode	Demodulator.DEMODULATION_OFF, *_AM, *_NFM, *_WFM
+	 */
+	public void setDemodulationMode(int mode) {
+		if(scheduler == null || demodulator == null || source == null) {
+			Log.e(LOGTAG,"setDemodulationMode: scheduler/demodulator/source is null");
+			return;
+		}
+
+		// (de-)activate demodulation in the scheduler and set the sample rate accordingly:
+		if(mode == Demodulator.DEMODULATION_OFF) {
+			scheduler.setDemodulationActivated(false);
+		}
+		else {
+			// adjust sample rate of the source:
+			source.setSampleRate(Demodulator.INPUT_RATE);
+
+			// Verify that the source supports the sample rate:
+			if(source.getSampleRate() != Demodulator.INPUT_RATE) {
+				Log.e(LOGTAG,"setDemodulationMode: cannot adjust source sample rate!");
+				Toast.makeText(MainActivity.this, "Source does not support the sample rate necessary for demodulation (" +
+						Demodulator.INPUT_RATE/1000000 + " Msps)", Toast.LENGTH_LONG).show();
+				scheduler.setDemodulationActivated(false);
+				mode = Demodulator.DEMODULATION_OFF;	// deactivate demodulation...
+			} else
+				scheduler.setDemodulationActivated(true);
+		}
+
+		// set demodulation mode in demodulator:
+		demodulator.setDemodulationMode(mode);
+		this.demodulationMode = mode;	// save the setting
+
+		// update action bar:
+		updateActionBar();
 	}
 
 	/**

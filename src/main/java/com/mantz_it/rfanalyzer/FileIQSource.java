@@ -141,7 +141,6 @@ public class FileIQSource implements IQSourceInterface {
 	@Override
 	public void setSampleRate(int sampleRate) {
 		Log.e(LOGTAG,"Setting the sample rate is not supported on a file source");
-		reportError("Setting the sample rate is not supported on a file source");
 	}
 
 	@Override
@@ -152,7 +151,6 @@ public class FileIQSource implements IQSourceInterface {
 	@Override
 	public void setFrequency(long frequency) {
 		Log.e(LOGTAG,"Setting the frequency is not supported on a file source");
-		reportError("Setting the frequency is not supported on a file source");
 	}
 
 	@Override

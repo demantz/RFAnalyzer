@@ -39,6 +39,7 @@ public class Scheduler extends Thread {
 	private ArrayBlockingQueue<SamplePacket> demodOutputQueue = null;	// Queue that delivers samples to the Demodulator block
 	private ArrayBlockingQueue<SamplePacket> demodInputQueue = null;	// Queue that collects used buffers from the Demodulator block
 	private int mixFrequency = 0;						// Shift frequency by this value when passing packets to demodulator
+	private boolean demodulationActivated = false;		// Indicates if samples should be forwarded to the demodulator queues or not.
 	private boolean stopRequested = true;
 
 	// Define the size of the fft output and input Queues. By setting this value to 2 we basically end up
@@ -100,6 +101,14 @@ public class Scheduler extends Thread {
 		return demodInputQueue;
 	}
 
+	public boolean isDemodulationActivated() {
+		return demodulationActivated;
+	}
+
+	public void setDemodulationActivated(boolean demodulationActivated) {
+		this.demodulationActivated = demodulationActivated;
+	}
+
 	public int getMixFrequency() {
 		return mixFrequency;
 	}
@@ -125,17 +134,19 @@ public class Scheduler extends Thread {
 			}
 
 			///// Demodulation /////////////////////////////////////////////////////////////////////
-			// Get a buffer from the demodulator inputQueue
-			demodBuffer = demodInputQueue.poll();
-			if(demodBuffer != null) {
-				demodBuffer.setSize(0);	// mark buffer as empty
-				// fill the packet into the buffer and shift its spectrum by mixFrequency:
-				source.mixPacketIntoSamplePacket(packet, demodBuffer, mixFrequency);
-				demodOutputQueue.offer(demodBuffer);	// deliver packet
-			} else {
-				Log.d(LOGTAG,"run: Flush the demod queue because demodulator is too slow!");
-				while ((tmpFlushBuffer = demodOutputQueue.poll()) != null)
-					demodInputQueue.offer(tmpFlushBuffer);
+			if(demodulationActivated) {
+				// Get a buffer from the demodulator inputQueue
+				demodBuffer = demodInputQueue.poll();
+				if (demodBuffer != null) {
+					demodBuffer.setSize(0);    // mark buffer as empty
+					// fill the packet into the buffer and shift its spectrum by mixFrequency:
+					source.mixPacketIntoSamplePacket(packet, demodBuffer, mixFrequency);
+					demodOutputQueue.offer(demodBuffer);    // deliver packet
+				} else {
+					Log.d(LOGTAG, "run: Flush the demod queue because demodulator is too slow!");
+					while ((tmpFlushBuffer = demodOutputQueue.poll()) != null)
+						demodInputQueue.offer(tmpFlushBuffer);
+				}
 			}
 
 			///// FFT //////////////////////////////////////////////////////////////////////////////

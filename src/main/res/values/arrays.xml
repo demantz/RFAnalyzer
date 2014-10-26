@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="demodulation_modes">
+        <item>Demodulation off</item>
+        <item>AM</item>
+        <item>narrow-band FM</item>
+        <item>wide-band FM</item>
+    </string-array>
     <string-array name="pref_sourceType_entries">
         <item>File Source</item>
         <item>HackRF</item>

@@ -39,19 +39,12 @@ public class Demodulator extends Thread {
 	private static final int AUDIO_RATE = 31250;
 	private static final int AUDIO_DECIMATION = 8;
 	private static final int QUADRATURE_RATE = AUDIO_RATE * AUDIO_DECIMATION; 	// 250000
-	private static final int INPUT_RATE = QUADRATURE_RATE*2;					// 500000
+	private static final int INTERMEDIATE_RATE = QUADRATURE_RATE*2;				// 500000
+	public static final int INPUT_RATE = INTERMEDIATE_RATE*2;					// 1000000
 
 	private ArrayBlockingQueue<SamplePacket> inputQueue;
 	private ArrayBlockingQueue<SamplePacket> outputQueue;
 	private int packetSize;
-
-	//MIXER:
-	private int mixFrequency = 0;
-	private double[] cosineReal = null;
-	private double[] cosineImag = null;
-	private int cosineLength = 0;
-	private int cosineIndex = 0;
-	private static final int MIN_MIX_FREQUENCY = 1000;
 
 	// DOWNSAMPLING:
 	private static final int INPUT_FILTER_GAIN = 1;
@@ -77,6 +70,11 @@ public class Demodulator extends Thread {
 	private FirFilter audioFilter = null;
 	private SamplePacket demodulatedSamples;
 	private SamplePacket demodulatorHistory;
+	public static final int DEMODULATION_OFF = 0;
+	public static final int DEMODULATION_AM = 1;
+	public static final int DEMODULATION_NFM = 2;
+	public static final int DEMODULATION_WFM = 3;
+	public int demodulationMode;
 
 	// AUDIO OUTPUT
 	private AudioSink audioSink = null;
@@ -107,6 +105,18 @@ public class Demodulator extends Thread {
 				+ " transition="+audioFilter.getTransitionWidth());
 	}
 
+	public int getDemodulationMode() {
+		return demodulationMode;
+	}
+
+	public void setDemodulationMode(int demodulationMode) {
+		if(demodulationMode > 3 || demodulationMode < 0) {
+			Log.e(LOGTAG,"setDemodulationMode: invalid mode: " + demodulationMode);
+			return;
+		}
+		this.demodulationMode = demodulationMode;
+	}
+
 	/**
 	 * Starts the thread
 	 */
@@ -128,11 +138,12 @@ public class Demodulator extends Thread {
 		SamplePacket inputSamples = null;
 		SamplePacket audioBuffer = null;
 
+		Log.i(LOGTAG,"Demodulator started. (Thread: " + this.getName() + ")");
+
 		audioSink.start();
 
 		// DEBUG ////////////////////////////////////
 		userFilterCutOff = 150000;
-		mixFrequency = 100000;
 		long startTime = System.currentTimeMillis();
 		long timerCounter = 0;
 		// DEBUG ////////////////////////////////////
@@ -149,25 +160,24 @@ public class Demodulator extends Thread {
 
 			// Verify the input sample packet is not null:
 			if (inputSamples == null) {
-				Log.e(LOGTAG, "run: Input sample is null. skip this round...");
+				Log.d(LOGTAG, "run: Input sample is null. skip this round...");
 				continue;
 			}
 
 			// Verify the input sample rate:
-			if (inputSamples.getSampleRate() % INPUT_RATE != 0) {
-				Log.e(LOGTAG, "run: Input sample rate is not a multiple of " + INPUT_RATE + ". stop.");
-				this.stopRequested = true;
-				break;
+			if (inputSamples.getSampleRate() != INPUT_RATE) {
+				Log.d(LOGTAG, "run: Input sample rate is " + inputSamples.getSampleRate() + " but should be" + INTERMEDIATE_RATE + ". skip.");
+				continue;
 			}
 
-			// downsampling		[sample rate decimated to INPUT_RATE]
+			// downsampling		[sample rate decimated to INTERMEDIATE_RATE]
 			downsampling(inputSamples);
 			// The result from downsampling is stored in downsampledSamples
 
 			// return inputSamples back to the Scheduler:
 			outputQueue.offer(inputSamples);
 
-			// filtering		[sample rate is INPUT_RATE; output sample rate is QUADRATURE_RATE]
+			// filtering		[sample rate is INTERMEDIATE_RATE; output sample rate is QUADRATURE_RATE]
 			applyUserFilter(downsampledSamples);
 			// The result from filtering is stored in quadratureSamples
 
@@ -188,19 +198,23 @@ public class Demodulator extends Thread {
 			}
 		}
 
+		audioSink.stopSink();
+
 		// DEBUG ////////////////////////////////////
 		long timeSpan = (System.currentTimeMillis() - startTime)/1000;
 		Log.d(LOGTAG,"##### DONE. Measured Audio Rate: " + timerCounter/(double)timeSpan + " Hz ("
 				+timerCounter+" audio samples in "+timeSpan+" sec) ##############################");
 		// DEBUG ////////////////////////////////////
 
+		this.stopRequested = true;
+		Log.i(LOGTAG,"Demodulator stopped. (Thread: " + this.getName() + ")");
 	}
 
 	public void downsampling(SamplePacket samples) {
 		// Verify that the filter is still correct configured:
-		if(inputFilter == null || samples.getSampleRate()/INPUT_RATE != inputFilter.getDecimation()) {
+		if(inputFilter == null || samples.getSampleRate()/ INTERMEDIATE_RATE != inputFilter.getDecimation()) {
 			// We have to (re-)create the input filter:
-			this.inputFilter = FirFilter.createLowPass(	samples.getSampleRate()/INPUT_RATE,
+			this.inputFilter = FirFilter.createLowPass(	samples.getSampleRate()/ INTERMEDIATE_RATE,
 														INPUT_FILTER_GAIN,
 														samples.getSampleRate(),
 														INPUT_FILTER_CUT_OFF,
@@ -220,7 +234,7 @@ public class Demodulator extends Thread {
 		// Verify that the filter is still correct configured:
 		if(userFilter == null || ((int) userFilter.getCutOffFrequency()) != userFilterCutOff) {
 			// We have to (re-)create the user filter:
-			this.userFilter = FirFilter.createLowPass(	samples.getSampleRate()/QUADRATURE_RATE, // --> INPUT_RATE to QUADRATURE_RATE
+			this.userFilter = FirFilter.createLowPass(	samples.getSampleRate()/QUADRATURE_RATE, // --> INTERMEDIATE_RATE to QUADRATURE_RATE
 														USER_FILTER_GAIN,
 														samples.getSampleRate(),
 														userFilterCutOff,
