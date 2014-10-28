@@ -80,9 +80,6 @@ public class Demodulator extends Thread {
 
 	// AUDIO OUTPUT
 	private AudioSink audioSink = null;
-	private FirFilter audioFilter1 = null;
-	private FirFilter audioFilter2 = null;
-	private SamplePacket tmpAudioSamples;
 
 	public Demodulator (ArrayBlockingQueue<SamplePacket> inputQueue, ArrayBlockingQueue<SamplePacket> outputQueue, int packetSize) {
 		this.inputQueue = inputQueue;
@@ -97,7 +94,6 @@ public class Demodulator extends Thread {
 		this.tmpDownsampledSamples = new SamplePacket(packetSize);
 		this.quadratureSamples = new SamplePacket(packetSize);
 		this.demodulatedSamples = new SamplePacket(packetSize);
-		this.tmpAudioSamples = new SamplePacket(packetSize);
 
 		// Create Audio Sink
 		this.audioSink = new AudioSink(packetSize, AUDIO_RATE);
@@ -106,11 +102,6 @@ public class Demodulator extends Thread {
 		this.inputFilter1 = new HalfBandLowPassFilter(8);
 		this.inputFilter2 = new HalfBandLowPassFilter(8);
 		this.inputFilter3 = new HalfBandLowPassFilter(8);
-
-		this.audioFilter1 = FirFilter.createLowPass(2, 1, 1, 0.1, 0.15, 30);
-		Log.d(LOGTAG,"constructor: created audio filter 1 with " + audioFilter1.getNumberOfTaps() + " Taps.");
-		this.audioFilter2 = FirFilter.createLowPass(4, 1, 1, 0.1, 0.1, 30);
-		Log.d(LOGTAG,"constructor: created audio filter 2 with " + audioFilter2.getNumberOfTaps() + " Taps.");
 	}
 
 	public int getDemodulationMode() {
@@ -199,23 +190,14 @@ public class Demodulator extends Thread {
 			// filtering		[sample rate is QUADRATURE_RATE]
 			applyUserFilter(downsampledSamples, quadratureSamples);		// The result from filtering is stored in quadratureSamples
 
-			// demodulate		[sample rate is QUADRATURE_RATE]
-			demodulate(quadratureSamples, demodulatedSamples);			// The result from demodulating is stored in demodulatedSamples
-
 			// get buffer from audio sink
-			if(audioBuffer == null) {
-				audioBuffer = audioSink.getPacketBuffer(1000);
-				audioBuffer.setSize(0);	// Mark buffer as empty
-			}
+			audioBuffer = audioSink.getPacketBuffer(1000);
 
-			// filter the demodulated samples		[sample rate decimated from QUADRATURE_RATE to AUDIO_RATE]
-			applyAudioFilter(demodulatedSamples, audioBuffer);			// The result from filtering is stored in audioBuffer
+			// demodulate		[sample rate is QUADRATURE_RATE]
+			demodulate(quadratureSamples, audioBuffer);			// The result from demodulating is stored in audioBuffer
 
-			// play audio if buffer is at least half full [sample rate is AUDIO_RATE]
-			if(audioBuffer.size() >= audioBuffer.capacity()/2) {
-				audioSink.enqueuePacket(audioBuffer);
-				audioBuffer = null;
-			}
+			// play audio		[sample rate is QUADRATURE_RATE]
+			audioSink.enqueuePacket(audioBuffer);
 		}
 
 		// Stop the audio sink thread:
@@ -284,8 +266,8 @@ public class Demodulator extends Thread {
 	public void demodulate(SamplePacket input, SamplePacket output) {
 		double[] reIn = input.re();
 		double[] imIn = input.im();
-		double[] reOut = demodulatedSamples.re();
-		double[] imOut = demodulatedSamples.im();
+		double[] reOut = output.re();
+		double[] imOut = output.im();
 		int maxDeviation = 75000;
 		double quadratureGain = QUADRATURE_RATE[demodulationMode]/(2*Math.PI*maxDeviation);
 
@@ -306,28 +288,7 @@ public class Demodulator extends Thread {
 		}
 		demodulatorHistory.re()[0] = reIn[input.size()-1];
 		demodulatorHistory.im()[0] = imIn[input.size()-1];
-		demodulatedSamples.setSize(input.size());
-		demodulatedSamples.setSampleRate(QUADRATURE_RATE[demodulationMode]);
-	}
-
-	public void applyAudioFilter(SamplePacket input, SamplePacket output) {
-		// if we need a decimation of 8: apply first and second filter (decimate to QUADRATURE_RATE/8)
-		if(QUADRATURE_RATE[demodulationMode]/AUDIO_RATE == 8) {
-			// apply first filter (decimate to QUADRATURE_RATE/2)
-			tmpAudioSamples.setSize(0);	// mark buffer as empty
-			if (audioFilter1.filter(input, tmpAudioSamples, 0, input.size()) < input.size()) {
-				Log.e(LOGTAG, "applyAudioFilter: [audioFilter1] could not filter all samples from input packet.");
-			}
-
-			// apply second filter (decimate to QUADRATURE_RATE/8)
-			if (audioFilter2.filter(tmpAudioSamples, output, 0, tmpAudioSamples.size()) < tmpAudioSamples.size()) {
-				Log.e(LOGTAG, "applyAudioFilter: [audioFilter2] could not filter all samples from input packet.");
-			}
-		} else {
-			// apply first filter (decimate to QUADRATURE_RATE/2 )
-			if (audioFilter1.filter(input, output, 0, input.size()) < input.size()) {
-				Log.e(LOGTAG, "applyAudioFilter: [audioFilter1] could not filter all samples from input packet.");
-			}
-		}
+		output.setSize(input.size());
+		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
 	}
 }

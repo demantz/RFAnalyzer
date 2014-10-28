@@ -155,6 +155,61 @@ public class FirFilter {
 	}
 
 	/**
+	 * Filters the real parts of the samples from the input sample packet and appends filter output to the output
+	 * sample packet. Stops automatically if output sample packet is full.
+	 * @param in		input sample packet
+	 * @param out		output sample packet
+	 * @param offset	offset to use as start index for the input packet
+	 * @param length	max number of samples processed from the input packet
+	 * @return number of samples consumed from the input packet
+	 */
+	public int filterReal(SamplePacket in, SamplePacket out, int offset, int length) {
+		int index;
+		int indexOut = out.size();
+		int outputCapacity = out.capacity();
+		double[] reIn = in.re(), reOut = out.re();
+
+		// insert each input sample into the delay line:
+		for (int i = 0; i < length; i++) {
+			delaysReal[tapCounter] = reIn[offset + i];
+
+			// Calculate the filter output for every Mth element (were M = decimation)
+			if(decimationCounter == 0) {
+				// first check if we have enough space in the output buffers:
+				if(indexOut == outputCapacity) {
+					out.setSize(indexOut);	// update size of output sample packet
+					out.setSampleRate(in.getSampleRate()/decimation);	// update the sample rate of the output sample packet
+					return i;    // We return the number of consumed samples from the input buffers
+				}
+
+				// Calculate the results:
+				reOut[indexOut] = 0;
+				index = tapCounter;
+				for (double tap : taps) {
+					reOut[indexOut] += tap * delaysReal[index];
+					index--;
+					if (index < 0)
+						index = taps.length - 1;
+				}
+
+				// increase indexOut:
+				indexOut++;
+			}
+
+			// update counters:
+			decimationCounter++;
+			if(decimationCounter >= decimation)
+				decimationCounter = 0;
+			tapCounter++;
+			if(tapCounter >= taps.length)
+				tapCounter = 0;
+		}
+		out.setSize(indexOut);	// update size of output sample packet
+		out.setSampleRate(in.getSampleRate()/decimation);	// update the sample rate of the output sample packet
+		return length;			// We return the number of consumed samples from the input buffers
+	}
+
+	/**
 	 * FROM GNU Radio firdes::low_pass_2:
 	 *
 	 * Will calculate the tabs for the specified low pass filter and return a FirFilter instance
