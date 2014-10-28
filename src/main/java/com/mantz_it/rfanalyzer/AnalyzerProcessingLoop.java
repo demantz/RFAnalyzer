@@ -200,13 +200,20 @@ public class AnalyzerProcessingLoop extends Thread {
 		this.fftBlock.fft(samples.re(), samples.im());
 
 		// Calculate the logarithmic magnitude:
-		for (int i = 0; i < samples.size(); i++) {
+		double realPower;
+		double imagPower;
+		int size = samples.size();
+		for (int i = 0; i < size; i++) {
 			// We have to flip both sides of the fft to draw it centered on the screen:
-			int targetIndex = (i+samples.size()/2) % samples.size();
+			int targetIndex = (i+size/2) % size;
 
 			// Calc the magnitude = log(  re^2 + im^2  )
 			// note that we still have to divide re and im by the fft size
-			mag[targetIndex] = Math.log(Math.pow(samples.re(i)/fftSize,2) + Math.pow(samples.im(i)/fftSize,2));
+			realPower = samples.re(i)/fftSize;
+			realPower = realPower * realPower;
+			imagPower = samples.im(i)/fftSize;
+			imagPower = imagPower * imagPower;
+			mag[targetIndex] = Math.log(realPower + imagPower);
 		}
 	}
 }
