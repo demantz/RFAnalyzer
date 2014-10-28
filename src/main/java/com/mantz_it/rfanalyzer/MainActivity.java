@@ -736,4 +736,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	public void onUpdateChannelFrequency(long newChannelFrequency) {
 		scheduler.setChannelFrequency(newChannelFrequency);
 	}
+
+	@Override
+	public void onUpdateSquelch(float newSquelch) {
+		demodulator.setSquelch(newSquelch);
+	}
 }

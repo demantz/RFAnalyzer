@@ -109,6 +109,8 @@ public class Decimator extends Thread {
 		SamplePacket inputSamples;
 		SamplePacket outputSamples;
 
+		Log.i(LOGTAG,"Decimator started. (Thread: " + this.getName() + ")");
+
 		while (!stopRequested) {
 			// Get a packet from the input queue:
 			try {
@@ -155,6 +157,9 @@ public class Decimator extends Thread {
 			// deliver the outputSamples to the output queue
 			outputQueue.offer(outputSamples);
 		}
+
+		this.stopRequested = true;
+		Log.i(LOGTAG,"Decimator stopped. (Thread: " + this.getName() + ")");
 	}
 
 	private void downsampling(SamplePacket input, SamplePacket output) {

@@ -61,6 +61,7 @@ public class Demodulator extends Thread {
 														120000};// wFM
 
 	// DEMODULATION
+	private double squelch = 0;	// squelch threshold (absolute --> 0 == squelch off)
 	private SamplePacket demodulatorHistory;
 	public static final int DEMODULATION_OFF = 0;
 	public static final int DEMODULATION_AM = 1;
@@ -118,6 +119,23 @@ public class Demodulator extends Thread {
 	}
 
 	/**
+	 * Returns the squelch threshold in dB!
+	 *
+	 * @return	squelch threshold in dB
+	 */
+	public double getSquelch() {
+		return Math.log(squelch);
+	}
+
+	/**
+	 * Sets the squelch threshold
+	 * @param squelch squelch threshold in dB!
+	 */
+	public void setSquelch(double squelch) {
+		this.squelch = Math.pow(10,squelch);
+	}
+
+	/**
 	 * Starts the thread
 	 */
 	@Override
@@ -143,6 +161,9 @@ public class Demodulator extends Thread {
 		// Start the audio sink thread:
 		audioSink.start();
 
+		// Start decimator thread:
+		decimator.start();
+
 		while (!stopRequested) {
 
 			// Get downsampled packet from the decimator:
@@ -160,18 +181,24 @@ public class Demodulator extends Thread {
 			// return input samples to the decimator block:
 			decimator.returnDecimatedPacket(inputSamples);
 
-			// get buffer from audio sink
-			audioBuffer = audioSink.getPacketBuffer(1000);
+			// Test if average signal power of the packet higher than the squelch threshold:
+			if (squelch <= 0 || testSquelchThreshold(quadratureSamples)) {
+				// get buffer from audio sink
+				audioBuffer = audioSink.getPacketBuffer(1000);
 
-			// demodulate		[sample rate is QUADRATURE_RATE]
-			demodulate(quadratureSamples, audioBuffer);			// The result from demodulating is stored in audioBuffer
+				// demodulate		[sample rate is QUADRATURE_RATE]
+				demodulate(quadratureSamples, audioBuffer);            // The result from demodulating is stored in audioBuffer
 
-			// play audio		[sample rate is QUADRATURE_RATE]
-			audioSink.enqueuePacket(audioBuffer);
+				// play audio		[sample rate is QUADRATURE_RATE]
+				audioSink.enqueuePacket(audioBuffer);
+			}
 		}
 
 		// Stop the audio sink thread:
 		audioSink.stopSink();
+
+		// Stop the decimator thread:
+		decimator.stopDecimator();
 
 		this.stopRequested = true;
 		Log.i(LOGTAG,"Demodulator stopped. (Thread: " + this.getName() + ")");
@@ -195,6 +222,19 @@ public class Demodulator extends Thread {
 		if(userFilter.filter(input, output, 0, input.size()) < input.size()) {
 			Log.e(LOGTAG, "applyUserFilter: could not filter all samples from input packet.");
 		}
+	}
+
+	public boolean testSquelchThreshold(SamplePacket input) {
+		double[] re = input.re();
+		double[] im = input.im();
+		double sum = 0;
+		int size = input.size();
+		int stepSize = size / 10;	// only look at every 10th sample to gain performance
+		for (int i = 0; i < size; i+=stepSize)
+			sum = re[i]*re[i] + im[i]*im[i];	// sum up the magnitudes
+
+		// calculate the average magnetude:
+		return sum/(size/stepSize) > squelch;
 	}
 
 	public void demodulate(SamplePacket input, SamplePacket output) {

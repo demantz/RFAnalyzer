@@ -574,6 +574,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				case SCROLLTYPE_SQUELCH:
 					float dbPerPx = (maxDB-minDB) / (float) getFftHeight();
 					squelch = squelch + distanceY * dbPerPx;
+					callbackHandler.onUpdateSquelch(squelch);
 					break;
 				default:
 					Log.e(LOGTAG,"onScroll: invalid scroll type: " + scrollType);
@@ -1079,5 +1080,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		 * @param newChannelFrequency	new channel frequency in Hz
 		 */
 		public void onUpdateChannelFrequency(long newChannelFrequency);
+
+		/**
+		 * Is called when the user adjusts the squelch threshold.
+		 *
+		 * @param newSquelch	new squelch threshold in dB
+		 */
+		public void onUpdateSquelch(float newSquelch);
 	}
 }
+
