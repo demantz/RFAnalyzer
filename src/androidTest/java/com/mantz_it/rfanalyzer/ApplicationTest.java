@@ -78,7 +78,92 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		System.out.println("##### DONE. Time needed for 1 sec of samples: " + (System.currentTimeMillis() - startTime)/(packetSize*loopCycles/4000000.0));
 		//Debug.stopMethodTracing();
 	}
-	
+
+	public void testHalfBandLowPassFilter() {
+		int samples = 128;
+		double[] reIn = new double[samples];
+		double[] imIn = new double[samples];
+		double[] reOut = new double[samples/2];
+		double[] imOut = new double[samples/2];
+		int sampleRate = 1000;
+		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
+		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate/2);
+		out.setSize(0);
+		int f1 = 50;
+		int f2 = 400;
+
+		for (int i = 0; i < reIn.length; i++) {
+			reIn[i] = Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
+			imIn[i] = Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
+		}
+
+		HalfBandLowPassFilter halfBandLowPassFilter = new HalfBandLowPassFilter(12);
+		assertEquals(halfBandLowPassFilter.filterN12(in, out, 0, in.size()), in.size());
+
+		FFT fft1 = new FFT(samples);
+		System.out.println("Before FILTER:");
+		spectrum(fft1, reIn, imIn);
+
+		FFT fft2 = new FFT(samples/2);
+		System.out.println("After FILTER:");
+		spectrum(fft2, reOut, imOut);
+	}
+
+	public void testHalfBandLowPassFilterPerformance() {
+		int sampleRate = 1000000;
+		int packetSize = 16384;
+		int loopCycles = 1000;
+		long startTime;
+		int firFilterTime;
+		int halfBandFilterTime;
+		SamplePacket in = new SamplePacket(packetSize);
+		SamplePacket out = new SamplePacket(packetSize);
+		out.setSize(0);
+		in.setSize(in.capacity());
+
+		// Compare with equal FirFilter:
+		FirFilter filter = FirFilter.createLowPass(2, 1, sampleRate, 100000, 300000, 30);
+		System.out.println("FirFilter for comparing has " + filter.getNumberOfTaps() + " taps!");
+
+		startTime = System.currentTimeMillis();
+		for (int i = 0; i < loopCycles; i++) {
+			filter.filter(in, out, 0, in.size());
+			out.setSize(0);
+		}
+		firFilterTime = (int)(System.currentTimeMillis() - startTime);
+		System.out.println("Time needed by FirFilter for 1 sec of samples: " + firFilterTime/(packetSize*loopCycles/(float)sampleRate));
+
+		// Now the same for the actual half band filter:
+		HalfBandLowPassFilter halfBandLowPassFilter = new HalfBandLowPassFilter(12);
+		startTime = System.currentTimeMillis();
+		for (int i = 0; i < loopCycles; i++) {
+			halfBandLowPassFilter.filterN12(in, out, 0, in.size());
+			out.setSize(0);
+		}
+		halfBandFilterTime = (int)(System.currentTimeMillis() - startTime);
+		System.out.println("Time needed by HalfBandLowPassFilter for 1 sec of samples: " + halfBandFilterTime/(packetSize*loopCycles/(float)sampleRate));
+		System.out.println("Half band filter is " + ((firFilterTime - halfBandFilterTime)/(float)halfBandFilterTime)*100 + "% faster than the FirFilter!");
+
+		// just for fun: see how the N8 filter performs with filterN8 and with filter:
+		halfBandLowPassFilter = new HalfBandLowPassFilter(12);
+		startTime = System.currentTimeMillis();
+		for (int i = 0; i < loopCycles; i++) {
+			halfBandLowPassFilter.filterN12(in, out, 0, in.size());
+			out.setSize(0);
+		}
+		halfBandFilterTime = (int)(System.currentTimeMillis() - startTime);
+		System.out.println("Time needed by filterN8 HalfBandLowPassFilter for 1 sec of samples: " + halfBandFilterTime/(packetSize*loopCycles/(float)sampleRate));
+
+		halfBandLowPassFilter = new HalfBandLowPassFilter(12);
+		startTime = System.currentTimeMillis();
+		for (int i = 0; i < loopCycles; i++) {
+			halfBandLowPassFilter.filter(in, out, 0, in.size());
+			out.setSize(0);
+		}
+		halfBandFilterTime = (int)(System.currentTimeMillis() - startTime);
+		System.out.println("Time needed by filter HalfBandLowPassFilter for 1 sec of samples: " + halfBandFilterTime/(packetSize*loopCycles/(float)sampleRate));
+	}
+
 	public void testFFT() throws Exception {
 		// Test the FFT to make sure it's working
 		int N = 8;

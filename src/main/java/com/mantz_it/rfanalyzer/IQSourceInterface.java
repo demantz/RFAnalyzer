@@ -165,13 +165,13 @@ public interface IQSourceInterface {
 	 * Note that samples are appended to the buffer starting at the index samplePacket.size().
 	 * If you want to overwrite, set the size to 0 first.
 	 *
-	 * @param packet		packet that was returned by getPacket() and that should now be 'filled'
-	 *                      into the samplePacket.
-	 * @param samplePacket	SamplePacket that should be filled with samples from the packet.
-	 * @param mixFrequency	frequency by which the spectrum of the signal should be shifted
+	 * @param packet			packet that was returned by getPacket() and that should now be 'filled'
+	 *                          into the samplePacket.
+	 * @param samplePacket		SamplePacket that should be filled with samples from the packet.
+	 * @param channelFrequency	frequency to which the spectrum of the signal should be shifted
 	 * @return the number of samples filled into the samplePacket and shifted by mixFrequency.
 	 */
-	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int mixFrequency);
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency);
 
 	/**
 	 * Callback interface for asynchronous interactions with the source.

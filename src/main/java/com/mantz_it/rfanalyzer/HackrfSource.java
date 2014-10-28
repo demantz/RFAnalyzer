@@ -63,7 +63,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public double[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
 	public int cosineFrequency;							// Frequency of the cosine that is mixed to the signal
 	public int cosineIndex;								// current index within the cosine
-	public static final int MAX_COSINE_LENGTH = 10000;	// Max length of the cosine lookup table
+	public static final int MAX_COSINE_LENGTH = 50;		// Max length of the cosine lookup table
 
 	/**
 	 * Will forward an error message to the callback object
@@ -449,10 +449,11 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		return count;
 	}
 
-	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int mixFrequency) {
-		// If mix frequency is too low, just skip mixing:
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
+		int mixFrequency = (int)(frequency - channelFrequency);
+		// If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
 		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
-			return fillPacketIntoSamplePacket(packet, samplePacket);
+			mixFrequency += sampleRate;
 
 		// If lookupTable is null or is invalid, we create it:
 		if(cosineRealLookupTable == null || cosineFrequency != mixFrequency) {
@@ -461,21 +462,27 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 			double cycleLength = sampleRate / Math.abs((double)mixFrequency);
 			int bestLength = (int) cycleLength;
 			double bestLengthError = Math.abs(bestLength-cycleLength);
-			for (int i = 0; i*cycleLength < MAX_COSINE_LENGTH ; i++) {
+			for (int i = 1; i*cycleLength < MAX_COSINE_LENGTH ; i++) {
 				if(Math.abs(i*cycleLength - (int)(i*cycleLength)) < bestLengthError) {
 					bestLength = (int)(i*cycleLength);
 					bestLengthError = Math.abs(bestLength - (i*cycleLength));
 				}
 			}
-			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array. Length="+bestLength + " Error="+bestLengthError);
+			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
+					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
 			cosineRealLookupTable = new double[bestLength][256];
 			cosineImagLookupTable = new double[bestLength][256];
+			double cosineAtT;
+			double sineAtT;
 			for (int t = 0; t < bestLength; t++) {
+				cosineAtT = Math.cos(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+				sineAtT = Math.sin(2 * Math.PI * mixFrequency * t / (double) sampleRate);
 				for (int i = 0; i < 256; i++) {
-					cosineRealLookupTable[t][i] = (i-128)/128.0 * Math.cos(2 * Math.PI * mixFrequency * t / (double) sampleRate);
-					cosineImagLookupTable[t][i] = (i-128)/128.0 * Math.sin(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+					cosineRealLookupTable[t][i] = (i-128)/128.0 * cosineAtT;
+					cosineImagLookupTable[t][i] = (i-128)/128.0 * sineAtT;
 				}
 			}
+			cosineIndex=0;
 		}
 
 		// Mix the samples from packet and store the results in the samplePacket

@@ -38,7 +38,7 @@ public class Scheduler extends Thread {
 	private ArrayBlockingQueue<SamplePacket> fftInputQueue = null;	// Queue that collects used buffers from the Processing Loop
 	private ArrayBlockingQueue<SamplePacket> demodOutputQueue = null;	// Queue that delivers samples to the Demodulator block
 	private ArrayBlockingQueue<SamplePacket> demodInputQueue = null;	// Queue that collects used buffers from the Demodulator block
-	private int mixFrequency = 0;						// Shift frequency by this value when passing packets to demodulator
+	private long channelFrequency = 0;					// Shift frequency to this value when passing packets to demodulator
 	private boolean demodulationActivated = false;		// Indicates if samples should be forwarded to the demodulator queues or not.
 	private boolean stopRequested = true;
 
@@ -109,12 +109,12 @@ public class Scheduler extends Thread {
 		this.demodulationActivated = demodulationActivated;
 	}
 
-	public int getMixFrequency() {
-		return mixFrequency;
+	public long getChannelFrequency() {
+		return channelFrequency;
 	}
 
-	public void setMixFrequency(int mixFrequency) {
-		this.mixFrequency = mixFrequency;
+	public void setChannelFrequency(long channelFrequency) {
+		this.channelFrequency = channelFrequency;
 	}
 
 	@Override
@@ -140,7 +140,7 @@ public class Scheduler extends Thread {
 				if (demodBuffer != null) {
 					demodBuffer.setSize(0);    // mark buffer as empty
 					// fill the packet into the buffer and shift its spectrum by mixFrequency:
-					source.mixPacketIntoSamplePacket(packet, demodBuffer, mixFrequency);
+					source.mixPacketIntoSamplePacket(packet, demodBuffer, channelFrequency);
 					demodOutputQueue.offer(demodBuffer);    // deliver packet
 				} else {
 					Log.d(LOGTAG, "run: Flush the demod queue because demodulator is too slow!");

@@ -220,10 +220,10 @@ public class FirFilter {
 		for (int n = 1; n <= M; n++)
 			fmax += 2 * taps[n + M];
 
-		gain /= fmax;    // normalize
+		double actualGain = gain/fmax;    // normalize
 
 		for (int i = 0; i < ntaps; i++)
-			taps[i] *= gain;
+			taps[i] *= actualGain;
 
 		return new FirFilter(taps, decimation, gain, sampling_freq, cutoff_freq, transition_width, attenuation_dB);
 	}

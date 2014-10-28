@@ -133,9 +133,8 @@ public class AnalyzerProcessingLoop extends Thread {
 			try {
 				samples = inputQueue.poll(1000 / frameRate, TimeUnit.MILLISECONDS);
 				if (samples == null) {
-					Log.e(LOGTAG, "run: Timeout while waiting on input data. stop.");
-					this.stopLoop();
-					break;
+					Log.d(LOGTAG, "run: Timeout while waiting on input data. skip.");
+					continue;
 				}
 			} catch (InterruptedException e) {
 				Log.e(LOGTAG, "run: Interrupted while polling from input queue. stop.");

@@ -50,7 +50,7 @@ import java.io.File;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback  {
+public class MainActivity extends Activity implements IQSourceInterface.Callback, AnalyzerSurface.CallbackInterface {
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
@@ -110,7 +110,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		fl_analyzerFrame = (FrameLayout) findViewById(R.id.fl_analyzerFrame);
 
 		// Create a analyzer surface:
-		analyzerSurface = new AnalyzerSurface(this);
+		analyzerSurface = new AnalyzerSurface(this,this);
 		analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 		analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 		analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
@@ -517,7 +517,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		scheduler.start();
 		analyzerProcessingLoop.start();
 
-		scheduler.setMixFrequency(100000); ///// DEBUG ///////
+		scheduler.setChannelFrequency(analyzerSurface.getChannelFrequency());
 
 		// Start the demodulator thread:
 		demodulator = new Demodulator(scheduler.getDemodOutputQueue(), scheduler.getDemodInputQueue(), source.getPacketSize());
@@ -574,13 +574,22 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						Demodulator.INPUT_RATE/1000000 + " Msps)", Toast.LENGTH_LONG).show();
 				scheduler.setDemodulationActivated(false);
 				mode = Demodulator.DEMODULATION_OFF;	// deactivate demodulation...
-			} else
+			} else {
 				scheduler.setDemodulationActivated(true);
+			}
 		}
 
 		// set demodulation mode in demodulator:
 		demodulator.setDemodulationMode(mode);
 		this.demodulationMode = mode;	// save the setting
+
+		// disable/enable demodulation view in surface:
+		if(mode == Demodulator.DEMODULATION_OFF) {
+			analyzerSurface.setDemodulationEnabled(false);
+		} else {
+			analyzerSurface.setDemodulationEnabled(true);
+			analyzerSurface.setChannelWidth(demodulator.getChannelWidth());
+		}
 
 		// update action bar:
 		updateActionBar();
@@ -713,5 +722,18 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		}
 	}
 
+	/**
+	 * Called by the analyzer surface after the user changed the channel width
+	 * @param newChannelWidth    new channel width (single sided) in Hz
+	 * @return true if channel width is valid; false if out of range
+	 */
+	@Override
+	public boolean onUpdateChannelWidth(int newChannelWidth) {
+		return demodulator.setChannelWidth(newChannelWidth);
+	}
 
+	@Override
+	public void onUpdateChannelFrequency(long newChannelFrequency) {
+		scheduler.setChannelFrequency(newChannelFrequency);
+	}
 }
