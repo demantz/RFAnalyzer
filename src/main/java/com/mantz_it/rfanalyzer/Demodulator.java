@@ -187,7 +187,24 @@ public class Demodulator extends Thread {
 				audioBuffer = audioSink.getPacketBuffer(1000);
 
 				// demodulate		[sample rate is QUADRATURE_RATE]
-				demodulate(quadratureSamples, audioBuffer);            // The result from demodulating is stored in audioBuffer
+				switch (demodulationMode) {
+					case DEMODULATION_OFF:
+						break;
+
+					case DEMODULATION_AM:
+						break;
+
+					case DEMODULATION_NFM:
+						demodulateFM(quadratureSamples, audioBuffer, 5000);
+						break;
+
+					case DEMODULATION_WFM:
+						demodulateFM(quadratureSamples, audioBuffer, 75000);
+						break;
+
+					default:
+						Log.e(LOGTAG,"run: invalid demodulationMode: " + demodulationMode);
+				}
 
 				// play audio		[sample rate is QUADRATURE_RATE]
 				audioSink.enqueuePacket(audioBuffer);
@@ -204,7 +221,7 @@ public class Demodulator extends Thread {
 		Log.i(LOGTAG,"Demodulator stopped. (Thread: " + this.getName() + ")");
 	}
 
-	public void applyUserFilter(SamplePacket input, SamplePacket output) {
+	private void applyUserFilter(SamplePacket input, SamplePacket output) {
 		// Verify that the filter is still correct configured:
 		if(userFilter == null || ((int) userFilter.getCutOffFrequency()) != userFilterCutOff) {
 			// We have to (re-)create the user filter:
@@ -224,7 +241,7 @@ public class Demodulator extends Thread {
 		}
 	}
 
-	public boolean testSquelchThreshold(SamplePacket input) {
+	private boolean testSquelchThreshold(SamplePacket input) {
 		double[] re = input.re();
 		double[] im = input.im();
 		double sum = 0;
@@ -237,12 +254,11 @@ public class Demodulator extends Thread {
 		return sum/(size/stepSize) > squelch;
 	}
 
-	public void demodulate(SamplePacket input, SamplePacket output) {
+	private void demodulateFM(SamplePacket input, SamplePacket output, int maxDeviation) {
 		double[] reIn = input.re();
 		double[] imIn = input.im();
 		double[] reOut = output.re();
 		double[] imOut = output.im();
-		int maxDeviation = 75000;
 		double quadratureGain = QUADRATURE_RATE[demodulationMode]/(2*Math.PI*maxDeviation);
 
 		if(demodulatorHistory == null) {
@@ -262,6 +278,19 @@ public class Demodulator extends Thread {
 		}
 		demodulatorHistory.re()[0] = reIn[input.size()-1];
 		demodulatorHistory.im()[0] = imIn[input.size()-1];
+		output.setSize(input.size());
+		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
+	}
+
+	private void demodulateAM(SamplePacket input, SamplePacket output) {
+		double[] reIn = input.re();
+		double[] imIn = input.im();
+		double[] reOut = output.re();
+
+		// Complex to magnitude
+		for (int i = 0; i < input.size(); i++)
+			reOut[i] = (reIn[i]*reIn[i] + imIn[i]*imIn[i]) * 0.5;
+
 		output.setSize(input.size());
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
 	}
