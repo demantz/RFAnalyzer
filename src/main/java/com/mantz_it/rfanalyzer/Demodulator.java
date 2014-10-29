@@ -37,7 +37,7 @@ public class Demodulator extends Thread {
 	private boolean stopRequested = true;
 	private static final String LOGTAG = "Demodulator";
 	private static final int AUDIO_RATE = 31250;
-	private static final int[] QUADRATURE_RATE = {	0,				// off
+	private static final int[] QUADRATURE_RATE = {	1,				// off; this value is not 0 to avoid divide by zero errors!
 													2*AUDIO_RATE,	// AM
 													2*AUDIO_RATE,	// nFM
 													8*AUDIO_RATE};	// wFM
@@ -124,7 +124,7 @@ public class Demodulator extends Thread {
 	 * @return	squelch threshold in dB
 	 */
 	public double getSquelch() {
-		return Math.log(squelch);
+		return 10*Math.log10(squelch);
 	}
 
 	/**
@@ -132,7 +132,7 @@ public class Demodulator extends Thread {
 	 * @param squelch squelch threshold in dB!
 	 */
 	public void setSquelch(double squelch) {
-		this.squelch = Math.pow(10,squelch);
+		this.squelch = Math.pow(10, 0.1 *squelch);
 	}
 
 	/**
@@ -192,6 +192,7 @@ public class Demodulator extends Thread {
 						break;
 
 					case DEMODULATION_AM:
+						demodulateAM(quadratureSamples, audioBuffer);
 						break;
 
 					case DEMODULATION_NFM:
@@ -231,6 +232,8 @@ public class Demodulator extends Thread {
 														userFilterCutOff,
 														input.getSampleRate()*0.10,
 														USER_FILTER_ATTENUATION);
+			if(userFilter == null)
+				return;	// This may happen if input samples changed rate or demodulation was turned off. Just skip the filtering.
 			Log.d(LOGTAG,"applyUserFilter: created new user filter with " + userFilter.getNumberOfTaps()
 					+ " taps. Decimation=" + userFilter.getDecimation() + " Cut-Off="+userFilter.getCutOffFrequency()
 					+ " transition="+userFilter.getTransitionWidth());
@@ -249,6 +252,9 @@ public class Demodulator extends Thread {
 		int stepSize = size / 10;	// only look at every 10th sample to gain performance
 		for (int i = 0; i < size; i+=stepSize)
 			sum = re[i]*re[i] + im[i]*im[i];	// sum up the magnitudes
+
+		if(System.currentTimeMillis() % 100 == 0)
+			Log.d(LOGTAG,"SQUELCH is " + squelch + " (" + 10*Math.log10(squelch) + "dB)  SIGNAL: " + sum/(size/stepSize) + " (" + 10*Math.log10(Math.sqrt(sum/(size/stepSize))) + "dB)" );
 
 		// calculate the average magnetude:
 		return sum/(size/stepSize) > squelch;
@@ -289,7 +295,7 @@ public class Demodulator extends Thread {
 
 		// Complex to magnitude
 		for (int i = 0; i < input.size(); i++)
-			reOut[i] = (reIn[i]*reIn[i] + imIn[i]*imIn[i]) * 0.5;
+			reOut[i] = (reIn[i]*reIn[i] + imIn[i]*imIn[i]) - 1;
 
 		output.setSize(input.size());
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);

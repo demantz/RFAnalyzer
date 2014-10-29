@@ -153,6 +153,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		outState.putBoolean(getString(R.string.save_state_running), running);
 		outState.putInt(getString(R.string.save_state_demodulatorMode), demodulationMode);
 		if(analyzerSurface != null) {
+			outState.putLong(getString(R.string.save_state_channelFrequency), analyzerSurface.getChannelFrequency());
+			outState.putInt(getString(R.string.save_state_channelWidth), analyzerSurface.getChannelWidth());
+			outState.putFloat(getString(R.string.save_state_squelch), analyzerSurface.getSquelch());
 			outState.putLong(getString(R.string.save_state_virtualFrequency), analyzerSurface.getVirtualFrequency());
 			outState.putInt(getString(R.string.save_state_virtualSampleRate), analyzerSurface.getVirtualSampleRate());
 			outState.putFloat(getString(R.string.save_state_minDB), analyzerSurface.getMinDB());
@@ -180,11 +183,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		switch (id) {
-			case R.id.action_startStop:		if(running) {
+			case R.id.action_startStop:		if(running)
 												stopAnalyzer();
-												// Stop demodulating:
-												this.setDemodulationMode(Demodulator.DEMODULATION_OFF);
-											}
 											else
 												startAnalyzer();
 											break;
@@ -267,8 +267,23 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		if (running)
 			startAnalyzer();
 
-		// Set the demodulator mode (to restore settings)
-		this.setDemodulationMode(demodulationMode);
+		// on the first time after the app was killed by the system, savedInstanceState will be
+		// non-null and we restore the settings:
+		if(savedInstanceState != null) {
+			analyzerSurface.setVirtualFrequency(savedInstanceState.getLong(getString(R.string.save_state_virtualFrequency)));
+			analyzerSurface.setVirtualSampleRate(savedInstanceState.getInt(getString(R.string.save_state_virtualSampleRate)));
+			analyzerSurface.setDBScale(savedInstanceState.getFloat(getString(R.string.save_state_minDB)),
+					savedInstanceState.getFloat(getString(R.string.save_state_maxDB)));
+			analyzerSurface.setChannelFrequency(savedInstanceState.getLong(getString(R.string.save_state_channelFrequency)));
+			analyzerSurface.setChannelWidth(savedInstanceState.getInt(getString(R.string.save_state_channelWidth)));
+			analyzerSurface.setSquelch(savedInstanceState.getFloat(getString(R.string.save_state_squelch)));
+			if(demodulator != null && scheduler != null) {
+				demodulator.setChannelWidth(savedInstanceState.getInt(getString(R.string.save_state_channelWidth)));
+				demodulator.setSquelch(savedInstanceState.getFloat(getString(R.string.save_state_squelch)));
+				scheduler.setChannelFrequency(savedInstanceState.getLong(getString(R.string.save_state_channelFrequency)));
+			}
+			savedInstanceState = null; // not needed any more...
+		}
 	}
 
 	@Override
@@ -407,15 +422,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// inform the analyzer surface about the new source
 		analyzerSurface.setSource(source);
-		// on the first time after the app was killed by the system, savedInstanceState will be
-		// non-null and we restore the settings:
-		if(savedInstanceState != null) {
-			analyzerSurface.setVirtualFrequency(savedInstanceState.getLong(getString(R.string.save_state_virtualFrequency)));
-			analyzerSurface.setVirtualSampleRate(savedInstanceState.getInt(getString(R.string.save_state_virtualSampleRate)));
-			analyzerSurface.setDBScale(savedInstanceState.getFloat(getString(R.string.save_state_minDB)),
-					savedInstanceState.getFloat(getString(R.string.save_state_maxDB)));
-			savedInstanceState = null; // not needed any more...
-		}
+
 		return true;
 	}
 
@@ -523,6 +530,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		demodulator = new Demodulator(scheduler.getDemodOutputQueue(), scheduler.getDemodInputQueue(), source.getPacketSize());
 		demodulator.start();
 
+		// Set the demodulation mode (will configure the demodulator correctly)
+		this.setDemodulationMode(demodulationMode);
+
 		// update the action bar icons and titles:
 		updateActionBar();
 	}
@@ -587,8 +597,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		if(mode == Demodulator.DEMODULATION_OFF) {
 			analyzerSurface.setDemodulationEnabled(false);
 		} else {
-			analyzerSurface.setDemodulationEnabled(true);
-			analyzerSurface.setChannelWidth(demodulator.getChannelWidth());
+			analyzerSurface.setDemodulationEnabled(true);	// will re-adjust channel freq, width and squelch,
+															// if they are outside the current viewport and update the
+															// demodulator via callbacks.
 		}
 
 		// update action bar:
@@ -740,5 +751,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	public void onUpdateSquelch(float newSquelch) {
 		demodulator.setSquelch(newSquelch);
+	}
+
+	@Override
+	public int onCurrentChannelWidthRequested() {
+		if(demodulator != null)
+			return demodulator.getChannelWidth();
+		else
+			return -1;
 	}
 }

@@ -19,6 +19,9 @@
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
     <string name="save_state_running">save_state_running</string>
     <string name="save_state_demodulatorMode">save_state_demodulatorMode</string>
+    <string name="save_state_channelFrequency">save_state_channelFrequency</string>
+    <string name="save_state_channelWidth">save_state_channelWidth</string>
+    <string name="save_state_squelch">save_state_squelch</string>
     <string name="save_state_virtualFrequency">save_state_virtualFrequency</string>
     <string name="save_state_virtualSampleRate">save_state_virtualSampleRate</string>
     <string name="save_state_minDB">save_state_minDB</string>

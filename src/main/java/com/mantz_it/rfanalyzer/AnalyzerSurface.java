@@ -95,14 +95,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	// the actual values when the user does scrolling and zooming
 	private long virtualFrequency = -1;		// Center frequency of the fft (baseband) AS SHOWN ON SCREEN
 	private int virtualSampleRate = -1;		// Sample Rate of the fft AS SHOWN ON SCREEN
-	private float minDB = -35;				// Lowest dB on the scale
+	private float minDB = -50;				// Lowest dB on the scale
 	private float maxDB = -5;				// Highest dB on the scale
 	private long lastFrequency;				// Center frequency of the last packet of fft samples
 	private int lastSampleRate;				// Sample rate of the last packet of fft samples
 
 	private boolean demodulationEnabled = false;	// indicates whether demodulation is enabled or disabled
 	private long channelFrequency = -1;				// center frequency of the demodulator
-	private int channelWidth = 50000;				// (half) width of the channel filter of the demodulator
+	private int channelWidth = -1;					// (half) width of the channel filter of the demodulator
 	private float squelch = -1;						// squelch threshold in dB
 
 	// scroll type stores the intention of the user on a pointer down event:
@@ -325,9 +325,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				this.virtualSampleRate = (int)(source.getSampleRate() * 0.9);
 				source.setFrequency(virtualFrequency);
 
-				// initialize channel freq and squelch:
-				this.channelFrequency = virtualFrequency;
-				this.squelch = minDB + (maxDB-minDB)/10;
+				// initialize channel freq, width and squelch if they are out of range:
+				if(channelFrequency < virtualFrequency-virtualSampleRate/2 || channelFrequency > virtualFrequency+virtualSampleRate/2) {
+					this.channelFrequency = virtualFrequency;
+					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+				}
+				this.channelWidth = callbackHandler.onCurrentChannelWidthRequested();
+				if(squelch < minDB || squelch > maxDB) {
+					this.squelch = minDB + (maxDB - minDB) / 4;
+					callbackHandler.onUpdateSquelch(squelch);
+				}
 			}
 			this.demodulationEnabled = demodulationEnabled;
 		}
@@ -1087,6 +1094,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		 * @param newSquelch	new squelch threshold in dB
 		 */
 		public void onUpdateSquelch(float newSquelch);
+
+		/**
+		 * Is called when the AnalyzerSurface has to determine the current
+		 * channel width
+		 *
+		 * @return	the current channel width
+		 */
+		public int onCurrentChannelWidthRequested();
 	}
 }
 
