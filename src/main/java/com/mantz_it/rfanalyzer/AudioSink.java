@@ -149,7 +149,7 @@ public class AudioSink extends Thread {
 				packet = inputQueue.poll(1000, TimeUnit.MILLISECONDS);
 
 				if(packet == null) {
-					Log.d(LOGTAG, "run: Queue is empty. skip this round");
+					//Log.d(LOGTAG, "run: Queue is empty. skip this round");
 					continue;
 				}
 

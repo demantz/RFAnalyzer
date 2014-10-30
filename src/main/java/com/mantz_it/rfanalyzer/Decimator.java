@@ -123,7 +123,7 @@ public class Decimator extends Thread {
 
 			// Verify the input sample packet is not null:
 			if (inputSamples == null) {
-				Log.d(LOGTAG, "run: Input sample is null. skip this round...");
+				//Log.d(LOGTAG, "run: Input sample is null. skip this round...");
 				continue;
 			}
 

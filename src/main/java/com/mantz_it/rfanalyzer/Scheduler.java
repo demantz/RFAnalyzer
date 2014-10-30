@@ -40,6 +40,7 @@ public class Scheduler extends Thread {
 	private ArrayBlockingQueue<SamplePacket> demodInputQueue = null;	// Queue that collects used buffers from the Demodulator block
 	private long channelFrequency = 0;					// Shift frequency to this value when passing packets to demodulator
 	private boolean demodulationActivated = false;		// Indicates if samples should be forwarded to the demodulator queues or not.
+	private boolean squelchSatisfied = false;			// indicates whether the current signal is strong enough to cross the squelch threshold
 	private boolean stopRequested = true;
 
 	// Define the size of the fft output and input Queues. By setting this value to 2 we basically end up
@@ -117,6 +118,15 @@ public class Scheduler extends Thread {
 		this.channelFrequency = channelFrequency;
 	}
 
+	/**
+	 * Has to be called when the signal strength of the selected channel crosses the squelch threshold
+	 *
+	 * @param squelchSatisfied	true: the signal is now stronger than the threshold; false: signal is now weaker
+	 */
+	public void setSquelchSatisfied(boolean squelchSatisfied) {
+		this.squelchSatisfied = squelchSatisfied;
+	}
+
 	@Override
 	public void run() {
 		Log.i(LOGTAG,"Scheduler started. (Thread: " + this.getName() + ")");
@@ -134,7 +144,7 @@ public class Scheduler extends Thread {
 			}
 
 			///// Demodulation /////////////////////////////////////////////////////////////////////
-			if(demodulationActivated) {
+			if(demodulationActivated && squelchSatisfied) {
 				// Get a buffer from the demodulator inputQueue
 				demodBuffer = demodInputQueue.poll();
 				if (demodBuffer != null) {

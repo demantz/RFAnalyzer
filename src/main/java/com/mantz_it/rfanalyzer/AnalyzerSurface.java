@@ -60,6 +60,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Paint waterfallLinePaint = null;// Paint object to draw one waterfall pixel
 	private Paint textPaint = null;			// Paint object to draw text on the canvas
 	private Paint demodSelectorPaint = null;// Paint object to draw the area of the channel
+	private Paint squelchPaint = null;		// Paint object to draw the squelch selector
 	private int width;						// current width (in pixels) of the SurfaceView
 	private int height;						// current height (in pixels) of the SurfaceView
 	private boolean doAutoscaleInNextDraw = false;	// will cause draw() to adjust minDB and maxDB according to the samples
@@ -104,6 +105,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private long channelFrequency = -1;				// center frequency of the demodulator
 	private int channelWidth = -1;					// (half) width of the channel filter of the demodulator
 	private float squelch = -1;						// squelch threshold in dB
+	private boolean squelchSatisfied = false;		// indicates whether the current signal is strong enough to cross the squelch threshold
 
 	// scroll type stores the intention of the user on a pointer down event:
 	private int scrollType = 0;
@@ -138,6 +140,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.waterfallLinePaint = new Paint();
 		this.demodSelectorPaint = new Paint();
 		this.demodSelectorPaint.setColor(Color.WHITE);
+		this.squelchPaint = new Paint();
+		this.squelchPaint.setColor(Color.RED);
 
 		// Add a Callback to get informed when the dimensions of the SurfaceView changes:
 		this.getHolder().addCallback(this);
@@ -322,19 +326,23 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		synchronized (this.getHolder()) {
 			if(demodulationEnabled) {
 				// set viewport correctly:
-				this.virtualSampleRate = (int)(source.getSampleRate() * 0.9);
-				source.setFrequency(virtualFrequency);
+				if(virtualSampleRate > source.getSampleRate() * 0.9)
+					this.virtualSampleRate = (int)(source.getSampleRate() * 0.9);
+				if(virtualFrequency-virtualSampleRate/2 < source.getFrequency()-source.getSampleRate()/2
+						|| virtualFrequency+virtualSampleRate/2 > source.getFrequency()+source.getSampleRate()/2)
+					source.setFrequency(virtualFrequency);
 
 				// initialize channel freq, width and squelch if they are out of range:
 				if(channelFrequency < virtualFrequency-virtualSampleRate/2 || channelFrequency > virtualFrequency+virtualSampleRate/2) {
 					this.channelFrequency = virtualFrequency;
 					callbackHandler.onUpdateChannelFrequency(channelFrequency);
 				}
-				this.channelWidth = callbackHandler.onCurrentChannelWidthRequested();
+				if(!callbackHandler.onUpdateChannelWidth(channelWidth))	// try setting the channel width
+					this.channelWidth = callbackHandler.onCurrentChannelWidthRequested();	// width was not supported; inherit from demodulator
 				if(squelch < minDB || squelch > maxDB) {
 					this.squelch = minDB + (maxDB - minDB) / 4;
-					callbackHandler.onUpdateSquelch(squelch);
 				}
+				callbackHandler.onUpdateSquelchSatisfied(squelchSatisfied);	// just to make sure the scheduler is still in sync with the gui
 			}
 			this.demodulationEnabled = demodulationEnabled;
 		}
@@ -468,6 +476,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				float newMinDB = Math.min(Math.max(dBFocus - (dBFocus - minDB) / yScale, MIN_DB), MAX_DB - 10);
 				float newMaxDB = Math.min(Math.max(dBFocus - (dBFocus - maxDB) / yScale, newMinDB + 10), MAX_DB);
 				this.setDBScale(newMinDB, newMaxDB);
+
+				// adjust the squelch if it is outside the visible viewport right now:
+				if(squelch < minDB)
+					squelch = minDB;
+				if(squelch > maxDB)
+					squelch = maxDB;
 			}
 
 			// Automatically re-adjust the sample rate of the source if we zoom too far out or in
@@ -497,33 +511,34 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		// Find out which type of scrolling is requested:
 		float hzPerPx = virtualSampleRate / (float) width;
 		float dbPerPx = (maxDB-minDB) / (float) getFftHeight();
-		float frequencyVariation = (float) Math.min(channelWidth/2.0, virtualSampleRate/10);
+		float channelFrequencyVariation = (float) Math.max(channelWidth*0.8f, width/15f*hzPerPx);
+		float channelWidthVariation = width/15*hzPerPx;
 		long touchedFrequency = virtualFrequency - virtualSampleRate/2 + (long)(e.getX() * hzPerPx);
 		float touchedDB = maxDB - e.getY() * dbPerPx;
 
 		// if the user touched the squelch indicator the user wants to adjust the squelch threshold:
 		if(demodulationEnabled 	&& touchedFrequency < channelFrequency + channelWidth
 								&& touchedFrequency > channelFrequency - channelWidth
-								&& touchedDB < squelch + (maxDB-minDB)/10
-								&& touchedDB > squelch - (maxDB-minDB)/10)
+								&& touchedDB < squelch + (maxDB-minDB)/7
+								&& touchedDB > squelch - (maxDB-minDB)/7)
 			this.scrollType = SCROLLTYPE_SQUELCH;
 
 		// if the user touched the channel frequency the user wants to shift the channel frequency:
 		else if(demodulationEnabled	&& e.getY() <= getFftHeight()
-								&& touchedFrequency < channelFrequency + frequencyVariation
-								&& touchedFrequency > channelFrequency - frequencyVariation)
+								&& touchedFrequency < channelFrequency + channelFrequencyVariation
+								&& touchedFrequency > channelFrequency - channelFrequencyVariation)
 			this.scrollType = SCROLLTYPE_CHANNEL_FREQUENCY;
 
 		// if the user touched the left channel selector border the user wants to adjust the channel width:
 		else if(demodulationEnabled	&& e.getY() <= getFftHeight()
-									&& touchedFrequency < channelFrequency-channelWidth + frequencyVariation
-									&& touchedFrequency > channelFrequency-channelWidth - frequencyVariation)
+									&& touchedFrequency < channelFrequency-channelWidth + channelWidthVariation
+									&& touchedFrequency > channelFrequency-channelWidth - channelWidthVariation)
 			this.scrollType = SCROLLTYPE_CHANNEL_WIDTH_LEFT;
 
 		// if the user touched the right channel selector border the user wants to adjust the channel width:
 		else if(demodulationEnabled	&& e.getY() <= getFftHeight()
-									&& touchedFrequency < channelFrequency+channelWidth + frequencyVariation
-									&& touchedFrequency > channelFrequency+channelWidth - frequencyVariation)
+									&& touchedFrequency < channelFrequency+channelWidth + channelWidthVariation
+									&& touchedFrequency > channelFrequency+channelWidth - channelWidthVariation)
 			this.scrollType = SCROLLTYPE_CHANNEL_WIDTH_RIGHT;
 
 		// otherwise the user wants to scroll the virtual frequency
@@ -581,7 +596,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				case SCROLLTYPE_SQUELCH:
 					float dbPerPx = (maxDB-minDB) / (float) getFftHeight();
 					squelch = squelch + distanceY * dbPerPx;
-					callbackHandler.onUpdateSquelch(squelch);
+					if(squelch < minDB)
+						squelch = minDB;
 					break;
 				default:
 					Log.e(LOGTAG,"onScroll: invalid scroll type: " + scrollType);
@@ -596,6 +612,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				if (minDB - yDiff < MIN_DB)
 					yDiff = MIN_DB - minDB;
 				this.setDBScale(minDB - yDiff, maxDB - yDiff);
+
+				// adjust the squelch if it is outside the visible viewport right now:
+				if(squelch < minDB)
+					squelch = minDB;
+				if(squelch > maxDB)
+					squelch = maxDB;
 			}
 
 			// Automatically re-tune the source if we scrolled the samples out of the visible window:
@@ -661,7 +683,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @return number of pixels (in vertical direction) of one line in the waterfall plot
 	 */
 	private int getPixelPerWaterfallLine() {
-		return 3;
+		return 1;
 	}
 
 	/**
@@ -759,6 +781,29 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			peaks = null;
 		}
 
+		// Update squelchSatisfied:
+		float averageSignalStrengh = -9999;		// avg magnitude of the signal in the center of the selected channel
+		if(demodulationEnabled) {
+			float sum = 0;
+			int chanStart = (int) ((channelFrequency - (frequency-sampleRate/2) - channelWidth/2) * samplesPerHz);
+			int chanEnd = (int)(chanStart + channelWidth * samplesPerHz);
+			if(chanStart > 0 && chanEnd <= mag.length) {
+				for (int i = chanStart; i < chanEnd; i++)
+					sum += mag[i];
+				averageSignalStrengh = sum / (chanEnd - chanStart);
+				if(averageSignalStrengh >= squelch && squelchSatisfied==false) {
+					squelchSatisfied = true;
+					this.squelchPaint.setColor(Color.GREEN);
+					callbackHandler.onUpdateSquelchSatisfied(squelchSatisfied);
+				} else if (averageSignalStrengh < squelch && squelchSatisfied==true) {
+					squelchSatisfied = false;
+					this.squelchPaint.setColor(Color.RED);
+					callbackHandler.onUpdateSquelchSatisfied(squelchSatisfied);
+				}
+				// else the squelchSatisfied flag is still valid. no actions needed...
+			}
+		}
+
 		// Draw:
 		Canvas c = null;
 		try {
@@ -771,7 +816,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 					drawWaterfall(c);
 					drawFrequencyGrid(c);
 					drawPowerGrid(c);
-					drawPerformanceInfo(c, frameRate, load);
+					drawPerformanceInfo(c, frameRate, load, averageSignalStrengh);
 				} else
 					Log.d(LOGTAG, "draw: Canvas is null.");
 			}
@@ -882,26 +927,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				waterfallLinePaint.setColor(waterfallColorMap[(int)((avg-minDB)*scale)]);
 			newline.drawLine(i, 0, i, getPixelPerWaterfallLine(), waterfallLinePaint);
 		}
-
-		// If demodulation is activated: draw channel selector:
-		if(demodulationEnabled) {
-			float pxPerHz = width / (float) virtualSampleRate;
-			float channelPosition = width/2 + pxPerHz * (channelFrequency - virtualFrequency);
-			float leftBorder = channelPosition - pxPerHz * channelWidth;
-			float rightBorder = channelPosition + pxPerHz * channelWidth;
-			float squelchPosition =  getFftHeight() - (squelch - minDB) * dbWidth;
-
-			// draw half transparent channel area:
-			demodSelectorPaint.setAlpha(0x7f);
-			c.drawRect(leftBorder, 0, rightBorder, squelchPosition, demodSelectorPaint);
-
-			// draw center and borders:
-			demodSelectorPaint.setAlpha(0xff);
-			c.drawLine(channelPosition,getFftHeight(), channelPosition, 0, demodSelectorPaint);
-			c.drawLine(leftBorder,getFftHeight(), leftBorder, 0, demodSelectorPaint);
-			c.drawLine(rightBorder,getFftHeight(), rightBorder, 0, demodSelectorPaint);
-			c.drawLine(leftBorder,squelchPosition,rightBorder,squelchPosition,demodSelectorPaint);
-		}
 	}
 
 	/**
@@ -928,7 +953,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param c				canvas of the surface view
 	 */
 	private void drawFrequencyGrid(Canvas c) {
-		String frequencyStr;
+		String textStr;
 		double MHZ = 1000000F;
 		double tickFreqMHz;
 		float lastTextEndPos = -99999;	// will indicate the horizontal pixel pos where the last text ended
@@ -968,15 +993,15 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// Draw Frequency Text (always in MHz)
 				tickFreqMHz = tickFreq/MHZ;
 				if(tickFreqMHz == (int) tickFreqMHz)
-					frequencyStr = String.format("%d", (int)tickFreqMHz);
+					textStr = String.format("%d", (int)tickFreqMHz);
 				else
-					frequencyStr = String.format("%s", tickFreqMHz);
-				textPaint.getTextBounds(frequencyStr, 0, frequencyStr.length(), bounds);
+					textStr = String.format("%s", tickFreqMHz);
+				textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
 				textPos = tickPos - bounds.width()/2;
 
 				// ...only if not overlapping with the last text:
 				if(lastTextEndPos+minFreeSpaceBetweenText < textPos) {
-					c.drawText(frequencyStr, textPos, getFftHeight() - tickHeight, textPaint);
+					c.drawText(textStr, textPos, getFftHeight() - tickHeight, textPaint);
 					lastTextEndPos = textPos + bounds.width();
 				}
 			} else if(tickFreq % (tickSize*5) == 0) {
@@ -986,17 +1011,17 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// Draw Frequency Text (always in MHz)...
 				tickFreqMHz = tickFreq / MHZ;
 				if (tickFreqMHz == (int) tickFreqMHz)
-					frequencyStr = String.format("%d", (int) tickFreqMHz);
+					textStr = String.format("%d", (int) tickFreqMHz);
 				else
-					frequencyStr = String.format("%s", tickFreqMHz);
-				textPaint.getTextBounds(frequencyStr, 0, frequencyStr.length(), bounds);
+					textStr = String.format("%s", tickFreqMHz);
+				textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
 				textPos = tickPos - bounds.width()/2;
 
 				// ...only if not overlapping with the last text:
 				if(lastTextEndPos+minFreeSpaceBetweenText < textPos) {
 					// ... if enough space between the major ticks:
 					if (bounds.width() < pixelPerMinorTick * 4) {
-						c.drawText(frequencyStr, textPos, getFftHeight() - tickHeight, textPaint);
+						c.drawText(textStr, textPos, getFftHeight() - tickHeight, textPaint);
 						lastTextEndPos = textPos + bounds.width();
 					}
 				}
@@ -1009,6 +1034,37 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			c.drawLine(tickPos, getFftHeight(), tickPos, getFftHeight() - tickHeight, textPaint);
 			tickFreq += tickSize;
 			tickPos += pixelPerMinorTick;
+		}
+
+		// If demodulation is activated: draw channel selector:
+		if(demodulationEnabled) {
+			float pxPerHz = width / (float) virtualSampleRate;
+			float channelPosition = width/2 + pxPerHz * (channelFrequency - virtualFrequency);
+			float leftBorder = channelPosition - pxPerHz * channelWidth;
+			float rightBorder = channelPosition + pxPerHz * channelWidth;
+			float dbWidth = getFftHeight() / (maxDB-minDB);
+			float squelchPosition =  getFftHeight() - (squelch - minDB) * dbWidth;
+
+			// draw half transparent channel area:
+			demodSelectorPaint.setAlpha(0x7f);
+			c.drawRect(leftBorder, 0, rightBorder, squelchPosition, demodSelectorPaint);
+
+			// draw center and borders:
+			demodSelectorPaint.setAlpha(0xff);
+			c.drawLine(channelPosition,getFftHeight(), channelPosition, 0, demodSelectorPaint);
+			c.drawLine(leftBorder,getFftHeight(), leftBorder, 0, demodSelectorPaint);
+			c.drawLine(rightBorder,getFftHeight(), rightBorder, 0, demodSelectorPaint);
+			c.drawLine(leftBorder,squelchPosition,rightBorder,squelchPosition,squelchPaint);
+
+			// draw squelch text above the squelch selector:
+			textStr = String.format("%2.1f dB", squelch);
+			textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
+			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition - bounds.height() * 0.1f, textPaint);
+
+			// draw channel width text below the squelch selector:
+			textStr = String.format("%d kHz", channelWidth*2/1000);
+			textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
+			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition + bounds.height() * 1.1f, textPaint);
 		}
 	}
 
@@ -1053,20 +1109,56 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param c				canvas of the surface view
 	 * @param frameRate 	current frame rate (FPS)
 	 * @param load			current load (percentage [0..1])
+	 * @param averageSignalStrength		average magnitude of the signal in the selected channel
 	 */
-	private void drawPerformanceInfo(Canvas c, int frameRate, double load) {
+	private void drawPerformanceInfo(Canvas c, int frameRate, double load, float averageSignalStrength) {
 		Rect bounds = new Rect();
 		String text;
+		float yPos = height * 0.01f;
+		float rightBorder = width * 0.99f;
+
+		// Draw the average signal strength indicator if demodulation is enabled
+		if (demodulationEnabled) {
+			text = String.format("%2.1f dB", averageSignalStrength);
+			textPaint.getTextBounds(text, 0, text.length(), bounds);
+
+			float indicatorWidth = width/10;
+			float indicatorPosX = rightBorder-indicatorWidth;
+			float indicatorPosY = yPos + bounds.height();
+			float squelchTickPos = (squelch - minDB)/(maxDB - minDB) * indicatorWidth;
+			float signalWidth = (averageSignalStrength - minDB)/(maxDB - minDB) * indicatorWidth;
+			if(signalWidth < 0)
+				signalWidth = 0;
+			if(signalWidth > indicatorWidth)
+				signalWidth = indicatorWidth;
+
+			// draw signal rectangle:
+			c.drawRect(indicatorPosX, yPos + bounds.height()*0.1f, indicatorPosX+signalWidth, indicatorPosY, squelchPaint );
+
+			// draw left border, right border, bottom line and squelch tick:
+			c.drawLine(indicatorPosX, indicatorPosY, indicatorPosX, yPos, textPaint);
+			c.drawLine(rightBorder, indicatorPosY, rightBorder, yPos, textPaint);
+			c.drawLine(indicatorPosX, indicatorPosY, rightBorder, indicatorPosY, textPaint);
+			c.drawLine(indicatorPosX+squelchTickPos, indicatorPosY+2, indicatorPosX+squelchTickPos, yPos+bounds.height()*0.5f, textPaint);
+
+			// draw text:
+			c.drawText(text, indicatorPosX - bounds.width() * 1.1f, indicatorPosY, textPaint);
+
+			// increase yPos:
+			yPos += bounds.height() * 1.1f;
+		}
 
 		// Draw the FFT/s rate
 		text = frameRate+" FPS";
 		textPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,width-bounds.width(),bounds.height(), textPaint);
+		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(), textPaint);
+		yPos += bounds.height() * 1.1f;
 
 		// Draw the load
 		text = String.format("%3.1f %%", load * 100);
 		textPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,width-bounds.width(),bounds.height() * 2,textPaint);
+		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(),textPaint);
+		yPos += bounds.height() * 1.1f;
 	}
 
 	/**
@@ -1089,11 +1181,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		public void onUpdateChannelFrequency(long newChannelFrequency);
 
 		/**
-		 * Is called when the user adjusts the squelch threshold.
+		 * Is called when the signal strength of the selected channel
+		 * crosses the squelch threshold
 		 *
-		 * @param newSquelch	new squelch threshold in dB
+		 * @param squelchSatisfied	true: the signal is now stronger than the threshold; false: signal is now weaker
 		 */
-		public void onUpdateSquelch(float newSquelch);
+		public void onUpdateSquelchSatisfied(boolean squelchSatisfied);
 
 		/**
 		 * Is called when the AnalyzerSurface has to determine the current

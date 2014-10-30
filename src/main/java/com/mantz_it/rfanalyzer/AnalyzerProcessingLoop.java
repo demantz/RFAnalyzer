@@ -176,7 +176,7 @@ public class AnalyzerProcessingLoop extends Thread {
 					if(dynamicFrameRate && frameRate > 1)
 						frameRate--;
 
-					Log.w(LOGTAG, "Couldn't meet requested frame rate!");
+					//Log.d(LOGTAG, "Couldn't meet requested frame rate!");
 					load = 1;
 				}
 			} catch (Exception e) {

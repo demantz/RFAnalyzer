@@ -279,7 +279,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setSquelch(savedInstanceState.getFloat(getString(R.string.save_state_squelch)));
 			if(demodulator != null && scheduler != null) {
 				demodulator.setChannelWidth(savedInstanceState.getInt(getString(R.string.save_state_channelWidth)));
-				demodulator.setSquelch(savedInstanceState.getFloat(getString(R.string.save_state_squelch)));
 				scheduler.setChannelFrequency(savedInstanceState.getLong(getString(R.string.save_state_channelFrequency)));
 			}
 			savedInstanceState = null; // not needed any more...
@@ -636,6 +635,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
 							source.setFrequency((long)newFreq);
 							analyzerSurface.setVirtualFrequency((long)newFreq);
+							if(demodulationMode != Demodulator.DEMODULATION_OFF)
+								analyzerSurface.setDemodulationEnabled(true);	// This will re-adjust the channel freq correctly
 						} else {
 							Toast.makeText(MainActivity.this, "Frequency is out of the valid range: " + (long)newFreq + " Hz", Toast.LENGTH_LONG).show();
 						}
@@ -749,8 +750,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	}
 
 	@Override
-	public void onUpdateSquelch(float newSquelch) {
-		demodulator.setSquelch(newSquelch);
+	public void onUpdateSquelchSatisfied(boolean squelchSatisfied) {
+		scheduler.setSquelchSatisfied(squelchSatisfied);
 	}
 
 	@Override

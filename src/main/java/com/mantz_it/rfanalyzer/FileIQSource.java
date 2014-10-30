@@ -302,8 +302,8 @@ public class FileIQSource implements IQSourceInterface {
 					bestLengthError = Math.abs(bestLength - (i*cycleLength));
 				}
 			}
-			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
-					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
+//			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
+//					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
 			cosineRealLookupTable = new double[bestLength][256];
 			cosineImagLookupTable = new double[bestLength][256];
 			double cosineAtT;
