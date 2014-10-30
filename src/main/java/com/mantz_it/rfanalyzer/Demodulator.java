@@ -36,17 +36,19 @@ import java.util.concurrent.TimeUnit;
 public class Demodulator extends Thread {
 	private boolean stopRequested = true;
 	private static final String LOGTAG = "Demodulator";
-	private static final int AUDIO_RATE = 31250;
+	private static final int AUDIO_RATE = 31250;	// Even though this is not a proper audio rate, the Android system can
+													// handle it properly and it is a integer fraction of the input rate (1MHz).
+	// The quadrature rate is the sample rate that is used for the demodulation:
 	private static final int[] QUADRATURE_RATE = {	1,				// off; this value is not 0 to avoid divide by zero errors!
 													2*AUDIO_RATE,	// AM
 													2*AUDIO_RATE,	// nFM
 													8*AUDIO_RATE};	// wFM
-	public static final int INPUT_RATE = 1000000;
+	public static final int INPUT_RATE = 1000000;	// Expected rate of the incoming samples
 
 	// DECIMATION
-	private Decimator decimator;
+	private Decimator decimator;	// will do INPUT_RATE --> QUADRATURE_RATE
 
-	// FILTERING
+	// FILTERING (This is the channel filter controlled by the user)
 	private static final int USER_FILTER_ATTENUATION = 20;
 	private FirFilter userFilter = null;
 	private int userFilterCutOff = 0;
@@ -62,15 +64,24 @@ public class Demodulator extends Thread {
 
 	// DEMODULATION
 	private SamplePacket demodulatorHistory;
-	public static final int DEMODULATION_OFF = 0;
-	public static final int DEMODULATION_AM = 1;
-	public static final int DEMODULATION_NFM = 2;
-	public static final int DEMODULATION_WFM = 3;
+	public static final int DEMODULATION_OFF 	= 0;
+	public static final int DEMODULATION_AM 	= 1;
+	public static final int DEMODULATION_NFM 	= 2;
+	public static final int DEMODULATION_WFM 	= 3;
 	public int demodulationMode;
 
 	// AUDIO OUTPUT
-	private AudioSink audioSink = null;
+	private AudioSink audioSink = null;		// Will do QUADRATURE_RATE --> AUDIO_RATE and audio output
 
+	/**
+	 * Constructor. Creates a new demodulator block reading its samples from the given input queue and
+	 * returning the buffers to the given output queue. Expects input samples to be at baseband (mixing
+	 * is done by the scheduler)
+	 *
+	 * @param inputQueue	Queue that delivers received baseband signals
+	 * @param outputQueue	Queue to return used buffers from the inputQueue
+	 * @param packetSize	Size of the packets in the input queue
+	 */
 	public Demodulator (ArrayBlockingQueue<SamplePacket> inputQueue, ArrayBlockingQueue<SamplePacket> outputQueue, int packetSize) {
 		// Create internal sample buffers:
 		// Note that we create the buffers for the case that there is no downsampling necessary
@@ -87,10 +98,20 @@ public class Demodulator extends Thread {
 		this.decimator = new Decimator(QUADRATURE_RATE[demodulationMode], packetSize, inputQueue, outputQueue);
 	}
 
+	/**
+	 * @return	Demodulation Mode (DEMODULATION_OFF, *_AM, *_NFM, *_WFM)
+	 */
 	public int getDemodulationMode() {
 		return demodulationMode;
 	}
 
+	/**
+	 * Sets a new demodulation mode. This can be done while the demodulator is running!
+	 * Will automatically adjust internal sample rate conversions and the user filter
+	 * if necessary
+	 *
+	 * @param demodulationMode	Demodulation Mode (DEMODULATION_OFF, *_AM, *_NFM, *_WFM)
+	 */
 	public void setDemodulationMode(int demodulationMode) {
 		if(demodulationMode > 3 || demodulationMode < 0) {
 			Log.e(LOGTAG,"setDemodulationMode: invalid mode: " + demodulationMode);
@@ -113,12 +134,17 @@ public class Demodulator extends Thread {
 		return true;
 	}
 
+	/**
+	 * @return Current width (cut-off frequency - one sided) of the user filter
+	 */
 	public int getChannelWidth() {
 		return userFilterCutOff;
 	}
 
 	/**
-	 * Starts the thread
+	 * Starts the thread. This thread will start 2 more threads for decimation and audio output.
+	 * These threads are managed by the Demodulator and terminated, when the Demodulator thread
+	 * terminates.
 	 */
 	@Override
 	public synchronized void start() {
@@ -201,6 +227,14 @@ public class Demodulator extends Thread {
 		Log.i(LOGTAG,"Demodulator stopped. (Thread: " + this.getName() + ")");
 	}
 
+	/**
+	 * Will filter the samples in input according to the user filter settings.
+	 * Filtered samples are stored in output. Note: All samples in output
+	 * will always be overwritten!
+	 *
+	 * @param input		incoming (unfiltered) samples
+	 * @param output	outgoing (filtered) samples
+	 */
 	private void applyUserFilter(SamplePacket input, SamplePacket output) {
 		// Verify that the filter is still correct configured:
 		if(userFilter == null || ((int) userFilter.getCutOffFrequency()) != userFilterCutOff) {
@@ -223,6 +257,15 @@ public class Demodulator extends Thread {
 		}
 	}
 
+	/**
+	 * Will FM demodulate the samples in input. Use ~75000 deviation for wide band FM
+	 * and ~3000 deviation for narrow band FM.
+	 * Demodulated samples are stored in the real array of output. Note: All samples in output
+	 * will always be overwritten!
+	 *
+	 * @param input		incoming (modulated) samples
+	 * @param output	outgoing (demodulated) samples
+	 */
 	private void demodulateFM(SamplePacket input, SamplePacket output, int maxDeviation) {
 		double[] reIn = input.re();
 		double[] imIn = input.im();
@@ -251,6 +294,14 @@ public class Demodulator extends Thread {
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
 	}
 
+	/**
+	 * Will AM demodulate the samples in input.
+	 * Demodulated samples are stored in the real array of output. Note: All samples in output
+	 * will always be overwritten!
+	 *
+	 * @param input		incoming (modulated) samples
+	 * @param output	outgoing (demodulated) samples
+	 */
 	private void demodulateAM(SamplePacket input, SamplePacket output) {
 		double[] reIn = input.re();
 		double[] imIn = input.im();

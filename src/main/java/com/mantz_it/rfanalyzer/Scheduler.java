@@ -9,9 +9,12 @@ import java.util.concurrent.ArrayBlockingQueue;
  *
  * Module:      Scheduler.java
  * Description: This Thread is responsible for forwarding the samples from the input hardware
- *              to the Processing Loop at the correct speed and format. Therefore it has to
- *              drop incoming samples that won't be used in order to keep the buffer of the
- *              hackrf_android library from beeing filled up.
+ *              to the Demodulator and to the Processing Loop and at the correct speed and format.
+ *              Sample packets are passed to other blocks by using blocking queues. The samples passed
+ *              to the Demodulator will be shifted to base band first.
+ *              If the Demodulator or the Processing Loop are to slow, the scheduler will automatically
+ *              drop incoming samples to keep the buffer of the hackrf_android library from beeing filled up.
+ *
  *
  * @author Dennis Mantz
  *

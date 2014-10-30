@@ -38,18 +38,24 @@ import java.util.concurrent.TimeUnit;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class AudioSink extends Thread {
-	private AudioTrack audioTrack = null;
+	private AudioTrack audioTrack = null;		// AudioTrack object that is used to pass audio samples to the Android system
 	private boolean stopRequested = true;
-	private ArrayBlockingQueue<SamplePacket> inputQueue = null;
-	private ArrayBlockingQueue<SamplePacket> outputQueue = null;
-	private int packetSize;
-	private int sampleRate;
+	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// Queue that holds incoming samples
+	private ArrayBlockingQueue<SamplePacket> outputQueue = null;	// Queue that holds available buffers
+	private int packetSize;		// packet size of the incoming sample packets
+	private int sampleRate;		// audio sample rate of the AudioSink
 	private static final int QUEUE_SIZE = 2;	// This results in a double buffer. see Scheduler...
 	private static final String LOGTAG = "AudioSink";
-	private FirFilter audioFilter1 = null;
-	private FirFilter audioFilter2 = null;
-	private SamplePacket tmpAudioSamples;
+	private FirFilter audioFilter1 = null;		// Filter used to decimate the incoming signal rate
+	private FirFilter audioFilter2 = null;		// Cascaded filter for high incoming signal rates
+	private SamplePacket tmpAudioSamples;		// tmp buffer for audio filters.
 
+	/**
+	 * Constructor. Will create a new AudioSink.
+	 *
+	 * @param packetSize	size of the incoming packets
+	 * @param sampleRate	sample rate of the audio signal
+	 */
 	public AudioSink (int packetSize, int sampleRate) {
 		this.packetSize = packetSize;
 		this.sampleRate = sampleRate;
@@ -182,6 +188,12 @@ public class AudioSink extends Thread {
 		Log.i(LOGTAG,"AudioSink stopped. (Thread: " + this.getName() + ")");
 	}
 
+	/**
+	 * Will filter the real array contained in input and decimate them to the audio rate.
+	 *
+	 * @param input		incoming (unfiltered) samples at the incoming rate (quadrature rate)
+	 * @param output	outgoing (filtered, decimated) samples at audio rate
+	 */
 	public void applyAudioFilter(SamplePacket input, SamplePacket output) {
 		// if we need a decimation of 8: apply first and second filter (decimate to input_rate/8)
 		if(input.getSampleRate()/sampleRate == 8) {

@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Module:      Decimator.java
  * Description: This class implements a decimation block used to downsample the incoming signal
- *              to the sample rate used by the demodulation routines.
+ *              to the sample rate used by the demodulation routines. It will run in a separate thread.
  *
  * @author Dennis Mantz
  *
@@ -32,16 +32,16 @@ import java.util.concurrent.TimeUnit;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class Decimator extends Thread {
-	private int outputSampleRate;
-	private int packetSize;
+	private int outputSampleRate;	// sample rate at the output of the decimator block
+	private int packetSize;			// packet size of the incoming packets
 	private boolean stopRequested = true;
 	private static final String LOGTAG = "Decimator";
 
 	private static final int OUTPUT_QUEUE_SIZE = 2;		// Double Buffer
-	private ArrayBlockingQueue<SamplePacket> inputQueue;
-	private ArrayBlockingQueue<SamplePacket> inputReturnQueue;
-	private ArrayBlockingQueue<SamplePacket> outputQueue;
-	private ArrayBlockingQueue<SamplePacket> outputReturnQueue;
+	private ArrayBlockingQueue<SamplePacket> inputQueue;		// queue that holds the incoming sample packets
+	private ArrayBlockingQueue<SamplePacket> inputReturnQueue;	// queue to return used buffers from the input queue
+	private ArrayBlockingQueue<SamplePacket> outputQueue;		// queue that will hold the decimated sample packets
+	private ArrayBlockingQueue<SamplePacket> outputReturnQueue;	// queue to return used buffers from the output queue
 
 	// DOWNSAMPLING:
 	private static final int INPUT_RATE = 1000000;	// For now, this decimator only works with a fixed input rate of 1Msps
@@ -51,6 +51,14 @@ public class Decimator extends Thread {
 	private FirFilter inputFilter4 = null;
 	private SamplePacket tmpDownsampledSamples;
 
+	/**
+	 * Constructor. Will create a new Decimator block.
+	 *
+	 * @param outputSampleRate		// sample rate to which the incoming samples should be decimated
+	 * @param packetSize			// packet size of the incoming sample packets
+	 * @param inputQueue			// queue that delivers incoming sample packets
+	 * @param inputReturnQueue		// queue to return used input sample packets
+	 */
 	public Decimator (int outputSampleRate, int packetSize, ArrayBlockingQueue<SamplePacket> inputQueue,
 					  ArrayBlockingQueue<SamplePacket> inputReturnQueue) {
 		this.outputSampleRate = outputSampleRate;
@@ -162,6 +170,12 @@ public class Decimator extends Thread {
 		Log.i(LOGTAG,"Decimator stopped. (Thread: " + this.getName() + ")");
 	}
 
+	/**
+	 * Will decimate the input samples to the outputSampleRate and store them in output
+	 *
+	 * @param input		incoming samples at the incoming rate (input rate)
+	 * @param output	outgoing (decimated) samples at output rate (quadrature rate)
+	 */
 	private void downsampling(SamplePacket input, SamplePacket output) {
 		// Verify that the input filter 4 is still correct configured (gain):
 		if(inputFilter4 == null || inputFilter4.getGain() != 2*(outputSampleRate/(double)input.getSampleRate()) ) {

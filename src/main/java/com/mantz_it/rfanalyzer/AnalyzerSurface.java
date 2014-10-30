@@ -300,30 +300,57 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.peakHoldEnabled = enable;
 	}
 
+	/**
+	 * @return current channel frequency as set in the UI
+	 */
 	public long getChannelFrequency() {
 		return channelFrequency;
 	}
 
+	/**
+	 * @return current channel width (cut-off frequency - single sided) of the channel filter in Hz
+	 */
 	public int getChannelWidth() {
 		return channelWidth;
 	}
 
+	/**
+	 * @return current squelch threshold in dB
+	 */
 	public float getSquelch() {
 		return squelch;
 	}
 
+	/**
+	 * @param squelch 	new squelch threshold in dB
+	 */
 	public void setSquelch(float squelch) {
 		this.squelch = squelch;
 	}
 
+	/**
+	 * @param channelWidth	new channel width (cut-off frequency - single sided) of the channel filter in Hz
+	 */
 	public void setChannelWidth(int channelWidth) {
 		this.channelWidth = channelWidth;
 	}
 
+	/**
+	 * @param channelFrequency	new channel frequency in Hz
+	 */
 	public void setChannelFrequency(long channelFrequency) {
 		this.channelFrequency = channelFrequency;
 	}
 
+	/**
+	 * If called with true, this will set the UI in demodulation mode:
+	 * - No more sample rate changes
+	 * - Showing channel selector
+	 * This will also pass the current values of channel frequency, width and squelch
+	 * to the callback handler in order to sync with the demodulator.
+	 *
+	 * @param demodulationEnabled	true: set to demodulation mode;  false: set to regular mode
+	 */
 	public void setDemodulationEnabled(boolean demodulationEnabled) {
 		synchronized (this.getHolder()) {
 			if(demodulationEnabled) {
