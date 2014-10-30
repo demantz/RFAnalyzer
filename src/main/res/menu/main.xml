@@ -25,7 +25,7 @@
           android:icon="@drawable/ic_action_gain"
           android:title="@string/action_setGain"
           android:orderInCategory="10"
-          android:showAsAction="ifRoom" />
+          android:showAsAction="always" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

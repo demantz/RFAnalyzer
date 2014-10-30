@@ -59,6 +59,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Paint peakHoldPaint = null;		// Paint object to draw the fft peak hold points
 	private Paint waterfallLinePaint = null;// Paint object to draw one waterfall pixel
 	private Paint textPaint = null;			// Paint object to draw text on the canvas
+	private Paint textSmallPaint = null;	// Paint object to draw small text on the canvas
 	private Paint demodSelectorPaint = null;// Paint object to draw the area of the channel
 	private Paint squelchPaint = null;		// Paint object to draw the squelch selector
 	private int width;						// current width (in pixels) of the SurfaceView
@@ -116,7 +117,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private static final int SCROLLTYPE_SQUELCH = 5;
 
 	private float fftRatio = 0.5f;					// percentage of the height the fft consumes on the surface
-	private float waterfallRatio = 1 - fftRatio;	// percentage of the height the waterfall consumes on the surface
 
 	/**
 	 * Constructor. Will initialize the Paint instances and register the callback
@@ -137,6 +137,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.peakHoldPaint.setColor(Color.YELLOW);
 		this.textPaint = new Paint();
 		this.textPaint.setColor(Color.WHITE);
+		this.textSmallPaint = new Paint();
+		this.textSmallPaint.setColor(Color.WHITE);
 		this.waterfallLinePaint = new Paint();
 		this.demodSelectorPaint = new Paint();
 		this.demodSelectorPaint.setColor(Color.WHITE);
@@ -349,6 +351,20 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
+	 * Sets the fft to waterfall ratio
+	 *
+	 * @param fftRatio	percentage of the fft on the screen (0 -> 0%;  1 -> 100%)
+	 */
+	public void setFftRatio(float fftRatio) {
+		if(fftRatio != this.fftRatio) {
+			this.fftRatio = fftRatio;
+			createWaterfallLineBitmaps();	// recreate the waterfall bitmaps
+			// Recreate the shaders:
+			this.fftPaint.setShader(new LinearGradient(0, 0, 0, getFftHeight(), Color.WHITE, Color.BLUE, Shader.TileMode.MIRROR));
+		}
+	}
+
+	/**
 	 * Will initialize the waterfallLines array for the given width and height of the waterfall plot.
 	 * If the array is not null, it will be recycled first.
 	 */
@@ -445,6 +461,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// Fix the text size:
 			this.textPaint.setTextSize((int) (getGridSize() / 2.1));
+			this.textSmallPaint.setTextSize(textPaint.getTextSize()*0.5f);
 		}
 	}
 
@@ -665,7 +682,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @return heigth (in px) of the waterfall
 	 */
 	private int getWaterfallHeight() {
-		return (int) (height * waterfallRatio);
+		return (int) (height * (1-fftRatio));
 	}
 
 	/**
@@ -1014,14 +1031,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 					textStr = String.format("%d", (int) tickFreqMHz);
 				else
 					textStr = String.format("%s", tickFreqMHz);
-				textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
+				textSmallPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
 				textPos = tickPos - bounds.width()/2;
 
 				// ...only if not overlapping with the last text:
 				if(lastTextEndPos+minFreeSpaceBetweenText < textPos) {
 					// ... if enough space between the major ticks:
-					if (bounds.width() < pixelPerMinorTick * 4) {
-						c.drawText(textStr, textPos, getFftHeight() - tickHeight, textPaint);
+					if (bounds.width() < pixelPerMinorTick * 3) {
+						c.drawText(textStr, textPos, getFftHeight() - tickHeight, textSmallPaint);
 						lastTextEndPos = textPos + bounds.width();
 					}
 				}
@@ -1058,13 +1075,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// draw squelch text above the squelch selector:
 			textStr = String.format("%2.1f dB", squelch);
-			textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
-			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition - bounds.height() * 0.1f, textPaint);
+			textSmallPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
+			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition - bounds.height() * 0.1f, textSmallPaint);
 
 			// draw channel width text below the squelch selector:
 			textStr = String.format("%d kHz", channelWidth*2/1000);
-			textPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
-			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition + bounds.height() * 1.1f, textPaint);
+			textSmallPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
+			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition + bounds.height() * 1.1f, textSmallPaint);
 		}
 	}
 
@@ -1117,10 +1134,20 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		float yPos = height * 0.01f;
 		float rightBorder = width * 0.99f;
 
+		// Draw the channel frequency if demodulation is enabled:
+		if(demodulationEnabled) {
+			text = String.format("%4.6f MHz", channelFrequency/1000000f);
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+
+			// increase yPos:
+			yPos += bounds.height() * 1.1f;
+		}
+
 		// Draw the average signal strength indicator if demodulation is enabled
 		if (demodulationEnabled) {
 			text = String.format("%2.1f dB", averageSignalStrength);
-			textPaint.getTextBounds(text, 0, text.length(), bounds);
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
 
 			float indicatorWidth = width/10;
 			float indicatorPosX = rightBorder-indicatorWidth;
@@ -1142,7 +1169,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			c.drawLine(indicatorPosX+squelchTickPos, indicatorPosY+2, indicatorPosX+squelchTickPos, yPos+bounds.height()*0.5f, textPaint);
 
 			// draw text:
-			c.drawText(text, indicatorPosX - bounds.width() * 1.1f, indicatorPosY, textPaint);
+			c.drawText(text, indicatorPosX - bounds.width() * 1.1f, indicatorPosY, textSmallPaint);
 
 			// increase yPos:
 			yPos += bounds.height() * 1.1f;
@@ -1150,14 +1177,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 		// Draw the FFT/s rate
 		text = frameRate+" FPS";
-		textPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(), textPaint);
+		textSmallPaint.getTextBounds(text,0 , text.length(), bounds);
+		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(), textSmallPaint);
 		yPos += bounds.height() * 1.1f;
 
 		// Draw the load
 		text = String.format("%3.1f %%", load * 100);
-		textPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(),textPaint);
+		textSmallPaint.getTextBounds(text,0 , text.length(), bounds);
+		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(),textSmallPaint);
 		yPos += bounds.height() * 1.1f;
 	}
 
