@@ -3,7 +3,8 @@ RF Analyzer for Android
 
 This is the repository of the RF Analyzer app for Android. It can be used
 to view a FFT plot and a waterfall plot of the frequency spectrum
-received by a HackRF.
+received by a HackRF. The new version can also demodulate audio from
+AM and FM signals!
 
 ![RF Analyzer](http://4.bp.blogspot.com/-gdSsQ1COybM/VEQkplyqFOI/AAAAAAAADt8/hJhA0i6WyYY/s0/RF%2BAnalyzer.jpg)
 
@@ -12,12 +13,14 @@ received by a HackRF.
 See [http://tech.mantz-it.com](http://tech.mantz-it.com) and [@dennismantz]
 (https://twitter.com/dennismantz) for updates.
 
+RF Analyzer is also available on Google Play: 
+[https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer]
+(https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)
 
 Implemented Features
 --------------------
 * Browse the spectrum by scrolling horizontally
 * Zoom in and out, both horizontally and vertically
-* Adjust the sample rate and center frequency to match the current view of the screen by double tapping
 * Automatic re-tune while scrolling and zooming
 * Auto scale the vertical axis
 * Jump directly to a frequency
@@ -30,6 +33,9 @@ Implemented Features
 * Averaging
 * Setting the frame rate either to a fixed value or to automatic control
 * Activate logging and showing the log file
+* (new) Demodulate nFM, wFM and AM
+* Adjust squelch and channel width
+* Change the proportion of spectrum and waterfall
 
 
 Testet Devices
@@ -55,6 +61,9 @@ building it yourself. But it won't be synched to the latest code base all the ti
 A basic how-to-start can be found on this blog post:
 [http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html]
 (http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html)
+
+Here is short screen record of the application in action:
+[http://youtu.be/r36fd_QhpNM](http://youtu.be/r36fd_QhpNM)
 
 
 License

@@ -1,5 +1,10 @@
 CHANGELOG - RF Analyzer
 
+version 1.07
+ - AM/FM demodulation
+ - Adjustable squelch and channel width
+ - Adjustable proportion of spectrum and waterfall
+
 version 1.06
  - New launcher icon
  - First version available in Google Play
