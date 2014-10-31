@@ -657,11 +657,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 					yDiff = MIN_DB - minDB;
 				this.setDBScale(minDB - yDiff, maxDB - yDiff);
 
-				// adjust the squelch if it is outside the visible viewport right now:
-				if(squelch < minDB)
-					squelch = minDB;
-				if(squelch > maxDB)
-					squelch = maxDB;
+				// adjust the squelch if it is outside the visible viewport right now and demodulation is enabled:
+				if(demodulationEnabled) {
+					if (squelch < minDB)
+						squelch = minDB;
+					if (squelch > maxDB)
+						squelch = maxDB;
+				}
 			}
 
 			// Automatically re-tune the source if we scrolled the samples out of the visible window:
@@ -803,6 +805,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				minDB = Math.max(min, MIN_DB);
 				maxDB = Math.min(max, MAX_DB);
 			}
+			if(squelch < minDB)
+				squelch = minDB;
+			if(squelch > maxDB)
+				squelch = maxDB;
 		}
 
 		// Update Peak Hold
