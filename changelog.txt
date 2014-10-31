@@ -1,5 +1,9 @@
 CHANGELOG - RF Analyzer
 
+version 1.06
+ - New launcher icon
+ - First version available in Google Play
+
 version 1.05:
  - Fixed crash on application start when double tapping the screen
  - Optimized auto-retuning on scrolling
