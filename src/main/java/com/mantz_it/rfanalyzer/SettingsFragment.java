@@ -67,12 +67,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	@Override
 	public void onResume() {
 		super.onResume();
-		getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-		updateSummaries();
 
 		// Screen Orientation:
 		String screenOrientation = getPreferenceScreen().getSharedPreferences().getString(getString(R.string.pref_screenOrientation), "auto");
 		setScreenOrientation(screenOrientation);
+
+		getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+		updateSummaries();
 	}
 
 	@Override
@@ -188,6 +189,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		// Screen Orientation
 		listPref = (ListPreference) findPreference(getString(R.string.pref_screenOrientation));
 		listPref.setSummary(getString(R.string.pref_screenOrientation_summ, listPref.getEntry()));
+
+		// Spectrum Waterfall Ratio
+		listPref = (ListPreference) findPreference(getString(R.string.pref_spectrumWaterfallRatio));
+		listPref.setSummary(getString(R.string.pref_spectrumWaterfallRatio_summ, listPref.getEntry()));
 
 		// Frame Rate
 		SwitchPreference switchPref = (SwitchPreference) findPreference(getString(R.string.pref_dynamicFrameRate));

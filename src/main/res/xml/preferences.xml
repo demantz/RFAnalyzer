@@ -1,131 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <ListPreference
-        android:key="@string/pref_sourceType"
-        android:title="@string/pref_sourceType_title"
-        android:dialogTitle="@string/pref_sourceType_title"
-        android:entries="@array/pref_sourceType_entries"
-        android:entryValues="@array/pref_sourceType_values"
-        android:defaultValue="@string/pref_sourceType_default" />
+    <PreferenceCategory
+        android:key="@string/pref_signalProcessing_category"
+        android:title="@string/pref_signalProcessing_category_title">
+        <ListPreference
+            android:key="@string/pref_sourceType"
+            android:title="@string/pref_sourceType_title"
+            android:dialogTitle="@string/pref_sourceType_title"
+            android:entries="@array/pref_sourceType_entries"
+            android:entryValues="@array/pref_sourceType_values"
+            android:defaultValue="@string/pref_sourceType_default" />
+        <PreferenceScreen
+            android:key="@string/pref_sourceSettings"
+            android:title="@string/pref_sourceSettings_title"
+            android:persistent="false">
+            <PreferenceCategory
+                android:key="@string/pref_filesource_category"
+                android:title="@string/pref_filesource_category_title">
+                <EditTextPreference
+                    android:key="@string/pref_filesource_frequency"
+                    android:title="@string/pref_filesource_frequency_title"
+                    android:dialogTitle="@string/pref_filesource_frequency_title"
+                    android:defaultValue="@string/pref_filesource_frequency_default" />
+                <EditTextPreference
+                    android:key="@string/pref_filesource_sampleRate"
+                    android:title="@string/pref_filesource_sampleRate_title"
+                    android:dialogTitle="@string/pref_filesource_sampleRate_title"
+                    android:defaultValue="@string/pref_filesource_sampleRate_default" />
+                <EditTextPreference
+                    android:key="@string/pref_filesource_file"
+                    android:title="@string/pref_filesource_file_title"
+                    android:defaultValue="@string/pref_filesource_file_default" />
+                <SwitchPreference
+                    android:key="@string/pref_filesource_repeat"
+                    android:title="@string/pref_filesource_repeat_title"
+                    android:summaryOn="@string/pref_filesource_repeat_summ_on"
+                    android:summaryOff="@string/pref_filesource_repeat_summ_off"
+                    android:defaultValue="false" />
+            </PreferenceCategory>
+        </PreferenceScreen>
+        <ListPreference
+            android:key="@string/pref_fftSize"
+            android:title="@string/pref_fftSize_title"
+            android:dialogTitle="@string/pref_fftSize_title"
+            android:entries="@array/pref_fftSize_entries"
+            android:entryValues="@array/pref_fftSize_values"
+            android:defaultValue="@string/pref_fftSize_default" />
+        <ListPreference
+            android:key="@string/pref_averaging"
+            android:title="@string/pref_averaging_title"
+            android:dialogTitle="@string/pref_averaging_title"
+            android:entries="@array/pref_averaging_entries"
+            android:entryValues="@array/pref_averaging_values"
+            android:defaultValue="@string/pref_averaging_default" />
+        <SwitchPreference
+            android:key="@string/pref_peakHold"
+            android:title="@string/pref_peakHold_title"
+            android:summaryOn="@string/pref_peakHold_summ_on"
+            android:summaryOff="@string/pref_peakHold_summ_off"
+            android:defaultValue="false" />
+        <SwitchPreference
+            android:key="@string/pref_autostart"
+            android:title="@string/pref_autostart_title"
+            android:summaryOn="@string/pref_autostart_summ_on"
+            android:summaryOff="@string/pref_autostart_summ_off"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="@string/pref_view_category"
+        android:title="@string/pref_view_category_title">
+        <ListPreference
+            android:key="@string/pref_colorMapType"
+            android:title="@string/pref_colorMapType_title"
+            android:dialogTitle="@string/pref_colorMapType_title"
+            android:entries="@array/pref_colorMapType_entries"
+            android:entryValues="@array/pref_colorMapType_values"
+            android:defaultValue="@string/pref_colorMapType_default" />
+        <ListPreference
+            android:key="@string/pref_fftDrawingType"
+            android:title="@string/pref_fftDrawingType_title"
+            android:dialogTitle="@string/pref_fftDrawingType_title"
+            android:entries="@array/pref_fftDrawingType_entries"
+            android:entryValues="@array/pref_fftDrawingType_values"
+            android:defaultValue="@string/pref_fftDrawingType_default" />
+        <ListPreference
+            android:key="@string/pref_screenOrientation"
+            android:title="@string/pref_screenOrientation_title"
+            android:dialogTitle="@string/pref_screenOrientation_title"
+            android:entries="@array/pref_screenOrientation_entries"
+            android:entryValues="@array/pref_screenOrientation_values"
+            android:defaultValue="@string/pref_screenOrientation_default" />
+        <ListPreference
+            android:key="@string/pref_spectrumWaterfallRatio"
+            android:title="@string/pref_spectrumWaterfallRatio_title"
+            android:dialogTitle="@string/pref_spectrumWaterfallRatio_title"
+            android:entries="@array/pref_spectrumWaterfallRatio_entries"
+            android:entryValues="@array/pref_spectrumWaterfallRatio_values"
+            android:defaultValue="@string/pref_spectrumWaterfallRatio_default" />
+        <SwitchPreference
+            android:key="@string/pref_zoomDB"
+            android:title="@string/pref_zoomDB_title"
+            android:summaryOn="@string/pref_zoomDB_summ_on"
+            android:summaryOff="@string/pref_zoomDB_summ_off"
+            android:defaultValue="true" />
+        <SwitchPreference
+            android:key="@string/pref_scrollDB"
+            android:title="@string/pref_scrollDB_title"
+            android:summaryOn="@string/pref_scrollDB_summ_on"
+            android:summaryOff="@string/pref_scrollDB_summ_off"
+            android:defaultValue="true" />
+    </PreferenceCategory>
     <PreferenceScreen
-        android:key="@string/pref_sourceSettings"
-        android:title="@string/pref_sourceSettings_title"
+        android:key="@string/pref_advancedSettings"
+        android:title="@string/pref_advancedSettings_title"
         android:persistent="false">
-        <PreferenceCategory
-            android:key="@string/pref_filesource_category"
-            android:title="@string/pref_filesource_category_title">
-            <EditTextPreference
-                android:key="@string/pref_filesource_frequency"
-                android:title="@string/pref_filesource_frequency_title"
-                android:dialogTitle="@string/pref_filesource_frequency_title"
-                android:defaultValue="@string/pref_filesource_frequency_default" />
-            <EditTextPreference
-                android:key="@string/pref_filesource_sampleRate"
-                android:title="@string/pref_filesource_sampleRate_title"
-                android:dialogTitle="@string/pref_filesource_sampleRate_title"
-                android:defaultValue="@string/pref_filesource_sampleRate_default" />
-            <EditTextPreference
-                android:key="@string/pref_filesource_file"
-                android:title="@string/pref_filesource_file_title"
-                android:defaultValue="@string/pref_filesource_file_default" />
-            <SwitchPreference
-                android:key="@string/pref_filesource_repeat"
-                android:title="@string/pref_filesource_repeat_title"
-                android:summaryOn="@string/pref_filesource_repeat_summ_on"
-                android:summaryOff="@string/pref_filesource_repeat_summ_off"
-                android:defaultValue="false" />
-        </PreferenceCategory>
+        <SwitchPreference
+            android:key="@string/pref_dynamicFrameRate"
+            android:title="@string/pref_dynamicFrameRate_title"
+            android:summaryOn="@string/pref_dynamicFrameRate_summ_on"
+            android:summaryOff="@string/pref_dynamicFrameRate_summ_off"
+            android:defaultValue="true"
+            android:disableDependentsState="true" />
+        <ListPreference
+            android:key="@string/pref_frameRate"
+            android:dependency="@string/pref_dynamicFrameRate"
+            android:title="@string/pref_frameRate_title"
+            android:dialogTitle="@string/pref_frameRate_title"
+            android:entries="@array/pref_frameRate_entries"
+            android:entryValues="@array/pref_frameRate_values"
+            android:defaultValue="@string/pref_frameRate_default" />
+        <SwitchPreference
+            android:key="@string/pref_logging"
+            android:title="@string/pref_logging_title"
+            android:summaryOn="@string/pref_logging_summ_on"
+            android:summaryOff="@string/pref_logging_summ_off"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="@string/pref_logfile"
+            android:title="@string/pref_logfile_title"
+            android:dependency="@string/pref_logging"
+            android:defaultValue="@string/pref_logfile_default" />
+        <Preference
+            android:key="@string/pref_showLog"
+            android:title="@string/pref_showLog_title"
+            android:dependency="@string/pref_logging"
+            android:persistent="false" />
     </PreferenceScreen>
-    <ListPreference
-        android:key="@string/pref_fftSize"
-        android:title="@string/pref_fftSize_title"
-        android:dialogTitle="@string/pref_fftSize_title"
-        android:entries="@array/pref_fftSize_entries"
-        android:entryValues="@array/pref_fftSize_values"
-        android:defaultValue="@string/pref_fftSize_default" />
-    <ListPreference
-        android:key="@string/pref_colorMapType"
-        android:title="@string/pref_colorMapType_title"
-        android:dialogTitle="@string/pref_colorMapType_title"
-        android:entries="@array/pref_colorMapType_entries"
-        android:entryValues="@array/pref_colorMapType_values"
-        android:defaultValue="@string/pref_colorMapType_default" />
-    <ListPreference
-        android:key="@string/pref_fftDrawingType"
-        android:title="@string/pref_fftDrawingType_title"
-        android:dialogTitle="@string/pref_fftDrawingType_title"
-        android:entries="@array/pref_fftDrawingType_entries"
-        android:entryValues="@array/pref_fftDrawingType_values"
-        android:defaultValue="@string/pref_fftDrawingType_default" />
-    <ListPreference
-        android:key="@string/pref_averaging"
-        android:title="@string/pref_averaging_title"
-        android:dialogTitle="@string/pref_averaging_title"
-        android:entries="@array/pref_averaging_entries"
-        android:entryValues="@array/pref_averaging_values"
-        android:defaultValue="@string/pref_averaging_default" />
-    <SwitchPreference
-        android:key="@string/pref_peakHold"
-        android:title="@string/pref_peakHold_title"
-        android:summaryOn="@string/pref_peakHold_summ_on"
-        android:summaryOff="@string/pref_peakHold_summ_off"
-        android:defaultValue="false" />
-    <ListPreference
-        android:key="@string/pref_screenOrientation"
-        android:title="@string/pref_screenOrientation_title"
-        android:dialogTitle="@string/pref_screenOrientation_title"
-        android:entries="@array/pref_screenOrientation_entries"
-        android:entryValues="@array/pref_screenOrientation_values"
-        android:defaultValue="@string/pref_screenOrientation_default" />
-    <SwitchPreference
-        android:key="@string/pref_autostart"
-        android:title="@string/pref_autostart_title"
-        android:summaryOn="@string/pref_autostart_summ_on"
-        android:summaryOff="@string/pref_autostart_summ_off"
-        android:defaultValue="false" />
-    <SwitchPreference
-        android:key="@string/pref_dynamicFrameRate"
-        android:title="@string/pref_dynamicFrameRate_title"
-        android:summaryOn="@string/pref_dynamicFrameRate_summ_on"
-        android:summaryOff="@string/pref_dynamicFrameRate_summ_off"
-        android:defaultValue="true"
-        android:disableDependentsState="true" />
-    <ListPreference
-        android:key="@string/pref_frameRate"
-        android:dependency="@string/pref_dynamicFrameRate"
-        android:title="@string/pref_frameRate_title"
-        android:dialogTitle="@string/pref_frameRate_title"
-        android:entries="@array/pref_frameRate_entries"
-        android:entryValues="@array/pref_frameRate_values"
-        android:defaultValue="@string/pref_frameRate_default" />
-    <SwitchPreference
-        android:key="@string/pref_zoomDB"
-        android:title="@string/pref_zoomDB_title"
-        android:summaryOn="@string/pref_zoomDB_summ_on"
-        android:summaryOff="@string/pref_zoomDB_summ_off"
-        android:defaultValue="true" />
-    <SwitchPreference
-        android:key="@string/pref_scrollDB"
-        android:title="@string/pref_scrollDB_title"
-        android:summaryOn="@string/pref_scrollDB_summ_on"
-        android:summaryOff="@string/pref_scrollDB_summ_off"
-        android:defaultValue="true" />
-    <SwitchPreference
-        android:key="@string/pref_logging"
-        android:title="@string/pref_logging_title"
-        android:summaryOn="@string/pref_logging_summ_on"
-        android:summaryOff="@string/pref_logging_summ_off"
-        android:defaultValue="false" />
-    <EditTextPreference
-        android:key="@string/pref_logfile"
-        android:title="@string/pref_logfile_title"
-        android:dependency="@string/pref_logging"
-        android:defaultValue="@string/pref_logfile_default" />
-    <Preference
-        android:key="@string/pref_showLog"
-        android:title="@string/pref_showLog_title"
-        android:dependency="@string/pref_logging"
-        android:persistent="false" />
-
 </PreferenceScreen>

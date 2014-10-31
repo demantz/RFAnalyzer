@@ -9,9 +9,12 @@ import java.util.concurrent.ArrayBlockingQueue;
  *
  * Module:      Scheduler.java
  * Description: This Thread is responsible for forwarding the samples from the input hardware
- *              to the Processing Loop at the correct speed and format. Therefore it has to
- *              drop incoming samples that won't be used in order to keep the buffer of the
- *              hackrf_android library from beeing filled up.
+ *              to the Demodulator and to the Processing Loop and at the correct speed and format.
+ *              Sample packets are passed to other blocks by using blocking queues. The samples passed
+ *              to the Demodulator will be shifted to base band first.
+ *              If the Demodulator or the Processing Loop are to slow, the scheduler will automatically
+ *              drop incoming samples to keep the buffer of the hackrf_android library from beeing filled up.
+ *
  *
  * @author Dennis Mantz
  *
@@ -34,26 +37,38 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class Scheduler extends Thread {
 	private IQSourceInterface source = null;	// Reference to the source of the IQ samples
-	private ArrayBlockingQueue<SamplePacket> outputQueue = null;	// Queue that delivers samples to the Processing Loop
-	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// Queue that collects used buffers from the Processing Loop
+	private ArrayBlockingQueue<SamplePacket> fftOutputQueue = null;	// Queue that delivers samples to the Processing Loop
+	private ArrayBlockingQueue<SamplePacket> fftInputQueue = null;	// Queue that collects used buffers from the Processing Loop
+	private ArrayBlockingQueue<SamplePacket> demodOutputQueue = null;	// Queue that delivers samples to the Demodulator block
+	private ArrayBlockingQueue<SamplePacket> demodInputQueue = null;	// Queue that collects used buffers from the Demodulator block
+	private long channelFrequency = 0;					// Shift frequency to this value when passing packets to demodulator
+	private boolean demodulationActivated = false;		// Indicates if samples should be forwarded to the demodulator queues or not.
+	private boolean squelchSatisfied = false;			// indicates whether the current signal is strong enough to cross the squelch threshold
 	private boolean stopRequested = true;
 
-	// Define the size of the output and input Queues. By setting this value to 2 we basically end up
+	// Define the size of the fft output and input Queues. By setting this value to 2 we basically end up
 	// with double buffering. Maybe the two queues are overkill, but it works pretty well like this and
 	// it handles the synchronization between the scheduler thread and the processing loop for us.
 	// Note that setting the size to 1 will not work well and any number higher than 2 will cause
 	// higher delays when switching frequencies.
-	private static final int queueSize = 2;
+	private static final int FFT_QUEUE_SIZE = 2;
+	private static final int DEMOD_QUEUE_SIZE = 10;
 	private static final String LOGTAG = "Scheduler";
 
 	public Scheduler(int fftSize, IQSourceInterface source) {
 		this.source = source;
 
-		// Create the input- and output queues and allocate the buffer packets.
-		this.outputQueue = new ArrayBlockingQueue<SamplePacket>(queueSize);
-		this.inputQueue = new ArrayBlockingQueue<SamplePacket>(queueSize);
-		for (int i = 0; i < queueSize; i++)
-			inputQueue.offer(new SamplePacket(fftSize));
+		// Create the fft input- and output queues and allocate the buffer packets.
+		this.fftOutputQueue = new ArrayBlockingQueue<SamplePacket>(FFT_QUEUE_SIZE);
+		this.fftInputQueue = new ArrayBlockingQueue<SamplePacket>(FFT_QUEUE_SIZE);
+		for (int i = 0; i < FFT_QUEUE_SIZE; i++)
+			fftInputQueue.offer(new SamplePacket(fftSize));
+
+		// Create the demod input- and output queues and allocate the buffer packets.
+		this.demodOutputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
+		this.demodInputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
+		for (int i = 0; i < DEMOD_QUEUE_SIZE; i++)
+			demodInputQueue.offer(new SamplePacket(source.getPacketSize()));
 	}
 
 	public void stopScheduler() {
@@ -74,19 +89,53 @@ public class Scheduler extends Thread {
 		return !stopRequested;
 	}
 
-	public ArrayBlockingQueue<SamplePacket> getOutputQueue() {
-		return outputQueue;
+	public ArrayBlockingQueue<SamplePacket> getFftOutputQueue() {
+		return fftOutputQueue;
 	}
 
-	public ArrayBlockingQueue<SamplePacket> getInputQueue() {
-		return inputQueue;
+	public ArrayBlockingQueue<SamplePacket> getFftInputQueue() {
+		return fftInputQueue;
+	}
+
+	public ArrayBlockingQueue<SamplePacket> getDemodOutputQueue() {
+		return demodOutputQueue;
+	}
+
+	public ArrayBlockingQueue<SamplePacket> getDemodInputQueue() {
+		return demodInputQueue;
+	}
+
+	public boolean isDemodulationActivated() {
+		return demodulationActivated;
+	}
+
+	public void setDemodulationActivated(boolean demodulationActivated) {
+		this.demodulationActivated = demodulationActivated;
+	}
+
+	public long getChannelFrequency() {
+		return channelFrequency;
+	}
+
+	public void setChannelFrequency(long channelFrequency) {
+		this.channelFrequency = channelFrequency;
+	}
+
+	/**
+	 * Has to be called when the signal strength of the selected channel crosses the squelch threshold
+	 *
+	 * @param squelchSatisfied	true: the signal is now stronger than the threshold; false: signal is now weaker
+	 */
+	public void setSquelchSatisfied(boolean squelchSatisfied) {
+		this.squelchSatisfied = squelchSatisfied;
 	}
 
 	@Override
 	public void run() {
 		Log.i(LOGTAG,"Scheduler started. (Thread: " + this.getName() + ")");
-		SamplePacket buffer = null;		// reference to a buffer we got from the input queue to fill
-		int bufferIndex = 0;			// fill level of the buffer. ==> next index to insert into the buffer
+		SamplePacket fftBuffer = null;		// reference to a buffer we got from the fft input queue to fill
+		SamplePacket demodBuffer = null;	// reference to a buffer we got from the demod input queue to fill
+		SamplePacket tmpFlushBuffer = null;	// Just a tmp buffer to flush a queue if necessary
 
 		while(!stopRequested) {
 			// Get a new packet from the source:
@@ -97,24 +146,40 @@ public class Scheduler extends Thread {
 				break;
 			}
 
-			// If buffer is null we request a new buffer from the input queue:
-			if(buffer == null)
-				buffer = inputQueue.poll();
+			///// Demodulation /////////////////////////////////////////////////////////////////////
+			if(demodulationActivated && squelchSatisfied) {
+				// Get a buffer from the demodulator inputQueue
+				demodBuffer = demodInputQueue.poll();
+				if (demodBuffer != null) {
+					demodBuffer.setSize(0);    // mark buffer as empty
+					// fill the packet into the buffer and shift its spectrum by mixFrequency:
+					source.mixPacketIntoSamplePacket(packet, demodBuffer, channelFrequency);
+					demodOutputQueue.offer(demodBuffer);    // deliver packet
+				} else {
+					Log.d(LOGTAG, "run: Flush the demod queue because demodulator is too slow!");
+					while ((tmpFlushBuffer = demodOutputQueue.poll()) != null)
+						demodInputQueue.offer(tmpFlushBuffer);
+				}
+			}
+
+			///// FFT //////////////////////////////////////////////////////////////////////////////
+			// If buffer is null we request a new buffer from the fft input queue:
+			if(fftBuffer == null) {
+				fftBuffer = fftInputQueue.poll();
+				if(fftBuffer != null)
+					fftBuffer.setSize(0);	// mark buffer as empty
+			}
 
 			// If we got a buffer, fill it!
-			if(buffer != null)
+			if(fftBuffer != null)
 			{
-				// fill the packet into the buffer at bufferIndex:
-				int sampleCount = source.fillPacketIntoSamplePacket(packet,buffer,bufferIndex);
-				buffer.setFrequency(source.getFrequency());
-				buffer.setSampleRate(source.getSampleRate());
-				bufferIndex += sampleCount;
+				// fill the packet into the buffer:
+				source.fillPacketIntoSamplePacket(packet,fftBuffer);
 
 				// check if the buffer is now full and if so: deliver it to the output queue
-				if(bufferIndex == buffer.size()) {
-					outputQueue.offer(buffer);
-					buffer = null;
-					bufferIndex = 0;
+				if(fftBuffer.capacity() == fftBuffer.size()) {
+					fftOutputQueue.offer(fftBuffer);
+					fftBuffer = null;
 				}
 				// otherwise we would just go for another round...
 			}

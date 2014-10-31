@@ -148,14 +148,30 @@ public interface IQSourceInterface {
 	/**
 	 * Used to convert a packet from this source to the SamplePacket format. That means the samples
 	 * in the SamplePacket are stored as signed double values, normalized between -1 and 1.
+	 * Note that samples are appended to the buffer starting at the index samplePacket.size().
+	 * If you want to overwrite, set the size to 0 first.
 	 *
 	 * @param packet		packet that was returned by getPacket() and that should now be 'filled'
 	 *                      into the samplePacket.
 	 * @param samplePacket	SamplePacket that should be filled with samples from the packet.
-	 * @param startIndex	First index in samplePacket that should be written.
 	 * @return the number of samples filled into the samplePacket.
 	 */
-	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int startIndex);
+	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket);
+
+	/**
+	 * Used to convert a packet from this source to the SamplePacket format while at the same
+	 * time mixing the signal with the specified frequency. That means the samples
+	 * in the SamplePacket are stored as signed double values, normalized between -1 and 1.
+	 * Note that samples are appended to the buffer starting at the index samplePacket.size().
+	 * If you want to overwrite, set the size to 0 first.
+	 *
+	 * @param packet			packet that was returned by getPacket() and that should now be 'filled'
+	 *                          into the samplePacket.
+	 * @param samplePacket		SamplePacket that should be filled with samples from the packet.
+	 * @param channelFrequency	frequency to which the spectrum of the signal should be shifted
+	 * @return the number of samples filled into the samplePacket and shifted by mixFrequency.
+	 */
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency);
 
 	/**
 	 * Callback interface for asynchronous interactions with the source.

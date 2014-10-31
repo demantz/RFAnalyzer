@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="demodulation_modes">
+        <item>Demodulation off</item>
+        <item>AM</item>
+        <item>narrow-band FM</item>
+        <item>wide-band FM</item>
+    </string-array>
     <string-array name="pref_sourceType_entries">
         <item>File Source</item>
         <item>HackRF</item>
@@ -23,6 +29,24 @@
         <item>portrait</item>
         <item>reverse_landscape</item>
         <item>reverse_portrait</item>
+    </string-array>
+    <string-array name="pref_spectrumWaterfallRatio_entries">
+        <item>Spectrum 4:1 Waterfall</item>
+        <item>Spectrum 3:1 Waterfall</item>
+        <item>Spectrum 2:1 Waterfall</item>
+        <item>Spectrum 1:1 Waterfall</item>
+        <item>Spectrum 1:2 Waterfall</item>
+        <item>Spectrum 1:3 Waterfall</item>
+        <item>Spectrum 1:4 Waterfall</item>
+    </string-array>
+    <string-array name="pref_spectrumWaterfallRatio_values">
+        <item>0.8</item>
+        <item>0.75</item>
+        <item>0.66</item>
+        <item>0.5</item>
+        <item>0.33</item>
+        <item>0.25</item>
+        <item>0.2</item>
     </string-array>
     <string-array name="pref_frameRate_entries">
         <item>1 FPS</item>

@@ -40,11 +40,19 @@ public class FileIQSource implements IQSourceInterface {
 	private int sampleRate = 0;
 	private long frequency = 0;
 	private int packetSize = 0;
+	private int sleepTime = 0;			// min. time (in ms) between two getPacket() calls to simulate the sample rate
+	private long lastAccessTime = 0;	// timestamp of the last getPacket() call
 	private byte[] buffer = null;
 	private File file = null;
 	private String filename = null;
 	private BufferedInputStream bufferedInputStream = null;
 	private static final String LOGTAG = "FileIQSource";
+	public double[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
+	public double[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
+	public double[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
+	public int cosineFrequency;							// Frequency of the cosine that is mixed to the signal
+	public int cosineIndex;								// current index within the cosine
+	public static final int MAX_COSINE_LENGTH = 50;	// Max length of the cosine lookup table
 
 	public FileIQSource(String filename, int sampleRate, long frequency, int packetSize, boolean repeat) {
 		this.filename = filename;
@@ -54,6 +62,7 @@ public class FileIQSource implements IQSourceInterface {
 		this.frequency = frequency;
 		this.packetSize = packetSize;
 		this.buffer = new byte[packetSize];
+		this.sleepTime = (int)((packetSize/2)/(float)sampleRate * 1000); // note: half packet size because of I and Q samples
 	}
 
 	private void reportError(String msg) {
@@ -132,7 +141,6 @@ public class FileIQSource implements IQSourceInterface {
 	@Override
 	public void setSampleRate(int sampleRate) {
 		Log.e(LOGTAG,"Setting the sample rate is not supported on a file source");
-		reportError("Setting the sample rate is not supported on a file source");
 	}
 
 	@Override
@@ -143,7 +151,6 @@ public class FileIQSource implements IQSourceInterface {
 	@Override
 	public void setFrequency(long frequency) {
 		Log.e(LOGTAG,"Setting the frequency is not supported on a file source");
-		reportError("Setting the frequency is not supported on a file source");
 	}
 
 	@Override
@@ -188,8 +195,9 @@ public class FileIQSource implements IQSourceInterface {
 
 		try {
 			// Simulate sample rate of real hardware:
-			int sleepTime = Math.min((int)(packetSize/(float)sampleRate * 1000), timeout);
-			Thread.sleep(sleepTime);
+			int sleep = Math.min(sleepTime-(int)(System.currentTimeMillis()-lastAccessTime), timeout);
+			if(sleep > 0)
+				Thread.sleep(sleep);
 
 			// Read the samples.
 			if(bufferedInputStream.read(buffer, 0 , buffer.length) != buffer.length) {
@@ -200,8 +208,10 @@ public class FileIQSource implements IQSourceInterface {
 					this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
 					if (bufferedInputStream.read(buffer, 0, buffer.length) != buffer.length)
 						return null;
-					else
+					else {
+						lastAccessTime = System.currentTimeMillis();
 						return buffer;
+					}
 				} else {
 					Log.i(LOGTAG, "getPacket: End of File");
 					reportError("End of File");
@@ -209,7 +219,7 @@ public class FileIQSource implements IQSourceInterface {
 				}
 			}
 		} catch (IOException e) {
-			Log.e(LOGTAG,"getPacket: Error while reading from file: " + e.getMessage());
+			Log.e(LOGTAG, "getPacket: Error while reading from file: " + e.getMessage());
 			reportError("Unexpected error while reading file: " + e.getMessage());
 			return null;
 		} catch (InterruptedException e) {
@@ -217,6 +227,7 @@ public class FileIQSource implements IQSourceInterface {
 			return null;
 		}
 
+		lastAccessTime = System.currentTimeMillis();
 		return buffer;
 	}
 
@@ -236,7 +247,7 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
-	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int startIndex) {
+	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
 		/**
 		 * The HackRF delivers samples in the following format:
 		 * The bytes are interleaved, 8-bit, signed IQ samples (in-phase
@@ -246,16 +257,85 @@ public class FileIQSource implements IQSourceInterface {
 		 *         I                  Q                  I                Q ...
 		 *  receivedBytes[0]   receivedBytes[1]   receivedBytes[2]       ...
 		 */
+
+		// If lookupTable is null, we create it:
+		if(lookupTable == null) {
+			lookupTable = new double[256];
+			for (int i = 0; i < 256; i++)
+				lookupTable[i] = (i-128) / 128.0;
+		}
+
+		int capacity = samplePacket.capacity();
 		int count = 0;
+		int startIndex = samplePacket.size();
 		double[] re = samplePacket.re();
 		double[] im = samplePacket.im();
 		for (int i = 0; i < packet.length; i+=2) {
-			re[startIndex+count] = packet[i] / 128.0;
-			im[startIndex+count] = packet[i+1] / 128.0;
+			re[startIndex+count] = lookupTable[packet[i]+128];
+			im[startIndex+count] = lookupTable[packet[i+1]+128];
 			count++;
-			if(startIndex+count >= samplePacket.size())
+			if(startIndex+count >= capacity)
 				break;
 		}
+		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
+		samplePacket.setSampleRate(sampleRate);				// update the sample rate
+		samplePacket.setFrequency(frequency);				// update the frequency
+		return count;
+	}
+
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
+		int mixFrequency = (int)(frequency - channelFrequency);
+		// If mix frequency is too low, just skip mixing:
+		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
+			mixFrequency += sampleRate;
+
+		// If lookupTable is null or is invalid, we create it:
+		if(cosineRealLookupTable == null || cosineFrequency != mixFrequency) {
+			cosineFrequency = mixFrequency;
+			// look for the best fitting array size to hold one or more full cosine cycles:
+			double cycleLength = sampleRate / Math.abs((double)mixFrequency);
+			int bestLength = (int) cycleLength;
+			double bestLengthError = Math.abs(bestLength-cycleLength);
+			for (int i = 1; i*cycleLength < MAX_COSINE_LENGTH ; i++) {
+				if(Math.abs(i*cycleLength - (int)(i*cycleLength)) < bestLengthError) {
+					bestLength = (int)(i*cycleLength);
+					bestLengthError = Math.abs(bestLength - (i*cycleLength));
+				}
+			}
+//			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
+//					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
+			cosineRealLookupTable = new double[bestLength][256];
+			cosineImagLookupTable = new double[bestLength][256];
+			double cosineAtT;
+			double sineAtT;
+			for (int t = 0; t < bestLength; t++) {
+				cosineAtT = Math.cos(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+				sineAtT = Math.sin(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+				for (int i = 0; i < 256; i++) {
+					cosineRealLookupTable[t][i] = (i-128)/128.0 * cosineAtT;
+					cosineImagLookupTable[t][i] = (i-128)/128.0 * sineAtT;
+				}
+			}
+			cosineIndex=0;
+		}
+
+		// Mix the samples from packet and store the results in the samplePacket
+		int capacity = samplePacket.capacity();
+		int count = 0;
+		int startIndex = samplePacket.size();
+		double[] re = samplePacket.re();
+		double[] im = samplePacket.im();
+		for (int i = 0; i < packet.length; i+=2) {
+			re[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i]+128] - cosineImagLookupTable[cosineIndex][packet[i+1]+128];
+			im[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i+1]+128] + cosineImagLookupTable[cosineIndex][packet[i]+128];
+			cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
+			count++;
+			if(startIndex+count >= capacity)
+				break;
+		}
+		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
+		samplePacket.setSampleRate(sampleRate);				// update the sample rate
+		samplePacket.setFrequency(frequency);				// update the frequency
 		return count;
 	}
 }

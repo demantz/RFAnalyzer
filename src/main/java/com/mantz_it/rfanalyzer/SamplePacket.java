@@ -30,9 +30,11 @@ public class SamplePacket {
 	private double[] im;		// imag values
 	private long frequency;		// center frequency
 	private int sampleRate;		// sample rate
+	private int size;			// number of samples in this packet
 
 	/**
-	 * Constructor. This constructor wraps existing arrays.
+	 * Constructor. This constructor wraps existing arrays and set the number of
+	 * samples to the length of the arrays
 	 *
 	 * @param re	array of real parts of the sample values
 	 * @param im	array of imaginary parts of the sample values
@@ -40,12 +42,29 @@ public class SamplePacket {
 	 * @param sampleRate	sample rate
 	 */
 	public SamplePacket(double[] re, double im[], long frequency, int sampleRate) {
+		this(re, im, frequency, sampleRate, re.length);
+	}
+
+	/**
+	 * Constructor. This constructor wraps existing arrays and allows to set the
+	 * number of samples in this packet to something smaller than the array length
+	 *
+	 * @param re	array of real parts of the sample values
+	 * @param im	array of imaginary parts of the sample values
+	 * @param frequency		center frequency
+	 * @param sampleRate	sample rate
+	 * @param size	number of samples in this packet ( <= arrays.length )
+	 */
+	public SamplePacket(double[] re, double im[], long frequency, int sampleRate, int size) {
 		if(re.length != im.length)
 			throw new IllegalArgumentException("Arrays must be of the same length");
+		if(size > re.length)
+			throw new IllegalArgumentException("Size must be of the smaller or equal the array length");
 		this.re = re;
 		this.im = im;
 		this.frequency = frequency;
 		this.sampleRate = sampleRate;
+		this.size = size;
 	}
 
 	/**
@@ -58,6 +77,7 @@ public class SamplePacket {
 		this.im = new double[size];
 		this.frequency = 0;
 		this.sampleRate = 0;
+		this.size = 0;
 	}
 
 	/**
@@ -95,10 +115,25 @@ public class SamplePacket {
 	}
 
 	/**
-	 * @return the size of the arrays (number of samples in this packet)
+	 * @return the length of the arrays
+	 */
+	public int capacity() {
+		return re.length;
+	}
+
+	/**
+	 * @return number of samples in this packet
 	 */
 	public int size() {
-		return re.length;
+		return size;
+	}
+
+	/**
+	 * Sets a new size (number of samples in this packet)
+	 * @param size	number of (valid) samples in this packet
+	 */
+	public void setSize(int size) {
+		this.size = Math.min(size, re.length);
 	}
 
 	/**

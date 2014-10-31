@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -49,18 +50,21 @@ import java.io.File;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback  {
+public class MainActivity extends Activity implements IQSourceInterface.Callback, AnalyzerSurface.CallbackInterface {
 
 	private MenuItem mi_startStop = null;
+	private MenuItem mi_demodulationMode = null;
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
 	private IQSourceInterface source = null;
 	private Scheduler scheduler = null;
+	private Demodulator demodulator = null;
 	private SharedPreferences preferences = null;
 	private Bundle savedInstanceState = null;
 	private Process logcat = null;
 	private boolean running = false;
+	private int demodulationMode = Demodulator.DEMODULATION_OFF;
 
 	private static final String LOGTAG = "MainActivity";
 	private static final int FILE_SOURCE = 0;
@@ -106,22 +110,27 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		fl_analyzerFrame = (FrameLayout) findViewById(R.id.fl_analyzerFrame);
 
 		// Create a analyzer surface:
-		analyzerSurface = new AnalyzerSurface(this);
+		analyzerSurface = new AnalyzerSurface(this,this);
 		analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 		analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 		analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 		analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
+		analyzerSurface.setFftRatio(Float.valueOf(preferences.getString(getString(R.string.pref_spectrumWaterfallRatio), "0.5")));
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
 
-		// Restore / Initialize the running state:
+		// Restore / Initialize the running state and the demodulator mode:
 		if(savedInstanceState != null) {
 			running = savedInstanceState.getBoolean(getString(R.string.save_state_running));
+			demodulationMode = savedInstanceState.getInt(getString(R.string.save_state_demodulatorMode));
 		} else {
 			// Set running to true if autostart is enabled (this will start the analyzer in onStart() )
 			running = preferences.getBoolean((getString(R.string.pref_autostart)), false);
 		}
+
+		// Set the hardware volume keys to work on the music audio stream:
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 	}
 
 	@Override
@@ -143,7 +152,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putBoolean(getString(R.string.save_state_running), running);
+		outState.putInt(getString(R.string.save_state_demodulatorMode), demodulationMode);
 		if(analyzerSurface != null) {
+			outState.putLong(getString(R.string.save_state_channelFrequency), analyzerSurface.getChannelFrequency());
+			outState.putInt(getString(R.string.save_state_channelWidth), analyzerSurface.getChannelWidth());
+			outState.putFloat(getString(R.string.save_state_squelch), analyzerSurface.getSquelch());
 			outState.putLong(getString(R.string.save_state_virtualFrequency), analyzerSurface.getVirtualFrequency());
 			outState.putInt(getString(R.string.save_state_virtualSampleRate), analyzerSurface.getVirtualSampleRate());
 			outState.putFloat(getString(R.string.save_state_minDB), analyzerSurface.getMinDB());
@@ -157,15 +170,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		getMenuInflater().inflate(R.menu.main, menu);
 		// Get a reference to the start-stop button:
 		mi_startStop = menu.findItem(R.id.action_startStop);
+		mi_demodulationMode = menu.findItem(R.id.action_setDemodulation);
 
-		// Set title and icon according to the state:
-		if(running) {
-			mi_startStop.setTitle(R.string.action_stop);
-			mi_startStop.setIcon(R.drawable.ic_action_pause);
-		} else {
-			mi_startStop.setTitle(R.string.action_start);
-			mi_startStop.setIcon(R.drawable.ic_action_play);
-		}
+		// update the action bar icons and titles according to the app state:
+		updateActionBar();
 		return true;
 	}
 
@@ -180,6 +188,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 												stopAnalyzer();
 											else
 												startAnalyzer();
+											break;
+			case R.id.action_setDemodulation: showDemodulationDialog();
 											break;
 			case R.id.action_setFrequency:	tuneToFrequency();
 											break;
@@ -199,6 +209,55 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		return true;
 	}
 
+	/**
+	 * Will update the action bar icons and titles according to the current app state
+	 */
+	private void updateActionBar() {
+		// Set title and icon of the start/stop button according to the state:
+		if(mi_startStop != null) {
+			if (running) {
+				mi_startStop.setTitle(R.string.action_stop);
+				mi_startStop.setIcon(R.drawable.ic_action_pause);
+			} else {
+				mi_startStop.setTitle(R.string.action_start);
+				mi_startStop.setIcon(R.drawable.ic_action_play);
+			}
+		}
+
+		// Set title and icon for the demodulator mode button
+		if(mi_demodulationMode != null) {
+			int iconRes;
+			int titleRes;
+			switch (demodulationMode) {
+				case Demodulator.DEMODULATION_OFF:
+					iconRes = R.drawable.ic_action_demod_off;
+					titleRes = R.string.action_demodulation_off;
+					break;
+				case Demodulator.DEMODULATION_AM:
+					iconRes = R.drawable.ic_action_demod_am;
+					titleRes = R.string.action_demodulation_am;
+					break;
+				case Demodulator.DEMODULATION_NFM:
+					iconRes = R.drawable.ic_action_demod_nfm;
+					titleRes = R.string.action_demodulation_nfm;
+					break;
+				case Demodulator.DEMODULATION_WFM:
+					iconRes = R.drawable.ic_action_demod_wfm;
+					titleRes = R.string.action_demodulation_wfm;
+					break;
+				default:
+					Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
+					iconRes = -1;
+					titleRes = -1;
+					break;
+			}
+			if(titleRes > 0 && iconRes > 0) {
+				mi_demodulationMode.setTitle(titleRes);
+				mi_demodulationMode.setIcon(iconRes);
+			}
+		}
+	}
+
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -208,6 +267,23 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Start the analyzer if running is true:
 		if (running)
 			startAnalyzer();
+
+		// on the first time after the app was killed by the system, savedInstanceState will be
+		// non-null and we restore the settings:
+		if(savedInstanceState != null) {
+			analyzerSurface.setVirtualFrequency(savedInstanceState.getLong(getString(R.string.save_state_virtualFrequency)));
+			analyzerSurface.setVirtualSampleRate(savedInstanceState.getInt(getString(R.string.save_state_virtualSampleRate)));
+			analyzerSurface.setDBScale(savedInstanceState.getFloat(getString(R.string.save_state_minDB)),
+					savedInstanceState.getFloat(getString(R.string.save_state_maxDB)));
+			analyzerSurface.setChannelFrequency(savedInstanceState.getLong(getString(R.string.save_state_channelFrequency)));
+			analyzerSurface.setChannelWidth(savedInstanceState.getInt(getString(R.string.save_state_channelWidth)));
+			analyzerSurface.setSquelch(savedInstanceState.getFloat(getString(R.string.save_state_squelch)));
+			if(demodulator != null && scheduler != null) {
+				demodulator.setChannelWidth(savedInstanceState.getInt(getString(R.string.save_state_channelWidth)));
+				scheduler.setChannelFrequency(savedInstanceState.getLong(getString(R.string.save_state_channelFrequency)));
+			}
+			savedInstanceState = null; // not needed any more...
+		}
 	}
 
 	@Override
@@ -283,6 +359,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
 			analyzerSurface.setAverageLength(Integer.valueOf(preferences.getString(getString(R.string.pref_averaging),"0")));
 			analyzerSurface.setPeakHoldEnabled(preferences.getBoolean(getString(R.string.pref_peakHold), false));
+			analyzerSurface.setFftRatio(Float.valueOf(preferences.getString(getString(R.string.pref_spectrumWaterfallRatio), "0.5")));
 		}
 
 		// Screen Orientation:
@@ -346,21 +423,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// inform the analyzer surface about the new source
 		analyzerSurface.setSource(source);
-		// on the first time after the app was killed by the system, savedInstanceState will be
-		// non-null and we restore the settings:
-		if(savedInstanceState != null) {
-			analyzerSurface.setVirtualFrequency(savedInstanceState.getLong(getString(R.string.save_state_virtualFrequency)));
-			analyzerSurface.setVirtualSampleRate(savedInstanceState.getInt(getString(R.string.save_state_virtualSampleRate)));
-			analyzerSurface.setDBScale(savedInstanceState.getFloat(getString(R.string.save_state_minDB)),
-					savedInstanceState.getFloat(getString(R.string.save_state_maxDB)));
-			savedInstanceState = null; // not needed any more...
-		}
+
 		return true;
 	}
 
 	/**
 	 * Will stop the RF Analyzer. This includes shutting down the scheduler (which turns of the
-	 * source) and the processing loop.
+	 * source), the processing loop and the demodulator if running.
 	 */
 	public void stopAnalyzer() {
 		// Stop the Scheduler if running:
@@ -370,6 +439,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Stop the Processing Loop if running:
 		if(analyzerProcessingLoop != null)
 			analyzerProcessingLoop.stopLoop();
+
+		// Stop the Demodulator if running:
+		if(demodulator != null)
+			demodulator.stopDemodulator();
 
 		// Wait for the scheduler to stop:
 		if(scheduler != null) {
@@ -389,13 +462,19 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		}
 
-		// Change stop button in action bar into a start button:
-		if(mi_startStop != null) {
-			mi_startStop.setTitle(R.string.action_start);
-			mi_startStop.setIcon(R.drawable.ic_action_play);
+		// Wait for the demodulator to stop
+		if(demodulator != null) {
+			try {
+				demodulator.join();
+			} catch (InterruptedException e) {
+				Log.e(LOGTAG, "startAnalyzer: Error while stopping Demodulator.");
+			}
 		}
 
 		running = false;
+
+		// update action bar icons and titles:
+		updateActionBar();
 	}
 
 	/**
@@ -433,8 +512,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		analyzerProcessingLoop = new AnalyzerProcessingLoop(
 				analyzerSurface, 			// Reference to the Analyzer Surface
 				fftSize,					// FFT size
-				scheduler.getOutputQueue(), // Reference to the input queue for the processing loop
-				scheduler.getInputQueue()); // Reference to the buffer-pool-return queue
+				scheduler.getFftOutputQueue(), // Reference to the input queue for the processing loop
+				scheduler.getFftInputQueue()); // Reference to the buffer-pool-return queue
 		if(dynamicFrameRate)
 			analyzerProcessingLoop.setDynamicFrameRate(true);
 		else {
@@ -446,11 +525,86 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		scheduler.start();
 		analyzerProcessingLoop.start();
 
-		// Change start button in action bar into a stop button:
-		if(mi_startStop != null) {
-			mi_startStop.setTitle(R.string.action_stop);
-			mi_startStop.setIcon(R.drawable.ic_action_pause);
+		scheduler.setChannelFrequency(analyzerSurface.getChannelFrequency());
+
+		// Start the demodulator thread:
+		demodulator = new Demodulator(scheduler.getDemodOutputQueue(), scheduler.getDemodInputQueue(), source.getPacketSize());
+		demodulator.start();
+
+		// Set the demodulation mode (will configure the demodulator correctly)
+		this.setDemodulationMode(demodulationMode);
+
+		// update the action bar icons and titles:
+		updateActionBar();
+	}
+
+	/**
+	 * Will pop up a dialog to let the user choose a demodulation mode.
+	 */
+	private void showDemodulationDialog() {
+		if(scheduler == null || demodulator == null || source == null) {
+			Toast.makeText(MainActivity.this, "FFT must be running to change modulation mode", Toast.LENGTH_LONG).show();
+			return;
 		}
+
+		new AlertDialog.Builder(this)
+				.setTitle("Select a demodulation mode:")
+				.setSingleChoiceItems(R.array.demodulation_modes, demodulator.getDemodulationMode(), new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						setDemodulationMode(which);
+						dialog.dismiss();
+					}
+				})
+				.show();
+	}
+
+	/**
+	 * Will set the modulation mode to the given value. Takes care of adjusting the
+	 * scheduler and the demodulator respectively and updates the action bar menu item.
+	 *
+	 * @param mode	Demodulator.DEMODULATION_OFF, *_AM, *_NFM, *_WFM
+	 */
+	public void setDemodulationMode(int mode) {
+		if(scheduler == null || demodulator == null || source == null) {
+			Log.e(LOGTAG,"setDemodulationMode: scheduler/demodulator/source is null");
+			return;
+		}
+
+		// (de-)activate demodulation in the scheduler and set the sample rate accordingly:
+		if(mode == Demodulator.DEMODULATION_OFF) {
+			scheduler.setDemodulationActivated(false);
+		}
+		else {
+			// adjust sample rate of the source:
+			source.setSampleRate(Demodulator.INPUT_RATE);
+
+			// Verify that the source supports the sample rate:
+			if(source.getSampleRate() != Demodulator.INPUT_RATE) {
+				Log.e(LOGTAG,"setDemodulationMode: cannot adjust source sample rate!");
+				Toast.makeText(MainActivity.this, "Source does not support the sample rate necessary for demodulation (" +
+						Demodulator.INPUT_RATE/1000000 + " Msps)", Toast.LENGTH_LONG).show();
+				scheduler.setDemodulationActivated(false);
+				mode = Demodulator.DEMODULATION_OFF;	// deactivate demodulation...
+			} else {
+				scheduler.setDemodulationActivated(true);
+			}
+		}
+
+		// set demodulation mode in demodulator:
+		demodulator.setDemodulationMode(mode);
+		this.demodulationMode = mode;	// save the setting
+
+		// disable/enable demodulation view in surface:
+		if(mode == Demodulator.DEMODULATION_OFF) {
+			analyzerSurface.setDemodulationEnabled(false);
+		} else {
+			analyzerSurface.setDemodulationEnabled(true);	// will re-adjust channel freq, width and squelch,
+															// if they are outside the current viewport and update the
+															// demodulator via callbacks.
+		}
+
+		// update action bar:
+		updateActionBar();
 	}
 
 	/**
@@ -483,6 +637,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
 							source.setFrequency((long)newFreq);
 							analyzerSurface.setVirtualFrequency((long)newFreq);
+							if(demodulationMode != Demodulator.DEMODULATION_OFF)
+								analyzerSurface.setDemodulationEnabled(true);	// This will re-adjust the channel freq correctly
 						} else {
 							Toast.makeText(MainActivity.this, "Frequency is out of the valid range: " + (long)newFreq + " Hz", Toast.LENGTH_LONG).show();
 						}
@@ -580,5 +736,31 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		}
 	}
 
+	/**
+	 * Called by the analyzer surface after the user changed the channel width
+	 * @param newChannelWidth    new channel width (single sided) in Hz
+	 * @return true if channel width is valid; false if out of range
+	 */
+	@Override
+	public boolean onUpdateChannelWidth(int newChannelWidth) {
+		return demodulator.setChannelWidth(newChannelWidth);
+	}
 
+	@Override
+	public void onUpdateChannelFrequency(long newChannelFrequency) {
+		scheduler.setChannelFrequency(newChannelFrequency);
+	}
+
+	@Override
+	public void onUpdateSquelchSatisfied(boolean squelchSatisfied) {
+		scheduler.setSquelchSatisfied(squelchSatisfied);
+	}
+
+	@Override
+	public int onCurrentChannelWidthRequested() {
+		if(demodulator != null)
+			return demodulator.getChannelWidth();
+		else
+			return -1;
+	}
 }
