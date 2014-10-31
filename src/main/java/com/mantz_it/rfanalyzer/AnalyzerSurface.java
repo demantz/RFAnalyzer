@@ -118,6 +118,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	private float fftRatio = 0.5f;					// percentage of the height the fft consumes on the surface
 
+	public static final int FONT_SIZE_SMALL = 1;
+	public static final int FONT_SIZE_MEDIUM = 2;
+	public static final int FONT_SIZE_LARGE = 3;
+	private int fontSize = FONT_SIZE_MEDIUM;		// Indicates the font size of the grid labels
+	private boolean showDebugInformation = false;
+
+
 	/**
 	 * Constructor. Will initialize the Paint instances and register the callback
 	 * functions of the SurfaceHolder
@@ -343,6 +350,57 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
+	 * Set the font size
+	 *
+	 * @param fontSize FONT_SIZE_SMALL, *_MEDIUM or *_LARGE
+	 */
+	public void setFontSize(int fontSize) {
+		int normalTextSize;
+		int smallTextSize;
+		switch (fontSize) {
+			case FONT_SIZE_SMALL:
+				normalTextSize = (int)(getGridSize() / 2.5);
+				smallTextSize = (int)(normalTextSize * 0.7);
+				break;
+			case FONT_SIZE_MEDIUM:
+				normalTextSize = (int)(getGridSize() / 2.1);
+				smallTextSize = (int)(normalTextSize * 0.5);
+				break;
+			case FONT_SIZE_LARGE:
+				normalTextSize = (int)(getGridSize() / 1.8);
+				smallTextSize = (int)(normalTextSize * 0.3);
+				break;
+			default:
+				Log.e(LOGTAG,"setFontSize: Invalid font size: " + fontSize);
+				return;
+		}
+		this.fontSize = fontSize;
+		this.textPaint.setTextSize(normalTextSize);
+		this.textSmallPaint.setTextSize(smallTextSize);
+	}
+
+	/**
+	 * @return current font size: FONT_SIZE_SMALL, *_MEDIUM, *_LARGE
+	 */
+	public int getFontSize() {
+		return fontSize;
+	}
+
+	/**
+	 * @return true if debug information is currently printed on the screen
+	 */
+	public boolean isShowDebugInformation() {
+		return showDebugInformation;
+	}
+
+	/**
+	 * @param showDebugInformation 		true will enable debug outputs on the screen
+	 */
+	public void setShowDebugInformation(boolean showDebugInformation) {
+		this.showDebugInformation = showDebugInformation;
+	}
+
+	/**
 	 * If called with true, this will set the UI in demodulation mode:
 	 * - No more sample rate changes
 	 * - Showing channel selector
@@ -486,9 +544,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			// Recreate the waterfall bitmaps:
 			this.createWaterfallLineBitmaps();
 
-			// Fix the text size:
-			this.textPaint.setTextSize((int) (getGridSize() / 2.1));
-			this.textSmallPaint.setTextSize(textPaint.getTextSize()*0.5f);
+			// Fix the text size of the text paint objects:
+			this.setFontSize(fontSize);
 		}
 	}
 
@@ -1208,17 +1265,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			yPos += bounds.height() * 1.1f;
 		}
 
-		// Draw the FFT/s rate
-		text = frameRate+" FPS";
-		textSmallPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(), textSmallPaint);
-		yPos += bounds.height() * 1.1f;
+		if(showDebugInformation) {
+			// Draw the FFT/s rate
+			text = frameRate + " FPS";
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			yPos += bounds.height() * 1.1f;
 
-		// Draw the load
-		text = String.format("%3.1f %%", load * 100);
-		textSmallPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(),textSmallPaint);
-		yPos += bounds.height() * 1.1f;
+			// Draw the load
+			text = String.format("%3.1f %%", load * 100);
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			yPos += bounds.height() * 1.1f;
+		}
 	}
 
 	/**

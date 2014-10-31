@@ -154,4 +154,14 @@
         <item>15</item>
         <item>20</item>
     </string-array>
+    <string-array name="pref_fontSize_entries">
+        <item>small</item>
+        <item>medium</item>
+        <item>large</item>
+    </string-array>
+    <string-array name="pref_fontSize_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
 </resources>
