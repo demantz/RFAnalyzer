@@ -63,7 +63,8 @@ public class Demodulator extends Thread {
 														120000};// wFM
 
 	// DEMODULATION
-	private SamplePacket demodulatorHistory;
+	private SamplePacket demodulatorHistory;	// used for FM demodulation
+	private double lastMax = 0;	// used for gain control in AM demodulation
 	public static final int DEMODULATION_OFF 	= 0;
 	public static final int DEMODULATION_AM 	= 1;
 	public static final int DEMODULATION_NFM 	= 2;
@@ -306,10 +307,16 @@ public class Demodulator extends Thread {
 		double[] reIn = input.re();
 		double[] imIn = input.im();
 		double[] reOut = output.re();
+		double gain = 1/lastMax;
+		lastMax = 0;
 
 		// Complex to magnitude
-		for (int i = 0; i < input.size(); i++)
-			reOut[i] = (reIn[i]*reIn[i] + imIn[i]*imIn[i]) - 1;
+		for (int i = 0; i < input.size(); i++) {
+			reOut[i] = (reIn[i] * reIn[i] + imIn[i] * imIn[i]);
+			if(reOut[i] > lastMax)
+				lastMax = reOut[i];
+			reOut[i] = reOut[i] * gain - 0.5;
+		}
 
 		output.setSize(input.size());
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
