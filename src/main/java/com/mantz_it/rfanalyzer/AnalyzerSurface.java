@@ -359,16 +359,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		int smallTextSize;
 		switch (fontSize) {
 			case FONT_SIZE_SMALL:
-				normalTextSize = (int)(getGridSize() / 2.5);
-				smallTextSize = (int)(normalTextSize * 0.7);
+				normalTextSize = (int)(getGridSize() * 0.3);
+				smallTextSize = (int)(getGridSize() * 0.2);
 				break;
 			case FONT_SIZE_MEDIUM:
-				normalTextSize = (int)(getGridSize() / 2.1);
-				smallTextSize = (int)(normalTextSize * 0.5);
+				normalTextSize = (int)(getGridSize() * 0.476);
+				smallTextSize = (int)(getGridSize() * 0.25);
 				break;
 			case FONT_SIZE_LARGE:
-				normalTextSize = (int)(getGridSize() / 1.8);
-				smallTextSize = (int)(normalTextSize * 0.3);
+				normalTextSize = (int)(getGridSize() * 0.7);
+				smallTextSize = (int)(getGridSize() * 0.35);
 				break;
 			default:
 				Log.e(LOGTAG,"setFontSize: Invalid font size: " + fontSize);
