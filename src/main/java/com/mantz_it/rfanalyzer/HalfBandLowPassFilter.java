@@ -32,11 +32,11 @@ import android.util.Log;
  */
 public class HalfBandLowPassFilter {
 
-	private double[] taps;
-	private double[] delaysReal;
-	private double[] delaysImag;
-	private double[] delaysMiddleTapReal;
-	private double[] delaysMiddleTapImag;
+	private float[] taps;
+	private float[] delaysReal;
+	private float[] delaysImag;
+	private float[] delaysMiddleTapReal;
+	private float[] delaysMiddleTapImag;
 	private int delayIndex;
 	private int delayMiddleTapIndex;
 	private static final String LOGTAG = "HalfBandLowPassFilter";
@@ -48,22 +48,22 @@ public class HalfBandLowPassFilter {
 	public HalfBandLowPassFilter (int N) {
 		if(N % 4 != 0)
 			throw new IllegalArgumentException("N must be multiple of 4");
-		delaysReal = new double[N/2];
-		delaysImag = new double[N/2];
-		delaysMiddleTapReal = new double[N/4];
-		delaysMiddleTapImag = new double[N/4];
+		delaysReal = new float[N/2];
+		delaysImag = new float[N/2];
+		delaysMiddleTapReal = new float[N/4];
+		delaysMiddleTapImag = new float[N/4];
 		delayIndex = 0;
 		delayMiddleTapIndex = 0;
 
 		// Taps where generated with scipy:
 		// todo: generate them dynamically!
 		switch (N) {
-			case 8:		taps = new double[] {-0.045567308121, 0.550847429795};
+			case 8:		taps = new float[] {-0.045567308121f, 0.550847429795f};
 						break;
-			case 12:	taps = new double[] {0.018032677037, -0.114591559026, 0.597385968973};
+			case 12:	taps = new float[] {0.018032677037f, -0.114591559026f, 0.597385968973f};
 						break;
-			case 32:	taps = new double[] {-0.020465752391, 0.021334704213, -0.032646869627, 0.048752407464,
-											 -0.072961784639, 0.113978914053, -0.203982998267, 0.633841612044 };
+			case 32:	taps = new float[] {-0.020465752391f, 0.021334704213f, -0.032646869627f, 0.048752407464f,
+											 -0.072961784639f, 0.113978914053f, -0.203982998267f, 0.633841612044f };
 						break;
 			default:	throw new IllegalArgumentException("N=" + N + " is not supported!");
 		}
@@ -86,7 +86,7 @@ public class HalfBandLowPassFilter {
 		int index1, index2;
 		int indexOut = out.size();
 		int outputCapacity = out.capacity();
-		double[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
+		float[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
 		// insert each input sample into the delay line:
 		for (int i = offset; i < length-1; i+=2) {
@@ -113,7 +113,7 @@ public class HalfBandLowPassFilter {
 			imOut[indexOut] = 0;
 			index1 = delayIndex;
 			index2 = delayIndex+delaysReal.length-1;
-			for (double tap : taps) {
+			for (float tap : taps) {
 				reOut[indexOut] += (delaysReal[index1] + delaysReal[index2]) * tap;
 				imOut[indexOut] += (delaysImag[index1] + delaysImag[index2]) * tap;
 				index1++;
@@ -147,7 +147,7 @@ public class HalfBandLowPassFilter {
 	public int filterN8(SamplePacket in, SamplePacket out, int offset, int length) {
 		int indexOut = out.size();
 		int outputCapacity = out.capacity();
-		double[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
+		float[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
 		// insert each input sample into the delay line:
 		for (int i = offset; i < length-1; i+=2) {
@@ -173,38 +173,38 @@ public class HalfBandLowPassFilter {
 			// note that this is fast but not very elegant xD
 			switch (delayIndex) {
 				case 0:
-					reOut[indexOut] = (delaysReal[0] + delaysReal[3]) * -0.045567308121
-									+ (delaysReal[1] + delaysReal[2]) * 0.550847429795
+					reOut[indexOut] = (delaysReal[0] + delaysReal[3]) * -0.045567308121f
+									+ (delaysReal[1] + delaysReal[2]) * 0.550847429795f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[0] + delaysImag[3]) * -0.045567308121
-									+ (delaysImag[1] + delaysImag[2]) * 0.550847429795
+					imOut[indexOut] = (delaysImag[0] + delaysImag[3]) * -0.045567308121f
+									+ (delaysImag[1] + delaysImag[2]) * 0.550847429795f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 1;
 					break;
 				case 1:
-					reOut[indexOut] = (delaysReal[1] + delaysReal[0]) * -0.045567308121
-									+ (delaysReal[2] + delaysReal[3]) * 0.550847429795
+					reOut[indexOut] = (delaysReal[1] + delaysReal[0]) * -0.045567308121f
+									+ (delaysReal[2] + delaysReal[3]) * 0.550847429795f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[1] + delaysImag[0]) * -0.045567308121
-									+ (delaysImag[2] + delaysImag[3]) * 0.550847429795
+					imOut[indexOut] = (delaysImag[1] + delaysImag[0]) * -0.045567308121f
+									+ (delaysImag[2] + delaysImag[3]) * 0.550847429795f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 2;
 					break;
 				case 2:
-					reOut[indexOut] = (delaysReal[2] + delaysReal[1]) * -0.045567308121
-									+ (delaysReal[3] + delaysReal[0]) * 0.550847429795
+					reOut[indexOut] = (delaysReal[2] + delaysReal[1]) * -0.045567308121f
+									+ (delaysReal[3] + delaysReal[0]) * 0.550847429795f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[2] + delaysImag[1]) * -0.045567308121
-									+ (delaysImag[3] + delaysImag[0]) * 0.550847429795
+					imOut[indexOut] = (delaysImag[2] + delaysImag[1]) * -0.045567308121f
+									+ (delaysImag[3] + delaysImag[0]) * 0.550847429795f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 3;
 					break;
 				case 3:
-					reOut[indexOut] = (delaysReal[3] + delaysReal[2]) * -0.045567308121
-									+ (delaysReal[0] + delaysReal[1]) * 0.550847429795
+					reOut[indexOut] = (delaysReal[3] + delaysReal[2]) * -0.045567308121f
+									+ (delaysReal[0] + delaysReal[1]) * 0.550847429795f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[3] + delaysImag[2]) * -0.045567308121
-									+ (delaysImag[0] + delaysImag[1]) * 0.550847429795
+					imOut[indexOut] = (delaysImag[3] + delaysImag[2]) * -0.045567308121f
+									+ (delaysImag[0] + delaysImag[1]) * 0.550847429795f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 0;
 					break;
@@ -235,7 +235,7 @@ public class HalfBandLowPassFilter {
 	public int filterN12(SamplePacket in, SamplePacket out, int offset, int length) {
 		int indexOut = out.size();
 		int outputCapacity = out.capacity();
-		double[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
+		float[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
 		// insert each input sample into the delay line:
 		for (int i = offset; i < length-1; i+=2) {
@@ -261,68 +261,68 @@ public class HalfBandLowPassFilter {
 			// note that this is fast but not very elegant xD
 			switch (delayIndex) {
 				case 0:
-					reOut[indexOut] = (delaysReal[0] + delaysReal[5]) * 0.018032677037
-									+ (delaysReal[1] + delaysReal[4]) * -0.114591559026
-									+ (delaysReal[2] + delaysReal[3]) * 0.597385968973
+					reOut[indexOut] = (delaysReal[0] + delaysReal[5]) * 0.018032677037f
+									+ (delaysReal[1] + delaysReal[4]) * -0.114591559026f
+									+ (delaysReal[2] + delaysReal[3]) * 0.597385968973f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[0] + delaysImag[5]) * 0.018032677037
-									+ (delaysImag[1] + delaysImag[4]) * -0.114591559026
-									+ (delaysImag[2] + delaysImag[3]) * 0.597385968973
+					imOut[indexOut] = (delaysImag[0] + delaysImag[5]) * 0.018032677037f
+									+ (delaysImag[1] + delaysImag[4]) * -0.114591559026f
+									+ (delaysImag[2] + delaysImag[3]) * 0.597385968973f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 1;
 					break;
 				case 1:
-					reOut[indexOut] = (delaysReal[1] + delaysReal[0]) * 0.018032677037
-									+ (delaysReal[2] + delaysReal[5]) * -0.114591559026
-									+ (delaysReal[3] + delaysReal[4]) * 0.597385968973
+					reOut[indexOut] = (delaysReal[1] + delaysReal[0]) * 0.018032677037f
+									+ (delaysReal[2] + delaysReal[5]) * -0.114591559026f
+									+ (delaysReal[3] + delaysReal[4]) * 0.597385968973f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[1] + delaysImag[0]) * 0.018032677037
-									+ (delaysImag[2] + delaysImag[5]) * -0.114591559026
-									+ (delaysImag[3] + delaysImag[4]) * 0.597385968973
+					imOut[indexOut] = (delaysImag[1] + delaysImag[0]) * 0.018032677037f
+									+ (delaysImag[2] + delaysImag[5]) * -0.114591559026f
+									+ (delaysImag[3] + delaysImag[4]) * 0.597385968973f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 2;
 					break;
 				case 2:
-					reOut[indexOut] = (delaysReal[2] + delaysReal[1]) * 0.018032677037
-									+ (delaysReal[3] + delaysReal[0]) * -0.114591559026
-									+ (delaysReal[4] + delaysReal[5]) * 0.597385968973
+					reOut[indexOut] = (delaysReal[2] + delaysReal[1]) * 0.018032677037f
+									+ (delaysReal[3] + delaysReal[0]) * -0.114591559026f
+									+ (delaysReal[4] + delaysReal[5]) * 0.597385968973f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[2] + delaysImag[1]) * 0.018032677037
-									+ (delaysImag[3] + delaysImag[0]) * -0.114591559026
-									+ (delaysImag[4] + delaysImag[5]) * 0.597385968973
+					imOut[indexOut] = (delaysImag[2] + delaysImag[1]) * 0.018032677037f
+									+ (delaysImag[3] + delaysImag[0]) * -0.114591559026f
+									+ (delaysImag[4] + delaysImag[5]) * 0.597385968973f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 3;
 					break;
 				case 3:
-					reOut[indexOut] = (delaysReal[3] + delaysReal[2]) * 0.018032677037
-									+ (delaysReal[4] + delaysReal[1]) * -0.114591559026
-									+ (delaysReal[5] + delaysReal[0]) * 0.597385968973
+					reOut[indexOut] = (delaysReal[3] + delaysReal[2]) * 0.018032677037f
+									+ (delaysReal[4] + delaysReal[1]) * -0.114591559026f
+									+ (delaysReal[5] + delaysReal[0]) * 0.597385968973f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[3] + delaysImag[2]) * 0.018032677037
-									+ (delaysImag[4] + delaysImag[1]) * -0.114591559026
-									+ (delaysImag[5] + delaysImag[0]) * 0.597385968973
+					imOut[indexOut] = (delaysImag[3] + delaysImag[2]) * 0.018032677037f
+									+ (delaysImag[4] + delaysImag[1]) * -0.114591559026f
+									+ (delaysImag[5] + delaysImag[0]) * 0.597385968973f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 4;
 					break;
 				case 4:
-					reOut[indexOut] = (delaysReal[4] + delaysReal[3]) * 0.018032677037
-									+ (delaysReal[5] + delaysReal[2]) * -0.114591559026
-									+ (delaysReal[0] + delaysReal[1]) * 0.597385968973
+					reOut[indexOut] = (delaysReal[4] + delaysReal[3]) * 0.018032677037f
+									+ (delaysReal[5] + delaysReal[2]) * -0.114591559026f
+									+ (delaysReal[0] + delaysReal[1]) * 0.597385968973f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[4] + delaysImag[3]) * 0.018032677037
-									+ (delaysImag[5] + delaysImag[2]) * -0.114591559026
-									+ (delaysImag[0] + delaysImag[1]) * 0.597385968973
+					imOut[indexOut] = (delaysImag[4] + delaysImag[3]) * 0.018032677037f
+									+ (delaysImag[5] + delaysImag[2]) * -0.114591559026f
+									+ (delaysImag[0] + delaysImag[1]) * 0.597385968973f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 5;
 					break;
 				case 5:
-					reOut[indexOut] = (delaysReal[5] + delaysReal[4]) * 0.018032677037
-									+ (delaysReal[0] + delaysReal[3]) * -0.114591559026
-									+ (delaysReal[1] + delaysReal[2]) * 0.597385968973
+					reOut[indexOut] = (delaysReal[5] + delaysReal[4]) * 0.018032677037f
+									+ (delaysReal[0] + delaysReal[3]) * -0.114591559026f
+									+ (delaysReal[1] + delaysReal[2]) * 0.597385968973f
 									+ delaysMiddleTapReal[delayMiddleTapIndex];
-					imOut[indexOut] = (delaysImag[5] + delaysImag[4]) * 0.018032677037
-									+ (delaysImag[0] + delaysImag[3]) * -0.114591559026
-									+ (delaysImag[1] + delaysImag[2]) * 0.597385968973
+					imOut[indexOut] = (delaysImag[5] + delaysImag[4]) * 0.018032677037f
+									+ (delaysImag[0] + delaysImag[3]) * -0.114591559026f
+									+ (delaysImag[1] + delaysImag[2]) * 0.597385968973f
 									+ delaysMiddleTapImag[delayMiddleTapIndex];
 					delayIndex = 0;
 					break;

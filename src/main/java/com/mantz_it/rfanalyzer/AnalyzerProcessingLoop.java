@@ -39,7 +39,7 @@ public class AnalyzerProcessingLoop extends Thread {
 	private double load = 0;					// Time_for_processing_and_drawing / Time_per_Frame
 	private boolean dynamicFrameRate = true;	// Turns on and off the automatic frame rate control
 	private boolean stopRequested = true;		// Will stop the thread when set to true
-	private double[] mag = null;				// Magnitude of the frequency spectrum
+	private float[] mag = null;					// Magnitude of the frequency spectrum
 
 	private static final String LOGTAG = "AnalyzerProcessingLoop";
 	private static final int MAX_FRAMERATE = 30;		// Upper limit for the automatic frame rate control
@@ -70,7 +70,7 @@ public class AnalyzerProcessingLoop extends Thread {
 		this.fftSize = fftSize;
 
 		this.fftBlock = new FFT(fftSize);
-		this.mag = new double[fftSize];
+		this.mag = new float[fftSize];
 		this.inputQueue = inputQueue;
 		this.returnQueue = returnQueue;
 	}
@@ -200,8 +200,8 @@ public class AnalyzerProcessingLoop extends Thread {
 		this.fftBlock.fft(samples.re(), samples.im());
 
 		// Calculate the logarithmic magnitude:
-		double realPower;
-		double imagPower;
+		float realPower;
+		float imagPower;
 		int size = samples.size();
 		for (int i = 0; i < size; i++) {
 			// We have to flip both sides of the fft to draw it centered on the screen:
@@ -213,7 +213,7 @@ public class AnalyzerProcessingLoop extends Thread {
 			realPower = realPower * realPower;
 			imagPower = samples.im(i)/fftSize;
 			imagPower = imagPower * imagPower;
-			mag[targetIndex] = 10* Math.log10(Math.sqrt(realPower + imagPower));
+			mag[targetIndex] = (float) (10* Math.log10(Math.sqrt(realPower + imagPower)));
 		}
 	}
 }

@@ -88,10 +88,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	public static final int FFT_DRAWING_TYPE_LINE = 2;	// draw as line
 
 	private int averageLength = 0;				// indicates whether or not peak hold points should be drawn
-	private double[][] historySamples;			// array that holds the last averageLength fft sample packets
+	private float[][] historySamples;			// array that holds the last averageLength fft sample packets
 	private int oldesthistoryIndex;				// index in historySamples which holds the oldest samples
 	private boolean peakHoldEnabled = false;	// indicates whether peak hold should be enabled or disabled
-	private double[] peaks;						// peak hold points
+	private float[] peaks;						// peak hold points
 
 	// virtual frequency and sample rate indicate the current visible viewport of the fft. they vary from
 	// the actual values when the user does scrolling and zooming
@@ -742,7 +742,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param frameRate 	current frame rate (FPS)
 	 * @param load			current load (percentage [0..1])
 	 */
-	public void draw(double[] mag, long frequency, int sampleRate, int frameRate, double load) {
+	public void draw(float[] mag, long frequency, int sampleRate, int frameRate, double load) {
 
 		if(virtualFrequency < 0)
 			virtualFrequency = frequency;
@@ -761,7 +761,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		if(averageLength > 0) {
 			// verify that the history samples array is correctly initialized:
 			if(historySamples == null || historySamples.length != averageLength || historySamples[0].length != mag.length) {
-				historySamples = new double[averageLength][mag.length];
+				historySamples = new float[averageLength][mag.length];
 				for (int i = 0; i < averageLength; i++) {
 					for (int j = 0; j < mag.length; j++) {
 						historySamples[i][j] = mag[j];
@@ -778,7 +778,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				}
 			}
 			// calculate the averages (store them into mag). copy mag to oldest history index
-			double tmp;
+			float tmp;
 			for (int i = 0; i < mag.length; i++) {
 				tmp = mag[i];
 				for (int j = 0; j < historySamples.length; j++)
@@ -798,8 +798,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// try to avoid the DC peak (which is always exactly in the middle of mag:
 				if(i == (mag.length/2)-5)
 					i+=10;	// This effectively skips the DC offset peak
-				min = Math.min((float)mag[i], min);
-				max = Math.max((float)mag[i], max);
+				min = Math.min(mag[i], min);
+				max = Math.max(mag[i], max);
 			}
 			if(min<max){
 				minDB = Math.max(min, MIN_DB);
@@ -815,7 +815,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		if(peakHoldEnabled) {
 			// First verify that the array is initialized correctly:
 			if(peaks == null || peaks.length != mag.length) {
-				peaks = new double[mag.length];
+				peaks = new float[mag.length];
 				for (int i = 0; i < peaks.length; i++)
 					peaks[i] = -999999F;    // == no peak ;)
 			}
@@ -896,7 +896,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param start		first index to draw from mag (may be negative)
 	 * @param end		last index to draw from mag (may be > mag.length)
 	 */
-	private void drawFFT(Canvas c, double[] mag, int start, int end) {
+	private void drawFFT(Canvas c, float[] mag, int start, int end) {
 		float previousY		 = getFftHeight();	// y coordinate of the previously processed pixel (only used with drawing type line)
 		float currentY;							// y coordinate of the currently processed pixel
 		float samplesPerPx 	= (float) (end-start) / (float) width;		// number of fft samples per one pixel

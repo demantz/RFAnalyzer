@@ -180,7 +180,7 @@ public class Decimator extends Thread {
 		// Verify that the input filter 4 is still correct configured (gain):
 		if(inputFilter4 == null || inputFilter4.getGain() != 2*(outputSampleRate/(double)input.getSampleRate()) ) {
 			// We have to (re-)create the filter:
-			this.inputFilter4 = FirFilter.createLowPass(2, 2*(outputSampleRate/(double)input.getSampleRate()), 1, 0.15, 0.2, 20);
+			this.inputFilter4 = FirFilter.createLowPass(2, 2*(outputSampleRate/(float)input.getSampleRate()), 1, 0.15f, 0.2f, 20);
 			Log.d(LOGTAG, "downsampling: created new inputFilter4 with " + inputFilter4.getNumberOfTaps()
 					+ " taps. Decimation=" + inputFilter4.getDecimation() + " Cut-Off=" + inputFilter4.getCutOffFrequency()
 					+ " transition=" + inputFilter4.getTransitionWidth());

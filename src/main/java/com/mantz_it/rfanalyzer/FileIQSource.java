@@ -47,9 +47,9 @@ public class FileIQSource implements IQSourceInterface {
 	private String filename = null;
 	private BufferedInputStream bufferedInputStream = null;
 	private static final String LOGTAG = "FileIQSource";
-	public double[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
-	public double[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
-	public double[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
+	public float[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
+	public float[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
+	public float[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
 	public int cosineFrequency;							// Frequency of the cosine that is mixed to the signal
 	public int cosineIndex;								// current index within the cosine
 	public static final int MAX_COSINE_LENGTH = 50;	// Max length of the cosine lookup table
@@ -260,16 +260,16 @@ public class FileIQSource implements IQSourceInterface {
 
 		// If lookupTable is null, we create it:
 		if(lookupTable == null) {
-			lookupTable = new double[256];
+			lookupTable = new float[256];
 			for (int i = 0; i < 256; i++)
-				lookupTable[i] = (i-128) / 128.0;
+				lookupTable[i] = (i-128) / 128.0f;
 		}
 
 		int capacity = samplePacket.capacity();
 		int count = 0;
 		int startIndex = samplePacket.size();
-		double[] re = samplePacket.re();
-		double[] im = samplePacket.im();
+		float[] re = samplePacket.re();
+		float[] im = samplePacket.im();
 		for (int i = 0; i < packet.length; i+=2) {
 			re[startIndex+count] = lookupTable[packet[i]+128];
 			im[startIndex+count] = lookupTable[packet[i+1]+128];
@@ -304,16 +304,16 @@ public class FileIQSource implements IQSourceInterface {
 			}
 //			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
 //					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
-			cosineRealLookupTable = new double[bestLength][256];
-			cosineImagLookupTable = new double[bestLength][256];
-			double cosineAtT;
-			double sineAtT;
+			cosineRealLookupTable = new float[bestLength][256];
+			cosineImagLookupTable = new float[bestLength][256];
+			float cosineAtT;
+			float sineAtT;
 			for (int t = 0; t < bestLength; t++) {
-				cosineAtT = Math.cos(2 * Math.PI * mixFrequency * t / (double) sampleRate);
-				sineAtT = Math.sin(2 * Math.PI * mixFrequency * t / (double) sampleRate);
+				cosineAtT = (float) Math.cos(2 * Math.PI * mixFrequency * t / (float) sampleRate);
+				sineAtT = (float) Math.sin(2 * Math.PI * mixFrequency * t / (float) sampleRate);
 				for (int i = 0; i < 256; i++) {
-					cosineRealLookupTable[t][i] = (i-128)/128.0 * cosineAtT;
-					cosineImagLookupTable[t][i] = (i-128)/128.0 * sineAtT;
+					cosineRealLookupTable[t][i] = (i-128)/128.0f * cosineAtT;
+					cosineImagLookupTable[t][i] = (i-128)/128.0f * sineAtT;
 				}
 			}
 			cosineIndex=0;
@@ -323,8 +323,8 @@ public class FileIQSource implements IQSourceInterface {
 		int capacity = samplePacket.capacity();
 		int count = 0;
 		int startIndex = samplePacket.size();
-		double[] re = samplePacket.re();
-		double[] im = samplePacket.im();
+		float[] re = samplePacket.re();
+		float[] im = samplePacket.im();
 		for (int i = 0; i < packet.length; i+=2) {
 			re[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i]+128] - cosineImagLookupTable[cosineIndex][packet[i+1]+128];
 			im[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i+1]+128] + cosineImagLookupTable[cosineIndex][packet[i]+128];

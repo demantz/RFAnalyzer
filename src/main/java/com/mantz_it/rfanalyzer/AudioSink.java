@@ -72,9 +72,9 @@ public class AudioSink extends Thread {
 									AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
 
 		// Create the audio filters:
-		this.audioFilter1 = FirFilter.createLowPass(2, 1, 1, 0.1, 0.15, 30);
+		this.audioFilter1 = FirFilter.createLowPass(2, 1, 1, 0.1f, 0.15f, 30);
 		Log.d(LOGTAG,"constructor: created audio filter 1 with " + audioFilter1.getNumberOfTaps() + " Taps.");
-		this.audioFilter2 = FirFilter.createLowPass(4, 1, 1, 0.1, 0.1, 30);
+		this.audioFilter2 = FirFilter.createLowPass(4, 1, 1, 0.1f, 0.1f, 30);
 		Log.d(LOGTAG,"constructor: created audio filter 2 with " + audioFilter2.getNumberOfTaps() + " Taps.");
 		this.tmpAudioSamples = new SamplePacket(packetSize);
 	}
@@ -140,7 +140,7 @@ public class AudioSink extends Thread {
 	public void run() {
 		SamplePacket packet;
 		SamplePacket filteredPacket = new SamplePacket(packetSize);
-		double[] doublePacket;
+		float[] floatPacket;
 		short[] shortPacket = new short[packetSize];
 
 		Log.i(LOGTAG,"AudioSink started. (Thread: " + this.getName() + ")");
@@ -163,9 +163,9 @@ public class AudioSink extends Thread {
 				applyAudioFilter(packet, filteredPacket);
 
 				// Convert doubles to shorts [expect doubles to be in [-1...1]
-				doublePacket = filteredPacket.re();
+				floatPacket = filteredPacket.re();
 				for (int i = 0; i < filteredPacket.size(); i++) {
-					shortPacket[i] = (short) (doublePacket[i] * 32767);
+					shortPacket[i] = (short) (floatPacket[i] * 32767);
 				}
 
 				// Write it to the audioTrack:

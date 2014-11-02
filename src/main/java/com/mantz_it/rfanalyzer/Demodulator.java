@@ -64,7 +64,7 @@ public class Demodulator extends Thread {
 
 	// DEMODULATION
 	private SamplePacket demodulatorHistory;	// used for FM demodulation
-	private double lastMax = 0;	// used for gain control in AM demodulation
+	private float lastMax = 0;	// used for gain control in AM demodulation
 	public static final int DEMODULATION_OFF 	= 0;
 	public static final int DEMODULATION_AM 	= 1;
 	public static final int DEMODULATION_NFM 	= 2;
@@ -244,7 +244,7 @@ public class Demodulator extends Thread {
 														1,
 														input.getSampleRate(),
 														userFilterCutOff,
-														input.getSampleRate()*0.10,
+														input.getSampleRate()*0.10f,
 														USER_FILTER_ATTENUATION);
 			if(userFilter == null)
 				return;	// This may happen if input samples changed rate or demodulation was turned off. Just skip the filtering.
@@ -268,11 +268,11 @@ public class Demodulator extends Thread {
 	 * @param output	outgoing (demodulated) samples
 	 */
 	private void demodulateFM(SamplePacket input, SamplePacket output, int maxDeviation) {
-		double[] reIn = input.re();
-		double[] imIn = input.im();
-		double[] reOut = output.re();
-		double[] imOut = output.im();
-		double quadratureGain = QUADRATURE_RATE[demodulationMode]/(2*Math.PI*maxDeviation);
+		float[] reIn = input.re();
+		float[] imIn = input.im();
+		float[] reOut = output.re();
+		float[] imOut = output.im();
+		float quadratureGain =  QUADRATURE_RATE[demodulationMode]/(2*(float)Math.PI*maxDeviation);
 
 		if(demodulatorHistory == null) {
 			demodulatorHistory = new SamplePacket(1);
@@ -283,11 +283,11 @@ public class Demodulator extends Thread {
 		// Quadrature demodulation:
 		reOut[0] = reIn[0]*demodulatorHistory.re(0) + imIn[0] * demodulatorHistory.im(0);
 		imOut[0] = imIn[0]*demodulatorHistory.re(0) - reIn[0] * demodulatorHistory.im(0);
-		reOut[0] = quadratureGain * Math.atan2(imOut[0], reOut[0]);
+		reOut[0] = quadratureGain * (float) Math.atan2(imOut[0], reOut[0]);
 		for (int i = 1; i < input.size(); i++) {
 			reOut[i] = reIn[i]*reIn[i-1] + imIn[i] * imIn[i-1];
 			imOut[i] = imIn[i]*reIn[i-1] - reIn[i] * imIn[i-1];
-			reOut[i] = quadratureGain * Math.atan2(imOut[i], reOut[i]);
+			reOut[i] = quadratureGain * (float) Math.atan2(imOut[i], reOut[i]);
 		}
 		demodulatorHistory.re()[0] = reIn[input.size()-1];
 		demodulatorHistory.im()[0] = imIn[input.size()-1];
@@ -304,10 +304,10 @@ public class Demodulator extends Thread {
 	 * @param output	outgoing (demodulated) samples
 	 */
 	private void demodulateAM(SamplePacket input, SamplePacket output) {
-		double[] reIn = input.re();
-		double[] imIn = input.im();
-		double[] reOut = output.re();
-		double gain = 1/lastMax;
+		float[] reIn = input.re();
+		float[] imIn = input.im();
+		float[] reOut = output.re();
+		float gain = 1/lastMax;
 		lastMax = 0;
 
 		// Complex to magnitude
@@ -315,7 +315,7 @@ public class Demodulator extends Thread {
 			reOut[i] = (reIn[i] * reIn[i] + imIn[i] * imIn[i]);
 			if(reOut[i] > lastMax)
 				lastMax = reOut[i];
-			reOut[i] = reOut[i] * gain - 0.5;
+			reOut[i] = reOut[i] * gain - 0.5f;
 		}
 
 		output.setSize(input.size());

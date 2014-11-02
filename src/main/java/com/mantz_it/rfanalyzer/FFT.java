@@ -28,10 +28,10 @@ public class FFT {
 	int n, m;
 
 	// Lookup tables.  Only need to recompute when size of FFT changes.
-	double[] cos;
-	double[] sin;
+	float[] cos;
+	float[] sin;
 
-	double[] window;
+	float[] window;
 
 	public FFT(int n) {
 		this.n = n;
@@ -42,8 +42,8 @@ public class FFT {
 			throw new RuntimeException("FFT length must be power of 2");
 
 		// precompute tables
-		cos = new double[n/2];
-		sin = new double[n/2];
+		cos = new float[n/2];
+		sin = new float[n/2];
 
 //     for(int i=0; i<n/4; i++) {
 //       cos[i] = Math.cos(-2*Math.PI*i/n);
@@ -57,8 +57,8 @@ public class FFT {
 //     }
 
 		for(int i=0; i<n/2; i++) {
-			cos[i] = Math.cos(-2*Math.PI*i/n);
-			sin[i] = Math.sin(-2*Math.PI*i/n);
+			cos[i] = (float) Math.cos(-2*Math.PI*i/n);
+			sin[i] = (float) Math.sin(-2*Math.PI*i/n);
 		}
 
 		makeWindow();
@@ -67,17 +67,17 @@ public class FFT {
 	protected void makeWindow() {
 		// Make a blackman window:
 		// w(n)=0.42-0.5cos{(2*PI*n)/(N-1)}+0.08cos{(4*PI*n)/(N-1)};
-		window = new double[n];
+		window = new float[n];
 		for(int i = 0; i < window.length; i++)
-			window[i] = 0.42 - 0.5 * Math.cos(2*Math.PI*i/(n-1))
-					+ 0.08 * Math.cos(4*Math.PI*i/(n-1));
+			window[i] = (float) (0.42 - 0.5 * Math.cos(2*Math.PI*i/(n-1))
+					+ 0.08 * Math.cos(4*Math.PI*i/(n-1)));
 	}
 
-	public double[] getWindow() {
+	public float[] getWindow() {
 		return window;
 	}
 
-	public void applyWindow(double[] re, double[] im) {
+	public void applyWindow(float[] re, float[] im) {
 		for (int i = 0; i < window.length; i++) {
 			re[i] = window[i] * re[i];
 			im[i] = window[i] * im[i];
@@ -104,10 +104,10 @@ public class FFT {
 	 *   Permission to copy and use this program is granted
 	 *   as long as this header is included.
 	 ****************************************************************/
-	public void fft(double[] x, double[] y)
+	public void fft(float[] x, float[] y)
 	{
 		int i,j,k,n1,n2,a;
-		double c,s,e,t1,t2;
+		float c,s,e,t1,t2;
 
 
 		// Bit-reverse

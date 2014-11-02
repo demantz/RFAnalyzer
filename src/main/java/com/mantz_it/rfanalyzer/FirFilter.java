@@ -30,16 +30,16 @@ import android.util.Log;
  */
 public class FirFilter {
 	private int tapCounter = 0;
-	private double[] taps;
-	private double[] delaysReal;
-	private double[] delaysImag;
+	private float[] taps;
+	private float[] delaysReal;
+	private float[] delaysImag;
 	private int decimation;
 	private int decimationCounter = 1;
-	private double gain;
-	private double sampleRate;
-	private double cutOffFrequency;
-	private double transitionWidth;
-	private double attenuation;
+	private float gain;
+	private float sampleRate;
+	private float cutOffFrequency;
+	private float transitionWidth;
+	private float attenuation;
 	private static final String LOGTAG = "FirFilter";
 
 	/**
@@ -53,10 +53,10 @@ public class FirFilter {
 	 * @param transitionWidth		width from end of pass band to start stop band
 	 * @param attenuation			attenuation of stop band
 	 */
-	private FirFilter(double[] taps, int decimation, double gain, double sampleRate, double cutOffFrequency, double transitionWidth, double attenuation) {
+	private FirFilter(float[] taps, int decimation, float gain, float sampleRate, float cutOffFrequency, float transitionWidth, float attenuation) {
 		this.taps = taps;
-		this.delaysReal = new double[taps.length];
-		this.delaysImag = new double[taps.length];
+		this.delaysReal = new float[taps.length];
+		this.delaysImag = new float[taps.length];
 		this.decimation = decimation;
 		this.gain = gain;
 		this.sampleRate = sampleRate;
@@ -76,23 +76,23 @@ public class FirFilter {
 		return decimation;
 	}
 
-	public double getGain() {
+	public float getGain() {
 		return gain;
 	}
 
-	public double getSampleRate() {
+	public float getSampleRate() {
 		return sampleRate;
 	}
 
-	public double getCutOffFrequency() {
+	public float getCutOffFrequency() {
 		return cutOffFrequency;
 	}
 
-	public double getTransitionWidth() {
+	public float getTransitionWidth() {
 		return transitionWidth;
 	}
 
-	public double getAttenuation() {
+	public float getAttenuation() {
 		return attenuation;
 	}
 
@@ -109,7 +109,7 @@ public class FirFilter {
 		int index;
 		int indexOut = out.size();
 		int outputCapacity = out.capacity();
-		double[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
+		float[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
 		// insert each input sample into the delay line:
 		for (int i = 0; i < length; i++) {
@@ -129,7 +129,7 @@ public class FirFilter {
 				reOut[indexOut] = 0;
 				imOut[indexOut] = 0;
 				index = tapCounter;
-				for (double tap : taps) {
+				for (float tap : taps) {
 					reOut[indexOut] += tap * delaysReal[index];
 					imOut[indexOut] += tap * delaysImag[index];
 					index--;
@@ -167,7 +167,7 @@ public class FirFilter {
 		int index;
 		int indexOut = out.size();
 		int outputCapacity = out.capacity();
-		double[] reIn = in.re(), reOut = out.re();
+		float[] reIn = in.re(), reOut = out.re();
 
 		// insert each input sample into the delay line:
 		for (int i = 0; i < length; i++) {
@@ -185,7 +185,7 @@ public class FirFilter {
 				// Calculate the results:
 				reOut[indexOut] = 0;
 				index = tapCounter;
-				for (double tap : taps) {
+				for (float tap : taps) {
 					reOut[indexOut] += tap * delaysReal[index];
 					index--;
 					if (index < 0)
@@ -223,11 +223,11 @@ public class FirFilter {
 	 * @return instance of FirFilter
 	 */
 	public static FirFilter createLowPass(int decimation,
-										  double gain,
-										  double sampling_freq,    // Hz
-										  double cutoff_freq,      // Hz BEGINNING of transition band
-										  double transition_width, // Hz width of transition band
-										  double attenuation_dB)   // attenuation dB
+										  float gain,
+										  float sampling_freq,    // Hz
+										  float cutoff_freq,      // Hz BEGINNING of transition band
+										  float transition_width, // Hz width of transition band
+										  float attenuation_dB)   // attenuation dB
 	{
 		if (sampling_freq <= 0.0) {
 			Log.e(LOGTAG,"createLowPass: firdes check failed: sampling_freq > 0");
@@ -254,28 +254,28 @@ public class FirFilter {
 		// construct the truncated ideal impulse response
 		// [sin(x)/x for the low pass case]
 
-		double[] taps = new double[ntaps];
-		double[] w = makeWindow(ntaps);
+		float[] taps = new float[ntaps];
+		float[] w = makeWindow(ntaps);
 
 		int M = (ntaps - 1) / 2;
-		double fwT0 = 2 * Math.PI * cutoff_freq / sampling_freq;
+		float fwT0 = 2 * (float)Math.PI * cutoff_freq / sampling_freq;
 		for (int n = -M; n <= M; n++) {
 			if (n == 0)
-				taps[n + M] = fwT0 / Math.PI * w[n + M];
+				taps[n + M] = fwT0 / (float)Math.PI * w[n + M];
 			else {
 				// a little algebra gets this into the more familiar sin(x)/x form
-				taps[n + M] = Math.sin(n * fwT0) / (n * Math.PI) * w[n + M];
+				taps[n + M] = (float)Math.sin(n * fwT0) / (n * (float)Math.PI) * w[n + M];
 			}
 		}
 
 		// find the factor to normalize the gain, fmax.
 		// For low-pass, gain @ zero freq = 1.0
 
-		double fmax = taps[0 + M];
+		float fmax = taps[0 + M];
 		for (int n = 1; n <= M; n++)
 			fmax += 2 * taps[n + M];
 
-		double actualGain = gain/fmax;    // normalize
+		float actualGain = gain/fmax;    // normalize
 
 		for (int i = 0; i < ntaps; i++)
 			taps[i] *= actualGain;
@@ -289,13 +289,13 @@ public class FirFilter {
 	 * @param ntabs number of taps of the filter
 	 * @return window samples
 	 */
-	private static double[] makeWindow(int ntabs) {
+	private static float[] makeWindow(int ntabs) {
 		// Make a blackman window:
 		// w(n)=0.42-0.5cos{(2*PI*n)/(N-1)}+0.08cos{(4*PI*n)/(N-1)};
-		double[] window = new double[ntabs];
+		float[] window = new float[ntabs];
 		for (int i = 0; i < window.length; i++)
-			window[i] = 0.42 - 0.5 * Math.cos(2 * Math.PI * i / (ntabs - 1))
-					+ 0.08 * Math.cos(4 * Math.PI * i / (ntabs - 1));
+			window[i] = 0.42f - 0.5f * (float)Math.cos(2 * Math.PI * i / (ntabs - 1))
+					+ 0.08f * (float)Math.cos(4 * Math.PI * i / (ntabs - 1));
 		return window;
 	}
 

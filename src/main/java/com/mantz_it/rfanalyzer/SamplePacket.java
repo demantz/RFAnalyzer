@@ -26,8 +26,8 @@ package com.mantz_it.rfanalyzer;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class SamplePacket {
-	private double[] re;		// real values
-	private double[] im;		// imag values
+	private float[] re;			// real values
+	private float[] im;			// imag values
 	private long frequency;		// center frequency
 	private int sampleRate;		// sample rate
 	private int size;			// number of samples in this packet
@@ -36,12 +36,12 @@ public class SamplePacket {
 	 * Constructor. This constructor wraps existing arrays and set the number of
 	 * samples to the length of the arrays
 	 *
-	 * @param re	array of real parts of the sample values
-	 * @param im	array of imaginary parts of the sample values
+	 * @param re			array of real parts of the sample values
+	 * @param im			array of imaginary parts of the sample values
 	 * @param frequency		center frequency
 	 * @param sampleRate	sample rate
 	 */
-	public SamplePacket(double[] re, double im[], long frequency, int sampleRate) {
+	public SamplePacket(float[] re, float im[], long frequency, int sampleRate) {
 		this(re, im, frequency, sampleRate, re.length);
 	}
 
@@ -49,13 +49,13 @@ public class SamplePacket {
 	 * Constructor. This constructor wraps existing arrays and allows to set the
 	 * number of samples in this packet to something smaller than the array length
 	 *
-	 * @param re	array of real parts of the sample values
-	 * @param im	array of imaginary parts of the sample values
+	 * @param re			array of real parts of the sample values
+	 * @param im			array of imaginary parts of the sample values
 	 * @param frequency		center frequency
 	 * @param sampleRate	sample rate
 	 * @param size	number of samples in this packet ( <= arrays.length )
 	 */
-	public SamplePacket(double[] re, double im[], long frequency, int sampleRate, int size) {
+	public SamplePacket(float[] re, float im[], long frequency, int sampleRate, int size) {
 		if(re.length != im.length)
 			throw new IllegalArgumentException("Arrays must be of the same length");
 		if(size > re.length)
@@ -73,8 +73,8 @@ public class SamplePacket {
 	 * @param size	Number of samples in this packet
 	 */
 	public SamplePacket(int size) {
-		this.re = new double[size];
-		this.im = new double[size];
+		this.re = new float[size];
+		this.im = new float[size];
 		this.frequency = 0;
 		this.sampleRate = 0;
 		this.size = 0;
@@ -83,7 +83,7 @@ public class SamplePacket {
 	/**
 	 * @return the reference to the array of real parts
 	 */
-	public double[] re() {
+	public float[] re() {
 		return re;
 	}
 
@@ -93,14 +93,14 @@ public class SamplePacket {
 	 * @param i		index
 	 * @return real part of the sample with the given index
 	 */
-	public double re(int i) {
+	public float re(int i) {
 		return re[i];
 	}
 
 	/**
 	 * @return the reference to the array of imaginary parts
 	 */
-	public double[] im() {
+	public float[] im() {
 		return im;
 	}
 
@@ -110,7 +110,7 @@ public class SamplePacket {
 	 * @param i		index
 	 * @return imaginary part of the sample with the given index
 	 */
-	public double im(int i) {
+	public float im(int i) {
 		return im[i];
 	}
 
