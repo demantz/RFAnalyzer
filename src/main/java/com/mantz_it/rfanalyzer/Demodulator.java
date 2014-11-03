@@ -272,6 +272,7 @@ public class Demodulator extends Thread {
 		float[] imIn = input.im();
 		float[] reOut = output.re();
 		float[] imOut = output.im();
+		int inputSize = input.size();
 		float quadratureGain =  QUADRATURE_RATE[demodulationMode]/(2*(float)Math.PI*maxDeviation);
 
 		if(demodulatorHistory == null) {
@@ -284,14 +285,14 @@ public class Demodulator extends Thread {
 		reOut[0] = reIn[0]*demodulatorHistory.re(0) + imIn[0] * demodulatorHistory.im(0);
 		imOut[0] = imIn[0]*demodulatorHistory.re(0) - reIn[0] * demodulatorHistory.im(0);
 		reOut[0] = quadratureGain * (float) Math.atan2(imOut[0], reOut[0]);
-		for (int i = 1; i < input.size(); i++) {
+		for (int i = 1; i < inputSize; i++) {
 			reOut[i] = reIn[i]*reIn[i-1] + imIn[i] * imIn[i-1];
 			imOut[i] = imIn[i]*reIn[i-1] - reIn[i] * imIn[i-1];
 			reOut[i] = quadratureGain * (float) Math.atan2(imOut[i], reOut[i]);
 		}
-		demodulatorHistory.re()[0] = reIn[input.size()-1];
-		demodulatorHistory.im()[0] = imIn[input.size()-1];
-		output.setSize(input.size());
+		demodulatorHistory.re()[0] = reIn[inputSize-1];
+		demodulatorHistory.im()[0] = imIn[inputSize-1];
+		output.setSize(inputSize);
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
 	}
 

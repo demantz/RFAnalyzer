@@ -975,7 +975,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				waterfallLinePaint.setColor(waterfallColorMap[waterfallColorMap.length-1]);
 			else
 				waterfallLinePaint.setColor(waterfallColorMap[(int)((avg-minDB)*scale)]);
-			newline.drawLine(i, 0, i, getPixelPerWaterfallLine(), waterfallLinePaint);
+
+			if(getPixelPerWaterfallLine() > 1)
+				newline.drawLine(i, 0, i, getPixelPerWaterfallLine(), waterfallLinePaint);
+			else
+				newline.drawPoint(i, 0, waterfallLinePaint);
 		}
 	}
 
@@ -985,10 +989,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @param c			canvas of the surface view
 	 */
 	private void drawWaterfall(Canvas c) {
+		int yPos = getFftHeight();
+		int yDiff = getPixelPerWaterfallLine();
+
 		// draw the bitmaps on the canvas:
 		for (int i = 0; i < waterfallLines.length; i++) {
 			int idx = (waterfallLinesTopIndex + i) % waterfallLines.length;
-			c.drawBitmap(waterfallLines[idx], 0, getFftHeight() + i*getPixelPerWaterfallLine(), defaultPaint);
+			c.drawBitmap(waterfallLines[idx], 0, yPos, defaultPaint);
+			yPos += yDiff;
 		}
 
 		// move the array index (note that we have to decrement in order to do it correctly)

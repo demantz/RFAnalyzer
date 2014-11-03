@@ -193,11 +193,12 @@ public class AnalyzerProcessingLoop extends Thread {
 	 * @param samples	input samples for the signal processing
 	 */
 	public void doProcessing(SamplePacket samples) {
+		float[] re=samples.re(), im=samples.im();
 		// Multiply the samples with a Window function:
-		this.fftBlock.applyWindow(samples.re(), samples.im());
+		this.fftBlock.applyWindow(re, im);
 
 		// Calculate the fft:
-		this.fftBlock.fft(samples.re(), samples.im());
+		this.fftBlock.fft(re, im);
 
 		// Calculate the logarithmic magnitude:
 		float realPower;
@@ -209,9 +210,9 @@ public class AnalyzerProcessingLoop extends Thread {
 
 			// Calc the magnitude = log(  re^2 + im^2  )
 			// note that we still have to divide re and im by the fft size
-			realPower = samples.re(i)/fftSize;
+			realPower = re[i]/fftSize;
 			realPower = realPower * realPower;
-			imagPower = samples.im(i)/fftSize;
+			imagPower = im[i]/fftSize;
 			imagPower = imagPower * imagPower;
 			mag[targetIndex] = (float) (10* Math.log10(Math.sqrt(realPower + imagPower)));
 		}
