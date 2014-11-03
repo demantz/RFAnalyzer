@@ -67,6 +67,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private boolean doAutoscaleInNextDraw = false;	// will cause draw() to adjust minDB and maxDB according to the samples
 	private boolean verticalZoomEnabled = true;		// Enables vertical zooming (dB scale)
 	private boolean verticalScrollEnabled = true;	// Enables vertical scrolling (dB scale)
+	private boolean decoupledAxis = true;			// Will seperate the scrolling/zooming sensitive areas for vertical and
+													// horizontal axis.
 
 	private static final String LOGTAG = "AnalyzerSurface";
 	private static final int MIN_DB = -100;	// Smallest dB value the vertical scale can start
@@ -117,6 +119,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private static final int SCROLLTYPE_SQUELCH = 5;
 
 	private float fftRatio = 0.5f;					// percentage of the height the fft consumes on the surface
+
+	public static final int FONT_SIZE_SMALL = 1;
+	public static final int FONT_SIZE_MEDIUM = 2;
+	public static final int FONT_SIZE_LARGE = 3;
+	private int fontSize = FONT_SIZE_MEDIUM;		// Indicates the font size of the grid labels
+	private boolean showDebugInformation = false;
+
 
 	/**
 	 * Constructor. Will initialize the Paint instances and register the callback
@@ -211,6 +220,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void setVerticalZoomEnabled(boolean enable) {
 		this.verticalZoomEnabled = enable;
+	}
+
+	/**
+	 * Will switch between decoupled axis zoom/scroll ( vertical only in the left axis area ) and
+	 * the default mode: vertical and horizontal zoom/scroll at the same time
+	 *
+	 * @param decoupledAxis		true: vertical and horizontal zoom/scroll are decoupled
+	 */
+	public void setDecoupledAxis(boolean decoupledAxis) {
+		this.decoupledAxis = decoupledAxis;
 	}
 
 	/**
@@ -340,6 +359,57 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void setChannelFrequency(long channelFrequency) {
 		this.channelFrequency = channelFrequency;
+	}
+
+	/**
+	 * Set the font size
+	 *
+	 * @param fontSize FONT_SIZE_SMALL, *_MEDIUM or *_LARGE
+	 */
+	public void setFontSize(int fontSize) {
+		int normalTextSize;
+		int smallTextSize;
+		switch (fontSize) {
+			case FONT_SIZE_SMALL:
+				normalTextSize = (int)(getGridSize() * 0.3);
+				smallTextSize = (int)(getGridSize() * 0.2);
+				break;
+			case FONT_SIZE_MEDIUM:
+				normalTextSize = (int)(getGridSize() * 0.476);
+				smallTextSize = (int)(getGridSize() * 0.25);
+				break;
+			case FONT_SIZE_LARGE:
+				normalTextSize = (int)(getGridSize() * 0.7);
+				smallTextSize = (int)(getGridSize() * 0.35);
+				break;
+			default:
+				Log.e(LOGTAG,"setFontSize: Invalid font size: " + fontSize);
+				return;
+		}
+		this.fontSize = fontSize;
+		this.textPaint.setTextSize(normalTextSize);
+		this.textSmallPaint.setTextSize(smallTextSize);
+	}
+
+	/**
+	 * @return current font size: FONT_SIZE_SMALL, *_MEDIUM, *_LARGE
+	 */
+	public int getFontSize() {
+		return fontSize;
+	}
+
+	/**
+	 * @return true if debug information is currently printed on the screen
+	 */
+	public boolean isShowDebugInformation() {
+		return showDebugInformation;
+	}
+
+	/**
+	 * @param showDebugInformation 		true will enable debug outputs on the screen
+	 */
+	public void setShowDebugInformation(boolean showDebugInformation) {
+		this.showDebugInformation = showDebugInformation;
 	}
 
 	/**
@@ -486,9 +556,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			// Recreate the waterfall bitmaps:
 			this.createWaterfallLineBitmaps();
 
-			// Fix the text size:
-			this.textPaint.setTextSize((int) (getGridSize() / 2.1));
-			this.textSmallPaint.setTextSize(textPaint.getTextSize()*0.5f);
+			// Fix the text size of the text paint objects:
+			this.setFontSize(fontSize);
 		}
 	}
 
@@ -507,14 +576,18 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public boolean onScale(ScaleGestureDetector detector) {
 		if(source != null) {
-			float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
-			long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
-			int maxSampleRate = demodulationEnabled ? (int)(source.getSampleRate()*0.9) : source.getMaxSampleRate();
-			virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), maxSampleRate);
-			virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
-					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+			// Zoom horizontal if focus in the main area or always if decoupled axis is deactivated:
+			if(!decoupledAxis || detector.getFocusX() > getGridSize()*1.5) {
+				float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
+				long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
+				int maxSampleRate = demodulationEnabled ? (int) (source.getSampleRate() * 0.9) : source.getMaxSampleRate();
+				virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), maxSampleRate);
+				virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
+						source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+			}
 
-			if (verticalZoomEnabled) {
+			// Zoom vertical if enabled and focus in the left grid area or if decoupled axis is deactivated:
+			if (verticalZoomEnabled && (!decoupledAxis || detector.getFocusX() <= getGridSize() * 1.5)) {
 				float yScale = detector.getCurrentSpanY() / detector.getPreviousSpanY();
 				float dBFocus = maxDB - (maxDB - minDB) * (detector.getFocusY() / getFftHeight());
 				float newMinDB = Math.min(Math.max(dBFocus - (dBFocus - minDB) / yScale, MIN_DB), MAX_DB - 10);
@@ -610,19 +683,22 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			// scroll horizontally or adjust channel selector (scroll type was selected in onDown() event routine:
 			switch (this.scrollType) {
 				case SCROLLTYPE_NORMAL:
-					virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (hzPerPx * distanceX),
-							source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
-					if(virtualFrequency <= 0)	// don't allow negative frequencies
-						virtualFrequency = 1;
+					// Scroll horizontal if touch point in the main area or always if decoupled axis is deactivated:
+					if(!decoupledAxis || e1.getX() > getGridSize() *1.5) {
+						virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (hzPerPx * distanceX),
+								source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+						if (virtualFrequency <= 0)    // don't allow negative frequencies
+							virtualFrequency = 1;
 
-					// if we scrolled the channel selector out of the window, reset the channel selector:
-					if(demodulationEnabled && channelFrequency < virtualFrequency-virtualSampleRate/2) {
-						channelFrequency = virtualFrequency-virtualSampleRate/2;
-						callbackHandler.onUpdateChannelFrequency(channelFrequency);
-					}
-					if(demodulationEnabled && channelFrequency > virtualFrequency+virtualSampleRate/2) {
-						channelFrequency = virtualFrequency+virtualSampleRate/2;
-						callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						// if we scrolled the channel selector out of the window, reset the channel selector:
+						if (demodulationEnabled && channelFrequency < virtualFrequency - virtualSampleRate / 2) {
+							channelFrequency = virtualFrequency - virtualSampleRate / 2;
+							callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						}
+						if (demodulationEnabled && channelFrequency > virtualFrequency + virtualSampleRate / 2) {
+							channelFrequency = virtualFrequency + virtualSampleRate / 2;
+							callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						}
 					}
 					break;
 				case SCROLLTYPE_CHANNEL_FREQUENCY:
@@ -648,21 +724,24 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			}
 
 			// scroll vertically
-			if (verticalScrollEnabled && scrollType != SCROLLTYPE_SQUELCH) {
-				float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
-				// Make sure we stay in the boundaries:
-				if (maxDB - yDiff > MAX_DB)
-					yDiff = MAX_DB - maxDB;
-				if (minDB - yDiff < MIN_DB)
-					yDiff = MIN_DB - minDB;
-				this.setDBScale(minDB - yDiff, maxDB - yDiff);
+			if (verticalScrollEnabled && scrollType == SCROLLTYPE_NORMAL) {
+				// if touch point in the left grid area or if decoupled axis is deactivated:
+				if(!decoupledAxis || e1.getX() <= getGridSize()*1.5) {
+					float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
+					// Make sure we stay in the boundaries:
+					if (maxDB - yDiff > MAX_DB)
+						yDiff = MAX_DB - maxDB;
+					if (minDB - yDiff < MIN_DB)
+						yDiff = MIN_DB - minDB;
+					this.setDBScale(minDB - yDiff, maxDB - yDiff);
 
-				// adjust the squelch if it is outside the visible viewport right now and demodulation is enabled:
-				if(demodulationEnabled) {
-					if (squelch < minDB)
-						squelch = minDB;
-					if (squelch > maxDB)
-						squelch = maxDB;
+					// adjust the squelch if it is outside the visible viewport right now and demodulation is enabled:
+					if (demodulationEnabled) {
+						if (squelch < minDB)
+							squelch = minDB;
+						if (squelch > maxDB)
+							squelch = maxDB;
+					}
 				}
 			}
 
@@ -1216,17 +1295,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			yPos += bounds.height() * 1.1f;
 		}
 
-		// Draw the FFT/s rate
-		text = frameRate+" FPS";
-		textSmallPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(), textSmallPaint);
-		yPos += bounds.height() * 1.1f;
+		if(showDebugInformation) {
+			// Draw the FFT/s rate
+			text = frameRate + " FPS";
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			yPos += bounds.height() * 1.1f;
 
-		// Draw the load
-		text = String.format("%3.1f %%", load * 100);
-		textSmallPaint.getTextBounds(text,0 , text.length(), bounds);
-		c.drawText(text,rightBorder-bounds.width(), yPos + bounds.height(),textSmallPaint);
-		yPos += bounds.height() * 1.1f;
+			// Draw the load
+			text = String.format("%3.1f %%", load * 100);
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			yPos += bounds.height() * 1.1f;
+		}
 	}
 
 	/**

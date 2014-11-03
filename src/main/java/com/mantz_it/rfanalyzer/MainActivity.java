@@ -113,9 +113,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		analyzerSurface = new AnalyzerSurface(this,this);
 		analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 		analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
+		analyzerSurface.setDecoupledAxis(preferences.getBoolean(getString(R.string.pref_decoupledAxis), false));
 		analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 		analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
 		analyzerSurface.setFftRatio(Float.valueOf(preferences.getString(getString(R.string.pref_spectrumWaterfallRatio), "0.5")));
+		analyzerSurface.setFontSize(Integer.valueOf(preferences.getString(getString(R.string.pref_fontSize),"2")));
+		analyzerSurface.setShowDebugInformation(preferences.getBoolean(getString(R.string.pref_showDebugInformation), false));
 
 		// Put the analyzer surface in the analyzer frame of the layout:
 		fl_analyzerFrame.addView(analyzerSurface);
@@ -330,20 +333,30 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				case FILE_SOURCE:
 					if(!(source instanceof FileIQSource))
 						createSource();
-
-					long freq = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
-					int sampRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
-					String fileName = preferences.getString(getString(R.string.pref_filesource_file), "");
-					boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
-					if(freq != source.getFrequency() || sampRate != source.getSampleRate()
-							|| !fileName.equals(((FileIQSource) source).getFilename())
-							|| repeat != ((FileIQSource) source).isRepeat()) {
-						createSource();
+					else {
+						long freq = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
+						int sampRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
+						String fileName = preferences.getString(getString(R.string.pref_filesource_file), "");
+						boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
+						if (freq != source.getFrequency() || sampRate != source.getSampleRate()
+								|| !fileName.equals(((FileIQSource) source).getFilename())
+								|| repeat != ((FileIQSource) source).isRepeat()) {
+							createSource();
+						}
 					}
 					break;
 				case HACKRF_SOURCE:
 					if(!(source instanceof HackrfSource))
 						createSource();
+					else {
+						// overwrite hackrf source settings if changed:
+						boolean amp = preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false);
+						boolean antennaPower = preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false);
+						if(((HackrfSource)source).isAmplifierOn() != amp)
+							((HackrfSource)source).setAmplifier(amp);
+						if(((HackrfSource)source).isAntennaPowerOn() != antennaPower)
+							((HackrfSource)source).setAntennaPower(antennaPower);
+					}
 					break;
 				case RTLSDR_SOURCE:
 					break;
@@ -355,11 +368,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			// All GUI settings will just be overwritten:
 			analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 			analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
+			analyzerSurface.setDecoupledAxis(preferences.getBoolean(getString(R.string.pref_decoupledAxis), false));
 			analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 			analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
 			analyzerSurface.setAverageLength(Integer.valueOf(preferences.getString(getString(R.string.pref_averaging),"0")));
 			analyzerSurface.setPeakHoldEnabled(preferences.getBoolean(getString(R.string.pref_peakHold), false));
 			analyzerSurface.setFftRatio(Float.valueOf(preferences.getString(getString(R.string.pref_spectrumWaterfallRatio), "0.5")));
+			analyzerSurface.setFontSize(Integer.valueOf(preferences.getString(getString(R.string.pref_fontSize),"2")));
+			analyzerSurface.setShowDebugInformation(preferences.getBoolean(getString(R.string.pref_showDebugInformation), false));
 		}
 
 		// Screen Orientation:
@@ -412,6 +428,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						source.setSampleRate(preferences.getInt(getString(R.string.pref_sampleRate), HackrfSource.MAX_SAMPLERATE));
 						((HackrfSource) source).setVgaRxGain(preferences.getInt(getString(R.string.pref_hackrf_vgaRxGain), HackrfSource.MAX_VGA_RX_GAIN/2));
 						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.pref_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN/2));
+						((HackrfSource) source).setAmplifier(preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false));
+						((HackrfSource) source).setAntennaPower(preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false));
 						break;
 			case RTLSDR_SOURCE:
 						Log.e(LOGTAG, "createSource: RTLSDR is not implemented!");
@@ -475,6 +493,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// update action bar icons and titles:
 		updateActionBar();
+
+		// allow screen to turn off again:
+		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
 	/**
@@ -536,6 +557,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// update the action bar icons and titles:
 		updateActionBar();
+
+		// Prevent the screen from turning off:
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
 	/**
@@ -674,12 +698,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				final SeekBar sb_lna = (SeekBar) view.findViewById(R.id.sb_hackrf_lna_gain);
 				final TextView tv_vga = (TextView) view.findViewById(R.id.tv_hackrf_vga_gain);
 				final TextView tv_lna = (TextView) view.findViewById(R.id.tv_hackrf_lna_gain);
-				sb_vga.setMax(HackrfSource.MAX_VGA_RX_GAIN);
-				sb_lna.setMax(HackrfSource.MAX_LNA_GAIN);
+				sb_vga.setMax(HackrfSource.MAX_VGA_RX_GAIN/HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+				sb_lna.setMax(HackrfSource.MAX_LNA_GAIN/HackrfSource.LNA_GAIN_STEP_SIZE);
 				sb_vga.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-						tv_vga.setText("" + progress);
+						tv_vga.setText("" + progress*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
 					}
 					@Override
 					public void onStartTrackingTouch(SeekBar seekBar) {
@@ -691,7 +715,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				sb_lna.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-						tv_lna.setText("" + progress);
+						tv_lna.setText("" + progress*HackrfSource.LNA_GAIN_STEP_SIZE);
 					}
 					@Override
 					public void onStartTrackingTouch(SeekBar seekBar) {
@@ -700,8 +724,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					public void onStopTrackingTouch(SeekBar seekBar) {
 					}
 				});
-				sb_vga.setProgress(((HackrfSource)source).getVgaRxGain());
-				sb_lna.setProgress(((HackrfSource)source).getLnaGain());
+				sb_vga.setProgress(((HackrfSource)source).getVgaRxGain()/HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+				sb_lna.setProgress(((HackrfSource)source).getLnaGain()/HackrfSource.LNA_GAIN_STEP_SIZE);
 
 				// Show dialog:
 				new AlertDialog.Builder(this)
@@ -709,12 +733,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						.setView(view)
 						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int whichButton) {
-								((HackrfSource)source).setVgaRxGain(sb_vga.getProgress());
-								((HackrfSource)source).setLnaGain(sb_lna.getProgress());
+								((HackrfSource)source).setVgaRxGain(sb_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+								((HackrfSource)source).setLnaGain(sb_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
 								// safe preferences:
 								SharedPreferences.Editor edit = preferences.edit();
-								edit.putInt(getString(R.string.pref_hackrf_vgaRxGain), sb_vga.getProgress());
-								edit.putInt(getString(R.string.pref_hackrf_lnaGain), sb_lna.getProgress());
+								edit.putInt(getString(R.string.pref_hackrf_vgaRxGain), sb_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+								edit.putInt(getString(R.string.pref_hackrf_lnaGain), sb_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
 								edit.apply();
 							}
 						})

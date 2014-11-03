@@ -194,6 +194,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		listPref = (ListPreference) findPreference(getString(R.string.pref_spectrumWaterfallRatio));
 		listPref.setSummary(getString(R.string.pref_spectrumWaterfallRatio_summ, listPref.getEntry()));
 
+		// Font Size
+		listPref = (ListPreference) findPreference(getString(R.string.pref_fontSize));
+		listPref.setSummary(getString(R.string.pref_fontSize_summ, listPref.getEntry()));
+
 		// Frame Rate
 		SwitchPreference switchPref = (SwitchPreference) findPreference(getString(R.string.pref_dynamicFrameRate));
 		listPref = (ListPreference) findPreference(getString(R.string.pref_frameRate));
