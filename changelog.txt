@@ -1,5 +1,11 @@
 CHANGELOG - RF Analyzer
 
+version 1.08
+ - Enable/disable HackRF amplifier and antenna power in settings
+ - Setting to decouple the vertical and horizontal axis while zooming/scrolling
+ - Font size adjustable: small/medium/large
+ - DSP optimizations
+
 version 1.07
  - AM/FM demodulation
  - Adjustable squelch and channel width
