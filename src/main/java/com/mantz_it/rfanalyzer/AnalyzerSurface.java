@@ -67,6 +67,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private boolean doAutoscaleInNextDraw = false;	// will cause draw() to adjust minDB and maxDB according to the samples
 	private boolean verticalZoomEnabled = true;		// Enables vertical zooming (dB scale)
 	private boolean verticalScrollEnabled = true;	// Enables vertical scrolling (dB scale)
+	private boolean decoupledAxis = true;			// Will seperate the scrolling/zooming sensitive areas for vertical and
+													// horizontal axis.
 
 	private static final String LOGTAG = "AnalyzerSurface";
 	private static final int MIN_DB = -100;	// Smallest dB value the vertical scale can start
@@ -218,6 +220,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void setVerticalZoomEnabled(boolean enable) {
 		this.verticalZoomEnabled = enable;
+	}
+
+	/**
+	 * Will switch between decoupled axis zoom/scroll ( vertical only in the left axis area ) and
+	 * the default mode: vertical and horizontal zoom/scroll at the same time
+	 *
+	 * @param decoupledAxis		true: vertical and horizontal zoom/scroll are decoupled
+	 */
+	public void setDecoupledAxis(boolean decoupledAxis) {
+		this.decoupledAxis = decoupledAxis;
 	}
 
 	/**
@@ -564,14 +576,18 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public boolean onScale(ScaleGestureDetector detector) {
 		if(source != null) {
-			float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
-			long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
-			int maxSampleRate = demodulationEnabled ? (int)(source.getSampleRate()*0.9) : source.getMaxSampleRate();
-			virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), maxSampleRate);
-			virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
-					source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+			// Zoom horizontal if focus in the main area or always if decoupled axis is deactivated:
+			if(!decoupledAxis || detector.getFocusX() > getGridSize()*1.5) {
+				float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
+				long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
+				int maxSampleRate = demodulationEnabled ? (int) (source.getSampleRate() * 0.9) : source.getMaxSampleRate();
+				virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), maxSampleRate);
+				virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
+						source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+			}
 
-			if (verticalZoomEnabled) {
+			// Zoom vertical if enabled and focus in the left grid area or if decoupled axis is deactivated:
+			if (verticalZoomEnabled && (!decoupledAxis || detector.getFocusX() <= getGridSize() * 1.5)) {
 				float yScale = detector.getCurrentSpanY() / detector.getPreviousSpanY();
 				float dBFocus = maxDB - (maxDB - minDB) * (detector.getFocusY() / getFftHeight());
 				float newMinDB = Math.min(Math.max(dBFocus - (dBFocus - minDB) / yScale, MIN_DB), MAX_DB - 10);
@@ -667,19 +683,22 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			// scroll horizontally or adjust channel selector (scroll type was selected in onDown() event routine:
 			switch (this.scrollType) {
 				case SCROLLTYPE_NORMAL:
-					virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (hzPerPx * distanceX),
-							source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
-					if(virtualFrequency <= 0)	// don't allow negative frequencies
-						virtualFrequency = 1;
+					// Scroll horizontal if touch point in the main area or always if decoupled axis is deactivated:
+					if(!decoupledAxis || e1.getX() > getGridSize() *1.5) {
+						virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (hzPerPx * distanceX),
+								source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+						if (virtualFrequency <= 0)    // don't allow negative frequencies
+							virtualFrequency = 1;
 
-					// if we scrolled the channel selector out of the window, reset the channel selector:
-					if(demodulationEnabled && channelFrequency < virtualFrequency-virtualSampleRate/2) {
-						channelFrequency = virtualFrequency-virtualSampleRate/2;
-						callbackHandler.onUpdateChannelFrequency(channelFrequency);
-					}
-					if(demodulationEnabled && channelFrequency > virtualFrequency+virtualSampleRate/2) {
-						channelFrequency = virtualFrequency+virtualSampleRate/2;
-						callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						// if we scrolled the channel selector out of the window, reset the channel selector:
+						if (demodulationEnabled && channelFrequency < virtualFrequency - virtualSampleRate / 2) {
+							channelFrequency = virtualFrequency - virtualSampleRate / 2;
+							callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						}
+						if (demodulationEnabled && channelFrequency > virtualFrequency + virtualSampleRate / 2) {
+							channelFrequency = virtualFrequency + virtualSampleRate / 2;
+							callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						}
 					}
 					break;
 				case SCROLLTYPE_CHANNEL_FREQUENCY:
@@ -705,21 +724,24 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			}
 
 			// scroll vertically
-			if (verticalScrollEnabled && scrollType != SCROLLTYPE_SQUELCH) {
-				float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
-				// Make sure we stay in the boundaries:
-				if (maxDB - yDiff > MAX_DB)
-					yDiff = MAX_DB - maxDB;
-				if (minDB - yDiff < MIN_DB)
-					yDiff = MIN_DB - minDB;
-				this.setDBScale(minDB - yDiff, maxDB - yDiff);
+			if (verticalScrollEnabled && scrollType == SCROLLTYPE_NORMAL) {
+				// if touch point in the left grid area or if decoupled axis is deactivated:
+				if(!decoupledAxis || e1.getX() <= getGridSize()*1.5) {
+					float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
+					// Make sure we stay in the boundaries:
+					if (maxDB - yDiff > MAX_DB)
+						yDiff = MAX_DB - maxDB;
+					if (minDB - yDiff < MIN_DB)
+						yDiff = MIN_DB - minDB;
+					this.setDBScale(minDB - yDiff, maxDB - yDiff);
 
-				// adjust the squelch if it is outside the visible viewport right now and demodulation is enabled:
-				if(demodulationEnabled) {
-					if (squelch < minDB)
-						squelch = minDB;
-					if (squelch > maxDB)
-						squelch = maxDB;
+					// adjust the squelch if it is outside the visible viewport right now and demodulation is enabled:
+					if (demodulationEnabled) {
+						if (squelch < minDB)
+							squelch = minDB;
+						if (squelch > maxDB)
+							squelch = maxDB;
+					}
 				}
 			}
 

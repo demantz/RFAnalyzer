@@ -57,6 +57,9 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public static final int MAX_VGA_RX_GAIN = 62;
 	public static final int MAX_VGA_TX_GAIN = 47;
 	public static final int MAX_LNA_GAIN = 40;
+	public static final int VGA_RX_GAIN_STEP_SIZE = 2;
+	public static final int VGA_TX_GAIN_STEP_SIZE = 1;
+	public static final int LNA_GAIN_STEP_SIZE = 8;
 	public static final int[] OPTIMAL_SAMPLE_RATES = { 4000000, 6000000, 8000000, 10000000, 12500000, 16000000, 20000000};
 	public double[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
 	public double[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles

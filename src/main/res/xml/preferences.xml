@@ -39,6 +39,22 @@
                     android:summaryOff="@string/pref_filesource_repeat_summ_off"
                     android:defaultValue="false" />
             </PreferenceCategory>
+            <PreferenceCategory
+                android:key="@string/pref_hackrf_category"
+                android:title="@string/pref_hackrf_category_title">
+                <SwitchPreference
+                    android:key="@string/pref_hackrf_amplifier"
+                    android:title="@string/pref_hackrf_amplifier_title"
+                    android:summaryOn="@string/pref_hackrf_amplifier_summ_on"
+                    android:summaryOff="@string/pref_hackrf_amplifier_summ_off"
+                    android:defaultValue="false" />
+                <SwitchPreference
+                    android:key="@string/pref_hackrf_antennaPower"
+                    android:title="@string/pref_hackrf_antennaPower_title"
+                    android:summaryOn="@string/pref_hackrf_antennaPower_summ_on"
+                    android:summaryOff="@string/pref_hackrf_antennaPower_summ_off"
+                    android:defaultValue="false" />
+            </PreferenceCategory>
         </PreferenceScreen>
         <ListPreference
             android:key="@string/pref_fftSize"
@@ -110,6 +126,12 @@
             android:summaryOn="@string/pref_scrollDB_summ_on"
             android:summaryOff="@string/pref_scrollDB_summ_off"
             android:defaultValue="true" />
+        <SwitchPreference
+            android:key="@string/pref_decoupledAxis"
+            android:title="@string/pref_decoupledAxis_title"
+            android:summaryOn="@string/pref_decoupledAxis_summ_on"
+            android:summaryOff="@string/pref_decoupledAxis_summ_off"
+            android:defaultValue="false" />
         <ListPreference
             android:key="@string/pref_fontSize"
             android:title="@string/pref_fontSize_title"
