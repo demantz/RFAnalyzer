@@ -170,6 +170,18 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_filesource_file));
 		editTextPref.setSummary(getString(R.string.pref_filesource_file_summ, editTextPref.getText()));
 
+		// RTL-SDR IP
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_ip));
+		editTextPref.setSummary(getString(R.string.pref_rtlsdr_ip_summ, editTextPref.getText()));
+
+		// RTL-SDR Port
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_port));
+		editTextPref.setSummary(getString(R.string.pref_rtlsdr_port_summ, editTextPref.getText()));
+
+		// RTL-SDR frequency correction
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyCorrection));
+		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyCorrection_summ, editTextPref.getText()));
+
 		// FFT size
 		listPref = (ListPreference) findPreference(getString(R.string.pref_fftSize));
 		listPref.setSummary(getString(R.string.pref_fftSize_summ, listPref.getEntry()));

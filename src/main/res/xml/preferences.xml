@@ -55,6 +55,33 @@
                     android:summaryOff="@string/pref_hackrf_antennaPower_summ_off"
                     android:defaultValue="false" />
             </PreferenceCategory>
+            <PreferenceCategory
+                android:key="@string/pref_rtlsdr_category"
+                android:title="@string/pref_rtlsdr_category_title">
+                <SwitchPreference
+                    android:key="@string/pref_rtlsdr_externalServer"
+                    android:title="@string/pref_rtlsdr_externalServer_title"
+                    android:summaryOn="@string/pref_rtlsdr_externalServer_summ_on"
+                    android:summaryOff="@string/pref_rtlsdr_externalServer_summ_off"
+                    android:defaultValue="false" />
+                <EditTextPreference
+                    android:key="@string/pref_rtlsdr_ip"
+                    android:dependency="@string/pref_rtlsdr_externalServer"
+                    android:title="@string/pref_rtlsdr_ip_title"
+                    android:dialogTitle="@string/pref_rtlsdr_ip_title"
+                    android:defaultValue="@string/pref_rtlsdr_ip_default" />
+                <EditTextPreference
+                    android:key="@string/pref_rtlsdr_port"
+                    android:dependency="@string/pref_rtlsdr_externalServer"
+                    android:title="@string/pref_rtlsdr_port_title"
+                    android:dialogTitle="@string/pref_rtlsdr_port_title"
+                    android:defaultValue="@string/pref_rtlsdr_port_default" />
+                <EditTextPreference
+                    android:key="@string/pref_rtlsdr_frequencyCorrection"
+                    android:title="@string/pref_rtlsdr_frequencyCorrection_title"
+                    android:dialogTitle="@string/pref_rtlsdr_frequencyCorrection_title"
+                    android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default" />
+            </PreferenceCategory>
         </PreferenceScreen>
         <ListPreference
             android:key="@string/pref_fftSize"

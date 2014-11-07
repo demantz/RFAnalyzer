@@ -216,49 +216,55 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 * Will update the action bar icons and titles according to the current app state
 	 */
 	private void updateActionBar() {
-		// Set title and icon of the start/stop button according to the state:
-		if(mi_startStop != null) {
-			if (running) {
-				mi_startStop.setTitle(R.string.action_stop);
-				mi_startStop.setIcon(R.drawable.ic_action_pause);
-			} else {
-				mi_startStop.setTitle(R.string.action_start);
-				mi_startStop.setIcon(R.drawable.ic_action_play);
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+			// Set title and icon of the start/stop button according to the state:
+			if(mi_startStop != null) {
+				if (running) {
+					mi_startStop.setTitle(R.string.action_stop);
+					mi_startStop.setIcon(R.drawable.ic_action_pause);
+				} else {
+					mi_startStop.setTitle(R.string.action_start);
+					mi_startStop.setIcon(R.drawable.ic_action_play);
+				}
 			}
-		}
 
-		// Set title and icon for the demodulator mode button
-		if(mi_demodulationMode != null) {
-			int iconRes;
-			int titleRes;
-			switch (demodulationMode) {
-				case Demodulator.DEMODULATION_OFF:
-					iconRes = R.drawable.ic_action_demod_off;
-					titleRes = R.string.action_demodulation_off;
-					break;
-				case Demodulator.DEMODULATION_AM:
-					iconRes = R.drawable.ic_action_demod_am;
-					titleRes = R.string.action_demodulation_am;
-					break;
-				case Demodulator.DEMODULATION_NFM:
-					iconRes = R.drawable.ic_action_demod_nfm;
-					titleRes = R.string.action_demodulation_nfm;
-					break;
-				case Demodulator.DEMODULATION_WFM:
-					iconRes = R.drawable.ic_action_demod_wfm;
-					titleRes = R.string.action_demodulation_wfm;
-					break;
-				default:
-					Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
-					iconRes = -1;
-					titleRes = -1;
-					break;
+			// Set title and icon for the demodulator mode button
+			if(mi_demodulationMode != null) {
+				int iconRes;
+				int titleRes;
+				switch (demodulationMode) {
+					case Demodulator.DEMODULATION_OFF:
+						iconRes = R.drawable.ic_action_demod_off;
+						titleRes = R.string.action_demodulation_off;
+						break;
+					case Demodulator.DEMODULATION_AM:
+						iconRes = R.drawable.ic_action_demod_am;
+						titleRes = R.string.action_demodulation_am;
+						break;
+					case Demodulator.DEMODULATION_NFM:
+						iconRes = R.drawable.ic_action_demod_nfm;
+						titleRes = R.string.action_demodulation_nfm;
+						break;
+					case Demodulator.DEMODULATION_WFM:
+						iconRes = R.drawable.ic_action_demod_wfm;
+						titleRes = R.string.action_demodulation_wfm;
+						break;
+					default:
+						Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
+						iconRes = -1;
+						titleRes = -1;
+						break;
+				}
+				if(titleRes > 0 && iconRes > 0) {
+					mi_demodulationMode.setTitle(titleRes);
+					mi_demodulationMode.setIcon(iconRes);
+				}
 			}
-			if(titleRes > 0 && iconRes > 0) {
-				mi_demodulationMode.setTitle(titleRes);
-				mi_demodulationMode.setIcon(iconRes);
 			}
-		}
+		});
+
 	}
 
 	@Override
@@ -306,6 +312,41 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	}
 
 	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode) {
+			case RtlsdrSource.RTL2832U_RESULT_CODE:
+				// This happens if the RTL2832U driver was started inside the RtlsdrSource instance.
+				// We check for errors and print them:
+				if (resultCode == RESULT_OK)
+					Log.i(LOGTAG, "onActivityResult: RTL2832U driver was successfully started.");
+				else {
+					// err_info from RTL2832U:
+					String[] errInfo = {
+						"permission_denied",
+						"root_required",
+						"no_devices_found",
+						"unknown_error",
+						"replug",
+						"already_running"};
+					int errorId = data.getIntExtra("marto.rtl_tcp_andro.RtlTcpExceptionId", -1);
+					int exceptionCode = data.getIntExtra("detailed_exception_code", 0);
+					String detailedDescription = data.getStringExtra("detailed_exception_message");
+					String errorMsg = "ERROR NOT SPECIFIED";
+					if(errorId >= 0 && errorId < errInfo.length)
+						errorMsg = errInfo[errorId];
+
+					Log.e(LOGTAG, "onActivityResult: RTL2832U driver returned with error: " + errorMsg + " ("+errorId+")");
+					if(source != null  && source instanceof RtlsdrSource) {
+						Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + errorMsg + " ("+errorId+")"
+								+ (detailedDescription!=null ? ": " + detailedDescription + " ("+exceptionCode+")" : ""), Toast.LENGTH_LONG).show();
+						source.close();
+					}
+				}
+		}
+	}
+
+	@Override
 	public void onIQSourceReady(IQSourceInterface source) {	// is called after source.open()
 		if (running)
 			startAnalyzer();    // will start the processing loop, scheduler and source
@@ -331,8 +372,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		if(source != null) {
 			switch (sourceType) {
 				case FILE_SOURCE:
-					if(!(source instanceof FileIQSource))
+					if(!(source instanceof FileIQSource)) {
+						source.close();
 						createSource();
+					}
 					else {
 						long freq = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
 						int sampRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
@@ -341,13 +384,16 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						if (freq != source.getFrequency() || sampRate != source.getSampleRate()
 								|| !fileName.equals(((FileIQSource) source).getFilename())
 								|| repeat != ((FileIQSource) source).isRepeat()) {
+							source.close();
 							createSource();
 						}
 					}
 					break;
 				case HACKRF_SOURCE:
-					if(!(source instanceof HackrfSource))
+					if(!(source instanceof HackrfSource)) {
+						source.close();
 						createSource();
+					}
 					else {
 						// overwrite hackrf source settings if changed:
 						boolean amp = preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false);
@@ -359,6 +405,34 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					}
 					break;
 				case RTLSDR_SOURCE:
+					if(!(source instanceof RtlsdrSource)) {
+						source.close();
+						createSource();
+					}
+					else {
+						// Check if ip or port has changed and recreate source if necessary:
+						String ip = preferences.getString(getString(R.string.pref_rtlsdr_ip), "");
+						int port = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_port), "1234"));
+						boolean externalServer = preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer), false);
+						if(externalServer) {
+							if(!ip.equals(((RtlsdrSource) source).getIpAddress()) || port != ((RtlsdrSource) source).getPort()) {
+								source.close();
+								createSource();
+								return;
+							}
+						} else {
+							if(!((RtlsdrSource) source).getIpAddress().equals("127.0.0.1") || 1234 != ((RtlsdrSource) source).getPort()) {
+								source.close();
+								createSource();
+								return;
+							}
+						}
+
+						// otherwise just overwrite rtl-sdr source settings if changed:
+						int frequencyCorrection = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0"));
+						if(frequencyCorrection != ((RtlsdrSource) source).getFrequencyCorrection())
+							((RtlsdrSource) source).setFrequencyCorrection(frequencyCorrection);
+					}
 					break;
 				default:
 			}
@@ -432,9 +506,18 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						((HackrfSource) source).setAntennaPower(preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false));
 						break;
 			case RTLSDR_SOURCE:
-						Log.e(LOGTAG, "createSource: RTLSDR is not implemented!");
-						Toast.makeText(this, "RTL-SDR is not implemented!", Toast.LENGTH_LONG).show();
-						return false;
+						// Create RtlsdrSource
+						if(preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer), false))
+							source = new RtlsdrSource(this, preferences.getString(getString(R.string.pref_rtlsdr_ip), ""),
+											Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_port), "1234")));
+						else
+							source = new RtlsdrSource(this, "127.0.0.1", 1234);
+
+						source.setFrequency(preferences.getLong(getString(R.string.pref_frequency),97000000));
+						source.setSampleRate(preferences.getInt(getString(R.string.pref_sampleRate), source.getMaxSampleRate()));
+						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
+						// todo: set specific settings (gain, ...)
+						break;
 			default:	Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
 						return false;
 		}
@@ -495,7 +578,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		updateActionBar();
 
 		// allow screen to turn off again:
-		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+			}
+		});
 	}
 
 	/**
@@ -559,7 +647,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		updateActionBar();
 
 		// Prevent the screen from turning off:
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+			}
+		});
 	}
 
 	/**
@@ -751,8 +844,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 				break;
 			case RTLSDR_SOURCE:
-				Log.e(LOGTAG, "adjustGain: RTLSDR is not implemented!");
-				Toast.makeText(this, "RTL-SDR is not implemented!", Toast.LENGTH_LONG).show();
+				// todo
 				break;
 			default:
 				Log.e(LOGTAG, "adjustGain: Invalid source type: " + sourceType);
