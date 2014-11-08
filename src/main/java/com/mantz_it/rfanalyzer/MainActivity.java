@@ -339,10 +339,22 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						errorMsg = errInfo[errorId];
 
 					Log.e(LOGTAG, "onActivityResult: RTL2832U driver returned with error: " + errorMsg + " ("+errorId+")");
-					if(source != null  && source instanceof RtlsdrSource) {
-						Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + errorMsg + " ("+errorId+")"
-								+ (detailedDescription!=null ? ": " + detailedDescription + " ("+exceptionCode+")" : ""), Toast.LENGTH_LONG).show();
-						source.close();
+
+					try {
+						if (source != null && source instanceof RtlsdrSource) {
+							Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + errorMsg + " (" + errorId + ")"
+									+ (detailedDescription != null ? ": " + detailedDescription + " (" + exceptionCode + ")" : ""), Toast.LENGTH_LONG).show();
+							source.close();
+
+							// Bugfix: (works, but is not nice ... maybe we can do better?)
+							// On a orientation change the app gets killed and restarted. This means the TCP session
+							// to the rtl driver breaks causing it to shut down. In this case the driver will return
+							// with an errorId == -1 (NOT SPECIFIED). We restart:
+							//if(errorId == -1)
+							//	startAnalyzer();
+						}
+					} catch (NullPointerException e) {	// Sometimes another thread will null the source. don't crash!
+						Log.e(LOGTAG, "onActivityResult: source is null! Ignore.");
 					}
 				}
 		}
@@ -363,9 +375,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		});
 		stopAnalyzer();
-		if(this.source != null && this.source.isOpen())
-			this.source.close();
-		this.source = null;	// create new on retry...
+		try {
+			if(this.source != null && this.source.isOpen())
+				this.source.close();
+		} catch (NullPointerException e) {	// Sometimes another thread will null the source. don't crash!
+			Log.e(LOGTAG, "onIQSourceError: source is null! Ignore.");
+		}
+		this.source = null;	// create new on next retry...
+		analyzerSurface.setSource(null);
 	}
 
 	/**
@@ -520,7 +537,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							// start local rtl_tcp instance:
 							try {
 								Intent intent = new Intent(Intent.ACTION_VIEW);
-								intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 5"));
+								intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 1"));
 								startActivityForResult(intent, RTL2832U_RESULT_CODE);
 							} catch (ActivityNotFoundException e) {
 								Log.e(LOGTAG, "createSource: RTL2832U is not installed");

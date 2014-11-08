@@ -179,10 +179,12 @@ public class RtlsdrSource implements IQSourceInterface {
 		// Stop the command thread:
 		if(commandThread != null) {
 			commandThread.stopCommandThread();
-			try {
-				commandThread.join();
-			} catch (InterruptedException e) {
-
+			// Join the thread only if the current thread is NOT the commandThread ^^
+			if(Thread.currentThread().getName().equals(commandThread.threadName)) {
+				try {
+					commandThread.join();
+				} catch (InterruptedException e) {
+				}
 			}
 			commandThread = null;
 		}
@@ -190,7 +192,6 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.tuner = 0;
 		this.magic = null;
 		this.name = "RTL-SDR";
-		callback = null;
 		return true;
 	}
 
@@ -224,6 +225,10 @@ public class RtlsdrSource implements IQSourceInterface {
 				Log.e(LOGTAG, "setSampleRate: failed.");
 			}
 		}
+
+		// Flush the queue:
+		this.flushQueue();
+
 		this.sampleRate = sampleRate;
 	}
 
@@ -244,6 +249,10 @@ public class RtlsdrSource implements IQSourceInterface {
 				Log.e(LOGTAG, "setFrequency: failed.");
 			}
 		}
+
+		// Flush the queue:
+		this.flushQueue();
+
 		this.frequency = frequency;
 	}
 
@@ -413,10 +422,13 @@ public class RtlsdrSource implements IQSourceInterface {
 		// stop and join receiver thread:
 		if(receiverThread != null) {
 			receiverThread.stopReceiving();
-			try {
-				receiverThread.join();
-			} catch (InterruptedException e) {
-				Log.e(LOGTAG, "stopSampling: Interrupted while joining receiver thread: " + e.getMessage());
+			// Join the thread only if the current thread is NOT the receiverThread ^^
+			if(Thread.currentThread().getName().equals(receiverThread.threadName)) {
+				try {
+					receiverThread.join();
+				} catch (InterruptedException e) {
+					Log.e(LOGTAG, "stopSampling: Interrupted while joining receiver thread: " + e.getMessage());
+				}
 			}
 			receiverThread = null;
 		}
@@ -569,6 +581,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	 * This thread will read samples from the socket and put them in the queue
 	 */
 	private class ReceiverThread extends Thread {
+		public String threadName = null;	// We save the thread name to check against it in the stopSampling() method
 		private boolean stopRequested = false;
 		private InputStream inputStream = null;
 		private ArrayBlockingQueue<byte[]> inputQueue = null;
@@ -590,6 +603,7 @@ public class RtlsdrSource implements IQSourceInterface {
 			int bytesRead = 0;
 
 			Log.i(LOGTAG, "ReceiverThread started (Thread: " + this.getName() + ")");
+			threadName = this.getName();
 
 			while(!stopRequested) {
 				try {
@@ -627,6 +641,7 @@ public class RtlsdrSource implements IQSourceInterface {
 					break;
 				} catch (IOException e) {
 					Log.e(LOGTAG, "ReceiverThread: Error while reading from socket: " + e.getMessage());
+					reportError("Error while receiving samples.");
 					this.stopRequested = true;
 					break;
 				} catch (NullPointerException e) {
@@ -648,6 +663,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	 * it. Commands can be queued for execution by other threads
 	 */
 	private class CommandThread extends Thread {
+		public String threadName = null;	// We save the thread name to check against it in the close() method
 		private ArrayBlockingQueue<byte[]> commandQueue = null;
 		private static final int COMMAND_QUEUE_SIZE = 20;
 		private boolean stopRequested = false;
@@ -706,6 +722,7 @@ public class RtlsdrSource implements IQSourceInterface {
 
 				// Set socket options:
 				socket.setTcpNoDelay(true);
+				socket.setSoTimeout(1000);
 
 				inputStream = socket.getInputStream();
 				outputStream = socket.getOutputStream();
@@ -795,6 +812,7 @@ public class RtlsdrSource implements IQSourceInterface {
 
 		public void run() {
 			Log.i(LOGTAG, "CommandThread started (Thread: " + this.getName() + ")");
+			threadName = this.getName();
 			byte[] nextCommand = null;
 
 			// Perfom "device open". This means connect to the rtl_tcp instance; get the information
