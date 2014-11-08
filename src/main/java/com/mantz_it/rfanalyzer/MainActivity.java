@@ -552,10 +552,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						source.setFrequency(preferences.getLong(getString(R.string.pref_frequency),97000000));
 						source.setSampleRate(preferences.getInt(getString(R.string.pref_sampleRate), source.getMaxSampleRate()));
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
-						((RtlsdrSource) source).setGain(preferences.getInt(getString(R.string.pref_rtlsdr_gain), 0));
-						((RtlsdrSource) source).setIFGain(preferences.getInt(getString(R.string.pref_rtlsdr_ifGain), 0));
 						((RtlsdrSource)source).setManualGain(preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false));
 						((RtlsdrSource)source).setAutomaticGainControl(preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false));
+						if(((RtlsdrSource)source).isManualGain()) {
+							((RtlsdrSource) source).setGain(preferences.getInt(getString(R.string.pref_rtlsdr_gain), 0));
+							((RtlsdrSource) source).setIFGain(preferences.getInt(getString(R.string.pref_rtlsdr_ifGain), 0));
+						}
 						break;
 			default:	Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
 						return false;
@@ -990,10 +992,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						.setView(view_rtlsdr)
 						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int whichButton) {
-								((RtlsdrSource)source).setGain(possibleGainValues[sb_rtlsdr_gain.getProgress()]);
-								((RtlsdrSource)source).setIFGain(possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
 								((RtlsdrSource)source).setManualGain(sw_rtlsdr_manual_gain.isChecked());
 								((RtlsdrSource)source).setAutomaticGainControl(cb_rtlsdr_agc.isChecked());
+								if(sw_rtlsdr_manual_gain.isChecked()) {
+									((RtlsdrSource) source).setGain(possibleGainValues[sb_rtlsdr_gain.getProgress()]);
+									((RtlsdrSource) source).setIFGain(possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
+								}
+
 								// safe preferences:
 								SharedPreferences.Editor edit = preferences.edit();
 								edit.putBoolean(getString(R.string.pref_rtlsdr_manual_gain), sw_rtlsdr_manual_gain.isChecked());
