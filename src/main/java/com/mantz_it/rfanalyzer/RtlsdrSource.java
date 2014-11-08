@@ -245,9 +245,7 @@ public class RtlsdrSource implements IQSourceInterface {
 				return;
 			}
 
-			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int) frequency))) {
-				Log.e(LOGTAG, "setFrequency: failed.");
-			}
+			commandThread.executeFrequencyChangeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int) frequency));
 		}
 
 		// Flush the queue:
@@ -666,11 +664,13 @@ public class RtlsdrSource implements IQSourceInterface {
 		public String threadName = null;	// We save the thread name to check against it in the close() method
 		private ArrayBlockingQueue<byte[]> commandQueue = null;
 		private static final int COMMAND_QUEUE_SIZE = 20;
+		private ArrayBlockingQueue<byte[]> frequencyChangeCommandQueue = null;	// separate queue for frequency changes (work-around)
 		private boolean stopRequested = false;
 
 		public CommandThread() {
 			// Create command queue:
 			this.commandQueue = new ArrayBlockingQueue<byte[]>(COMMAND_QUEUE_SIZE);
+			this.frequencyChangeCommandQueue = new ArrayBlockingQueue<byte[]>(1);	// work-around
 		}
 
 		public void stopCommandThread() {
@@ -692,6 +692,23 @@ public class RtlsdrSource implements IQSourceInterface {
 			// todo: maybe flush the queue? for now just error:
 			Log.e(LOGTAG, "executeCommand: command queue is full!");
 			return false;
+		}
+
+		/**
+		 * Work-around:
+		 * Frequency changes happen very often and if too many of these commands are sent to the driver
+		 * it will lag and eventually crash. To prevent this, we have a separate commandQueue only for
+		 * frequency changes. This queue has size 1 and executeFrequencyChangeCommand() will ensure that
+		 * it contains always the latest frequency change command. The command thread will always sleep 250 ms
+		 * after executing a frequency change command to prevent a high rate of commands.
+		 *
+		 * @param command	5 byte command array (see rtl_tcp documentation)
+		 */
+		public void executeFrequencyChangeCommand(byte[] command) {
+			// remove any waiting frequency change command from the queue (not used any more):
+			if(frequencyChangeCommandQueue.poll() != null)
+				Log.d(LOGTAG,"executeFrequencyChangeCommand: Dropping old frequency change command and replace with new one...");
+			frequencyChangeCommandQueue.offer(command);	// will always work
 		}
 
 		/**
@@ -828,7 +845,17 @@ public class RtlsdrSource implements IQSourceInterface {
 			// poll commands from queue and send them over the socket in loop:
 			while(!stopRequested && outputStream != null) {
 				try {
-					nextCommand = commandQueue.poll(1000, TimeUnit.MILLISECONDS);
+					nextCommand = commandQueue.poll(100, TimeUnit.MILLISECONDS);
+
+					// Work-around:
+					// Frequency changes happen very often and if too many of these commands are sent to the driver
+					// it will lag and eventually crash. To prevent this, we have a separate commandQueue only for
+					// frequency changes. This queue has size 1 and executeFrequencyChangeCommand() will ensure that
+					// it contains always the latest frequency change command. The command thread will always sleep 100 ms
+					// after executing a frequency change command to prevent a high rate of commands.
+					if(nextCommand == null)
+						nextCommand = frequencyChangeCommandQueue.poll(); // check for frequency change commands:
+
 					if(nextCommand == null)
 						continue;
 					outputStream.write(nextCommand);
