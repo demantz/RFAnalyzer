@@ -17,10 +17,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -551,7 +554,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
 						((RtlsdrSource) source).setGain(preferences.getInt(getString(R.string.pref_rtlsdr_gain), 0));
 						((RtlsdrSource) source).setIFGain(preferences.getInt(getString(R.string.pref_rtlsdr_ifGain), 0));
-						// todo: set specific settings (gain mode, agc ...)
+						((RtlsdrSource)source).setManualGain(preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false));
+						((RtlsdrSource)source).setAutomaticGainControl(preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false));
 						break;
 			default:	Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
 						return false;
@@ -890,10 +894,32 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				}
 				// Prepare layout:
 				final LinearLayout view_rtlsdr = (LinearLayout) this.getLayoutInflater().inflate(R.layout.rtlsdr_gain, null);
+				final Switch sw_rtlsdr_manual_gain = (Switch) view_rtlsdr.findViewById(R.id.sw_rtlsdr_manual_gain);
+				final CheckBox cb_rtlsdr_agc = (CheckBox) view_rtlsdr.findViewById(R.id.cb_rtlsdr_agc);
 				final SeekBar sb_rtlsdr_gain = (SeekBar) view_rtlsdr.findViewById(R.id.sb_rtlsdr_gain);
 				final SeekBar sb_rtlsdr_ifGain = (SeekBar) view_rtlsdr.findViewById(R.id.sb_rtlsdr_ifgain);
 				final TextView tv_rtlsdr_gain = (TextView) view_rtlsdr.findViewById(R.id.tv_rtlsdr_gain);
 				final TextView tv_rtlsdr_ifGain = (TextView) view_rtlsdr.findViewById(R.id.tv_rtlsdr_ifgain);
+				sw_rtlsdr_manual_gain.setOnCheckedChangeListener(new Switch.OnCheckedChangeListener() {
+					@Override
+					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+						if(isChecked) {
+							if(possibleGainValues.length > 1) {
+								sb_rtlsdr_gain.setEnabled(true);
+								tv_rtlsdr_gain.setEnabled(true);
+							}
+							if(possibleIFGainValues.length > 1) {
+								sb_rtlsdr_ifGain.setEnabled(true);
+								tv_rtlsdr_ifGain.setEnabled(true);
+							}
+						} else {
+							sb_rtlsdr_gain.setEnabled(false);
+							tv_rtlsdr_gain.setEnabled(false);
+							sb_rtlsdr_ifGain.setEnabled(false);
+							tv_rtlsdr_ifGain.setEnabled(false);
+						}
+					}
+				});
 				sb_rtlsdr_gain.setMax(possibleGainValues.length - 1);
 				sb_rtlsdr_ifGain.setMax(possibleIFGainValues.length - 1);
 				sb_rtlsdr_gain.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -944,12 +970,16 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				tv_rtlsdr_gain.setText("" + possibleGainValues[gainIndex]);
 				tv_rtlsdr_ifGain.setText("" + possibleIFGainValues[ifGainIndex]);
 
+				// Assign current manual gain and agc setting
+				sw_rtlsdr_manual_gain.setChecked(((RtlsdrSource)source).isManualGain());
+				cb_rtlsdr_agc.setChecked(((RtlsdrSource)source).isAutomaticGainControl());
+
 				// Disable gui elements if gain cannot be adjusted:
-				if(possibleGainValues.length <= 1) {
+				if(!sw_rtlsdr_manual_gain.isChecked() || possibleGainValues.length <= 1) {
 					sb_rtlsdr_gain.setEnabled(false);
 					tv_rtlsdr_gain.setEnabled(false);
 				}
-				if(possibleIFGainValues.length <= 1) {
+				if(!sw_rtlsdr_manual_gain.isChecked() || possibleIFGainValues.length <= 1) {
 					sb_rtlsdr_ifGain.setEnabled(false);
 					tv_rtlsdr_ifGain.setEnabled(false);
 				}
@@ -962,8 +992,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							public void onClick(DialogInterface dialog, int whichButton) {
 								((RtlsdrSource)source).setGain(possibleGainValues[sb_rtlsdr_gain.getProgress()]);
 								((RtlsdrSource)source).setIFGain(possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
+								((RtlsdrSource)source).setManualGain(sw_rtlsdr_manual_gain.isChecked());
+								((RtlsdrSource)source).setAutomaticGainControl(cb_rtlsdr_agc.isChecked());
 								// safe preferences:
 								SharedPreferences.Editor edit = preferences.edit();
+								edit.putBoolean(getString(R.string.pref_rtlsdr_manual_gain), sw_rtlsdr_manual_gain.isChecked());
+								edit.putBoolean(getString(R.string.pref_rtlsdr_agc), cb_rtlsdr_agc.isChecked());
 								edit.putInt(getString(R.string.pref_rtlsdr_gain), possibleGainValues[sb_rtlsdr_gain.getProgress()]);
 								edit.putInt(getString(R.string.pref_rtlsdr_ifGain), possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
 								edit.apply();

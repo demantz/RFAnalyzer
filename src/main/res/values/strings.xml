@@ -16,6 +16,8 @@
     <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
+    <string name="rtlsdr_manual_gain_label">Manual gain:</string>
+    <string name="rtlsdr_agc_label">AGC:</string>
     <string name="rtlsdr_gain_label">Gain:</string>
     <string name="rtlsdr_ifgain_label">IF Gain:</string>
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
@@ -33,6 +35,8 @@
     <string name="pref_sampleRate">pref_sampleRate</string>
     <string name="pref_hackrf_vgaRxGain">pref_hackrf_vgaRxGain</string>
     <string name="pref_hackrf_lnaGain">pref_hackrf_lnaGain</string>
+    <string name="pref_rtlsdr_manual_gain">pref_rtlsdr_manual_gain</string>
+    <string name="pref_rtlsdr_agc">pref_rtlsdr_agc</string>
     <string name="pref_rtlsdr_gain">pref_rtlsdr_gain</string>
     <string name="pref_rtlsdr_ifGain">pref_rtlsdr_ifGain</string>
     <string name="pref_signalProcessing_category">pref_signalProcessing_category</string>

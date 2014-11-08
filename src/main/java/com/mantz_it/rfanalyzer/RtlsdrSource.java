@@ -706,8 +706,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		 */
 		public void executeFrequencyChangeCommand(byte[] command) {
 			// remove any waiting frequency change command from the queue (not used any more):
-			if(frequencyChangeCommandQueue.poll() != null)
-				Log.d(LOGTAG,"executeFrequencyChangeCommand: Dropping old frequency change command and replace with new one...");
+			frequencyChangeCommandQueue.poll();
 			frequencyChangeCommandQueue.offer(command);	// will always work
 		}
 
