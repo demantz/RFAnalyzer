@@ -51,10 +51,19 @@ public class RtlsdrSource implements IQSourceInterface {
 	public static final int RTLSDR_TUNER_R828D		= 6;
 	public static final String[] TUNER_STRING = {"UNKNOWN", "E4000", "FC0012", "FC0013", "FC2580", "R820T", "R828D"};
 
+	public static final int RTL_TCP_COMMAND_SET_FREQUENCY 	= 0x01;
+	public static final int RTL_TCP_COMMAND_SET_SAMPLERATE 	= 0x02;
+	public static final int RTL_TCP_COMMAND_SET_GAIN_MODE	= 0x03;
+	public static final int RTL_TCP_COMMAND_SET_GAIN 		= 0x04;
+	public static final int RTL_TCP_COMMAND_SET_FREQ_CORR 	= 0x05;
+	public static final int RTL_TCP_COMMAND_SET_IFGAIN 		= 0x06;
+	public static final int RTL_TCP_COMMAND_SET_AGC_MODE 	= 0x08;
+	public final String[] COMMAND_NAME = {"invalid", "SET_FREQUENY", "SET_SAMPLERATE", "SET_GAIN_MODE",
+			"SET_GAIN", "SET_FREQ_CORR", "SET_IFGAIN", "SET_TEST_MODE", "SET_ADC_MODE"};
+
 	private ReceiverThread receiverThread = null;
 	private CommandThread commandThread = null;
 	private Callback callback = null;
-	private Activity activity = null;
 	private Socket socket = null;
 	private InputStream inputStream = null;
 	private OutputStream outputStream = null;
@@ -73,7 +82,6 @@ public class RtlsdrSource implements IQSourceInterface {
 	private int frequencyCorrection = 0;
 	private boolean automaticGainControl = false;
 	private static final String LOGTAG = "RtlsdrSource";
-	public static final int RTL2832U_RESULT_CODE = 1234;	// arbitrary value
 	private static final int QUEUE_SIZE = 20;
 	public static final int[] OPTIMAL_SAMPLE_RATES = { 1000000, 1024000, 1800000, 1920000, 2000000, 2048000, 2400000};
 	public static final long[] MIN_FREQUENCY = { 0,			// invalid
@@ -110,8 +118,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	public int cosineIndex;								// current index within the cosine
 	public static final int MAX_COSINE_LENGTH = 50;		// Max length of the cosine lookup table
 
-	public RtlsdrSource (Activity activity, String ip, int port) {
-		this.activity = activity;
+	public RtlsdrSource (String ip, int port) {
 		this.ipAddress = ip;
 		this.port = port;
 
@@ -146,7 +153,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.callback = callback;
 
 		// Start the command thread (this will perform the "open" procedure:
-		// (starting RTL2832U), connecting to the rtl_tcp instance, read information and inform the callback handler
+		// connecting to the rtl_tcp instance, read information and inform the callback handler
 		if(commandThread != null) {
 			Log.e(LOGTAG,"open: Command thread is still running");
 			reportError("Error while opening device");
@@ -172,7 +179,6 @@ public class RtlsdrSource implements IQSourceInterface {
 		// Stop the command thread:
 		if(commandThread != null) {
 			commandThread.stopCommandThread();
-			commandThread.interrupt();
 			try {
 				commandThread.join();
 			} catch (InterruptedException e) {
@@ -214,8 +220,8 @@ public class RtlsdrSource implements IQSourceInterface {
 				return;
 			}
 
-			if(!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_SAMPLERATE, sampleRate, 1000)) {
-				Log.e(LOGTAG, "setSampleRate: Timeout.");
+			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_SAMPLERATE, sampleRate))) {
+				Log.e(LOGTAG, "setSampleRate: failed.");
 			}
 		}
 		this.sampleRate = sampleRate;
@@ -234,8 +240,8 @@ public class RtlsdrSource implements IQSourceInterface {
 				return;
 			}
 
-			if(!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_FREQUENCY, (int) frequency, 1000)) {
-				Log.e(LOGTAG, "setFrequency: Timeout.");
+			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int) frequency))) {
+				Log.e(LOGTAG, "setFrequency: failed.");
 			}
 		}
 		this.frequency = frequency;
@@ -285,8 +291,8 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	public void setManualGain(boolean enable) {
 		if(isOpen()) {
-			if(!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_GAIN_MODE, (int)(enable ? 0x01 : 0x00), 1000)) {
-				Log.e(LOGTAG, "setManualGain: Timeout.");
+			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN_MODE, (int)(enable ? 0x01 : 0x00)))) {
+				Log.e(LOGTAG, "setManualGain: failed.");
 			}
 		}
 		this.manualGain = enable;
@@ -302,8 +308,8 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	public void setGain(int gain) {
 		if(isOpen()) {
-			if(!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_GAIN, gain, 1000)) {
-				Log.e(LOGTAG, "setGain: Timeout.");
+			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN, gain))) {
+				Log.e(LOGTAG, "setGain: failed.");
 			}
 		}
 		this.gain = gain;
@@ -325,9 +331,9 @@ public class RtlsdrSource implements IQSourceInterface {
 	}
 
 	public void setIFGain(int ifGain) {
-		if(isOpen()) {
-			if(!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_IFGAIN, (short) 0, (short) ifGain, 1000)) {
-				Log.e(LOGTAG, "setIFGain: Timeout.");
+		if(isOpen() && tuner == RTLSDR_TUNER_E4000) {
+			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_IFGAIN, (short) 0, (short) ifGain))) {
+				Log.e(LOGTAG, "setIFGain: failed.");
 			}
 		}
 		this.ifGain = ifGain;
@@ -339,8 +345,8 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	public void setFrequencyCorrection(int ppm) {
 		if(isOpen()) {
-			if(!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_FREQ_CORR, ppm, 1000)) {
-				Log.e(LOGTAG, "setFrequencyCorrection: Timeout.");
+			if(!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQ_CORR, ppm))) {
+				Log.e(LOGTAG, "setFrequencyCorrection: failed.");
 			}
 		}
 		this.frequencyCorrection = ppm;
@@ -352,8 +358,8 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	public void setAutomaticGainControl(boolean enable) {
 		if (isOpen()) {
-			if (!commandThread.executeCommand(CommandThread.RTL_TCP_COMMAND_SET_AGC_MODE, (int)(enable ? 0x01 : 0x00), 1000)) {
-				Log.e(LOGTAG, "setAutomaticGainControl: Timeout.");
+			if (!commandThread.executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_AGC_MODE, (int)(enable ? 0x01 : 0x00)))) {
+				Log.e(LOGTAG, "setAutomaticGainControl: failed.");
 			}
 		}
 		this.automaticGainControl = enable;
@@ -395,14 +401,25 @@ public class RtlsdrSource implements IQSourceInterface {
 			return;
 		}
 
-		if(isOpen())
-			commandThread.doStartSampling();	// will start the receiver Thread
+		if(isOpen()) {
+			// start ReceiverThread:
+			receiverThread = new ReceiverThread(inputStream, returnQueue, queue);
+			receiverThread.start();
+		}
 	}
 
 	@Override
 	public void stopSampling() {
-		if(isOpen())
-			commandThread.doStopSampling();
+		// stop and join receiver thread:
+		if(receiverThread != null) {
+			receiverThread.stopReceiving();
+			try {
+				receiverThread.join();
+			} catch (InterruptedException e) {
+				Log.e(LOGTAG, "stopSampling: Interrupted while joining receiver thread: " + e.getMessage());
+			}
+			receiverThread = null;
+		}
 	}
 
 	@Override
@@ -513,6 +530,44 @@ public class RtlsdrSource implements IQSourceInterface {
 		}
 	}
 
+	/**
+	 * Will pack a rtl_tcp command into a byte buffer
+	 *
+	 * @param command			RTL_TCP_COMMAND_*
+	 * @param arg				command argument (see rtl_tcp documentation)
+	 * @return command buffer
+	 */
+	private byte[] commandToByteArray(int command, int arg) {
+		byte[] commandArray = new byte[5];
+		commandArray[0] = (byte) command;
+		commandArray[1] = (byte) ((arg >> 24) & 0xff);
+		commandArray[2] = (byte) ((arg >> 16) & 0xff);
+		commandArray[3] = (byte) ((arg >> 8) & 0xff);
+		commandArray[4] = (byte) (arg & 0xff);
+		return commandArray;
+	}
+
+	/**
+	 * Will pack a rtl_tcp command into a byte buffer
+	 *
+	 * @param command			RTL_TCP_COMMAND_*
+	 * @param arg1				first command argument (see rtl_tcp documentation)
+	 * @param arg2				second command argument (see rtl_tcp documentation)
+	 * @return command buffer
+	 */
+	private byte[] commandToByteArray(int command, short arg1, short arg2) {
+		byte[] commandArray = new byte[5];
+		commandArray[0] = (byte) command;
+		commandArray[1] = (byte) ((arg1 >> 8) & 0xff);
+		commandArray[2] = (byte) (arg1 & 0xff);
+		commandArray[3] = (byte) ((arg2 >> 8) & 0xff);
+		commandArray[4] = (byte) (arg2 & 0xff);
+		return commandArray;
+	}
+
+	/**
+	 * This thread will read samples from the socket and put them in the queue
+	 */
 	private class ReceiverThread extends Thread {
 		private boolean stopRequested = false;
 		private InputStream inputStream = null;
@@ -574,6 +629,10 @@ public class RtlsdrSource implements IQSourceInterface {
 					Log.e(LOGTAG, "ReceiverThread: Error while reading from socket: " + e.getMessage());
 					this.stopRequested = true;
 					break;
+				} catch (NullPointerException e) {
+					Log.e(LOGTAG, "ReceiverThread: Nullpointer! (Probably inputStream): " + e.getStackTrace());
+					this.stopRequested = true;
+					break;
 				}
 			}
 			// check if we still hold a buffer and return it to the input queue:
@@ -584,127 +643,39 @@ public class RtlsdrSource implements IQSourceInterface {
 		}
 	}
 
+	/**
+	 * This thread will initiate the connection to the rtl_tcp instance and then send commands to
+	 * it. Commands can be queued for execution by other threads
+	 */
 	private class CommandThread extends Thread {
-		public static final int RTL_TCP_COMMAND_SET_FREQUENCY 	= 0x01;
-		public static final int RTL_TCP_COMMAND_SET_SAMPLERATE 	= 0x02;
-		public static final int RTL_TCP_COMMAND_SET_GAIN_MODE	= 0x03;
-		public static final int RTL_TCP_COMMAND_SET_GAIN 		= 0x04;
-		public static final int RTL_TCP_COMMAND_SET_FREQ_CORR 	= 0x05;
-		public static final int RTL_TCP_COMMAND_SET_IFGAIN 		= 0x06;
-		public static final int RTL_TCP_COMMAND_SET_AGC_MODE 	= 0x08;
-		public final String[] COMMAND_NAME = {"invalid", "SET_FREQUENY", "SET_SAMPLERATE", "SET_GAIN_MODE",
-													"SET_GAIN", "SET_FREQ_CORR", "SET_IFGAIN", "SET_TEST_MODE", "SET_ADC_MODE"};
-		private boolean doStartSampling = false;
-		private boolean doStopSampling = false;
-		private byte[] nextCommand = null;
+		private ArrayBlockingQueue<byte[]> commandQueue = null;
+		private static final int COMMAND_QUEUE_SIZE = 20;
 		private boolean stopRequested = false;
+
+		public CommandThread() {
+			// Create command queue:
+			this.commandQueue = new ArrayBlockingQueue<byte[]>(COMMAND_QUEUE_SIZE);
+		}
 
 		public void stopCommandThread() {
 			this.stopRequested = true;
-			this.interrupt();
-		}
-
-		public void doStartSampling() {
-			this.doStartSampling = true;
-			this.interrupt();
-		}
-
-		public void doStopSampling() {
-			this.doStopSampling = true;
-			this.interrupt();
 		}
 
 		/**
-		 * Overloaded version of executeCommand that takes an integer command + integer args
+		 * Will schedule the command (put it into the command queue
 		 *
-		 * @param command			RTL_TCP_COMMAND_*
-		 * @param arg				command argument (see rtl_tcp documentation)
-		 * @param timeoutMillis		timeout in milliseconds
-		 * @return true if command has been scheduled; false if Thread is busy and timeout exceeded.
+		 * @param command	5 byte command array (see rtl_tcp documentation)
+		 * @return true if command has been scheduled;
 		 */
-		public boolean executeCommand(int command, int arg, int timeoutMillis) {
-			return executeCommand(commandToByteArray(command, arg), timeoutMillis);
-		}
-
-		/**
-		 * Overloaded version of executeCommand that takes an integer command + 2 short args
-		 *
-		 * @param command			RTL_TCP_COMMAND_*
-		 * @param arg1				first command argument (see rtl_tcp documentation)
-		 * @param arg2				second command argument (see rtl_tcp documentation)
-		 * @param timeoutMillis		timeout in milliseconds
-		 * @return true if command has been scheduled; false if Thread is busy and timeout exceeded.
-		 */
-		public boolean executeCommand(int command, short arg1, short arg2, int timeoutMillis) {
-			return executeCommand(commandToByteArray(command, arg1, arg2), timeoutMillis);
-		}
-
-		/**
-		 * Will schedule the command if CommandThread is currently idling. Otherwise wait for
-		 * max. timeoutMillis milliseconds.
-		 *
-		 * @param command			5 byte command array (see rtl_tcp documentation)
-		 * @param timeoutMillis		timeout in milliseconds
-		 * @return true if command has been scheduled; false if Thread is busy and timeout exceeded.
-		 */
-		public boolean executeCommand(byte[] command, int timeoutMillis) {
-			synchronized (this) {
-				// Check if there is already a command scheduled:
-				if(nextCommand != null) {
-					if(timeoutMillis > 0) {
-						try {
-							this.wait(timeoutMillis);
-						} catch (InterruptedException e) {
-						}
-						if(nextCommand != null)
-							return false;
-					}
-				} else
-					return false;
-
-				// schedule next command:
-				this.nextCommand = command;
-				this.interrupt();
+		public boolean executeCommand(byte[] command) {
+			Log.d(LOGTAG,"executeCommand: Queuing command: " +COMMAND_NAME[command[0]]);
+			if(commandQueue.offer(command))
 				return true;
-			}
-		}
 
-		private byte[] commandToByteArray(int command, int arg) {
-			byte[] commandArray = new byte[5];
-			commandArray[0] = (byte) command;
-			commandArray[1] = (byte) ((arg >> 24) & 0xff);
-			commandArray[2] = (byte) ((arg >> 16) & 0xff);
-			commandArray[3] = (byte) ((arg >> 8) & 0xff);
-			commandArray[4] = (byte) (arg & 0xff);
-			return commandArray;
-		}
-
-		private byte[] commandToByteArray(int command, short arg1, short arg2) {
-			byte[] commandArray = new byte[5];
-			commandArray[0] = (byte) command;
-			commandArray[1] = (byte) ((arg1 >> 8) & 0xff);
-			commandArray[2] = (byte) (arg1 & 0xff);
-			commandArray[3] = (byte) ((arg2 >> 8) & 0xff);
-			commandArray[4] = (byte) (arg2 & 0xff);
-			return commandArray;
-		}
-
-		/**
-		 * Called from run(); will start the RTL driver activity
-		 */
-		private boolean startRTL2832U() {
-			// Start local rtl_tcp
-			try {
-				Intent intent = new Intent(Intent.ACTION_VIEW);
-				intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p " + port));
-				//intent.addCategory(Intent.CATEGORY_DEFAULT);
-				activity.startActivityForResult(intent, RTL2832U_RESULT_CODE);
-				return true;
-			} catch (ActivityNotFoundException e) {
-				Log.e(LOGTAG, "startRTL2832U: RTL2832U is not installed");
-				reportError(activity.getString(R.string.rtl2832u_is_not_installed));
-				return false;
-			}
+			// Queue is full
+			// todo: maybe flush the queue? for now just error:
+			Log.e(LOGTAG, "executeCommand: command queue is full!");
+			return false;
 		}
 
 		/**
@@ -733,6 +704,9 @@ public class RtlsdrSource implements IQSourceInterface {
 					return false;
 				}
 
+				// Set socket options:
+				socket.setTcpNoDelay(true);
+
 				inputStream = socket.getInputStream();
 				outputStream = socket.getOutputStream();
 				byte[] buffer = new byte[4];
@@ -750,7 +724,7 @@ public class RtlsdrSource implements IQSourceInterface {
 					return false;
 				}
 				tuner = buffer[3];
-				if(tuner < 0 || tuner >= TUNER_STRING.length) {
+				if(tuner <= 0 || tuner >= TUNER_STRING.length) {
 					Log.e(LOGTAG,"CommandThread: (connect) Invalid tuner type");
 					return false;
 				}
@@ -764,7 +738,48 @@ public class RtlsdrSource implements IQSourceInterface {
 				Log.i(LOGTAG,"CommandThread: (connect) Connected to RTL-SDR (Tuner: " + TUNER_STRING[tuner] + ";  magic: " + magic +
 						";  gain count: " + buffer[3] + ") at " + ipAddress + ":" + port);
 
+				// Update source name with the new information:
 				name = "RTL-SDR (" + TUNER_STRING[tuner] + ") at " + ipAddress + ":" + port;
+
+				// Check if parameters are in range and correct them:
+				if(frequency > getMaxFrequency())
+					frequency = getMaxFrequency();
+				if(frequency < getMinFrequency())
+					frequency = getMinFrequency();
+				if(sampleRate > getMaxSampleRate())
+					sampleRate = getMaxSampleRate();
+				if(sampleRate < getMinSampleRate())
+					sampleRate = getMinSampleRate();
+				for(int gainStep: getPossibleGainValues()) {
+					if (gainStep >= gain) {
+						gain = gainStep;
+						break;
+					}
+				}
+
+				// Set all parameters:
+				// Frequency:
+				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int)frequency));
+
+				// Sample Rate:
+				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_SAMPLERATE, sampleRate));
+
+				// Gain Mode:
+				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN_MODE, (int)(manualGain ? 0x01 : 0x00)));
+
+				// Gain:
+				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN, gain));
+
+				// IFGain:
+				if(tuner == RTLSDR_TUNER_E4000)
+					executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_IFGAIN, (short)0, (short)ifGain));
+
+				// Frequency Correction:
+				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQ_CORR, frequencyCorrection));
+
+				// AGC mode:
+				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_AGC_MODE, (int)(automaticGainControl ? 0x01 : 0x00)));
+
 				return true;
 
 			} catch (UnknownHostException e) {
@@ -778,179 +793,38 @@ public class RtlsdrSource implements IQSourceInterface {
 			return false;
 		}
 
-		/**
-		 * Called from run(); will tear down the connection to the rtl_tcp instance
-		 */
-		private void disconnect() {
-			// close connection:
-			if (socket != null) {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					Log.w(LOGTAG, "CommandThread: Error while closing socket: " + e.getMessage());
-					// ignore error...
-				}
+		public void run() {
+			Log.i(LOGTAG, "CommandThread started (Thread: " + this.getName() + ")");
+			byte[] nextCommand = null;
+
+			// Perfom "device open". This means connect to the rtl_tcp instance; get the information
+			if(connect(10000)) {	// 10 seconds for the user to accept permission request
+				// report that the device is ready:
+				callback.onIQSourceReady(RtlsdrSource.this);
+			} else {
+				Log.e(LOGTAG,"CommandThread: (open) connect reported error.");
+				reportError("Couldn't connect to rtl_tcp instance");
+				stopRequested = true;
 			}
-			socket = null;
-			inputStream = null;
-			outputStream = null;
-		}
 
-		/**
-		 * Called from run(); will do everything to start sampling
-		 */
-		private boolean startSampling() {
-			// Start driver if local mode:
-//			if(ipAddress.equals("127.0.0.1")) {
-//				if(!startRTL2832U()) {
-//					Log.e(LOGTAG, "CommandThread: (startSampling) couldn't start RTL driver.");
-//					return false;
-//				}
-//			}
-//
-//			if(!connect(1000)) {
-//				Log.e(LOGTAG, "CommandThread: (startSampling) connect reported error");
-//				return false;
-//			}
-
-			// Check parameters:
-			if(frequency > getMaxFrequency())
-				frequency = getMaxFrequency();
-			if(frequency < getMinFrequency())
-				frequency = getMinFrequency();
-			if(sampleRate > getMaxSampleRate())
-				sampleRate = getMaxSampleRate();
-			if(sampleRate < getMinSampleRate())
-				sampleRate = getMinSampleRate();
-			for(int gainStep: getPossibleGainValues()) {
-				if (gainStep <= gain) {
-					gain = gainStep;
+			// poll commands from queue and send them over the socket in loop:
+			while(!stopRequested && outputStream != null) {
+				try {
+					nextCommand = commandQueue.poll(1000, TimeUnit.MILLISECONDS);
+					if(nextCommand == null)
+						continue;
+					outputStream.write(nextCommand);
+					Log.d(LOGTAG,"CommandThread: Command was sent: " + COMMAND_NAME[nextCommand[0]]);
+				} catch (IOException e) {
+					Log.e(LOGTAG, "CommandThread: Error while sending command (" + COMMAND_NAME[nextCommand[0]] + "): " + e.getMessage());
+					reportError("Error while sending command: " + COMMAND_NAME[nextCommand[0]]);
+					break;
+				} catch (InterruptedException e) {
+					Log.e(LOGTAG, "CommandThread: Interrupted while sending command (" + COMMAND_NAME[nextCommand[0]] + ")");
+					reportError("Interrupted while sending command: " + COMMAND_NAME[nextCommand[0]]);
 					break;
 				}
 			}
-
-			// Set all parameters:
-			try {
-				// Frequency:
-				outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int)frequency));
-
-				// Sample Rate:
-				outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_SAMPLERATE, sampleRate));
-
-				// Gain Mode:
-				outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN_MODE, (int)(manualGain ? 0x01 : 0x00)));
-
-				// Gain:
-				outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN, gain));
-
-				// IFGain:
-				if(tuner == RTLSDR_TUNER_E4000)
-					outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_IFGAIN, (short)0, (short)ifGain));
-
-				// Frequency Correction:
-				outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_FREQ_CORR, frequencyCorrection));
-
-				// AGC mode:
-				outputStream.write(commandToByteArray(RTL_TCP_COMMAND_SET_AGC_MODE, (int)(automaticGainControl ? 0x01 : 0x00)));
-
-			} catch (IOException e) {
-				Log.e(LOGTAG, "CommandThread: (startSampling) Error while setting parameters: " + e.getMessage());
-				return false;
-			}
-
-			// start ReceiverThread:
-			receiverThread = new ReceiverThread(inputStream, returnQueue, queue);
-			receiverThread.start();
-			return true;
-		}
-
-		/**
-		 * Will idle unless nextCommand != null or doStartSampling/doStopSamping == true.
-		 */
-		public void run() {
-			Log.i(LOGTAG, "CommandThread started (Thread: " + this.getName() + ")");
-
-			// Perfom "device open". This means connect to the rtl_tcp instance; get the information
-			// and close the connection again.
-			synchronized (this) {
-				if(ipAddress.equals("127.0.0.1")) {
-					if(!startRTL2832U()) {
-						Log.e(LOGTAG, "CommandThread: (open) couldn't start RTL driver.");
-						commandThread = null;
-						Log.i(LOGTAG, "CommandThread stopped (Thread: " + this.getName() + ")");
-						return;
-					}
-				}
-				if(connect(60000)) {	// one minute for the user to accept permission request
-					//disconnect();
-					if(tuner != 0) {
-						// report that the device is ready:
-						callback.onIQSourceReady(RtlsdrSource.this);
-					} else {
-						// report error:
-						reportError("Couldn't open device");
-						this.stopRequested = true;
-					}
-				} else {
-					Log.e(LOGTAG,"CommandThread: (open) connect reported error.");
-					reportError("Error while opening device");
-					stopRequested = true;
-				}
-			}
-
-			while(!stopRequested) {
-				if(doStartSampling) {
-					synchronized (this) {
-						if(!startSampling())
-							break;
-
-						doStartSampling = false;
-					}
-					this.interrupt();	// wake up waiting threads...
-
-				} else if (doStopSampling) {
-					synchronized (this) {
-						// stop and join receiver thread:
-						if(receiverThread != null) {
-							receiverThread.stopReceiving();
-							try {
-								receiverThread.join();
-							} catch (InterruptedException e) {
-								Log.e(LOGTAG, "stopSampling: Interrupted while joining receiver thread: " + e.getMessage());
-							}
-						}
-
-						disconnect();
-
-						doStopSampling = false;
-					}
-					this.interrupt();	// wake up waiting threads...
-
-				} else if (nextCommand != null) {
-					synchronized (this) {
-						if(outputStream != null) {
-							try {
-								outputStream.write(nextCommand);
-							} catch (IOException e) {
-								Log.e(LOGTAG, "CommandThread: Error while sending command (" + COMMAND_NAME[nextCommand[0]] + "): " + e.getMessage());
-								reportError("Error while sending command: " + COMMAND_NAME[nextCommand[0]]);
-								break;
-							}
-						}
-						nextCommand = null;
-					}
-					this.interrupt();	// wake up waiting threads...
-
-				} else {
-					synchronized (this) {
-						try {
-							this.wait(1000);
-						} catch (InterruptedException e) {
-							// This happens if this.interrupt() is called in another thread... do next round...
-						}
-					}
-				}
-			} // while(!stopRequested)
 
 			// Clean up:
 			if(socket != null) {
@@ -963,7 +837,7 @@ public class RtlsdrSource implements IQSourceInterface {
 			socket = null;
 			inputStream = null;
 			outputStream = null;
-			commandThread = null;
+			RtlsdrSource.this.commandThread = null;		// mark this source as 'closed'
 			Log.i(LOGTAG, "CommandThread stopped (Thread: " + this.getName() + ")");
 		}
 	}

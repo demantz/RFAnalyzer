@@ -52,7 +52,7 @@ public class Scheduler extends Thread {
 	// Note that setting the size to 1 will not work well and any number higher than 2 will cause
 	// higher delays when switching frequencies.
 	private static final int FFT_QUEUE_SIZE = 2;
-	private static final int DEMOD_QUEUE_SIZE = 10;
+	private static final int DEMOD_QUEUE_SIZE = 20;
 	private static final String LOGTAG = "Scheduler";
 
 	public Scheduler(int fftSize, IQSourceInterface source) {

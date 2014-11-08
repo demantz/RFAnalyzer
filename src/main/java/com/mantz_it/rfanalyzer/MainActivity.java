@@ -2,6 +2,7 @@ package com.mantz_it.rfanalyzer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -67,6 +68,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private int demodulationMode = Demodulator.DEMODULATION_OFF;
 
 	private static final String LOGTAG = "MainActivity";
+	public static final int RTL2832U_RESULT_CODE = 1234;	// arbitrary value, used when sending intent to RTL2832U
 	private static final int FILE_SOURCE = 0;
 	private static final int HACKRF_SOURCE = 1;
 	private static final int RTLSDR_SOURCE = 2;
@@ -315,8 +317,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		switch (requestCode) {
-			case RtlsdrSource.RTL2832U_RESULT_CODE:
-				// This happens if the RTL2832U driver was started inside the RtlsdrSource instance.
+			case RTL2832U_RESULT_CODE:
+				// This happens if the RTL2832U driver was started.
 				// We check for errors and print them:
 				if (resultCode == RESULT_OK)
 					Log.i(LOGTAG, "onActivityResult: RTL2832U driver was successfully started.");
@@ -358,9 +360,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			@Override
 			public void run() {
 				Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + message, Toast.LENGTH_LONG).show();
-				stopAnalyzer();
 			}
 		});
+		stopAnalyzer();
+		if(this.source != null && this.source.isOpen())
+			this.source.close();
+		this.source = null;	// create new on retry...
 	}
 
 	/**
@@ -508,15 +513,28 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			case RTLSDR_SOURCE:
 						// Create RtlsdrSource
 						if(preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer), false))
-							source = new RtlsdrSource(this, preferences.getString(getString(R.string.pref_rtlsdr_ip), ""),
+							source = new RtlsdrSource(preferences.getString(getString(R.string.pref_rtlsdr_ip), ""),
 											Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_port), "1234")));
-						else
-							source = new RtlsdrSource(this, "127.0.0.1", 1234);
+						else {
+							source = new RtlsdrSource("127.0.0.1", 1234);
+							// start local rtl_tcp instance:
+							try {
+								Intent intent = new Intent(Intent.ACTION_VIEW);
+								intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 5"));
+								startActivityForResult(intent, RTL2832U_RESULT_CODE);
+							} catch (ActivityNotFoundException e) {
+								Log.e(LOGTAG, "createSource: RTL2832U is not installed");
+								Toast.makeText(MainActivity.this, getString(R.string.rtl2832u_is_not_installed), Toast.LENGTH_LONG).show();
+								return false;
+							}
+						}
 
 						source.setFrequency(preferences.getLong(getString(R.string.pref_frequency),97000000));
 						source.setSampleRate(preferences.getInt(getString(R.string.pref_sampleRate), source.getMaxSampleRate()));
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
-						// todo: set specific settings (gain, ...)
+						((RtlsdrSource) source).setGain(preferences.getInt(getString(R.string.pref_rtlsdr_gain), 0));
+						((RtlsdrSource) source).setIFGain(preferences.getInt(getString(R.string.pref_rtlsdr_ifGain), 0));
+						// todo: set specific settings (gain mode, agc ...)
 						break;
 			default:	Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
 						return false;
@@ -786,52 +804,56 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				break;
 			case HACKRF_SOURCE:
 				// Prepare layout:
-				final LinearLayout view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.hackrf_gain, null);
-				final SeekBar sb_vga = (SeekBar) view.findViewById(R.id.sb_hackrf_vga_gain);
-				final SeekBar sb_lna = (SeekBar) view.findViewById(R.id.sb_hackrf_lna_gain);
-				final TextView tv_vga = (TextView) view.findViewById(R.id.tv_hackrf_vga_gain);
-				final TextView tv_lna = (TextView) view.findViewById(R.id.tv_hackrf_lna_gain);
-				sb_vga.setMax(HackrfSource.MAX_VGA_RX_GAIN/HackrfSource.VGA_RX_GAIN_STEP_SIZE);
-				sb_lna.setMax(HackrfSource.MAX_LNA_GAIN/HackrfSource.LNA_GAIN_STEP_SIZE);
-				sb_vga.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				final LinearLayout view_hackrf = (LinearLayout) this.getLayoutInflater().inflate(R.layout.hackrf_gain, null);
+				final SeekBar sb_hackrf_vga = (SeekBar) view_hackrf.findViewById(R.id.sb_hackrf_vga_gain);
+				final SeekBar sb_hackrf_lna = (SeekBar) view_hackrf.findViewById(R.id.sb_hackrf_lna_gain);
+				final TextView tv_hackrf_vga = (TextView) view_hackrf.findViewById(R.id.tv_hackrf_vga_gain);
+				final TextView tv_hackrf_lna = (TextView) view_hackrf.findViewById(R.id.tv_hackrf_lna_gain);
+				sb_hackrf_vga.setMax(HackrfSource.MAX_VGA_RX_GAIN / HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+				sb_hackrf_lna.setMax(HackrfSource.MAX_LNA_GAIN / HackrfSource.LNA_GAIN_STEP_SIZE);
+				sb_hackrf_vga.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-						tv_vga.setText("" + progress*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+						tv_hackrf_vga.setText("" + progress * HackrfSource.VGA_RX_GAIN_STEP_SIZE);
 					}
+
 					@Override
 					public void onStartTrackingTouch(SeekBar seekBar) {
 					}
+
 					@Override
 					public void onStopTrackingTouch(SeekBar seekBar) {
 					}
 				});
-				sb_lna.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				sb_hackrf_lna.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-						tv_lna.setText("" + progress*HackrfSource.LNA_GAIN_STEP_SIZE);
+						tv_hackrf_lna.setText("" + progress * HackrfSource.LNA_GAIN_STEP_SIZE);
 					}
+
 					@Override
 					public void onStartTrackingTouch(SeekBar seekBar) {
 					}
+
 					@Override
 					public void onStopTrackingTouch(SeekBar seekBar) {
 					}
 				});
-				sb_vga.setProgress(((HackrfSource)source).getVgaRxGain()/HackrfSource.VGA_RX_GAIN_STEP_SIZE);
-				sb_lna.setProgress(((HackrfSource)source).getLnaGain()/HackrfSource.LNA_GAIN_STEP_SIZE);
+				sb_hackrf_vga.setProgress(((HackrfSource) source).getVgaRxGain() / HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+				sb_hackrf_lna.setProgress(((HackrfSource) source).getLnaGain() / HackrfSource.LNA_GAIN_STEP_SIZE);
 
 				// Show dialog:
 				new AlertDialog.Builder(this)
 						.setTitle("Adjust Gain Settings")
-						.setView(view)
+						.setView(view_hackrf)
 						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int whichButton) {
-								((HackrfSource)source).setVgaRxGain(sb_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
-								((HackrfSource)source).setLnaGain(sb_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
+								((HackrfSource)source).setVgaRxGain(sb_hackrf_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+								((HackrfSource)source).setLnaGain(sb_hackrf_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
 								// safe preferences:
 								SharedPreferences.Editor edit = preferences.edit();
-								edit.putInt(getString(R.string.pref_hackrf_vgaRxGain), sb_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
-								edit.putInt(getString(R.string.pref_hackrf_lnaGain), sb_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
+								edit.putInt(getString(R.string.pref_hackrf_vgaRxGain), sb_hackrf_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+								edit.putInt(getString(R.string.pref_hackrf_lnaGain), sb_hackrf_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
 								edit.apply();
 							}
 						})
@@ -844,7 +866,99 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 				break;
 			case RTLSDR_SOURCE:
-				// todo
+				final int[] possibleGainValues = ((RtlsdrSource)source).getPossibleGainValues();
+				final int[] possibleIFGainValues = ((RtlsdrSource)source).getPossibleIFGainValues();
+				if(possibleGainValues.length <= 1 && possibleIFGainValues.length <= 1) {
+					Toast.makeText(MainActivity.this, source.getName() + " does not support gain adjustment!", Toast.LENGTH_LONG).show();
+				}
+				// Prepare layout:
+				final LinearLayout view_rtlsdr = (LinearLayout) this.getLayoutInflater().inflate(R.layout.rtlsdr_gain, null);
+				final SeekBar sb_rtlsdr_gain = (SeekBar) view_rtlsdr.findViewById(R.id.sb_rtlsdr_gain);
+				final SeekBar sb_rtlsdr_ifGain = (SeekBar) view_rtlsdr.findViewById(R.id.sb_rtlsdr_ifgain);
+				final TextView tv_rtlsdr_gain = (TextView) view_rtlsdr.findViewById(R.id.tv_rtlsdr_gain);
+				final TextView tv_rtlsdr_ifGain = (TextView) view_rtlsdr.findViewById(R.id.tv_rtlsdr_ifgain);
+				sb_rtlsdr_gain.setMax(possibleGainValues.length - 1);
+				sb_rtlsdr_ifGain.setMax(possibleIFGainValues.length - 1);
+				sb_rtlsdr_gain.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					@Override
+					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+						tv_rtlsdr_gain.setText("" + possibleGainValues[progress]);
+					}
+
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
+					}
+				});
+				sb_rtlsdr_ifGain.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					@Override
+					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+						tv_rtlsdr_ifGain.setText("" + possibleIFGainValues[progress]);
+					}
+
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
+					}
+				});
+				// Assign current gain:
+				int gainIndex = possibleGainValues[0];
+				int ifGainIndex = possibleIFGainValues[0];
+				for (int i = 0; i < possibleGainValues.length; i++) {
+					if(((RtlsdrSource)source).getGain() == possibleGainValues[i]) {
+						gainIndex = i;
+						break;
+					}
+				}
+				for (int i = 0; i < possibleIFGainValues.length; i++) {
+					if(((RtlsdrSource)source).getIFGain() == possibleIFGainValues[i]) {
+						ifGainIndex = i;
+						break;
+					}
+				}
+				sb_rtlsdr_gain.setProgress(gainIndex);
+				sb_rtlsdr_ifGain.setProgress(ifGainIndex);
+				tv_rtlsdr_gain.setText("" + possibleGainValues[gainIndex]);
+				tv_rtlsdr_ifGain.setText("" + possibleIFGainValues[ifGainIndex]);
+
+				// Disable gui elements if gain cannot be adjusted:
+				if(possibleGainValues.length <= 1) {
+					sb_rtlsdr_gain.setEnabled(false);
+					tv_rtlsdr_gain.setEnabled(false);
+				}
+				if(possibleIFGainValues.length <= 1) {
+					sb_rtlsdr_ifGain.setEnabled(false);
+					tv_rtlsdr_ifGain.setEnabled(false);
+				}
+
+				// Show dialog:
+				new AlertDialog.Builder(this)
+						.setTitle("Adjust Gain Settings")
+						.setView(view_rtlsdr)
+						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int whichButton) {
+								((RtlsdrSource)source).setGain(possibleGainValues[sb_rtlsdr_gain.getProgress()]);
+								((RtlsdrSource)source).setIFGain(possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
+								// safe preferences:
+								SharedPreferences.Editor edit = preferences.edit();
+								edit.putInt(getString(R.string.pref_rtlsdr_gain), possibleGainValues[sb_rtlsdr_gain.getProgress()]);
+								edit.putInt(getString(R.string.pref_rtlsdr_ifGain), possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
+								edit.apply();
+							}
+						})
+						.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int whichButton) {
+								// do nothing
+							}
+						})
+						.show()
+						.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 				break;
 			default:
 				Log.e(LOGTAG, "adjustGain: Invalid source type: " + sourceType);
