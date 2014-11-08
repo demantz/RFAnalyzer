@@ -777,7 +777,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		et_input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
-			.setMessage("Frequency is " + source.getFrequency()/1000000f + "Hz. Type a new Frequency (Values below "
+			.setMessage("Frequency is " + source.getFrequency()/1000000f + "MHz. Type a new Frequency (Values below "
 					+ maxFreqMHz + " will be interpreted as MHz, higher values as Hz): ")
 			.setView(et_input)
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
