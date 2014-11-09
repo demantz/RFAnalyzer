@@ -497,13 +497,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 * @return true on success; false on error
 	 */
 	public boolean createSource() {
+		long frequency;
+		int sampleRate;
 		int sourceType = Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1"));
 
 		switch (sourceType) {
 			case FILE_SOURCE:
 						// Create IQ Source (filesource)
-						long frequency;
-						int sampleRate;
 						try {
 							frequency = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
 							sampleRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
@@ -549,8 +549,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							}
 						}
 
-						source.setFrequency(preferences.getLong(getString(R.string.pref_frequency),97000000));
-						source.setSampleRate(preferences.getInt(getString(R.string.pref_sampleRate), source.getMaxSampleRate()));
+						frequency = preferences.getLong(getString(R.string.pref_frequency),97000000);
+						sampleRate = preferences.getInt(getString(R.string.pref_sampleRate), source.getMaxSampleRate());
+						if(sampleRate > 2000000)	// might be the case after switching over from HackRF
+							sampleRate = 2000000;
+						source.setFrequency(frequency);
+						source.setSampleRate(sampleRate);
+
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
 						((RtlsdrSource)source).setManualGain(preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false));
 						((RtlsdrSource)source).setAutomaticGainControl(preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false));

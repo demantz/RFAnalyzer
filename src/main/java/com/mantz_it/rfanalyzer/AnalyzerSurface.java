@@ -684,7 +684,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			switch (this.scrollType) {
 				case SCROLLTYPE_NORMAL:
 					// Scroll horizontal if touch point in the main area or always if decoupled axis is deactivated:
-					if(!decoupledAxis || e1.getX() > getGridSize() *1.5) {
+					if(!decoupledAxis || e1.getX() > getGridSize() *1.5 || e1.getY() > getFftHeight()-getGridSize()) {
 						virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (hzPerPx * distanceX),
 								source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
 						if (virtualFrequency <= 0)    // don't allow negative frequencies
@@ -725,8 +725,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// scroll vertically
 			if (verticalScrollEnabled && scrollType == SCROLLTYPE_NORMAL) {
-				// if touch point in the left grid area or if decoupled axis is deactivated:
-				if(!decoupledAxis || e1.getX() <= getGridSize()*1.5) {
+				// if touch point in the left grid area of fft or if decoupled axis is deactivated:
+				if(!decoupledAxis || (e1.getX() <= getGridSize()*1.5 && e1.getY() <= getFftHeight()-getGridSize())) {
 					float yDiff = (maxDB - minDB) * (distanceY / (float) getFftHeight());
 					// Make sure we stay in the boundaries:
 					if (maxDB - yDiff > MAX_DB)

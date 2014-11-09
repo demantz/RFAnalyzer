@@ -158,7 +158,7 @@
             android:title="@string/pref_decoupledAxis_title"
             android:summaryOn="@string/pref_decoupledAxis_summ_on"
             android:summaryOff="@string/pref_decoupledAxis_summ_off"
-            android:defaultValue="false" />
+            android:defaultValue="true" />
         <ListPreference
             android:key="@string/pref_fontSize"
             android:title="@string/pref_fontSize_title"
