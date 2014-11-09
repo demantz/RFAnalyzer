@@ -16,6 +16,7 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -132,6 +133,39 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		if(savedInstanceState != null) {
 			running = savedInstanceState.getBoolean(getString(R.string.save_state_running));
 			demodulationMode = savedInstanceState.getInt(getString(R.string.save_state_demodulatorMode));
+
+			/* BUGFIX / WORKAROUND:
+			 * The RTL2832U driver will not allow to close the socket and immediately start the driver
+			 * again to reconnect after an orientation change / app kill + restart.
+			 * It will report back in onActivityResult() with a -1 (not specified).
+			 *
+			 * Work-around:
+			 * 1) We won't restart the Analyzer if the current source is set to a local RTL-SDR instance:
+			 * 2) Delay the restart of the Analyzer after the driver was shut down correctly...
+			 */
+			if(running && Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1")) == RTLSDR_SOURCE
+					&& !preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer),false)) {
+				// 1) don't start Analyzer immediately
+				running = false;
+
+				// Just inform the user about what is going on (why does this take so long? ...)
+				Toast.makeText(MainActivity.this,"Stopping and restarting RTL2832U driver...",Toast.LENGTH_SHORT).show();
+
+				// 2) Delayed start of the Analyzer:
+				Thread timer = new Thread() {
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(1500);
+							startAnalyzer();
+						} catch (InterruptedException e) {
+							Log.e(LOGTAG, "onCreate: (timer thread): Interrupted while sleeping.");
+						}
+					}
+				};
+				timer.start();
+			}
+
 		} else {
 			// Set running to true if autostart is enabled (this will start the analyzer in onStart() )
 			running = preferences.getBoolean((getString(R.string.pref_autostart)), false);
@@ -144,8 +178,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		// close source
 		if(source != null && source.isOpen())
 			source.close();
+
+		// stop logging:
 		if(logcat != null) {
 			try {
 				logcat.destroy();
@@ -153,6 +190,18 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				Log.i(LOGTAG, "onDestroy: logcat exit value: " + logcat.exitValue());
 			} catch (Exception e) {
 				Log.e(LOGTAG, "onDestroy: couldn't stop logcat: " + e.getMessage());
+			}
+		}
+
+		// shut down RTL2832U driver if running:
+		if(running && Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1")) == RTLSDR_SOURCE
+				&& !preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer),false)) {
+			try {
+				Intent intent = new Intent(Intent.ACTION_VIEW);
+				intent.setData(Uri.parse("iqsrc://-x"));	// -x is invalid. will cause the driver to shut down (if running)
+				startActivity(intent);
+			} catch (ActivityNotFoundException e) {
+				Log.e(LOGTAG, "onDestroy: RTL2832U is not installed");
 			}
 		}
 	}
@@ -319,6 +368,16 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
+
+		// err_info from RTL2832U:
+		String[] rtlsdrErrInfo = {
+				"permission_denied",
+				"root_required",
+				"no_devices_found",
+				"unknown_error",
+				"replug",
+				"already_running"};
+
 		switch (requestCode) {
 			case RTL2832U_RESULT_CODE:
 				// This happens if the RTL2832U driver was started.
@@ -326,40 +385,33 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				if (resultCode == RESULT_OK)
 					Log.i(LOGTAG, "onActivityResult: RTL2832U driver was successfully started.");
 				else {
-					// err_info from RTL2832U:
-					String[] errInfo = {
-						"permission_denied",
-						"root_required",
-						"no_devices_found",
-						"unknown_error",
-						"replug",
-						"already_running"};
-					int errorId = data.getIntExtra("marto.rtl_tcp_andro.RtlTcpExceptionId", -1);
-					int exceptionCode = data.getIntExtra("detailed_exception_code", 0);
-					String detailedDescription = data.getStringExtra("detailed_exception_message");
+					int errorId = -1;
+					int exceptionCode = 0;
+					String detailedDescription = null;
+					if(data != null) {
+						errorId = data.getIntExtra("marto.rtl_tcp_andro.RtlTcpExceptionId", -1);
+						exceptionCode = data.getIntExtra("detailed_exception_code", 0);
+						detailedDescription = data.getStringExtra("detailed_exception_message");
+					}
 					String errorMsg = "ERROR NOT SPECIFIED";
-					if(errorId >= 0 && errorId < errInfo.length)
-						errorMsg = errInfo[errorId];
+					if(errorId >= 0 && errorId < rtlsdrErrInfo.length)
+						errorMsg = rtlsdrErrInfo[errorId];
 
-					Log.e(LOGTAG, "onActivityResult: RTL2832U driver returned with error: " + errorMsg + " ("+errorId+")");
+					Log.e(LOGTAG, "onActivityResult: RTL2832U driver returned with error: " + errorMsg + " ("+errorId+")"
+							+ (detailedDescription != null ? ": " + detailedDescription + " (" + exceptionCode + ")" : ""));
 
 					try {
 						if (source != null && source instanceof RtlsdrSource) {
 							Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + errorMsg + " (" + errorId + ")"
 									+ (detailedDescription != null ? ": " + detailedDescription + " (" + exceptionCode + ")" : ""), Toast.LENGTH_LONG).show();
 							source.close();
-
-							// Bugfix: (works, but is not nice ... maybe we can do better?)
-							// On a orientation change the app gets killed and restarted. This means the TCP session
-							// to the rtl driver breaks causing it to shut down. In this case the driver will return
-							// with an errorId == -1 (NOT SPECIFIED). We restart:
-							//if(errorId == -1)
-							//	startAnalyzer();
+							source = null;
 						}
 					} catch (NullPointerException e) {	// Sometimes another thread will null the source. don't crash!
 						Log.e(LOGTAG, "onActivityResult: source is null! Ignore.");
 					}
 				}
+				break;
 		}
 	}
 
@@ -901,6 +953,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				}
 				// Prepare layout:
 				final LinearLayout view_rtlsdr = (LinearLayout) this.getLayoutInflater().inflate(R.layout.rtlsdr_gain, null);
+				final LinearLayout ll_rtlsdr_gain = (LinearLayout) view_rtlsdr.findViewById(R.id.ll_rtlsdr_gain);
+				final LinearLayout ll_rtlsdr_ifgain = (LinearLayout) view_rtlsdr.findViewById(R.id.ll_rtlsdr_ifgain);
 				final Switch sw_rtlsdr_manual_gain = (Switch) view_rtlsdr.findViewById(R.id.sw_rtlsdr_manual_gain);
 				final CheckBox cb_rtlsdr_agc = (CheckBox) view_rtlsdr.findViewById(R.id.cb_rtlsdr_agc);
 				final SeekBar sb_rtlsdr_gain = (SeekBar) view_rtlsdr.findViewById(R.id.sb_rtlsdr_gain);
@@ -911,14 +965,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 						if(isChecked) {
-							if(possibleGainValues.length > 1) {
-								sb_rtlsdr_gain.setEnabled(true);
-								tv_rtlsdr_gain.setEnabled(true);
-							}
-							if(possibleIFGainValues.length > 1) {
-								sb_rtlsdr_ifGain.setEnabled(true);
-								tv_rtlsdr_ifGain.setEnabled(true);
-							}
+							sb_rtlsdr_gain.setEnabled(true);
+							tv_rtlsdr_gain.setEnabled(true);
+							sb_rtlsdr_ifGain.setEnabled(true);
+							tv_rtlsdr_ifGain.setEnabled(true);
 						} else {
 							sb_rtlsdr_gain.setEnabled(false);
 							tv_rtlsdr_gain.setEnabled(false);
@@ -958,8 +1008,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					}
 				});
 				// Assign current gain:
-				int gainIndex = possibleGainValues[0];
-				int ifGainIndex = possibleIFGainValues[0];
+				int gainIndex = 0;
+				int ifGainIndex = 0;
 				for (int i = 0; i < possibleGainValues.length; i++) {
 					if(((RtlsdrSource)source).getGain() == possibleGainValues[i]) {
 						gainIndex = i;
@@ -982,11 +1032,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				cb_rtlsdr_agc.setChecked(((RtlsdrSource)source).isAutomaticGainControl());
 
 				// Disable gui elements if gain cannot be adjusted:
-				if(!sw_rtlsdr_manual_gain.isChecked() || possibleGainValues.length <= 1) {
+				if(possibleGainValues.length <= 1)
+					ll_rtlsdr_gain.setVisibility(View.GONE);
+				if(possibleIFGainValues.length <= 1)
+					ll_rtlsdr_ifgain.setVisibility(View.GONE);
+
+				if(!sw_rtlsdr_manual_gain.isChecked()) {
 					sb_rtlsdr_gain.setEnabled(false);
 					tv_rtlsdr_gain.setEnabled(false);
-				}
-				if(!sw_rtlsdr_manual_gain.isChecked() || possibleIFGainValues.length <= 1) {
 					sb_rtlsdr_ifGain.setEnabled(false);
 					tv_rtlsdr_ifGain.setEnabled(false);
 				}

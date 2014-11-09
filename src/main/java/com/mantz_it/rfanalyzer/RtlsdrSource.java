@@ -180,7 +180,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		if(commandThread != null) {
 			commandThread.stopCommandThread();
 			// Join the thread only if the current thread is NOT the commandThread ^^
-			if(Thread.currentThread().getName().equals(commandThread.threadName)) {
+			if(!Thread.currentThread().getName().equals(commandThread.threadName)) {
 				try {
 					commandThread.join();
 				} catch (InterruptedException e) {
@@ -421,7 +421,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		if(receiverThread != null) {
 			receiverThread.stopReceiving();
 			// Join the thread only if the current thread is NOT the receiverThread ^^
-			if(Thread.currentThread().getName().equals(receiverThread.threadName)) {
+			if(!Thread.currentThread().getName().equals(receiverThread.threadName)) {
 				try {
 					receiverThread.join();
 				} catch (InterruptedException e) {
@@ -722,7 +722,7 @@ public class RtlsdrSource implements IQSourceInterface {
 			// Connect to remote/local rtl_tcp
 			try {
 				long timeoutTime = System.currentTimeMillis() + timeoutMillis;
-				while(socket == null && System.currentTimeMillis() < timeoutTime) {
+				while(!stopRequested && socket == null && System.currentTimeMillis() < timeoutTime) {
 					try {
 						socket = new Socket(ipAddress, port);
 					} catch (IOException e) {
@@ -732,7 +732,10 @@ public class RtlsdrSource implements IQSourceInterface {
 				}
 
 				if(socket == null) {
-					Log.e(LOGTAG, "CommandThread: (connect) hit timeout");
+					if(stopRequested)
+						Log.i(LOGTAG, "CommandThread: (connect) command thread stopped while connecting.");
+					else
+						Log.e(LOGTAG, "CommandThread: (connect) hit timeout");
 					return false;
 				}
 
@@ -837,9 +840,12 @@ public class RtlsdrSource implements IQSourceInterface {
 				// report that the device is ready:
 				callback.onIQSourceReady(RtlsdrSource.this);
 			} else {
-				Log.e(LOGTAG,"CommandThread: (open) connect reported error.");
-				reportError("Couldn't connect to rtl_tcp instance");
-				stopRequested = true;
+				if(!stopRequested) {
+					Log.e(LOGTAG, "CommandThread: (open) connect reported error.");
+					reportError("Couldn't connect to rtl_tcp instance");
+					stopRequested = true;
+				}
+				// else: thread was stopped while connecting...
 			}
 
 			// poll commands from queue and send them over the socket in loop:
