@@ -801,10 +801,11 @@ public class RtlsdrSource implements IQSourceInterface {
 				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN_MODE, (int)(manualGain ? 0x01 : 0x00)));
 
 				// Gain:
-				executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN, gain));
+				if(manualGain)
+					executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_GAIN, gain));
 
 				// IFGain:
-				if(tuner == RTLSDR_TUNER_E4000)
+				if(manualGain && tuner == RTLSDR_TUNER_E4000)
 					executeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_IFGAIN, (short)0, (short)ifGain));
 
 				// Frequency Correction:
