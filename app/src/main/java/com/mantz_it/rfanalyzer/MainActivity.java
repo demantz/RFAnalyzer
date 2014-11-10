@@ -400,15 +400,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					Log.e(LOGTAG, "onActivityResult: RTL2832U driver returned with error: " + errorMsg + " ("+errorId+")"
 							+ (detailedDescription != null ? ": " + detailedDescription + " (" + exceptionCode + ")" : ""));
 
-					try {
-						if (source != null && source instanceof RtlsdrSource) {
-							Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + errorMsg + " (" + errorId + ")"
-									+ (detailedDescription != null ? ": " + detailedDescription + " (" + exceptionCode + ")" : ""), Toast.LENGTH_LONG).show();
-							source.close();
-							source = null;
-						}
-					} catch (NullPointerException e) {	// Sometimes another thread will null the source. don't crash!
-						Log.e(LOGTAG, "onActivityResult: source is null! Ignore.");
+					if (source != null && source instanceof RtlsdrSource) {
+						Toast.makeText(MainActivity.this, "Error with Source [" + source.getName() + "]: " + errorMsg + " (" + errorId + ")"
+								+ (detailedDescription != null ? ": " + detailedDescription + " (" + exceptionCode + ")" : ""), Toast.LENGTH_LONG).show();
+						source.close();
 					}
 				}
 				break;
@@ -430,14 +425,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			}
 		});
 		stopAnalyzer();
-		try {
-			if(this.source != null && this.source.isOpen())
-				this.source.close();
-		} catch (NullPointerException e) {	// Sometimes another thread will null the source. don't crash!
-			Log.e(LOGTAG, "onIQSourceError: source is null! Ignore.");
-		}
-		this.source = null;	// create new on next retry...
-		analyzerSurface.setSource(null);
+
+		if(this.source != null && this.source.isOpen())
+			this.source.close();
 	}
 
 	/**
@@ -589,32 +579,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 											Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_port), "1234")));
 						else {
 							source = new RtlsdrSource("127.0.0.1", 1234);
-							// start local rtl_tcp instance:
-							try {
-								Intent intent = new Intent(Intent.ACTION_VIEW);
-								intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 1"));
-								startActivityForResult(intent, RTL2832U_RESULT_CODE);
-							} catch (ActivityNotFoundException e) {
-								Log.e(LOGTAG, "createSource: RTL2832U is not installed");
-
-								// Show a dialog that links to the play market:
-								new AlertDialog.Builder(this)
-										.setTitle("RTL2832U driver not installed!")
-										.setMessage("You need to install the (free) RTL2832U driver to use RTL-SDR dongles.")
-										.setPositiveButton("Install from Google Play", new DialogInterface.OnClickListener() {
-											public void onClick(DialogInterface dialog, int whichButton) {
-												Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=marto.rtl_tcp_andro"));
-												startActivity(marketIntent);
-											}
-										})
-										.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-											public void onClick(DialogInterface dialog, int whichButton) {
-												// do nothing
-											}
-										})
-										.show();
-								return false;
-							}
 						}
 
 						frequency = preferences.getLong(getString(R.string.pref_frequency),97000000);
@@ -640,6 +604,73 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		analyzerSurface.setSource(source);
 
 		return true;
+	}
+
+	/**
+	 * Will open the IQ Source instance.
+	 * Note: some sources need special treatment on opening, like the rtl-sdr source.
+	 *
+	 * @return true on success; false on error
+	 */
+	public boolean openSource() {
+		int sourceType = Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1"));
+
+		switch (sourceType) {
+			case FILE_SOURCE:
+				if (source != null && source instanceof FileIQSource)
+					return source.open(this, this);
+				else {
+					Log.e(LOGTAG, "openSource: sourceType is FILE_SOURCE, but source is null or of other type.");
+					return false;
+				}
+			case HACKRF_SOURCE:
+				if (source != null && source instanceof HackrfSource)
+					return source.open(this, this);
+				else {
+					Log.e(LOGTAG, "openSource: sourceType is HACKRF_SOURCE, but source is null or of other type.");
+					return false;
+				}
+			case RTLSDR_SOURCE:
+				if (source != null && source instanceof RtlsdrSource) {
+					// We might need to start the driver:
+					if (!preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer), false)) {
+						// start local rtl_tcp instance:
+						try {
+							Intent intent = new Intent(Intent.ACTION_VIEW);
+							intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 1"));
+							startActivityForResult(intent, RTL2832U_RESULT_CODE);
+						} catch (ActivityNotFoundException e) {
+							Log.e(LOGTAG, "createSource: RTL2832U is not installed");
+
+							// Show a dialog that links to the play market:
+							new AlertDialog.Builder(this)
+									.setTitle("RTL2832U driver not installed!")
+									.setMessage("You need to install the (free) RTL2832U driver to use RTL-SDR dongles.")
+									.setPositiveButton("Install from Google Play", new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog, int whichButton) {
+											Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=marto.rtl_tcp_andro"));
+											startActivity(marketIntent);
+										}
+									})
+									.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog, int whichButton) {
+											// do nothing
+										}
+									})
+									.show();
+							return false;
+						}
+					}
+
+					return source.open(this, this);
+				} else {
+					Log.e(LOGTAG, "openSource: sourceType is RTLSDR_SOURCE, but source is null or of other type.");
+					return false;
+				}
+			default:
+				Log.e(LOGTAG, "openSource: Invalid source type: " + sourceType);
+				return false;
+		}
 	}
 
 	/**
@@ -722,7 +753,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// check if the source is open. if not, open it!
 		if(!source.isOpen()) {
-			if (!source.open(this, this)) {
+			if (!openSource()) {
 				Toast.makeText(MainActivity.this, "Source not available (" + source.getName() + ")", Toast.LENGTH_LONG).show();
 				running = false;
 				return;
