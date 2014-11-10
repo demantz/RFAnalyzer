@@ -723,7 +723,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// check if the source is open. if not, open it!
 		if(!source.isOpen()) {
 			if (!source.open(this, this)) {
-				Toast.makeText(MainActivity.this, "Source not available", Toast.LENGTH_LONG).show();
+				Toast.makeText(MainActivity.this, "Source not available (" + source.getName() + ")", Toast.LENGTH_LONG).show();
 				running = false;
 				return;
 			}
