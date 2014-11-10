@@ -596,7 +596,23 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 								startActivityForResult(intent, RTL2832U_RESULT_CODE);
 							} catch (ActivityNotFoundException e) {
 								Log.e(LOGTAG, "createSource: RTL2832U is not installed");
-								Toast.makeText(MainActivity.this, getString(R.string.rtl2832u_is_not_installed), Toast.LENGTH_LONG).show();
+
+								// Show a dialog that links to the play market:
+								new AlertDialog.Builder(this)
+										.setTitle("RTL2832U driver not installed!")
+										.setMessage("You need to install the (free) RTL2832U driver to use RTL-SDR dongles.")
+										.setPositiveButton("Install from Google Play", new DialogInterface.OnClickListener() {
+											public void onClick(DialogInterface dialog, int whichButton) {
+												Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=marto.rtl_tcp_andro"));
+												startActivity(marketIntent);
+											}
+										})
+										.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+											public void onClick(DialogInterface dialog, int whichButton) {
+												// do nothing
+											}
+										})
+										.show();
 								return false;
 							}
 						}
