@@ -12,23 +12,34 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * <h1>RF Analyzer - Main Activity</h1>
@@ -59,6 +70,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
+	private MenuItem mi_record = null;
 	private FrameLayout fl_analyzerFrame = null;
 	private AnalyzerSurface analyzerSurface = null;
 	private AnalyzerProcessingLoop analyzerProcessingLoop = null;
@@ -69,13 +81,16 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private Bundle savedInstanceState = null;
 	private Process logcat = null;
 	private boolean running = false;
+	private File recordingFile = null;
 	private int demodulationMode = Demodulator.DEMODULATION_OFF;
 
 	private static final String LOGTAG = "MainActivity";
+	private static final String RECORDING_DIR = "RFAnalyzer";
 	public static final int RTL2832U_RESULT_CODE = 1234;	// arbitrary value, used when sending intent to RTL2832U
 	private static final int FILE_SOURCE = 0;
 	private static final int HACKRF_SOURCE = 1;
 	private static final int RTLSDR_SOURCE = 2;
+	private static final String[] SOURCE_NAMES = new String[] {"filesource", "hackrf", "rtlsdr"};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -228,6 +243,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Get a reference to the start-stop button:
 		mi_startStop = menu.findItem(R.id.action_startStop);
 		mi_demodulationMode = menu.findItem(R.id.action_setDemodulation);
+		mi_record = menu.findItem(R.id.action_record);
 
 		// update the action bar icons and titles according to the app state:
 		updateActionBar();
@@ -253,6 +269,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			case R.id.action_setGain:		adjustGain();
 											break;
 			case R.id.action_autoscale:		analyzerSurface.autoscale();
+											break;
+			case R.id.action_record:		if(scheduler != null && scheduler.isRecording())
+												stopRecording();
+											else
+												showRecordingDialog();
 											break;
 			case R.id.action_settings:		Intent intentShowSettings = new Intent(getApplicationContext(), SettingsActivity.class);
 											startActivity(intentShowSettings);
@@ -314,6 +335,17 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				if(titleRes > 0 && iconRes > 0) {
 					mi_demodulationMode.setTitle(titleRes);
 					mi_demodulationMode.setIcon(iconRes);
+				}
+			}
+
+			// Set title and icon of the record button according to the state:
+			if(mi_record != null) {
+				if (recordingFile != null) {
+					mi_record.setTitle(R.string.action_recordOn);
+					mi_record.setIcon(R.drawable.ic_action_record_on);
+				} else {
+					mi_record.setTitle(R.string.action_recordOff);
+					mi_record.setIcon(R.drawable.ic_action_record_off);
 				}
 			}
 			}
@@ -679,8 +711,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 */
 	public void stopAnalyzer() {
 		// Stop the Scheduler if running:
-		if(scheduler != null)
+		if(scheduler != null) {
+			// Stop recording in case it is running:
+			stopRecording();
 			scheduler.stopScheduler();
+		}
 
 		// Stop the Processing Loop if running:
 		if(analyzerProcessingLoop != null)
@@ -805,7 +840,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 */
 	private void showDemodulationDialog() {
 		if(scheduler == null || demodulator == null || source == null) {
-			Toast.makeText(MainActivity.this, "FFT must be running to change modulation mode", Toast.LENGTH_LONG).show();
+			Toast.makeText(MainActivity.this, "Analyzer must be running to change modulation mode", Toast.LENGTH_LONG).show();
 			return;
 		}
 
@@ -1125,6 +1160,220 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				Log.e(LOGTAG, "adjustGain: Invalid source type: " + sourceType);
 				break;
 		}
+	}
+
+	public void showRecordingDialog() {
+		if(scheduler == null || demodulator == null || source == null) {
+			Toast.makeText(MainActivity.this, "Analyzer must be running to start recording", Toast.LENGTH_LONG).show();
+			return;
+		}
+
+		final String externalDir = Environment.getExternalStorageDirectory().getAbsolutePath();
+		final int[] supportedSampleRates = source.getSupportedSampleRates();
+		final double maxFreqMHz = source.getMaxFrequency() / 1000000f; // max frequency of the source in MHz
+		final int sourceType = Integer.valueOf(preferences.getString(getString(R.string.pref_sourceType), "1"));
+		final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
+
+		// Get references to the GUI components:
+		final LinearLayout view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.start_recording, null);
+		final EditText et_filename = (EditText) view.findViewById(R.id.et_recording_filename);
+		final EditText et_frequency = (EditText) view.findViewById(R.id.et_recording_frequency);
+		final Spinner sp_sampleRate = (Spinner) view.findViewById(R.id.sp_recording_sampleRate);
+		final TextView tv_fixedSampleRateHint = (TextView) view.findViewById(R.id.tv_recording_fixedSampleRateHint);
+		final CheckBox cb_stopAfter = (CheckBox) view.findViewById(R.id.cb_recording_stopAfter);
+		final EditText et_stopAfter = (EditText) view.findViewById(R.id.et_recording_stopAfter);
+		final Spinner sp_stopAfter = (Spinner) view.findViewById(R.id.sp_recording_stopAfter);
+
+		// Setup the sample rate spinner:
+		final ArrayAdapter<Integer> sampleRateAdapter = new ArrayAdapter<Integer>(this, android.R.layout.simple_list_item_1);
+		for(int sampR: supportedSampleRates)
+			sampleRateAdapter.add(sampR);
+		sampleRateAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		sp_sampleRate.setAdapter(sampleRateAdapter);
+
+		// Add listener to the frequency textfield, the sample rate spinner and the checkbox:
+		et_frequency.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {}
+			@Override
+			public void afterTextChanged(Editable s) {
+				if(et_frequency.getText().length() == 0)
+					return;
+				double freq = Double.valueOf(et_frequency.getText().toString());
+				if (freq < maxFreqMHz)
+					freq = freq * 1000000;
+				et_filename.setText(simpleDateFormat.format(new Date()) + "_" + SOURCE_NAMES[sourceType] + "_"
+						+ (long)freq + "Hz_" + sp_sampleRate.getSelectedItem() + "Sps.iq");
+			}
+		});
+		sp_sampleRate.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				if(et_frequency.getText().length() == 0)
+					return;
+				double freq = Double.valueOf(et_frequency.getText().toString());
+				if (freq < maxFreqMHz)
+					freq = freq * 1000000;
+				et_filename.setText(simpleDateFormat.format(new Date()) + "_" + SOURCE_NAMES[sourceType] + "_"
+						+ (long) freq + "Hz_" + sp_sampleRate.getSelectedItem() + "Sps.iq");
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {}
+		});
+		cb_stopAfter.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_stopAfter.setEnabled(isChecked);
+				sp_stopAfter.setEnabled(isChecked);
+			}
+		});
+
+		// Set default frequency, sample rate and stop after values:
+		et_frequency.setText("" + analyzerSurface.getVirtualFrequency());
+		int sampleRateIndex = 0;
+		int lastSampleRate = preferences.getInt(getString(R.string.pref_recordingSampleRate),1000000);
+		for (; sampleRateIndex < supportedSampleRates.length; sampleRateIndex++) {
+			if(supportedSampleRates[sampleRateIndex] >= lastSampleRate)
+				break;
+		}
+		if(sampleRateIndex >= supportedSampleRates.length)
+			sampleRateIndex = supportedSampleRates.length - 1;
+		sp_sampleRate.setSelection(sampleRateIndex);
+		cb_stopAfter.toggle(); // just to trigger the listener at least once!
+		cb_stopAfter.setChecked(preferences.getBoolean(getString(R.string.pref_recordingStopAfterEnabled), false));
+		et_stopAfter.setText("" + preferences.getInt(getString(R.string.pref_recordingStopAfterValue), 10));
+		sp_stopAfter.setSelection(preferences.getInt(getString(R.string.pref_recordingStopAfterUnit), 0));
+
+		// disable sample rate selection if demodulation is running:
+		if(demodulationMode != Demodulator.DEMODULATION_OFF) {
+			sp_sampleRate.setEnabled(false);
+			tv_fixedSampleRateHint.setVisibility(View.VISIBLE);
+		}
+
+		// Show dialog:
+		new AlertDialog.Builder(this)
+				.setTitle("Start recording")
+				.setView(view)
+				.setPositiveButton("Record", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						String filename = et_filename.getText().toString();
+						final int stopAfterUnit = sp_stopAfter.getSelectedItemPosition();
+						final int stopAfterValue = Integer.valueOf(et_stopAfter.getText().toString());
+						//todo check filename
+
+						// Set the frequency in the source:
+						if(et_frequency.getText().length() == 0)
+							return;
+						double freq = Double.valueOf(et_frequency.getText().toString());
+						if (freq < maxFreqMHz)
+							freq = freq * 1000000;
+						if (freq <= source.getMaxFrequency() && freq >= source.getMinFrequency())
+							source.setFrequency((long)freq);
+						else {
+							Toast.makeText(MainActivity.this, "Frequency is invalid!", Toast.LENGTH_LONG).show();
+							return;
+						}
+
+						// Set the sample rate (only if demodulator is off):
+						if(demodulationMode == Demodulator.DEMODULATION_OFF)
+							source.setSampleRate((Integer)sp_sampleRate.getSelectedItem());
+
+						// Open file and start recording:
+						recordingFile = new File(externalDir + "/" + RECORDING_DIR + "/" + filename);
+						recordingFile.getParentFile().mkdir();	// Create directory if it does not yet exist
+						try {
+							scheduler.startRecording(new BufferedOutputStream(new FileOutputStream(recordingFile)));
+						} catch (FileNotFoundException e) {
+							Log.e(LOGTAG, "showRecordingDialog: File not found: " + recordingFile.getAbsolutePath());
+						}
+
+						// safe preferences:
+						SharedPreferences.Editor edit = preferences.edit();
+						edit.putInt(getString(R.string.pref_recordingSampleRate), supportedSampleRates[sp_sampleRate.getSelectedItemPosition()]);
+						edit.putBoolean(getString(R.string.pref_recordingStopAfterEnabled), cb_stopAfter.isChecked());
+						edit.putInt(getString(R.string.pref_recordingStopAfterValue), stopAfterValue);
+						edit.putInt(getString(R.string.pref_recordingStopAfterUnit), stopAfterUnit);
+						edit.apply();
+
+						analyzerSurface.setRecordingEnabled(true);
+
+						updateActionBar();
+
+						// if stopAfter was selected, start thread to supervise the recording:
+						if(cb_stopAfter.isChecked()) {
+							Thread supervisorThread = new Thread() {
+								@Override
+								public void run() {
+									Log.i(LOGTAG, "recording_superviser: Supervisor Thread started. (Thread: " + this.getName() + ")");
+									try {
+										long startTime = System.currentTimeMillis();
+										boolean stop = false;
+
+										// We check once per half a second if the stop criteria is met:
+										Thread.sleep(500);
+										while (recordingFile != null && !stop) {
+											switch (stopAfterUnit) {    // see arrays.xml - recording_stopAfterUnit
+												case 0: /* MB */
+													if (recordingFile.length() / 1000000 >= stopAfterValue)
+														stop = true;
+													break;
+												case 1: /* GB */
+													if (recordingFile.length() / 1000000000 >= stopAfterValue)
+														stop = true;
+													break;
+												case 2: /* sec */
+													if (System.currentTimeMillis() - startTime >= stopAfterValue * 1000)
+														stop = true;
+													break;
+												case 3: /* min */
+													if (System.currentTimeMillis() - startTime >= stopAfterValue * 1000 * 60)
+														stop = true;
+													break;
+											}
+										}
+										// stop recording:
+										stopRecording();
+									} catch (InterruptedException e) {
+										Log.e(LOGTAG, "recording_superviser: Interrupted!");
+									} catch (NullPointerException e) {
+										Log.e(LOGTAG, "recording_superviser: Recording file is null!");
+									}
+									Log.i(LOGTAG, "recording_superviser: Supervisor Thread stopped. (Thread: " + this.getName() + ")");
+								}
+							};
+							supervisorThread.start();
+						}
+					}
+				})
+				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// do nothing
+					}
+				})
+				.show()
+				.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+	}
+
+	public void stopRecording() {
+		if(scheduler.isRecording()) {
+			scheduler.stopRecording();
+		}
+		if(recordingFile != null) {
+			final String filename = recordingFile.getAbsolutePath();
+			final long filesize = recordingFile.length()/1000000;	// file size in MB
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(MainActivity.this, "Recording stopped: " + filename + " (" + filesize + " MB)", Toast.LENGTH_LONG).show();
+				}
+			});
+			recordingFile = null;
+			updateActionBar();
+		}
+		if(analyzerSurface != null)
+			analyzerSurface.setRecordingEnabled(false);
 	}
 
 	/**

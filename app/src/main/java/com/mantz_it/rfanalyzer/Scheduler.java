@@ -2,6 +2,8 @@ package com.mantz_it.rfanalyzer;
 
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -45,6 +47,8 @@ public class Scheduler extends Thread {
 	private boolean demodulationActivated = false;		// Indicates if samples should be forwarded to the demodulator queues or not.
 	private boolean squelchSatisfied = false;			// indicates whether the current signal is strong enough to cross the squelch threshold
 	private boolean stopRequested = true;
+	private BufferedOutputStream bufferedOutputStream = null;	// Used for recording
+	private boolean stopRecording = false;
 
 	// Define the size of the fft output and input Queues. By setting this value to 2 we basically end up
 	// with double buffering. Maybe the two queues are overkill, but it works pretty well like this and
@@ -130,6 +134,32 @@ public class Scheduler extends Thread {
 		this.squelchSatisfied = squelchSatisfied;
 	}
 
+	/**
+	 * Will stop writing samples to the bufferedOutputStream and close it.
+	 */
+	public void stopRecording() {
+		this.stopRecording = true;
+	}
+
+	/**
+	 * Will start writing the raw samples to the bufferedOutputStream. Stream will be
+	 * closed on error, on stopRecording() and on stopSampling()
+	 *
+	 * @param bufferedOutputStream		stream to write the samples out.
+	 */
+	public void startRecording(BufferedOutputStream bufferedOutputStream) {
+		this.stopRecording = false;
+		this.bufferedOutputStream = bufferedOutputStream;
+		Log.i(LOGTAG, "startRecording: Recording started.");
+	}
+
+	/**
+	 * @return true if currently recording; false if not
+	 */
+	public boolean isRecording() {
+		return bufferedOutputStream != null;
+	}
+
 	@Override
 	public void run() {
 		Log.i(LOGTAG,"Scheduler started. (Thread: " + this.getName() + ")");
@@ -144,6 +174,25 @@ public class Scheduler extends Thread {
 				Log.e(LOGTAG, "run: No more packets from source. Shutting down...");
 				this.stopScheduler();
 				break;
+			}
+
+			///// Recording ////////////////////////////////////////////////////////////////////////
+			if(bufferedOutputStream != null) {
+				try {
+					bufferedOutputStream.write(packet);
+				} catch (IOException e) {
+					Log.e(LOGTAG, "run: Error while writing to output stream (recording): " + e.getMessage());
+					this.stopRecording();
+				}
+				if(stopRecording) {
+					try {
+						bufferedOutputStream.close();
+					} catch (IOException e) {
+						Log.e(LOGTAG, "run: Error while closing output stream (recording): " + e.getMessage());
+					}
+					bufferedOutputStream = null;
+					Log.i(LOGTAG, "run: Recording stopped.");
+				}
 			}
 
 			///// Demodulation /////////////////////////////////////////////////////////////////////
@@ -190,6 +239,14 @@ public class Scheduler extends Thread {
 			source.returnPacket(packet);
 		}
 		this.stopRequested = true;
+		if(bufferedOutputStream != null) {
+			try {
+				bufferedOutputStream.close();
+			} catch (IOException e) {
+				Log.e(LOGTAG, "run: Error while closing output stream (cleanup)(recording): " + e.getMessage());
+			}
+			bufferedOutputStream = null;
+		}
 		Log.i(LOGTAG,"Scheduler stopped. (Thread: " + this.getName() + ")");
 	}
 }

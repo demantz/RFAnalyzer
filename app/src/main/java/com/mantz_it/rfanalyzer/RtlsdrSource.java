@@ -292,6 +292,11 @@ public class RtlsdrSource implements IQSourceInterface {
 		return OPTIMAL_SAMPLE_RATES[OPTIMAL_SAMPLE_RATES.length-1];
 	}
 
+	@Override
+	public int[] getSupportedSampleRates() {
+		return OPTIMAL_SAMPLE_RATES;
+	}
+
 	public boolean isManualGain() {
 		return manualGain;
 	}

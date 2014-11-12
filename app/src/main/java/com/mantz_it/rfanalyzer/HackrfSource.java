@@ -197,6 +197,11 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	@Override
+	public int[] getSupportedSampleRates() {
+		return OPTIMAL_SAMPLE_RATES;
+	}
+
+	@Override
 	public void setSampleRate(int sampleRate) {
 		if(isAutomaticBBFilterCalculation())
 			setBasebandFilterWidth((int)(sampleRate * 0.75));

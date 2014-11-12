@@ -12,6 +12,8 @@
     <string name="action_demodulation_wfm">Demodulation: wide FM</string>
     <string name="action_setFrequency">Set Frequency</string>
     <string name="action_setGain">Set Gain</string>
+    <string name="action_recordOff">Record</string>
+    <string name="action_recordOn">Stop recording</string>
     <string name="action_autoscale">Autoscale</string>
     <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
@@ -22,6 +24,11 @@
     <string name="rtlsdr_ifgain_label">IF Gain:</string>
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
     <string name="rtl2832u_is_not_installed">RTL2832U driver is not installed</string>
+    <string name="recording_filename">File name:</string>
+    <string name="recording_frequency">Center frequency:</string>
+    <string name="recording_sampleRate">Sample rate:</string>
+    <string name="recording_fixedSampleRateHint">Sample rate is fixed because demodulation is running!</string>
+    <string name="recording_stopAfter">Stop after:</string>
     <string name="save_state_running">save_state_running</string>
     <string name="save_state_demodulatorMode">save_state_demodulatorMode</string>
     <string name="save_state_channelFrequency">save_state_channelFrequency</string>
@@ -33,6 +40,10 @@
     <string name="save_state_maxDB">save_state_maxDB</string>
     <string name="pref_frequency">pref_frequency</string>
     <string name="pref_sampleRate">pref_sampleRate</string>
+    <string name="pref_recordingSampleRate">pref_recordingSampleRate</string>
+    <string name="pref_recordingStopAfterEnabled">pref_recordingStopAfterEnabled</string>
+    <string name="pref_recordingStopAfterValue">pref_recordingStopAfterValue</string>
+    <string name="pref_recordingStopAfterUnit">pref_recordingStopAfterUnit</string>
     <string name="pref_hackrf_vgaRxGain">pref_hackrf_vgaRxGain</string>
     <string name="pref_hackrf_lnaGain">pref_hackrf_lnaGain</string>
     <string name="pref_rtlsdr_manual_gain">pref_rtlsdr_manual_gain</string>

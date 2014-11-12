@@ -104,6 +104,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private long lastFrequency;				// Center frequency of the last packet of fft samples
 	private int lastSampleRate;				// Sample rate of the last packet of fft samples
 
+	private boolean recordingEnabled = false;		// indicates whether recording is currently running or not
+
 	private boolean demodulationEnabled = false;	// indicates whether demodulation is enabled or disabled
 	private long channelFrequency = -1;				// center frequency of the demodulator
 	private int channelWidth = -1;					// (half) width of the channel filter of the demodulator
@@ -413,6 +415,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
+	 * @param enabled true: will prevent the analyzerSurface from re-tune the frequency or change the sample rate.
+	 */
+	public void setRecordingEnabled(boolean enabled) {
+		this.recordingEnabled = enabled;
+	}
+
+	/**
 	 * If called with true, this will set the UI in demodulation mode:
 	 * - No more sample rate changes
 	 * - Showing channel selector
@@ -581,6 +590,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
 				long frequencyFocus = virtualFrequency + (int) ((detector.getFocusX() / width - 0.5) * virtualSampleRate);
 				int maxSampleRate = demodulationEnabled ? (int) (source.getSampleRate() * 0.9) : source.getMaxSampleRate();
+				if(recordingEnabled)
+					maxSampleRate = source.getSampleRate();
 				virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), maxSampleRate);
 				virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
 						source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
@@ -602,11 +613,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			}
 
 			// Automatically re-adjust the sample rate of the source if we zoom too far out or in
-			if(source.getSampleRate() < virtualSampleRate && virtualSampleRate < source.getMaxSampleRate())
-				source.setSampleRate(source.getNextHigherOptimalSampleRate(virtualSampleRate));
-			int nextLower = source.getNextLowerOptimalSampleRate(source.getSampleRate());
-			if( (virtualSampleRate < nextLower) && (source.getSampleRate() > nextLower)) {
-				source.setSampleRate(nextLower);
+			// (only if not recording or demodulating!)
+			if(!recordingEnabled && !demodulationEnabled) {
+				if (source.getSampleRate() < virtualSampleRate && virtualSampleRate < source.getMaxSampleRate())
+					source.setSampleRate(source.getNextHigherOptimalSampleRate(virtualSampleRate));
+				int nextLower = source.getNextLowerOptimalSampleRate(source.getSampleRate());
+				if ((virtualSampleRate < nextLower) && (source.getSampleRate() > nextLower)) {
+					source.setSampleRate(nextLower);
+				}
 			}
 		}
 		return true;
@@ -746,10 +760,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			}
 
 			// Automatically re-tune the source if we scrolled the samples out of the visible window:
-			if(source.getFrequency() + source.getSampleRate()/2 < virtualFrequency + virtualSampleRate/2 ||
-						source.getFrequency() - source.getSampleRate()/2 > virtualFrequency - virtualSampleRate/2) {
-				if(virtualFrequency >= source.getMinFrequency() && virtualFrequency <= source.getMaxFrequency())
-					source.setFrequency(virtualFrequency);
+			// (only if not recording)
+			if(!recordingEnabled) {
+				if (source.getFrequency() + source.getSampleRate() / 2 < virtualFrequency + virtualSampleRate / 2 ||
+						source.getFrequency() - source.getSampleRate() / 2 > virtualFrequency - virtualSampleRate / 2) {
+					if (virtualFrequency >= source.getMinFrequency() && virtualFrequency <= source.getMaxFrequency())
+						source.setFrequency(virtualFrequency);
+				}
+			} else {
+				// if recording, we restrict scrolling outside the fft:
+				if(virtualFrequency + virtualSampleRate/2 > source.getFrequency() + source.getSampleRate()/2)
+					virtualFrequency = source.getFrequency() + source.getSampleRate()/2 - virtualSampleRate/2;
+				if(virtualFrequency - virtualSampleRate/2 < source.getFrequency() - source.getSampleRate()/2)
+					virtualFrequency = source.getFrequency() - source.getSampleRate()/2 + virtualSampleRate/2;
 			}
 		}
 
@@ -1290,6 +1313,18 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// draw text:
 			c.drawText(text, indicatorPosX - bounds.width() * 1.1f, indicatorPosY, textSmallPaint);
+
+			// increase yPos:
+			yPos += bounds.height() * 1.1f;
+		}
+
+		// Draw recording information
+		if(recordingEnabled) {
+			text = String.format("%4.6f MHz @ %2.3f MSps", source.getFrequency()/1000000f, source.getSampleRate()/1000000f);
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			defaultPaint.setColor(Color.RED);
+			c.drawCircle(rightBorder - bounds.width() - (bounds.height()/2)*1.3f, yPos + bounds.height()/2, bounds.height()/2, defaultPaint);
 
 			// increase yPos:
 			yPos += bounds.height() * 1.1f;

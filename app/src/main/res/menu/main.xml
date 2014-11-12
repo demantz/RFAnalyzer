@@ -26,6 +26,11 @@
           android:title="@string/action_setGain"
           android:orderInCategory="10"
           android:showAsAction="always" />
+    <item android:id="@+id/action_record"
+          android:icon="@drawable/ic_action_record_off"
+          android:title="@string/action_recordOff"
+          android:orderInCategory="15"
+          android:showAsAction="always" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

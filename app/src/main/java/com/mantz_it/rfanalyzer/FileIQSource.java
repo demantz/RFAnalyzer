@@ -184,6 +184,11 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
+	public int[] getSupportedSampleRates() {
+		return new int[] {this.sampleRate};
+	}
+
+	@Override
 	public int getPacketSize() {
 		return packetSize;
 	}

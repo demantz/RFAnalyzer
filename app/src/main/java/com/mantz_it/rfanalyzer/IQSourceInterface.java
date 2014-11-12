@@ -114,6 +114,11 @@ public interface IQSourceInterface {
 	public int getNextLowerOptimalSampleRate(int sampleRate);
 
 	/**
+	 * @return Array of all supported (optimal) sample rates
+	 */
+	public int[] getSupportedSampleRates();
+
+	/**
 	 * @return the size (in byte) of a packet that is returned by getPacket()
 	 */
 	public int getPacketSize();
