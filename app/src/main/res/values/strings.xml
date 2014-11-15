@@ -24,6 +24,7 @@
     <string name="rtlsdr_ifgain_label">IF Gain:</string>
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
     <string name="rtl2832u_is_not_installed">RTL2832U driver is not installed</string>
+    <string name="warning_recording_is_running">Warning: Recording is running!</string>
     <string name="recording_filename">File name:</string>
     <string name="recording_frequency">Center frequency:</string>
     <string name="recording_sampleRate">Sample rate:</string>

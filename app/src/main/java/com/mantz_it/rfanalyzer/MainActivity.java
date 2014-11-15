@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -872,6 +873,18 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			scheduler.setDemodulationActivated(false);
 		}
 		else {
+			if(recordingFile != null && source.getSampleRate() != Demodulator.INPUT_RATE) {
+				// We are recording at an incompatible sample rate right now.
+				Log.i(LOGTAG, "setDemodulationMode: Recording is running at " + source.getSampleRate() + " Sps. Can't start demodulation.");
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Toast.makeText(MainActivity.this, "Recording is running at incompatible sample rate for demodulation!", Toast.LENGTH_LONG).show();
+					}
+				});
+				return;
+			}
+
 			// adjust sample rate of the source:
 			source.setSampleRate(Demodulator.INPUT_RATE);
 
@@ -918,13 +931,17 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// calculate max frequency of the source in MHz:
 		final double maxFreqMHz = source.getMaxFrequency() / 1000000f;
 
-		final EditText et_input = new EditText(this);
-		et_input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+		final LinearLayout ll_view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.tune_to_frequency, null);
+		final EditText et_input = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency);
+		final TextView tv_warning = (TextView) ll_view.findViewById(R.id.tv_tune_to_frequency_warning);
+		if(recordingFile != null)
+			tv_warning.setVisibility(View.VISIBLE);
+
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
 			.setMessage("Frequency is " + source.getFrequency()/1000000f + "MHz. Type a new Frequency (Values below "
 					+ maxFreqMHz + " will be interpreted as MHz, higher values as Hz): ")
-			.setView(et_input)
+			.setView(ll_view)
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
 					try {
@@ -1163,7 +1180,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	}
 
 	public void showRecordingDialog() {
-		if(scheduler == null || demodulator == null || source == null) {
+		if(!running || scheduler == null || demodulator == null || source == null) {
 			Toast.makeText(MainActivity.this, "Analyzer must be running to start recording", Toast.LENGTH_LONG).show();
 			return;
 		}

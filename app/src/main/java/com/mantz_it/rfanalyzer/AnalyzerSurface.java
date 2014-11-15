@@ -419,6 +419,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void setRecordingEnabled(boolean enabled) {
 		this.recordingEnabled = enabled;
+		// The source sample rate and frequency might have been changed due to starting recording. fix the view:
+		virtualFrequency = source.getFrequency();
+		virtualSampleRate = source.getSampleRate();
 	}
 
 	/**
