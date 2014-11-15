@@ -148,8 +148,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.peakHoldPaint.setColor(Color.YELLOW);
 		this.textPaint = new Paint();
 		this.textPaint.setColor(Color.WHITE);
+		this.textPaint.setAntiAlias(true);
 		this.textSmallPaint = new Paint();
 		this.textSmallPaint.setColor(Color.WHITE);
+		this.textSmallPaint.setAntiAlias(true);
 		this.waterfallLinePaint = new Paint();
 		this.demodSelectorPaint = new Paint();
 		this.demodSelectorPaint.setColor(Color.WHITE);
@@ -391,6 +393,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.fontSize = fontSize;
 		this.textPaint.setTextSize(normalTextSize);
 		this.textSmallPaint.setTextSize(smallTextSize);
+		Log.i(LOGTAG, "setFontSize: X-dpi=" + getResources().getDisplayMetrics().xdpi +
+				"  fontSize="+fontSize+"  normalTextSize="+normalTextSize+"  smallTextSize="+smallTextSize);
 	}
 
 	/**
