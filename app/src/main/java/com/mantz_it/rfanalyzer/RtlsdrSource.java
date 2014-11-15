@@ -81,6 +81,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	private boolean manualGain = true;	// true == manual; false == automatic
 	private int frequencyCorrection = 0;
 	private boolean automaticGainControl = false;
+	private int upconverterFrequencyShift = 0;	// virtually shift the frequency according to an external upconverter
 	private static final String LOGTAG = "RtlsdrSource";
 	private static final int QUEUE_SIZE = 20;
 	public static final int[] OPTIMAL_SAMPLE_RATES = { 1000000, 1024000, 1800000, 1920000, 2000000, 2048000, 2400000};
@@ -234,14 +235,16 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public long getFrequency() {
-		return frequency;
+		return frequency - upconverterFrequencyShift;
 	}
 
 	@Override
 	public void setFrequency(long frequency) {
+		frequency += upconverterFrequencyShift;		// correct frequency
 		if(isOpen()) {
 			if(frequency < getMinFrequency() || frequency > getMaxFrequency()) {
-				Log.e(LOGTAG, "setFrequency: Frequency out of valid range: " + frequency);
+				Log.e(LOGTAG, "setFrequency: Frequency out of valid range: " + frequency
+								+ "  (upconverterFrequency="+upconverterFrequencyShift+" was added!)");
 				return;
 			}
 
@@ -256,12 +259,12 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public long getMaxFrequency() {
-		return MAX_FREQUENCY[tuner];
+		return MAX_FREQUENCY[tuner] - upconverterFrequencyShift;
 	}
 
 	@Override
 	public long getMinFrequency() {
-		return MIN_FREQUENCY[tuner];
+		return MIN_FREQUENCY[tuner] - upconverterFrequencyShift;
 	}
 
 	@Override
@@ -377,6 +380,14 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.automaticGainControl = enable;
 	}
 
+	public int getUpconverterFrequencyShift() {
+		return upconverterFrequencyShift;
+	}
+
+	public void setUpconverterFrequencyShift(int upconverterFrequencyShift) {
+		this.upconverterFrequencyShift = upconverterFrequencyShift;
+	}
+
 	@Override
 	public int getPacketSize() {
 		return PACKET_SIZE;
@@ -470,13 +481,13 @@ public class RtlsdrSource implements IQSourceInterface {
 		}
 		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
 		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(frequency);				// update the frequency
+		samplePacket.setFrequency(frequency-upconverterFrequencyShift);		// update the frequency
 		return count;
 	}
 
 	@Override
 	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-		int mixFrequency = (int)(frequency - channelFrequency);
+		int mixFrequency = (int)(frequency - (channelFrequency+upconverterFrequencyShift));
 		// If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
 		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
 			mixFrequency += sampleRate;
@@ -527,7 +538,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		}
 		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
 		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(frequency);				// update the frequency
+		samplePacket.setFrequency(channelFrequency);		// update the frequency
 		return count;
 	}
 
@@ -783,10 +794,10 @@ public class RtlsdrSource implements IQSourceInterface {
 				name = "RTL-SDR (" + TUNER_STRING[tuner] + ") at " + ipAddress + ":" + port;
 
 				// Check if parameters are in range and correct them:
-				if(frequency > getMaxFrequency())
-					frequency = getMaxFrequency();
-				if(frequency < getMinFrequency())
-					frequency = getMinFrequency();
+				if(frequency > MAX_FREQUENCY[tuner])
+					frequency = MAX_FREQUENCY[tuner];
+				if(frequency < MIN_FREQUENCY[tuner])
+					frequency = MIN_FREQUENCY[tuner];
 				if(sampleRate > getMaxSampleRate())
 					sampleRate = getMaxSampleRate();
 				if(sampleRate < getMinSampleRate())

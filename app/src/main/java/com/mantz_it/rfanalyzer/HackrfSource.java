@@ -48,6 +48,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private int lnaGain = 0;
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
+	private int upconverterFrequencyShift = 0;	// virtually shift the frequency according to an external upconverter
 	private static final String LOGTAG = "HackRFSource";
 	public static final long MIN_FREQUENCY = 1l;
 	public static final long MAX_FREQUENCY = 7250000000l;
@@ -130,11 +131,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public long getFrequency() {
-		return frequency;
+		return frequency - upconverterFrequencyShift;
 	}
 
 	@Override
 	public void setFrequency(long frequency) {
+		frequency += upconverterFrequencyShift; // correct frequency
 		// re-tune the hackrf:
 		if(hackrf != null) {
 			try {
@@ -155,12 +157,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public long getMaxFrequency() {
-		return MAX_FREQUENCY;
+		return MAX_FREQUENCY - upconverterFrequencyShift;
 	}
 
 	@Override
 	public long getMinFrequency() {
-		return MIN_FREQUENCY;
+		return MIN_FREQUENCY - upconverterFrequencyShift;
 	}
 
 	@Override
@@ -349,6 +351,14 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		this.antennaPower = antennaPower;
 	}
 
+	public int getUpconverterFrequencyShift() {
+		return upconverterFrequencyShift;
+	}
+
+	public void setUpconverterFrequencyShift(int upconverterFrequencyShift) {
+		this.upconverterFrequencyShift = upconverterFrequencyShift;
+	}
+
 	@Override
 	public int getPacketSize() {
 		if(hackrf != null)
@@ -452,12 +462,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		}
 		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
 		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(frequency);				// update the frequency
+		samplePacket.setFrequency(frequency-upconverterFrequencyShift);		// update the frequency
 		return count;
 	}
 
 	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-		int mixFrequency = (int)(frequency - channelFrequency);
+		int mixFrequency = (int)(frequency - (channelFrequency+upconverterFrequencyShift));
 		// If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
 		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
 			mixFrequency += sampleRate;
@@ -508,7 +518,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		}
 		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
 		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(frequency);				// update the frequency
+		samplePacket.setFrequency(channelFrequency);		// update the frequency
 		return count;
 	}
 
