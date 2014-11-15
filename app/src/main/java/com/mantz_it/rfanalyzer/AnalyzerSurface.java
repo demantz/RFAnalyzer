@@ -1021,9 +1021,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		float dbDiff 		= maxDB - minDB;
 		float dbWidth 		= getFftHeight() / dbDiff; 	// Size (in pixel) per 1dB in the fft
 		float scale 		= this.waterfallColorMap.length / dbDiff;	// scale for the color mapping of the waterfall
-		float avg;		// Used to calculate the average of multiple values in mag
-		float peakAvg;	// Used to calculate the average of multiple values in peaks
-		int counter;	// Used to calculate the average of multiple values in mag and peaks
+		float avg;				// Used to calculate the average of multiple values in mag (horizontal average)
+		float peakAvg;			// Used to calculate the average of multiple values in peaks
+		float waterfallAvg;		// Used to calculate the average of multiple values in historySamples[oldestHistoryIndex-1].
+								// This is used to ignore the time averaging in the waterfall plot
+		int counter;			// Used to calculate the average of multiple values in mag and peaks
+		int latestHistoryIndex = 0;
+
+		// latestHistoryIndex points to the current fft values inside the historySamples array and is used to calc waterfallAvg
+		if(historySamples != null)
+			latestHistoryIndex = oldesthistoryIndex==0 ? historySamples.length-1 : oldesthistoryIndex -1;
 
 		// Get a canvas from the bitmap of the current waterfall line and clear it:
 		Canvas newline = new Canvas(waterfallLines[waterfallLinesTopIndex]);
@@ -1041,19 +1048,26 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		// Draw pixel by pixel:
 		// We start at firstPixel+1 because of integer round off error
 		for (int i = firstPixel + 1; i < lastPixel; i++) {
-			// Calculate the average value for this pixel:
+			// Calculate the average value for this pixel (horizontal average - not the time domain average):
 			avg = 0;
 			peakAvg = 0;
+			waterfallAvg = 0;
 			counter = 0;
 			for (int j = (int)(i*samplesPerPx); j < (i+1)*samplesPerPx; j++) {
 				avg += mag[j + start];
 				if(peaks != null)
 					peakAvg += peaks[j + start];
+				if(this.averageLength > 0)
+					waterfallAvg += historySamples[latestHistoryIndex][j + start];
 				counter++;
 			}
 			avg = avg / counter;
 			if(peaks != null)
 				peakAvg = peakAvg / counter;
+			if(this.averageLength > 0)
+				waterfallAvg = waterfallAvg / counter;
+			else
+				waterfallAvg = avg;	// no difference between avg and waterfallAvg
 
 			// FFT:
 			if(avg > minDB) {
@@ -1087,12 +1101,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			}
 
 			// Waterfall:
-			if(avg <= minDB)
+			if(waterfallAvg <= minDB)
 				waterfallLinePaint.setColor(waterfallColorMap[0]);
-			else if(avg >= maxDB)
+			else if(waterfallAvg >= maxDB)
 				waterfallLinePaint.setColor(waterfallColorMap[waterfallColorMap.length-1]);
 			else
-				waterfallLinePaint.setColor(waterfallColorMap[(int)((avg-minDB)*scale)]);
+				waterfallLinePaint.setColor(waterfallColorMap[(int)((waterfallAvg-minDB)*scale)]);
 
 			if(getPixelPerWaterfallLine() > 1)
 				newline.drawLine(i, 0, i, getPixelPerWaterfallLine(), waterfallLinePaint);
