@@ -22,12 +22,14 @@
                     android:key="@string/pref_filesource_frequency"
                     android:title="@string/pref_filesource_frequency_title"
                     android:dialogTitle="@string/pref_filesource_frequency_title"
-                    android:defaultValue="@string/pref_filesource_frequency_default" />
+                    android:defaultValue="@string/pref_filesource_frequency_default"
+                    android:inputType="number"/>
                 <EditTextPreference
                     android:key="@string/pref_filesource_sampleRate"
                     android:title="@string/pref_filesource_sampleRate_title"
                     android:dialogTitle="@string/pref_filesource_sampleRate_title"
-                    android:defaultValue="@string/pref_filesource_sampleRate_default" />
+                    android:defaultValue="@string/pref_filesource_sampleRate_default"
+                    android:inputType="number"/>
                 <EditTextPreference
                     android:key="@string/pref_filesource_file"
                     android:title="@string/pref_filesource_file_title"
@@ -75,12 +77,14 @@
                     android:dependency="@string/pref_rtlsdr_externalServer"
                     android:title="@string/pref_rtlsdr_port_title"
                     android:dialogTitle="@string/pref_rtlsdr_port_title"
-                    android:defaultValue="@string/pref_rtlsdr_port_default" />
+                    android:defaultValue="@string/pref_rtlsdr_port_default"
+                    android:inputType="number"/>
                 <EditTextPreference
                     android:key="@string/pref_rtlsdr_frequencyCorrection"
                     android:title="@string/pref_rtlsdr_frequencyCorrection_title"
                     android:dialogTitle="@string/pref_rtlsdr_frequencyCorrection_title"
-                    android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default" />
+                    android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default"
+                    android:inputType="number"/>
             </PreferenceCategory>
         </PreferenceScreen>
         <ListPreference
