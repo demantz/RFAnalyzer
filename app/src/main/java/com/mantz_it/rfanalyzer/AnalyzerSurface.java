@@ -598,6 +598,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				virtualSampleRate = (int) Math.min(Math.max(virtualSampleRate / xScale, MIN_VIRTUAL_SAMPLERATE), maxSampleRate);
 				virtualFrequency = Math.min(Math.max(frequencyFocus + (long) ((virtualFrequency - frequencyFocus) / xScale),
 						source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
+
+				// if we zoomed the channel selector out of the window, reset the channel selector:
+				if (demodulationEnabled && channelFrequency < virtualFrequency - virtualSampleRate / 2) {
+					channelFrequency = virtualFrequency - virtualSampleRate / 2;
+					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+				}
+				if (demodulationEnabled && channelFrequency > virtualFrequency + virtualSampleRate / 2) {
+					channelFrequency = virtualFrequency + virtualSampleRate / 2;
+					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+				}
 			}
 
 			// Zoom vertical if enabled and focus in the left grid area or if decoupled axis is deactivated:
@@ -689,7 +699,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onSingleTapUp(MotionEvent e) {
-		return true;	// not used
+		// Set the channel frequency to the tapped position
+		if(demodulationEnabled) {
+			float hzPerPx = virtualSampleRate / (float) width;
+			channelFrequency = virtualFrequency - virtualSampleRate/2 + (long)(hzPerPx*e.getX());
+			callbackHandler.onUpdateChannelFrequency(channelFrequency);
+		}
+		return true;
 	}
 
 	@Override
@@ -702,20 +718,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				case SCROLLTYPE_NORMAL:
 					// Scroll horizontal if touch point in the main area or always if decoupled axis is deactivated:
 					if(!decoupledAxis || e1.getX() > getGridSize() *1.5 || e1.getY() > getFftHeight()-getGridSize()) {
-						virtualFrequency = Math.min(Math.max(virtualFrequency + (long) (hzPerPx * distanceX),
-								source.getMinFrequency() - source.getSampleRate() / 2), source.getMaxFrequency() + source.getSampleRate() / 2);
-						if (virtualFrequency <= 0)    // don't allow negative frequencies
-							virtualFrequency = 1;
-
-						// if we scrolled the channel selector out of the window, reset the channel selector:
-						if (demodulationEnabled && channelFrequency < virtualFrequency - virtualSampleRate / 2) {
-							channelFrequency = virtualFrequency - virtualSampleRate / 2;
-							callbackHandler.onUpdateChannelFrequency(channelFrequency);
-						}
-						if (demodulationEnabled && channelFrequency > virtualFrequency + virtualSampleRate / 2) {
-							channelFrequency = virtualFrequency + virtualSampleRate / 2;
-							callbackHandler.onUpdateChannelFrequency(channelFrequency);
-						}
+						long minFrequencyShift = Math.max(virtualFrequency * -1 +1,
+									source.getMinFrequency() - source.getSampleRate()/2 - virtualFrequency);
+						long maxFrequencyShift = source.getMaxFrequency() + source.getSampleRate()/2 - virtualFrequency;
+						long virtualFrequencyShift = Math.min(Math.max((long) (hzPerPx * distanceX), minFrequencyShift), maxFrequencyShift);
+						virtualFrequency += virtualFrequencyShift;
+						channelFrequency += virtualFrequencyShift;
+						callbackHandler.onUpdateChannelFrequency(channelFrequency);
 					}
 					break;
 				case SCROLLTYPE_CHANNEL_FREQUENCY:
