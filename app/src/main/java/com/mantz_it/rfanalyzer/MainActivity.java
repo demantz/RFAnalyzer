@@ -189,6 +189,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// Set the hardware volume keys to work on the music audio stream:
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+		// Hide application title in action bar (takes too much space)
+		getActionBar().setDisplayShowTitleEnabled(false);
 	}
 
 	@Override

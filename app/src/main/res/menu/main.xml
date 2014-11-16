@@ -6,11 +6,6 @@
           android:title="@string/action_start"
           android:orderInCategory="1"
           android:showAsAction="always" />
-    <item android:id="@+id/action_autoscale"
-          android:icon="@drawable/ic_action_full_screen"
-          android:title="@string/action_autoscale"
-          android:orderInCategory="2"
-          android:showAsAction="always" />
     <item android:id="@+id/action_setDemodulation"
           android:icon="@drawable/ic_action_demod_off"
           android:title="@string/action_demodulation_off"
@@ -31,6 +26,11 @@
           android:title="@string/action_recordOff"
           android:orderInCategory="15"
           android:showAsAction="always" />
+    <item android:id="@+id/action_autoscale"
+          android:icon="@drawable/ic_action_full_screen"
+          android:title="@string/action_autoscale"
+          android:orderInCategory="20"
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"
