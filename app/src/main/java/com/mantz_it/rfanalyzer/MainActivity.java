@@ -327,6 +327,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						iconRes = R.drawable.ic_action_demod_wfm;
 						titleRes = R.string.action_demodulation_wfm;
 						break;
+					case Demodulator.DEMODULATION_LSB:
+						iconRes = R.drawable.ic_action_demod_lsb;
+						titleRes = R.string.action_demodulation_lsb;
+						break;
+					case Demodulator.DEMODULATION_USB:
+						iconRes = R.drawable.ic_action_demod_usb;
+						titleRes = R.string.action_demodulation_usb;
+						break;
 					default:
 						Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
 						iconRes = -1;

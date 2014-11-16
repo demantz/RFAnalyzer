@@ -139,7 +139,8 @@ public class AudioSink extends Thread {
 	@Override
 	public void run() {
 		SamplePacket packet;
-		SamplePacket filteredPacket = new SamplePacket(packetSize);
+		SamplePacket filteredPacket;
+		SamplePacket tempPacket = new SamplePacket(packetSize);
 		float[] floatPacket;
 		short[] shortPacket = new short[packetSize];
 
@@ -160,7 +161,12 @@ public class AudioSink extends Thread {
 				}
 
 				// apply audio filter (decimation)
-				applyAudioFilter(packet, filteredPacket);
+				if(packet.getSampleRate() > this.sampleRate) {
+					applyAudioFilter(packet, tempPacket);
+					filteredPacket = tempPacket;
+				}
+				else
+					filteredPacket = packet;
 
 				// Convert doubles to shorts [expect doubles to be in [-1...1]
 				floatPacket = filteredPacket.re();

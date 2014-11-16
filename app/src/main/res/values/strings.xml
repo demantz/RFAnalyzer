@@ -10,6 +10,8 @@
     <string name="action_demodulation_am">Demodulation: AM</string>
     <string name="action_demodulation_nfm">Demodulation: narrow FM</string>
     <string name="action_demodulation_wfm">Demodulation: wide FM</string>
+    <string name="action_demodulation_lsb">Demodulation: LSB</string>
+    <string name="action_demodulation_usb">Demodulation: USB</string>
     <string name="action_setFrequency">Set Frequency</string>
     <string name="action_setGain">Set Gain</string>
     <string name="action_recordOff">Record</string>

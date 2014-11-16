@@ -5,6 +5,8 @@
         <item>AM</item>
         <item>narrow-band FM</item>
         <item>wide-band FM</item>
+        <item>LSB</item>
+        <item>USB</item>
     </string-array>
     <string-array name="pref_sourceType_entries">
         <item>File Source</item>

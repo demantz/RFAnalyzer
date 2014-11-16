@@ -24,10 +24,10 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 	public void testFirFilter() {
 		int samples = 128;
-		double[] reIn = new double[samples];
-		double[] imIn = new double[samples];
-		double[] reOut = new double[samples/4];
-		double[] imOut = new double[samples/4];
+		float[] reIn = new float[samples];
+		float[] imIn = new float[samples];
+		float[] reOut = new float[samples/4];
+		float[] imOut = new float[samples/4];
 		int sampleRate = 1000;
 		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
 		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate/4);
@@ -36,8 +36,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		int f2 = 200;
 
 		for (int i = 0; i < reIn.length; i++) {
-			reIn[i] = Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
-			imIn[i] = Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
+			reIn[i] = (float) Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
+			imIn[i] = (float) Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
 		}
 
 		FirFilter filter = FirFilter.createLowPass(4, 1, sampleRate, 100, 50, 60);
@@ -51,6 +51,40 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		filter.filter(in, out, 0, in.size());
 
 		FFT fft2 = new FFT(samples/4);
+
+		System.out.println("After FILTER:");
+		spectrum(fft2, reOut, imOut);
+	}
+
+	public void testComplexFirFilter() {
+		int samples = 32;
+		float[] reIn = new float[samples];
+		float[] imIn = new float[samples];
+		float[] reOut = new float[samples];
+		float[] imOut = new float[samples];
+		int sampleRate = 1000;
+		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
+		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate);
+		out.setSize(0);
+		int f1 = 50;
+		int f2 = 200;
+
+		for (int i = 0; i < reIn.length; i++) {
+			reIn[i] = (float) Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
+			imIn[i] = (float) Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
+		}
+
+		ComplexFirFilter filter = ComplexFirFilter.createBandPass(1, 1, sampleRate, 100, 250, 50, 60);
+		System.out.println("Created filter with " + filter.getNumberOfTaps() + " taps!");
+
+		FFT fft1 = new FFT(samples);
+
+		System.out.println("Before FILTER:");
+		spectrum(fft1, reIn, imIn);
+
+		filter.filter(in, out, 0, in.size());
+
+		FFT fft2 = new FFT(samples);
 
 		System.out.println("After FILTER:");
 		spectrum(fft2, reOut, imOut);
@@ -81,10 +115,10 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 	public void testHalfBandLowPassFilter() {
 		int samples = 128;
-		double[] reIn = new double[samples];
-		double[] imIn = new double[samples];
-		double[] reOut = new double[samples/2];
-		double[] imOut = new double[samples/2];
+		float[] reIn = new float[samples];
+		float[] imIn = new float[samples];
+		float[] reOut = new float[samples/2];
+		float[] imOut = new float[samples/2];
 		int sampleRate = 1000;
 		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
 		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate/2);
@@ -93,8 +127,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		int f2 = 400;
 
 		for (int i = 0; i < reIn.length; i++) {
-			reIn[i] = Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
-			imIn[i] = Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
+			reIn[i] = (float) Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
+			imIn[i] = (float) Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
 		}
 
 		HalfBandLowPassFilter halfBandLowPassFilter = new HalfBandLowPassFilter(12);
@@ -170,9 +204,9 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 		FFT fft = new FFT(N);
 
-		double[] window = fft.getWindow();
-		double[] re = new double[N];
-		double[] im = new double[N];
+		float[] window = fft.getWindow();
+		float[] re = new float[N];
+		float[] im = new float[N];
 
 		// Impulse
 		re[0] = 1; im[0] = 0;
@@ -182,14 +216,14 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 		// Nyquist
 		for(int i=0; i<N; i++) {
-			re[i] = Math.pow(-1, i);
+			re[i] = (float)Math.pow(-1, i);
 			im[i] = 0;
 		}
 		beforeAfter(fft, re, im);
 
 		// Single sin
 		for(int i=0; i<N; i++) {
-			re[i] = Math.cos(2*Math.PI*i / N);
+			re[i] = (float)Math.cos(2*Math.PI*i / N);
 			im[i] = 0;
 		}
 		beforeAfter(fft, re, im);
@@ -209,7 +243,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		System.out.println("Averaged " + (time/iter) + "ms per iteration");
 	}
 
-	protected static void beforeAfter(FFT fft, double[] re, double[] im) {
+	protected static void beforeAfter(FFT fft, float[] re, float[] im) {
 		System.out.println("Before: ");
 		printReIm(re, im);
 		//fft.applyWindow(re, im);
@@ -218,7 +252,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		printReIm(re, im);
 	}
 
-	protected static void printReIm(double[] re, double[] im) {
+	protected static void printReIm(float[] re, float[] im) {
 		System.out.print("Re: [");
 		for(int i=0; i<re.length; i++)
 			System.out.print(((int)(re[i]*1000)/1000.0) + " ");
@@ -230,12 +264,12 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		System.out.println("]");
 	}
 
-	protected static void spectrum(FFT fft, double[] re, double[] im) {
+	protected static void spectrum(FFT fft, float[] re, float[] im) {
 		//fft.applyWindow(re, im);
 		int length = re.length;
-		double[] reDouble = new double[length];
-		double[] imDouble = new double[length];
-		double[] mag = new double[length];
+		float[] reDouble = new float[length];
+		float[] imDouble = new float[length];
+		float[] mag = new float[length];
 		for (int i = 0; i < length; i++) {
 			reDouble[i] = re[i];
 			imDouble[i] = im[i];
@@ -249,7 +283,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 			// Calc the magnitude = log(  re^2 + im^2  )
 			// note that we still have to divide re and im by the fft size
-			mag[targetIndex] = Math.log(Math.pow(reDouble[i]/fft.n,2) + Math.pow(imDouble[i]/fft.n,2));
+			mag[targetIndex] = (float) Math.log(Math.pow(reDouble[i]/fft.n,2) + Math.pow(imDouble[i]/fft.n,2));
 		}
 
 		System.out.print("Spectrum: [");
