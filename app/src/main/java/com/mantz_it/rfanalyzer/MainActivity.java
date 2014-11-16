@@ -929,6 +929,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setDemodulationEnabled(true);	// will re-adjust channel freq, width and squelch,
 															// if they are outside the current viewport and update the
 															// demodulator via callbacks.
+			analyzerSurface.setShowLowerBand(mode != Demodulator.DEMODULATION_USB);		// show lower side band if not USB
+			analyzerSurface.setShowUpperBand(mode != Demodulator.DEMODULATION_LSB);		// show upper side band if not LSB
 		}
 
 		// update action bar:
@@ -1283,7 +1285,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// disable sample rate selection if demodulation is running:
 		if(demodulationMode != Demodulator.DEMODULATION_OFF) {
-			sp_sampleRate.setEnabled(false);
+			sampleRateAdapter.add(source.getSampleRate());	// add the current sample rate in case it's not already in the list
+			sp_sampleRate.setSelection(sampleRateAdapter.getPosition(source.getSampleRate()));	// select it
+			sp_sampleRate.setEnabled(false);	// disable the spinner
 			tv_fixedSampleRateHint.setVisibility(View.VISIBLE);
 		}
 
@@ -1326,7 +1330,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 						// safe preferences:
 						SharedPreferences.Editor edit = preferences.edit();
-						edit.putInt(getString(R.string.pref_recordingSampleRate), supportedSampleRates[sp_sampleRate.getSelectedItemPosition()]);
+						edit.putInt(getString(R.string.pref_recordingSampleRate), (Integer) sp_sampleRate.getSelectedItem());
 						edit.putBoolean(getString(R.string.pref_recordingStopAfterEnabled), cb_stopAfter.isChecked());
 						edit.putInt(getString(R.string.pref_recordingStopAfterValue), stopAfterValue);
 						edit.putInt(getString(R.string.pref_recordingStopAfterUnit), stopAfterUnit);

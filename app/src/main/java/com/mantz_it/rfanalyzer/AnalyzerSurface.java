@@ -111,6 +111,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private int channelWidth = -1;					// (half) width of the channel filter of the demodulator
 	private float squelch = -1;						// squelch threshold in dB
 	private boolean squelchSatisfied = false;		// indicates whether the current signal is strong enough to cross the squelch threshold
+	private boolean showLowerBand = true;			// indicates whether the lower side band of the channel selector is visible
+	private boolean showUpperBand = true;			// indicates whether the upper side band of the channel selector is visible
 
 	// scroll type stores the intention of the user on a pointer down event:
 	private int scrollType = 0;
@@ -363,6 +365,20 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void setChannelFrequency(long channelFrequency) {
 		this.channelFrequency = channelFrequency;
+	}
+
+	/**
+	 * @param showLowerBand		if true: draw the lower side band of the channel selector (if demodulation is enabled)
+	 */
+	public void setShowLowerBand(boolean showLowerBand) {
+		this.showLowerBand = showLowerBand;
+	}
+
+	/**
+	 * @param showUpperBand		if true: draw the upper side band of the channel selector (if demodulation is enabled)
+	 */
+	public void setShowUpperBand(boolean showUpperBand) {
+		this.showUpperBand = showUpperBand;
 	}
 
 	/**
@@ -678,13 +694,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			this.scrollType = SCROLLTYPE_CHANNEL_FREQUENCY;
 
 		// if the user touched the left channel selector border the user wants to adjust the channel width:
-		else if(demodulationEnabled	&& e.getY() <= getFftHeight()
+		else if(demodulationEnabled	&& e.getY() <= getFftHeight() && showLowerBand
 									&& touchedFrequency < channelFrequency-channelWidth + channelWidthVariation
 									&& touchedFrequency > channelFrequency-channelWidth - channelWidthVariation)
 			this.scrollType = SCROLLTYPE_CHANNEL_WIDTH_LEFT;
 
 		// if the user touched the right channel selector border the user wants to adjust the channel width:
-		else if(demodulationEnabled	&& e.getY() <= getFftHeight()
+		else if(demodulationEnabled	&& e.getY() <= getFftHeight() && showUpperBand
 									&& touchedFrequency < channelFrequency+channelWidth + channelWidthVariation
 									&& touchedFrequency > channelFrequency+channelWidth - channelWidthVariation)
 			this.scrollType = SCROLLTYPE_CHANNEL_WIDTH_RIGHT;
@@ -1237,14 +1253,22 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// draw half transparent channel area:
 			demodSelectorPaint.setAlpha(0x7f);
-			c.drawRect(leftBorder, 0, rightBorder, squelchPosition, demodSelectorPaint);
+			if(showLowerBand)
+				c.drawRect(leftBorder, 0, channelPosition, squelchPosition, demodSelectorPaint);
+			if(showUpperBand)
+				c.drawRect(channelPosition, 0, rightBorder, squelchPosition, demodSelectorPaint);
 
 			// draw center and borders:
 			demodSelectorPaint.setAlpha(0xff);
 			c.drawLine(channelPosition,getFftHeight(), channelPosition, 0, demodSelectorPaint);
-			c.drawLine(leftBorder,getFftHeight(), leftBorder, 0, demodSelectorPaint);
-			c.drawLine(rightBorder,getFftHeight(), rightBorder, 0, demodSelectorPaint);
-			c.drawLine(leftBorder,squelchPosition,rightBorder,squelchPosition,squelchPaint);
+			if(showLowerBand) {
+				c.drawLine(leftBorder, getFftHeight(), leftBorder, 0, demodSelectorPaint);
+				c.drawLine(leftBorder,squelchPosition,channelPosition,squelchPosition,squelchPaint);
+			}
+			if(showUpperBand) {
+				c.drawLine(rightBorder, getFftHeight(), rightBorder, 0, demodSelectorPaint);
+				c.drawLine(channelPosition,squelchPosition,rightBorder,squelchPosition,squelchPaint);
+			}
 
 			// draw squelch text above the squelch selector:
 			textStr = String.format("%2.1f dB", squelch);
@@ -1252,7 +1276,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition - bounds.height() * 0.1f, textSmallPaint);
 
 			// draw channel width text below the squelch selector:
-			textStr = String.format("%d kHz", channelWidth*2/1000);
+			int shownChannelWidth = 0;
+			if(showLowerBand)
+				shownChannelWidth += channelWidth;
+			if(showUpperBand)
+				shownChannelWidth += channelWidth;
+			textStr = String.format("%d kHz", shownChannelWidth/1000);
 			textSmallPaint.getTextBounds(textStr, 0, textStr.length(), bounds);
 			c.drawText(textStr, channelPosition - bounds.width()/2f, squelchPosition + bounds.height() * 1.1f, textSmallPaint);
 		}
