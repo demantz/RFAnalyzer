@@ -72,7 +72,7 @@ public class Demodulator extends Thread {
 	private SamplePacket demodulatorHistory;	// used for FM demodulation
 	private float lastMax = 0;	// used for gain control in AM / SSB demodulation
 	private ComplexFirFilter bandPassFilter = null;	// used for SSB demodulation
-	private static final int BAND_PASS_ATTENUATION = 60;
+	private static final int BAND_PASS_ATTENUATION = 40;
 	public static final int DEMODULATION_OFF 	= 0;
 	public static final int DEMODULATION_AM 	= 1;
 	public static final int DEMODULATION_NFM 	= 2;
@@ -363,8 +363,8 @@ public class Demodulator extends Thread {
 			this.bandPassFilter = ComplexFirFilter.createBandPass(	2,		// Decimate by 2; => AUDIO_RATE
 																	1,
 																	input.getSampleRate(),
-																	upperBand ? 0 : -userFilterCutOff,
-																	upperBand ? userFilterCutOff : 0,
+																	upperBand ? 200f : -userFilterCutOff,
+																	upperBand ? userFilterCutOff : -200f,
 																	input.getSampleRate()*0.01f,
 																	BAND_PASS_ATTENUATION);
 			if(bandPassFilter == null)

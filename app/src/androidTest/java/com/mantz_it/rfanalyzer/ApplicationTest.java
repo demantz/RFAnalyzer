@@ -66,15 +66,49 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
 		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate);
 		out.setSize(0);
-		int f1 = 50;
-		int f2 = 200;
+		int f1 = 250;
+		int f2 = -250;
 
 		for (int i = 0; i < reIn.length; i++) {
 			reIn[i] = (float) Math.cos(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.cos(2 * Math.PI * f2 * i/ (float)sampleRate);
 			imIn[i] = (float) Math.sin(2 * Math.PI * f1 * i/ (float)sampleRate) + (float) Math.sin(2 * Math.PI * f2 * i/ (float)sampleRate);
 		}
 
-		ComplexFirFilter filter = ComplexFirFilter.createBandPass(1, 1, sampleRate, 100, 250, 50, 60);
+		ComplexFirFilter filter = ComplexFirFilter.createBandPass(1, 1, sampleRate, -450, -50, 50, 60);
+		System.out.println("Created filter with " + filter.getNumberOfTaps() + " taps!");
+
+		FFT fft1 = new FFT(samples);
+
+		System.out.println("Before FILTER:");
+		spectrum(fft1, reIn, imIn);
+
+		filter.filter(in, out, 0, in.size());
+
+		FFT fft2 = new FFT(samples);
+
+		System.out.println("After FILTER:");
+		spectrum(fft2, reOut, imOut);
+	}
+
+	public void testComplexFirFilter2() {
+		int samples = 32;
+		float[] reIn = new float[samples];
+		float[] imIn = new float[samples];
+		float[] reOut = new float[samples];
+		float[] imOut = new float[samples];
+		int sampleRate = 1000;
+		SamplePacket in = new SamplePacket(reIn, imIn,0, sampleRate);
+		SamplePacket out = new SamplePacket(reOut, imOut,0, sampleRate);
+		out.setSize(0);
+
+		reIn[0] = 1;
+		imIn[0] = 1;
+		for (int i = 1; i < reIn.length; i++) {
+			reIn[i] = 0;
+			imIn[i] = 0;
+		}
+
+		ComplexFirFilter filter = ComplexFirFilter.createBandPass(1, 1, sampleRate, 50, 450, 50, 60);
 		System.out.println("Created filter with " + filter.getNumberOfTaps() + " taps!");
 
 		FFT fft1 = new FFT(samples);

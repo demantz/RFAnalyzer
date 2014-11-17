@@ -143,8 +143,8 @@ public class ComplexFirFilter {
 				imOut[indexOut] = 0;
 				index = tapCounter;
 				for (int j = 0; j < tapsReal.length; j++) {
-					reOut[indexOut] += tapsReal[j] * delaysReal[index];
-					imOut[indexOut] += tapsImag[j] * delaysImag[index];
+					reOut[indexOut] += tapsReal[j]*delaysReal[index] - tapsImag[j]*delaysImag[index];
+					imOut[indexOut] += tapsImag[j]*delaysReal[index] + tapsReal[j]*delaysImag[index];
 					index--;
 					if (index < 0)
 						index = tapsReal.length - 1;
