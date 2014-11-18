@@ -90,7 +90,7 @@
                     android:title="@string/pref_rtlsdr_frequencyCorrection_title"
                     android:dialogTitle="@string/pref_rtlsdr_frequencyCorrection_title"
                     android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default"
-                    android:inputType="number"/>
+                    android:inputType="number|numberSigned"/>
                 <EditTextPreference
                     android:key="@string/pref_rtlsdr_upconverterFrequencyShift"
                     android:title="@string/pref_rtlsdr_upconverterFrequencyShift_title"

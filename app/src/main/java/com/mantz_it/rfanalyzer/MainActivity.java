@@ -748,7 +748,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			demodulator.stopDemodulator();
 
 		// Wait for the scheduler to stop:
-		if(scheduler != null) {
+		if(scheduler != null && !scheduler.getName().equals(Thread.currentThread().getName())) {
 			try {
 				scheduler.join();
 			} catch (InterruptedException e) {

@@ -371,13 +371,19 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public byte[] getPacket(int timeout) {
-		if(queue != null)
+		if(queue != null && hackrf != null) {
 			try {
-				return queue.poll(timeout, TimeUnit.MILLISECONDS);
+				byte[] packet = queue.poll(timeout, TimeUnit.MILLISECONDS);
+				if(packet == null && (hackrf.getTransceiverMode() != Hackrf.HACKRF_TRANSCEIVER_MODE_RECEIVE)) {
+					Log.e(LOGTAG, "getPacket: HackRF is not in receiving mode!");
+					reportError("HackRF stopped receiving");
+				}
+				return packet;
 			} catch (InterruptedException e) {
 				Log.e(LOGTAG, "getPacket: Interrupted while waiting on queue");
 				return null;
 			}
+		}
 		else {
 			Log.e(LOGTAG, "getPacket: Queue is null");
 			return null;

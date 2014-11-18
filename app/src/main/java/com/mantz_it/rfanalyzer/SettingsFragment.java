@@ -151,7 +151,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	}
 
 	/**
-	 * Will go through each preference element and initialize/update the summary according to its value
+	 * Will go through each preference element and initialize/update the summary according to its value.
+	 * @note this will also correct invalid user inputs on EdittextPreferences!
 	 */
 	public void updateSummaries() {
 		// Source Type
@@ -160,10 +161,14 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 		// FileSource Frequency
 		EditTextPreference editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_filesource_frequency));
+		if(editTextPref.getText().length() == 0)
+			editTextPref.setText(getString(R.string.pref_filesource_frequency_default));
 		editTextPref.setSummary(getString(R.string.pref_filesource_frequency_summ, editTextPref.getText()));
 
 		// FileSource Sample Rate
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_filesource_sampleRate));
+		if(editTextPref.getText().length() == 0)
+			editTextPref.setText(getString(R.string.pref_filesource_sampleRate_default));
 		editTextPref.setSummary(getString(R.string.pref_filesource_sampleRate_summ, editTextPref.getText()));
 
 		// FileSource File
@@ -172,6 +177,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 		// HackRF upconverter frequency shift
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_upconverterFrequencyShift));
+		if(editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
 		editTextPref.setSummary(getString(R.string.pref_hackrf_upconverterFrequencyShift_summ, editTextPref.getText()));
 
 		// RTL-SDR IP
@@ -184,10 +191,14 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 		// RTL-SDR frequency correction
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyCorrection));
+		if(editTextPref.getText().length() == 0)
+			editTextPref.setText(getString(R.string.pref_rtlsdr_frequencyCorrection_default));
 		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyCorrection_summ, editTextPref.getText()));
 
 		// RTL-SDR upconverter frequency shift
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_upconverterFrequencyShift));
+		if(editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
 		editTextPref.setSummary(getString(R.string.pref_rtlsdr_upconverterFrequencyShift_summ, editTextPref.getText()));
 
 		// FFT size
