@@ -82,6 +82,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	private int frequencyCorrection = 0;
 	private boolean automaticGainControl = false;
 	private int upconverterFrequencyShift = 0;	// virtually shift the frequency according to an external upconverter
+	private IQConverter iqConverter;
 	private static final String LOGTAG = "RtlsdrSource";
 	private static final int QUEUE_SIZE = 20;
 	public static final int[] OPTIMAL_SAMPLE_RATES = { 1000000, 1024000, 1800000, 1920000, 2000000, 2048000, 2400000};
@@ -112,13 +113,6 @@ public class RtlsdrSource implements IQSourceInterface {
 	};
 	public static final int PACKET_SIZE = 16384;
 
-	public float[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
-	public float[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
-	public float[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
-	public int cosineFrequency;							// Frequency of the cosine that is mixed to the signal
-	public int cosineIndex;								// current index within the cosine
-	public static final int MAX_COSINE_LENGTH = 50;		// Max length of the cosine lookup table
-
 	public RtlsdrSource (String ip, int port) {
 		this.ipAddress = ip;
 		this.port = port;
@@ -128,6 +122,8 @@ public class RtlsdrSource implements IQSourceInterface {
 		returnQueue = new ArrayBlockingQueue<byte[]>(QUEUE_SIZE);
 		for(int i = 0; i < QUEUE_SIZE; i++)
 			returnQueue.offer(new byte[PACKET_SIZE]);
+
+		this.iqConverter = new Unsigned8BitIQConverter();
 	}
 
 	/**
@@ -231,6 +227,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.flushQueue();
 
 		this.sampleRate = sampleRate;
+		this.iqConverter.setSampleRate(sampleRate);
 	}
 
 	@Override
@@ -255,6 +252,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.flushQueue();
 
 		this.frequency = frequency;
+		this.iqConverter.setFrequency(frequency);
 	}
 
 	@Override
@@ -450,96 +448,12 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
-		/**
-		 * The rtl_sdr delivers samples in the following format:
-		 * The bytes are interleaved, 8-bit, unsigned IQ samples (in-phase
-		 *  component first, followed by the quadrature component):
-		 *
-		 *  [--------- first sample ----------]   [-------- second sample --------]
-		 *         I                  Q                  I                Q ...
-		 *  receivedBytes[0]   receivedBytes[1]   receivedBytes[2]       ...
-		 */
-
-		// If lookupTable is null, we create it:
-		if(lookupTable == null) {
-			lookupTable = new float[256];
-			for (int i = 0; i < 256; i++)
-				lookupTable[i] = (i-127.4f) / 128.0f;
-		}
-
-		int capacity = samplePacket.capacity();
-		int count = 0;
-		int startIndex = samplePacket.size();
-		float[] re = samplePacket.re();
-		float[] im = samplePacket.im();
-		for (int i = 0; i < packet.length; i+=2) {
-			re[startIndex+count] = lookupTable[packet[i] & 0xff];
-			im[startIndex+count] = lookupTable[packet[i+1] & 0xff];
-			count++;
-			if(startIndex+count >= capacity)
-				break;
-		}
-		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
-		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(frequency-upconverterFrequencyShift);		// update the frequency
-		return count;
+		return this.iqConverter.fillPacketIntoSamplePacket(packet, samplePacket);
 	}
 
 	@Override
 	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-		int mixFrequency = (int)(frequency - (channelFrequency+upconverterFrequencyShift));
-		// If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
-		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
-			mixFrequency += sampleRate;
-
-		// If lookupTable is null or is invalid, we create it:
-		if(cosineRealLookupTable == null || cosineFrequency != mixFrequency) {
-			cosineFrequency = mixFrequency;
-			// look for the best fitting array size to hold one or more full cosine cycles:
-			double cycleLength = sampleRate / Math.abs((double)mixFrequency);
-			int bestLength = (int) cycleLength;
-			double bestLengthError = Math.abs(bestLength-cycleLength);
-			for (int i = 1; i*cycleLength < MAX_COSINE_LENGTH ; i++) {
-				if(Math.abs(i*cycleLength - (int)(i*cycleLength)) < bestLengthError) {
-					bestLength = (int)(i*cycleLength);
-					bestLengthError = Math.abs(bestLength - (i*cycleLength));
-				}
-			}
-//			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
-//					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
-			cosineRealLookupTable = new float[bestLength][256];
-			cosineImagLookupTable = new float[bestLength][256];
-			float cosineAtT;
-			float sineAtT;
-			for (int t = 0; t < bestLength; t++) {
-				cosineAtT = (float) Math.cos(2 * Math.PI * mixFrequency * t / (float) sampleRate);
-				sineAtT = (float) Math.sin(2 * Math.PI * mixFrequency * t / (float) sampleRate);
-				for (int i = 0; i < 256; i++) {
-					cosineRealLookupTable[t][i] = (i-127.4f)/128.0f * cosineAtT;
-					cosineImagLookupTable[t][i] = (i-127.4f)/128.0f * sineAtT;
-				}
-			}
-			cosineIndex=0;
-		}
-
-		// Mix the samples from packet and store the results in the samplePacket
-		int capacity = samplePacket.capacity();
-		int count = 0;
-		int startIndex = samplePacket.size();
-		float[] re = samplePacket.re();
-		float[] im = samplePacket.im();
-		for (int i = 0; i < packet.length; i+=2) {
-			re[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i] & 0xff] - cosineImagLookupTable[cosineIndex][packet[i+1] & 0xff];
-			im[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i+1] & 0xff] + cosineImagLookupTable[cosineIndex][packet[i] & 0xff];
-			cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
-			count++;
-			if(startIndex+count >= capacity)
-				break;
-		}
-		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
-		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(channelFrequency);		// update the frequency
-		return count;
+		return this.iqConverter.mixPacketIntoSamplePacket(packet, samplePacket, channelFrequency);
 	}
 
 	/**
@@ -794,10 +708,14 @@ public class RtlsdrSource implements IQSourceInterface {
 				name = "RTL-SDR (" + TUNER_STRING[tuner] + ") at " + ipAddress + ":" + port;
 
 				// Check if parameters are in range and correct them:
-				if(frequency > MAX_FREQUENCY[tuner])
+				if(frequency > MAX_FREQUENCY[tuner]) {
 					frequency = MAX_FREQUENCY[tuner];
-				if(frequency < MIN_FREQUENCY[tuner])
+					iqConverter.setFrequency(frequency);
+				}
+				if(frequency < MIN_FREQUENCY[tuner]) {
 					frequency = MIN_FREQUENCY[tuner];
+					iqConverter.setFrequency(frequency);
+				}
 				if(sampleRate > getMaxSampleRate())
 					sampleRate = getMaxSampleRate();
 				if(sampleRate < getMinSampleRate())

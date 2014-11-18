@@ -175,6 +175,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_filesource_file));
 		editTextPref.setSummary(getString(R.string.pref_filesource_file_summ, editTextPref.getText()));
 
+		// FileSource Format
+		listPref = (ListPreference) findPreference(getString(R.string.pref_filesource_format));
+		listPref.setSummary(getString(R.string.pref_filesource_format_summ, listPref.getEntry()));
+
 		// HackRF upconverter frequency shift
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_upconverterFrequencyShift));
 		if(editTextPref.getText().length() == 0)

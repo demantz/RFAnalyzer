@@ -49,6 +49,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
 	private int upconverterFrequencyShift = 0;	// virtually shift the frequency according to an external upconverter
+	private IQConverter iqConverter;
 	private static final String LOGTAG = "HackRFSource";
 	public static final long MIN_FREQUENCY = 1l;
 	public static final long MAX_FREQUENCY = 7250000000l;
@@ -61,12 +62,10 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public static final int VGA_TX_GAIN_STEP_SIZE = 1;
 	public static final int LNA_GAIN_STEP_SIZE = 8;
 	public static final int[] OPTIMAL_SAMPLE_RATES = { 4000000, 6000000, 8000000, 10000000, 12500000, 16000000, 20000000};
-	public float[] lookupTable = null;					// Lookup table to transform IQ bytes into doubles
-	public float[][] cosineRealLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
-	public float[][] cosineImagLookupTable = null;		// Lookup table to transform IQ bytes into frequency shifted doubles
-	public int cosineFrequency;							// Frequency of the cosine that is mixed to the signal
-	public int cosineIndex;								// current index within the cosine
-	public static final int MAX_COSINE_LENGTH = 50;		// Max length of the cosine lookup table
+
+	public HackrfSource() {
+		iqConverter = new Signed8BitIQConverter();
+	}
 
 	/**
 	 * Will forward an error message to the callback object
@@ -153,6 +152,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 		// Store the new frequency
 		this.frequency = frequency;
+		this.iqConverter.setFrequency(frequency);
 	}
 
 	@Override
@@ -224,6 +224,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		this.flushQueue();
 		Log.d(LOGTAG,"setSampleRate: setting sample rate to " + sampleRate);
 		this.sampleRate = sampleRate;
+		this.iqConverter.setSampleRate(sampleRate);
 	}
 
 	public int getBasebandFilterWidth() {
@@ -437,95 +438,11 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
-		/**
-		 * The HackRF delivers samples in the following format:
-		 * The bytes are interleaved, 8-bit, signed IQ samples (in-phase
-		 *  component first, followed by the quadrature component):
-		 *
-		 *  [--------- first sample ----------]   [-------- second sample --------]
-		 *         I                  Q                  I                Q ...
-		 *  receivedBytes[0]   receivedBytes[1]   receivedBytes[2]       ...
-		 */
-
-		// If lookupTable is null, we create it:
-		if(lookupTable == null) {
-			lookupTable = new float[256];
-			for (int i = 0; i < 256; i++)
-				lookupTable[i] = (i-128) / 128.0f;
-		}
-
-		int capacity = samplePacket.capacity();
-		int count = 0;
-		int startIndex = samplePacket.size();
-		float[] re = samplePacket.re();
-		float[] im = samplePacket.im();
-		for (int i = 0; i < packet.length; i+=2) {
-			re[startIndex+count] = lookupTable[packet[i]+128];
-			im[startIndex+count] = lookupTable[packet[i+1]+128];
-			count++;
-			if(startIndex+count >= capacity)
-				break;
-		}
-		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
-		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(frequency-upconverterFrequencyShift);		// update the frequency
-		return count;
+		return this.iqConverter.fillPacketIntoSamplePacket(packet, samplePacket);
 	}
 
 	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-		int mixFrequency = (int)(frequency - (channelFrequency+upconverterFrequencyShift));
-		// If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
-		if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
-			mixFrequency += sampleRate;
-
-		// If lookupTable is null or is invalid, we create it:
-		if(cosineRealLookupTable == null || cosineFrequency != mixFrequency) {
-			cosineFrequency = mixFrequency;
-			// look for the best fitting array size to hold one or more full cosine cycles:
-			double cycleLength = sampleRate / Math.abs((double)mixFrequency);
-			int bestLength = (int) cycleLength;
-			double bestLengthError = Math.abs(bestLength-cycleLength);
-			for (int i = 1; i*cycleLength < MAX_COSINE_LENGTH ; i++) {
-				if(Math.abs(i*cycleLength - (int)(i*cycleLength)) < bestLengthError) {
-					bestLength = (int)(i*cycleLength);
-					bestLengthError = Math.abs(bestLength - (i*cycleLength));
-				}
-			}
-//			Log.d(LOGTAG, "mixPacketIntoSamplePacket: creating cosine lookup array for mix-frequency=" +
-//					mixFrequency + ". Length="+bestLength + " Error="+bestLengthError);
-			cosineRealLookupTable = new float[bestLength][256];
-			cosineImagLookupTable = new float[bestLength][256];
-			float cosineAtT;
-			float sineAtT;
-			for (int t = 0; t < bestLength; t++) {
-				cosineAtT = (float) Math.cos(2 * Math.PI * mixFrequency * t / (float) sampleRate);
-				sineAtT = (float) Math.sin(2 * Math.PI * mixFrequency * t / (float) sampleRate);
-				for (int i = 0; i < 256; i++) {
-					cosineRealLookupTable[t][i] = (i-128)/128.0f * cosineAtT;
-					cosineImagLookupTable[t][i] = (i-128)/128.0f * sineAtT;
-				}
-			}
-			cosineIndex=0;
-		}
-
-		// Mix the samples from packet and store the results in the samplePacket
-		int capacity = samplePacket.capacity();
-		int count = 0;
-		int startIndex = samplePacket.size();
-		float[] re = samplePacket.re();
-		float[] im = samplePacket.im();
-		for (int i = 0; i < packet.length; i+=2) {
-			re[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i]+128] - cosineImagLookupTable[cosineIndex][packet[i+1]+128];
-			im[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i+1]+128] + cosineImagLookupTable[cosineIndex][packet[i]+128];
-			cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
-			count++;
-			if(startIndex+count >= capacity)
-				break;
-		}
-		samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
-		samplePacket.setSampleRate(sampleRate);				// update the sample rate
-		samplePacket.setFrequency(channelFrequency);		// update the frequency
-		return count;
+		return this.iqConverter.mixPacketIntoSamplePacket(packet, samplePacket, channelFrequency);
 	}
 
 	/**

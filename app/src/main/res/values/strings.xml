@@ -75,6 +75,10 @@
     <string name="pref_filesource_file_title">Source File</string>
     <string name="pref_filesource_file_summ">File path: %s</string>
     <string name="pref_filesource_file_default">Test_Hackrf/hackrf_android.iq</string>
+    <string name="pref_filesource_format">pref_filesource_format</string>
+    <string name="pref_filesource_format_title">File format:</string>
+    <string name="pref_filesource_format_default">0</string>
+    <string name="pref_filesource_format_summ">File format is set to: %s</string>
     <string name="pref_filesource_repeat">pref_filesource_repeat</string>
     <string name="pref_filesource_repeat_title">Repeat</string>
     <string name="pref_filesource_repeat_summ_on">Start from beginning after end of file</string>

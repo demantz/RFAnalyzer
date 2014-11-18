@@ -491,10 +491,12 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						long freq = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_frequency), "97000000"));
 						int sampRate = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_sampleRate), "2000000"));
 						String fileName = preferences.getString(getString(R.string.pref_filesource_file), "");
+						int fileFormat = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_format), "0"));
 						boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
 						if (freq != source.getFrequency() || sampRate != source.getSampleRate()
 								|| !fileName.equals(((FileIQSource) source).getFilename())
-								|| repeat != ((FileIQSource) source).isRepeat()) {
+								|| repeat != ((FileIQSource) source).isRepeat()
+								|| fileFormat != ((FileIQSource) source).getFileFormat()) {
 							source.close();
 							createSource();
 						}
@@ -609,8 +611,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							return false;
 						}
 						String filename = preferences.getString(getString(R.string.pref_filesource_file), "");
+						int fileFormat = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_format), "0"));
 						boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
-						source = new FileIQSource(filename, sampleRate, frequency, 16384, repeat);
+						source = new FileIQSource(filename, sampleRate, frequency, 16384, repeat, fileFormat);
 						break;
 			case HACKRF_SOURCE:
 						// Create HackrfSource

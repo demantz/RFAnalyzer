@@ -34,6 +34,13 @@
                     android:key="@string/pref_filesource_file"
                     android:title="@string/pref_filesource_file_title"
                     android:defaultValue="@string/pref_filesource_file_default" />
+                <ListPreference
+                    android:key="@string/pref_filesource_format"
+                    android:title="@string/pref_filesource_format_title"
+                    android:dialogTitle="@string/pref_filesource_format_title"
+                    android:entries="@array/pref_filesource_format_entries"
+                    android:entryValues="@array/pref_filesource_format_values"
+                    android:defaultValue="@string/pref_filesource_format_default" />
                 <SwitchPreference
                     android:key="@string/pref_filesource_repeat"
                     android:title="@string/pref_filesource_repeat_title"

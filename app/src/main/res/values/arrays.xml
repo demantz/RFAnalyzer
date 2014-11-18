@@ -166,6 +166,14 @@
         <item>2</item>
         <item>3</item>
     </string-array>
+    <string-array name="pref_filesource_format_entries">
+        <item>8-bit signed IQ (HackRF)</item>
+        <item>8-bit unsigned IQ (RTL-SDR)</item>
+    </string-array>
+    <string-array name="pref_filesource_format_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
     <string-array name="recording_stopAfterUnit">
         <item>MB</item>
         <item>GB</item>
