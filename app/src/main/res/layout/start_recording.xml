@@ -47,7 +47,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/tv_recording_fixedSampleRateHint"
         android:text="@string/recording_fixedSampleRateHint"
-        android:textColor="#ffc30000"
+        android:textColor="#ffc0a000"
         android:visibility="gone"/>
 
     <TextView

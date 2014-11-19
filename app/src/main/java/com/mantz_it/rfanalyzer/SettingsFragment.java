@@ -128,9 +128,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 				case FILESOURCE_RESULT_CODE:
 					Uri uri = data.getData();
 					if (uri != null) {
-						if(uri.toString().startsWith("file://"))
+						if(uri.toString().startsWith("file://")) {
 							((EditTextPreference) findPreference(getString(R.string.pref_filesource_file)))
-										.setText(uri.toString().substring(7));
+									.setText(uri.toString().substring(7).replaceAll("%20", " "));
+							updateFileSourcePrefs();
+						}
 						else
 							Toast.makeText(SettingsFragment.this.getActivity(), "Not a local file: " + uri.toString(), Toast.LENGTH_LONG).show();
 					}
@@ -143,6 +145,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		// update the summeries:
 		updateSummaries();
 
 		// Screen Orientation:
@@ -278,5 +281,36 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 		cursor.moveToFirst();
 		return cursor.getString(column_index);
+	}
+
+	/**
+	 * Will try to extract the file source preferences (frequency, sample rate, format) from the filename
+	 */
+	public void updateFileSourcePrefs() {
+		EditTextPreference etp_filename = 	(EditTextPreference) findPreference(getString(R.string.pref_filesource_file));
+		EditTextPreference etp_frequency = 	(EditTextPreference) findPreference(getString(R.string.pref_filesource_frequency));
+		EditTextPreference etp_sampleRate = (EditTextPreference) findPreference(getString(R.string.pref_filesource_sampleRate));
+		ListPreference lp_format = 			(ListPreference) findPreference(getString(R.string.pref_filesource_format));
+		String filename = etp_filename.getText();
+
+		// Format. Search for strings like hackrf, rtl-sdr, ...
+		if(filename.matches(".*hackrf.*") || filename.matches(".*HackRF.*") ||
+				filename.matches(".*HACKRF.*") || filename.matches(".*hackrfone.*"))
+			lp_format.setValue("0");
+		if(filename.matches(".*rtlsdr.*") || filename.matches(".*rtl-sdr.*") ||
+				filename.matches(".*RTLSDR.*") || filename.matches(".*RTL-SDR.*"))
+			lp_format.setValue("1");
+
+		// Sampe Rate. Search for pattern XXXXXXXSps
+		if(filename.matches(".*(_|-|\\s)([0-9]+)(sps|Sps|SPS).*"))
+			etp_sampleRate.setText(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(sps|Sps|SPS).*", "$2"));
+		if(filename.matches(".*(_|-|\\s)([0-9]+)(msps|Msps|MSps|MSPS).*"))
+			etp_sampleRate.setText("" + Integer.valueOf(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(msps|Msps|MSps|MSPS).*", "$2")) * 1000000);
+
+		// Frequency. Search for pattern XXXXXXXHz
+		if(filename.matches(".*(_|-|\\s)([0-9]+)(hz|Hz|HZ).*"))
+			etp_frequency.setText(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(hz|Hz|HZ).*", "$2"));
+		if(filename.matches(".*(_|-|\\s)([0-9]+)(mhz|Mhz|MHz|MHZ).*"))
+			etp_frequency.setText("" + Integer.valueOf(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(mhz|Mhz|MHz|MHZ).*", "$2")) * 1000000);
 	}
 }
