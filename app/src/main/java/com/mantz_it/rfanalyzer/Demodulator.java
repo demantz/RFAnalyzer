@@ -59,14 +59,14 @@ public class Demodulator extends Thread {
 														3000,	// AM
 														3000,	// nFM
 														50000,	// wFM
-														3000,	// LSB
-														3000};	// USB
+														1500,	// LSB
+														1500};	// USB
 	private static final int[] MAX_USER_FILTER_WIDTH = {0,		// off
 														15000,	// AM
 														15000,	// nFM
 														120000,	// wFM
-														15000,	// LSB
-														15000}; // USB
+														5000,	// LSB
+														5000};  // USB
 
 	// DEMODULATION
 	private SamplePacket demodulatorHistory;	// used for FM demodulation
@@ -130,7 +130,7 @@ public class Demodulator extends Thread {
 		}
 		this.decimator.setOutputSampleRate(QUADRATURE_RATE[demodulationMode]);
 		this.demodulationMode = demodulationMode;
-		this.userFilterCutOff = MAX_USER_FILTER_WIDTH[demodulationMode];
+		this.userFilterCutOff = (MAX_USER_FILTER_WIDTH[demodulationMode] + MIN_USER_FILTER_WIDTH[demodulationMode])/2;
 	}
 
 	/**
@@ -326,16 +326,21 @@ public class Demodulator extends Thread {
 		float[] reIn = input.re();
 		float[] imIn = input.im();
 		float[] reOut = output.re();
-		float gain = 1/lastMax;
-		lastMax = 0;
+		float avg = 0;
 
 		// Complex to magnitude
 		for (int i = 0; i < input.size(); i++) {
 			reOut[i] = (reIn[i] * reIn[i] + imIn[i] * imIn[i]);
+			avg += reOut[i];
 			if(reOut[i] > lastMax)
 				lastMax = reOut[i];
-			reOut[i] = reOut[i] * gain - 0.5f;
 		}
+		avg = avg / input.size();
+
+		// normalize values:
+		float gain = 1/lastMax;
+		for (int i = 0; i < output.size(); i++)
+			reOut[i] = reOut[i] - avg;
 
 		output.setSize(input.size());
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
@@ -352,8 +357,6 @@ public class Demodulator extends Thread {
 	 */
 	private void demodulateSSB(SamplePacket input, SamplePacket output, boolean upperBand) {
 		float[] reOut = output.re();
-		float gain = 1/lastMax;
-		lastMax = 0;
 
 		// complex band pass:
 		if(bandPassFilter == null
@@ -378,11 +381,14 @@ public class Demodulator extends Thread {
 			Log.e(LOGTAG, "demodulateSSB: could not filter all samples from input packet.");
 		}
 
-		// gain control
+		// gain control: searching for max:
 		for (int i = 0; i < output.size(); i++) {
 			if(reOut[i] > lastMax)
 				lastMax = reOut[i];
-			reOut[i] = reOut[i] * gain;
 		}
+		// normalize values:
+		float gain = 1/lastMax;
+		for (int i = 0; i < output.size(); i++)
+			reOut[i] *= gain;
 	}
 }

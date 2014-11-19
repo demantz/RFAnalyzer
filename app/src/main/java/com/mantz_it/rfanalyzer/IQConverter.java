@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer;
 
+
 /**
  * <h1>RF Analyzer - IQ Converter</h1>
  *
@@ -35,7 +36,7 @@ public abstract class IQConverter {
 	protected float[][] cosineImagLookupTable = null;	// Lookup table to transform IQ bytes into frequency shifted doubles
 	protected int cosineFrequency;						// Frequency of the cosine that is mixed to the signal
 	protected int cosineIndex;							// current index within the cosine
-	protected static final int MAX_COSINE_LENGTH = 50;	// Max length of the cosine lookup table
+	protected static final int MAX_COSINE_LENGTH = 500;	// Max length of the cosine lookup table
 
 	public IQConverter() {
 		generateLookupTable();
