@@ -24,7 +24,7 @@ Implemented Features
 * Automatic re-tune while scrolling and zooming
 * Auto scale the vertical axis
 * Jump directly to a frequency
-* Adjust the gain settings of the HackRF
+* Adjust the gain settings of the HackRF / RTL-SDR dongle
 * Select a pre-recorded file as source instead of a real HackRF
 * Change the FFT size
 * Change FFT drawing mode: Line or Bars
@@ -33,10 +33,12 @@ Implemented Features
 * Averaging
 * Setting the frame rate either to a fixed value or to automatic control
 * Activate logging and showing the log file
-* Demodulate nFM, wFM and AM
+* Demodulate nFM, wFM, AM, LSB and USB with adjustable filters
 * Adjust squelch and channel width
 * Change the proportion of spectrum and waterfall
-* (NEW) Support for RTL-SDR dongles
+* Support for RTL-SDR dongles
+* Record the raw IQ samples to a file and select files as source
+* Select a fixed frequency shift (for upconverters)
 
 
 Testet Devices

@@ -1,5 +1,17 @@
 CHANGELOG - RF Analyzer
 
+version 1.10
+ - Added single sideband demodulation (LSB and USB)
+ - Added raw IQ recording
+ - Shift displayed frequencies by an offset (for upconverters)
+ - Improvements:
+    - No averaging in waterfall
+    - Tap to select demodulation frequency; Needle is fixed while scrolling
+    - Auto-detect file source settings (frequency, sample rate) based on the selected file name
+    - Adding Android 5.0 (Lollipop) to supported Android versions
+    - Using hackrf_android 1.09
+    - Bugfixes
+
 version 1.09
  - RTL-SDR support (EXPERIMENTAL)
  - Updating hackrf_android libary to version 1.08

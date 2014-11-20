@@ -8,8 +8,8 @@ android {
         applicationId "com.mantz_it.rfanalyzer"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 9
-        versionName "1.09"
+        versionCode 10
+        versionName "1.10"
     }
     buildTypes {
         release {
