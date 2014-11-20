@@ -28,6 +28,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -1218,7 +1219,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
 
 		// Get references to the GUI components:
-		final LinearLayout view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.start_recording, null);
+		final ScrollView view = (ScrollView) this.getLayoutInflater().inflate(R.layout.start_recording, null);
 		final EditText et_filename = (EditText) view.findViewById(R.id.et_recording_filename);
 		final EditText et_frequency = (EditText) view.findViewById(R.id.et_recording_frequency);
 		final Spinner sp_sampleRate = (Spinner) view.findViewById(R.id.sp_recording_sampleRate);

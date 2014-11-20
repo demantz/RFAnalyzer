@@ -327,6 +327,7 @@ public class Demodulator extends Thread {
 		float[] imIn = input.im();
 		float[] reOut = output.re();
 		float avg = 0;
+		lastMax *= 0.95;	// simplest AGC
 
 		// Complex to magnitude
 		for (int i = 0; i < input.size(); i++) {
@@ -338,9 +339,9 @@ public class Demodulator extends Thread {
 		avg = avg / input.size();
 
 		// normalize values:
-		float gain = 1/lastMax;
+		float gain = 0.75f/lastMax;
 		for (int i = 0; i < output.size(); i++)
-			reOut[i] = reOut[i] - avg;
+			reOut[i] = (reOut[i] - avg) * gain;
 
 		output.setSize(input.size());
 		output.setSampleRate(QUADRATURE_RATE[demodulationMode]);
@@ -382,12 +383,13 @@ public class Demodulator extends Thread {
 		}
 
 		// gain control: searching for max:
+		lastMax *= 0.95;	// simplest AGC
 		for (int i = 0; i < output.size(); i++) {
 			if(reOut[i] > lastMax)
 				lastMax = reOut[i];
 		}
 		// normalize values:
-		float gain = 1/lastMax;
+		float gain = 0.75f/lastMax;
 		for (int i = 0; i < output.size(); i++)
 			reOut[i] *= gain;
 	}
