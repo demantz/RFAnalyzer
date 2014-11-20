@@ -157,9 +157,9 @@
         <item>20</item>
     </string-array>
     <string-array name="pref_fontSize_entries">
-        <item>small</item>
-        <item>medium</item>
-        <item>large</item>
+        <item>Smaller</item>
+        <item>Normal</item>
+        <item>Larger</item>
     </string-array>
     <string-array name="pref_fontSize_values">
         <item>1</item>
