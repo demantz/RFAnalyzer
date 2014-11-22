@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface {
 	private Hackrf hackrf = null;
+	private String name = null;
 	private Callback callback = null;
 	private ArrayBlockingQueue<byte[]> queue = null;
 	private long frequency = 0;
@@ -119,13 +120,16 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public String getName() {
-		if(hackrf != null) {
+		if(name == null && hackrf != null) {
 			try {
-				return Hackrf.convertBoardIdToString(hackrf.getBoardID());
+				name = Hackrf.convertBoardIdToString(hackrf.getBoardID());
 			} catch (HackrfUsbException e) {
 			}
 		}
-		return "HackRF";
+		if(name != null)
+			return name;
+		else
+			return "HackRF";
 	}
 
 	@Override
