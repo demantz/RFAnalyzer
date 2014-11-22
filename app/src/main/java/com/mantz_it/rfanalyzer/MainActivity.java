@@ -1429,17 +1429,22 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 */
 	@Override
 	public boolean onUpdateChannelWidth(int newChannelWidth) {
-		return demodulator.setChannelWidth(newChannelWidth);
+		if(demodulator != null)
+			return demodulator.setChannelWidth(newChannelWidth);
+		else
+			return false;
 	}
 
 	@Override
 	public void onUpdateChannelFrequency(long newChannelFrequency) {
-		scheduler.setChannelFrequency(newChannelFrequency);
+		if(scheduler != null)
+			scheduler.setChannelFrequency(newChannelFrequency);
 	}
 
 	@Override
 	public void onUpdateSquelchSatisfied(boolean squelchSatisfied) {
-		scheduler.setSquelchSatisfied(squelchSatisfied);
+		if(scheduler != null)
+			scheduler.setSquelchSatisfied(squelchSatisfied);
 	}
 
 	@Override
