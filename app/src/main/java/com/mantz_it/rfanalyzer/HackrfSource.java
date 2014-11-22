@@ -48,7 +48,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private int lnaGain = 0;
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
-	private int upconverterFrequencyShift = 0;	// virtually shift the frequency according to an external upconverter
+	private int frequencyShift = 0;	// virtually shift the frequency according to an external up/down-converter
 	private IQConverter iqConverter;
 	private static final String LOGTAG = "HackRFSource";
 	public static final long MIN_FREQUENCY = 1l;
@@ -130,16 +130,16 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public long getFrequency() {
-		return frequency - upconverterFrequencyShift;
+		return frequency + frequencyShift;
 	}
 
 	@Override
 	public void setFrequency(long frequency) {
-		frequency += upconverterFrequencyShift; // correct frequency
+		long actualFrequency = frequency - frequencyShift;
 		// re-tune the hackrf:
 		if(hackrf != null) {
 			try {
-				hackrf.setFrequency(frequency);
+				hackrf.setFrequency(actualFrequency);
 			} catch (HackrfUsbException e) {
 				Log.e(LOGTAG, "setFrequency: Error while setting frequency: " + e.getMessage());
 				reportError("Error while setting frequency");
@@ -151,18 +151,18 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		this.flushQueue();
 
 		// Store the new frequency
-		this.frequency = frequency;
+		this.frequency = actualFrequency;
 		this.iqConverter.setFrequency(frequency);
 	}
 
 	@Override
 	public long getMaxFrequency() {
-		return MAX_FREQUENCY - upconverterFrequencyShift;
+		return MAX_FREQUENCY + frequencyShift;
 	}
 
 	@Override
 	public long getMinFrequency() {
-		return MIN_FREQUENCY - upconverterFrequencyShift;
+		return MIN_FREQUENCY + frequencyShift;
 	}
 
 	@Override
@@ -352,12 +352,13 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		this.antennaPower = antennaPower;
 	}
 
-	public int getUpconverterFrequencyShift() {
-		return upconverterFrequencyShift;
+	public int getFrequencyShift() {
+		return frequencyShift;
 	}
 
-	public void setUpconverterFrequencyShift(int upconverterFrequencyShift) {
-		this.upconverterFrequencyShift = upconverterFrequencyShift;
+	public void setFrequencyShift(int frequencyShift) {
+		this.frequencyShift = frequencyShift;
+		this.iqConverter.setFrequency(frequency+frequencyShift);
 	}
 
 	@Override

@@ -1,10 +1,6 @@
 package com.mantz_it.rfanalyzer;
 
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.util.Log;
 
 import java.io.IOException;
@@ -81,7 +77,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	private boolean manualGain = true;	// true == manual; false == automatic
 	private int frequencyCorrection = 0;
 	private boolean automaticGainControl = false;
-	private int upconverterFrequencyShift = 0;	// virtually shift the frequency according to an external upconverter
+	private int frequencyShift = 0;	// virtually shift the frequency according to an external up/down-converter
 	private IQConverter iqConverter;
 	private static final String LOGTAG = "RtlsdrSource";
 	private static final int QUEUE_SIZE = 20;
@@ -232,37 +228,37 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public long getFrequency() {
-		return frequency - upconverterFrequencyShift;
+		return frequency + frequencyShift;
 	}
 
 	@Override
 	public void setFrequency(long frequency) {
-		frequency += upconverterFrequencyShift;		// correct frequency
+		long actualSourceFrequency = frequency - frequencyShift;
 		if(isOpen()) {
-			if(frequency < getMinFrequency() || frequency > getMaxFrequency()) {
+			if(actualSourceFrequency < getMinFrequency() || actualSourceFrequency > getMaxFrequency()) {
 				Log.e(LOGTAG, "setFrequency: Frequency out of valid range: " + frequency
-								+ "  (upconverterFrequency="+upconverterFrequencyShift+" was added!)");
+								+ "  (upconverterFrequency="+ frequencyShift +" is subtracted!)");
 				return;
 			}
 
-			commandThread.executeFrequencyChangeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int) frequency));
+			commandThread.executeFrequencyChangeCommand(commandToByteArray(RTL_TCP_COMMAND_SET_FREQUENCY, (int) actualSourceFrequency));
 		}
 
 		// Flush the queue:
 		this.flushQueue();
 
-		this.frequency = frequency;
+		this.frequency = actualSourceFrequency;
 		this.iqConverter.setFrequency(frequency);
 	}
 
 	@Override
 	public long getMaxFrequency() {
-		return MAX_FREQUENCY[tuner] - upconverterFrequencyShift;
+		return MAX_FREQUENCY[tuner] + frequencyShift;
 	}
 
 	@Override
 	public long getMinFrequency() {
-		return MIN_FREQUENCY[tuner] - upconverterFrequencyShift;
+		return MIN_FREQUENCY[tuner] + frequencyShift;
 	}
 
 	@Override
@@ -378,12 +374,13 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.automaticGainControl = enable;
 	}
 
-	public int getUpconverterFrequencyShift() {
-		return upconverterFrequencyShift;
+	public int getFrequencyShift() {
+		return frequencyShift;
 	}
 
-	public void setUpconverterFrequencyShift(int upconverterFrequencyShift) {
-		this.upconverterFrequencyShift = upconverterFrequencyShift;
+	public void setFrequencyShift(int frequencyShift) {
+		this.frequencyShift = frequencyShift;
+		this.iqConverter.setFrequency(frequency + frequencyShift);
 	}
 
 	@Override
@@ -710,12 +707,11 @@ public class RtlsdrSource implements IQSourceInterface {
 				// Check if parameters are in range and correct them:
 				if(frequency > MAX_FREQUENCY[tuner]) {
 					frequency = MAX_FREQUENCY[tuner];
-					iqConverter.setFrequency(frequency);
 				}
 				if(frequency < MIN_FREQUENCY[tuner]) {
 					frequency = MIN_FREQUENCY[tuner];
-					iqConverter.setFrequency(frequency);
 				}
+				iqConverter.setFrequency(frequency + frequencyShift);
 				if(sampleRate > getMaxSampleRate())
 					sampleRate = getMaxSampleRate();
 				if(sampleRate < getMinSampleRate())

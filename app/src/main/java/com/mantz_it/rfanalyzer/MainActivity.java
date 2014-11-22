@@ -7,14 +7,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -512,13 +510,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						// overwrite hackrf source settings if changed:
 						boolean amp = preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false);
 						boolean antennaPower = preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false);
-						int upconverterFrequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_hackrf_upconverterFrequencyShift), "0"));
+						int frequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_hackrf_frequencyShift), "0"));
 						if(((HackrfSource)source).isAmplifierOn() != amp)
 							((HackrfSource)source).setAmplifier(amp);
 						if(((HackrfSource)source).isAntennaPowerOn() != antennaPower)
 							((HackrfSource)source).setAntennaPower(antennaPower);
-						if(((HackrfSource)source).getUpconverterFrequencyShift() != upconverterFrequencyShift)
-							((HackrfSource)source).setUpconverterFrequencyShift(upconverterFrequencyShift);
+						if(((HackrfSource)source).getFrequencyShift() != frequencyShift)
+							((HackrfSource)source).setFrequencyShift(frequencyShift);
 					}
 					break;
 				case RTLSDR_SOURCE:
@@ -547,11 +545,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 						// otherwise just overwrite rtl-sdr source settings if changed:
 						int frequencyCorrection = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0"));
-						int upconverterFrequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_upconverterFrequencyShift), "0"));
+						int frequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyShift), "0"));
 						if(frequencyCorrection != ((RtlsdrSource) source).getFrequencyCorrection())
 							((RtlsdrSource) source).setFrequencyCorrection(frequencyCorrection);
-						if(((RtlsdrSource)source).getUpconverterFrequencyShift() != upconverterFrequencyShift)
-							((RtlsdrSource)source).setUpconverterFrequencyShift(upconverterFrequencyShift);
+						if(((RtlsdrSource)source).getFrequencyShift() != frequencyShift)
+							((RtlsdrSource)source).setFrequencyShift(frequencyShift);
 					}
 					break;
 				default:
@@ -625,8 +623,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.pref_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN/2));
 						((HackrfSource) source).setAmplifier(preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false));
 						((HackrfSource) source).setAntennaPower(preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false));
-						((HackrfSource)source).setUpconverterFrequencyShift(Integer.valueOf(
-								preferences.getString(getString(R.string.pref_hackrf_upconverterFrequencyShift), "0")));
+						((HackrfSource)source).setFrequencyShift(Integer.valueOf(
+								preferences.getString(getString(R.string.pref_hackrf_frequencyShift), "0")));
 						break;
 			case RTLSDR_SOURCE:
 						// Create RtlsdrSource
@@ -645,8 +643,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						source.setSampleRate(sampleRate);
 
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
-						((RtlsdrSource)source).setUpconverterFrequencyShift(Integer.valueOf(
-								preferences.getString(getString(R.string.pref_rtlsdr_upconverterFrequencyShift), "0")));
+						((RtlsdrSource)source).setFrequencyShift(Integer.valueOf(
+								preferences.getString(getString(R.string.pref_rtlsdr_frequencyShift), "0")));
 						((RtlsdrSource)source).setManualGain(preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false));
 						((RtlsdrSource)source).setAutomaticGainControl(preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false));
 						if(((RtlsdrSource)source).isManualGain()) {
