@@ -409,7 +409,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.fontSize = fontSize;
 		this.textPaint.setTextSize(normalTextSize);
 		this.textSmallPaint.setTextSize(smallTextSize);
-		Log.i(LOGTAG, "setFontSize: X-dpi=" + getResources().getDisplayMetrics().xdpi +
+		Log.i(LOGTAG, "setFontSize: X-dpi=" + getResources().getDisplayMetrics().xdpi + " X-width=" +
+				getResources().getDisplayMetrics().widthPixels +
 				"  fontSize="+fontSize+"  normalTextSize="+normalTextSize+"  smallTextSize="+smallTextSize);
 	}
 
@@ -1335,6 +1336,35 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		String text;
 		float yPos = height * 0.01f;
 		float rightBorder = width * 0.99f;
+
+		// Source name and information
+		if(source != null) {
+			// Name
+			text = source.getName();
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			yPos += bounds.height() * 1.1f;
+
+			// HackRF specific stuff:
+			if(source instanceof HackrfSource) {
+				text = String.format("shift=%4.6f MHz", ((HackrfSource)source).getFrequencyShift()/1000000f);
+				textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+				c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+				yPos += bounds.height() * 1.1f;
+			}
+			// RTLSDR specific stuff:
+			if(source instanceof RtlsdrSource) {
+				text = String.format("shift=%4.6f MHz", ((RtlsdrSource)source).getFrequencyShift()/1000000f);
+				textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+				c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+				yPos += bounds.height() * 1.1f;
+
+				text = "ppm=" + ((RtlsdrSource)source).getFrequencyCorrection();
+				textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+				c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+				yPos += bounds.height() * 1.1f;
+			}
+		}
 
 		// Draw the channel frequency if demodulation is enabled:
 		if(demodulationEnabled) {

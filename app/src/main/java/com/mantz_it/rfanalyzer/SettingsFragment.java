@@ -9,14 +9,12 @@ import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
 import android.provider.MediaStore;
-import android.view.View;
 import android.widget.Toast;
 
 import java.io.File;
@@ -182,11 +180,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		listPref = (ListPreference) findPreference(getString(R.string.pref_filesource_format));
 		listPref.setSummary(getString(R.string.pref_filesource_format_summ, listPref.getEntry()));
 
-		// HackRF upconverter frequency shift
-		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_upconverterFrequencyShift));
+		// HackRF frequency shift
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_frequencyShift));
 		if(editTextPref.getText().length() == 0)
 			editTextPref.setText("0");
-		editTextPref.setSummary(getString(R.string.pref_hackrf_upconverterFrequencyShift_summ, editTextPref.getText()));
+		editTextPref.setSummary(getString(R.string.pref_hackrf_frequencyShift_summ, editTextPref.getText()));
 
 		// RTL-SDR IP
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_ip));
@@ -202,11 +200,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 			editTextPref.setText(getString(R.string.pref_rtlsdr_frequencyCorrection_default));
 		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyCorrection_summ, editTextPref.getText()));
 
-		// RTL-SDR upconverter frequency shift
-		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_upconverterFrequencyShift));
+		// RTL-SDR frequency shift
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyShift));
 		if(editTextPref.getText().length() == 0)
 			editTextPref.setText("0");
-		editTextPref.setSummary(getString(R.string.pref_rtlsdr_upconverterFrequencyShift_summ, editTextPref.getText()));
+		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyShift_summ, editTextPref.getText()));
 
 		// FFT size
 		listPref = (ListPreference) findPreference(getString(R.string.pref_fftSize));

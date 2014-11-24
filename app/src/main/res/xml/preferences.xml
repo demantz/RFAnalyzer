@@ -64,11 +64,11 @@
                     android:summaryOff="@string/pref_hackrf_antennaPower_summ_off"
                     android:defaultValue="false" />
                 <EditTextPreference
-                    android:key="@string/pref_hackrf_upconverterFrequencyShift"
-                    android:title="@string/pref_hackrf_upconverterFrequencyShift_title"
-                    android:dialogTitle="@string/pref_hackrf_upconverterFrequencyShift_title"
+                    android:key="@string/pref_hackrf_frequencyShift"
+                    android:title="@string/pref_hackrf_frequencyShift_title"
+                    android:dialogTitle="@string/pref_hackrf_frequencyShift_title"
                     android:defaultValue="0"
-                    android:inputType="number"/>
+                    android:inputType="number|numberSigned"/>
             </PreferenceCategory>
             <PreferenceCategory
                 android:key="@string/pref_rtlsdr_category"
@@ -99,11 +99,11 @@
                     android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default"
                     android:inputType="number|numberSigned"/>
                 <EditTextPreference
-                    android:key="@string/pref_rtlsdr_upconverterFrequencyShift"
-                    android:title="@string/pref_rtlsdr_upconverterFrequencyShift_title"
-                    android:dialogTitle="@string/pref_rtlsdr_upconverterFrequencyShift_title"
+                    android:key="@string/pref_rtlsdr_frequencyShift"
+                    android:title="@string/pref_rtlsdr_frequencyShift_title"
+                    android:dialogTitle="@string/pref_rtlsdr_frequencyShift_title"
                     android:defaultValue="0"
-                    android:inputType="number"/>
+                    android:inputType="number|numberSigned"/>
             </PreferenceCategory>
         </PreferenceScreen>
         <ListPreference
