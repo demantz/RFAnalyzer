@@ -1,5 +1,10 @@
 CHANGELOG - RF Analyzer
 
+version 1.11
+ - Switched to Material design for Android 5.0 devices
+ - Fixed 'Shift' setting (was broken in 1.10)
+ - Minor bug fixes
+
 version 1.10
  - Added single sideband demodulation (LSB and USB)
  - Added raw IQ recording
