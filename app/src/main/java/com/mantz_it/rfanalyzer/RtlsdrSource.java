@@ -90,12 +90,12 @@ public class RtlsdrSource implements IQSourceInterface {
 												24000000l,	// R820T
 												24000000l};	// R828D
 	public static final long[] MAX_FREQUENCY = { 0l,			// invalid
-												2200000000l,	// E4000
-												948000000l,		// FC0012
-												1100000000l,	// FC0013
-												924000000l,		// FC2580
-												1766000000l,	// R820T
-												1766000000l};	// R828D
+												3000000000l,	// E4000		actual max freq: 2200000000l
+												3000000000l,	// FC0012		actual max freq: 948000000l
+												3000000000l,	// FC0013		actual max freq: 1100000000l
+												3000000000l,	// FC2580		actual max freq: 924000000l
+												3000000000l,	// R820T		actual max freq: 1766000000l
+												3000000000l};	// R828D		actual max freq: 1766000000l
 	public static final int[][] POSSIBLE_GAIN_VALUES = {	// Values from gr_osmocom rt_tcp_source_s.cc:
 			{0},																		// invalid
 			{-10, 15, 40, 65, 90, 115, 140, 165, 190, 215, 240, 290, 340, 420},			// E4000

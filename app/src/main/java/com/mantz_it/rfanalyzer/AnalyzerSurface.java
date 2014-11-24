@@ -409,7 +409,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.fontSize = fontSize;
 		this.textPaint.setTextSize(normalTextSize);
 		this.textSmallPaint.setTextSize(smallTextSize);
-		Log.i(LOGTAG, "setFontSize: X-dpi=" + getResources().getDisplayMetrics().xdpi +
+		Log.i(LOGTAG, "setFontSize: X-dpi=" + getResources().getDisplayMetrics().xdpi + " X-width=" +
+				getResources().getDisplayMetrics().widthPixels +
 				"  fontSize="+fontSize+"  normalTextSize="+normalTextSize+"  smallTextSize="+smallTextSize);
 	}
 
