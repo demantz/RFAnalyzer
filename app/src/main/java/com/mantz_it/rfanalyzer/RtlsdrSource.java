@@ -235,7 +235,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	public void setFrequency(long frequency) {
 		long actualSourceFrequency = frequency - frequencyShift;
 		if(isOpen()) {
-			if(actualSourceFrequency < getMinFrequency() || actualSourceFrequency > getMaxFrequency()) {
+			if(frequency < getMinFrequency() || frequency > getMaxFrequency()) {
 				Log.e(LOGTAG, "setFrequency: Frequency out of valid range: " + frequency
 								+ "  (upconverterFrequency="+ frequencyShift +" is subtracted!)");
 				return;
