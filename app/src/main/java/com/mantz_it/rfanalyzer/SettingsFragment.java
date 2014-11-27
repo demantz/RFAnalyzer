@@ -126,13 +126,14 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 				case FILESOURCE_RESULT_CODE:
 					Uri uri = data.getData();
 					if (uri != null) {
-						if(uri.toString().startsWith("file://")) {
-							((EditTextPreference) findPreference(getString(R.string.pref_filesource_file)))
-									.setText(uri.toString().substring(7).replaceAll("%20", " "));
+						String filepath = FileUtils.getPath(getActivity(), uri);
+						if(filepath != null) {
+							((EditTextPreference) findPreference(getString(R.string.pref_filesource_file))).setText(filepath);
 							updateFileSourcePrefs();
 						}
-						else
-							Toast.makeText(SettingsFragment.this.getActivity(), "Not a local file: " + uri.toString(), Toast.LENGTH_LONG).show();
+						else {
+							Toast.makeText(SettingsFragment.this.getActivity(), "Can't resolve file path from: " + uri.toString(), Toast.LENGTH_LONG).show();
+						}
 					}
 					break;
 				default:
