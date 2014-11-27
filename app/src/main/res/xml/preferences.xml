@@ -189,6 +189,12 @@
             android:entries="@array/pref_fontSize_entries"
             android:entryValues="@array/pref_fontSize_values"
             android:defaultValue="@string/pref_fontSize_default" />
+        <SwitchPreference
+            android:key="@string/pref_relativeFrequencies"
+            android:title="@string/pref_relativeFrequencies_title"
+            android:summaryOn="@string/pref_relativeFrequencies_summ_on"
+            android:summaryOff="@string/pref_relativeFrequencies_summ_off"
+            android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceScreen
         android:key="@string/pref_advancedSettings"

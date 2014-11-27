@@ -180,4 +180,9 @@
         <item>sec</item>
         <item>min</item>
     </string-array>
+    <string-array name="tune_to_frequency_bandwidth_unit">
+        <item>MHz</item>
+        <item>KHz</item>
+        <item>Hz</item>
+    </string-array>
 </resources>

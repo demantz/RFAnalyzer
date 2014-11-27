@@ -104,6 +104,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private long lastFrequency;				// Center frequency of the last packet of fft samples
 	private int lastSampleRate;				// Sample rate of the last packet of fft samples
 
+	private boolean displayRelativeFrequencies = false; // indicates whether frequencies on the horizontal axis should be
+														// relative to the center frequency (true) or absolute (false)
+
 	private boolean recordingEnabled = false;		// indicates whether recording is currently running or not
 
 	private boolean demodulationEnabled = false;	// indicates whether demodulation is enabled or disabled
@@ -379,6 +382,21 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void setShowUpperBand(boolean showUpperBand) {
 		this.showUpperBand = showUpperBand;
+	}
+
+	/**
+	 * @return true if frequencies on the horizontal axis are displayed relative to center freq; false if absolute
+	 */
+	public boolean isDisplayRelativeFrequencies() {
+		return displayRelativeFrequencies;
+	}
+
+	/**
+	 * @param displayRelativeFrequencies true if frequencies on the horizontal axis should be displayed relative to
+	 *                                   center freq; false if absolute
+	 */
+	public void setDisplayRelativeFrequencies(boolean displayRelativeFrequencies) {
+		this.displayRelativeFrequencies = displayRelativeFrequencies;
 	}
 
 	/**
@@ -1184,7 +1202,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		float pixelPerMinorTick = width / (virtualSampleRate/(float)tickSize);
 
 		// Calculate the frequency at the left most point of the fft:
-		long startFrequency = (long) (virtualFrequency - (virtualSampleRate/2.0));
+		long startFrequency;
+		if(displayRelativeFrequencies)
+			startFrequency = (long) (-1 * (virtualSampleRate/2.0));
+		else
+			startFrequency = (long) (virtualFrequency - (virtualSampleRate/2.0));
 
 		// Calculate the frequency and position of the first Tick (ticks are every <tickSize> KHz)
 		long tickFreq = (long) (Math.ceil((double) startFrequency/(float)tickSize) * tickSize);
@@ -1345,6 +1367,20 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
 			yPos += bounds.height() * 1.1f;
 
+			// Frequency
+			text = String.format("tuned to %4.6f MHz", source.getFrequency()/1000000f);
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+			yPos += bounds.height() * 1.1f;
+
+			// Center Frequency
+			if(displayRelativeFrequencies) {
+				text = String.format("centered at %4.6f MHz", virtualFrequency / 1000000f);
+				textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+				c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+				yPos += bounds.height() * 1.1f;
+			}
+
 			// HackRF specific stuff:
 			if(source instanceof HackrfSource) {
 				text = String.format("shift=%4.6f MHz", ((HackrfSource)source).getFrequencyShift()/1000000f);
@@ -1368,7 +1404,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 		// Draw the channel frequency if demodulation is enabled:
 		if(demodulationEnabled) {
-			text = String.format("%4.6f MHz", channelFrequency/1000000f);
+			text = String.format("demod at %4.6f MHz", channelFrequency/1000000f);
 			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
 			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
 

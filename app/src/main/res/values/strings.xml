@@ -27,6 +27,7 @@
     <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
     <string name="rtl2832u_is_not_installed">RTL2832U driver is not installed</string>
     <string name="warning_recording_is_running">Warning: Recording is running!</string>
+    <string name="tuneToFrequency_setFrequencyRange">Set bandwidth:</string>
     <string name="recording_filename">File name:</string>
     <string name="recording_frequency">Center frequency (Hz or MHz):</string>
     <string name="recording_sampleRate">Sample rate:</string>
@@ -43,6 +44,9 @@
     <string name="save_state_maxDB">save_state_maxDB</string>
     <string name="pref_frequency">pref_frequency</string>
     <string name="pref_sampleRate">pref_sampleRate</string>
+    <string name="pref_tune_to_frequency_setBandwidth">pref_tune_to_frequency_setBandwidth</string>
+    <string name="pref_tune_to_frequency_bandwidth">pref_tune_to_frequency_bandwidth</string>
+    <string name="pref_tune_to_frequency_bandwidthUnit">pref_tune_to_frequency_bandwidthUnit</string>
     <string name="pref_recordingSampleRate">pref_recordingSampleRate</string>
     <string name="pref_recordingStopAfterEnabled">pref_recordingStopAfterEnabled</string>
     <string name="pref_recordingStopAfterValue">pref_recordingStopAfterValue</string>
@@ -163,6 +167,10 @@
     <string name="pref_decoupledAxis_title">Separate horizontal/vertical zoom/scroll</string>
     <string name="pref_decoupledAxis_summ_on">Vertical zoom/scroll only in the left area</string>
     <string name="pref_decoupledAxis_summ_off">Vertical zoom/scroll everywhere</string>
+    <string name="pref_relativeFrequencies">pref_relativeFrequencies</string>
+    <string name="pref_relativeFrequencies_title">Relative Frequencies</string>
+    <string name="pref_relativeFrequencies_summ_on">Frequencies are displayed relative to center frequency</string>
+    <string name="pref_relativeFrequencies_summ_off">Frequencies are displayed absolute</string>
     <string name="pref_advancedSettings">pref_advancedSettings</string>
     <string name="pref_advancedSettings_title">Advanced Settings</string>
     <string name="pref_fontSize">pref_fontSize</string>

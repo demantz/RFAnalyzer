@@ -135,6 +135,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 		analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 		analyzerSurface.setDecoupledAxis(preferences.getBoolean(getString(R.string.pref_decoupledAxis), false));
+		analyzerSurface.setDisplayRelativeFrequencies(preferences.getBoolean(getString(R.string.pref_relativeFrequencies), false));
 		analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 		analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
 		analyzerSurface.setFftRatio(Float.valueOf(preferences.getString(getString(R.string.pref_spectrumWaterfallRatio), "0.5")));
@@ -561,6 +562,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setVerticalScrollEnabled(preferences.getBoolean(getString(R.string.pref_scrollDB), true));
 			analyzerSurface.setVerticalZoomEnabled(preferences.getBoolean(getString(R.string.pref_zoomDB), true));
 			analyzerSurface.setDecoupledAxis(preferences.getBoolean(getString(R.string.pref_decoupledAxis), false));
+			analyzerSurface.setDisplayRelativeFrequencies(preferences.getBoolean(getString(R.string.pref_relativeFrequencies), false));
 			analyzerSurface.setWaterfallColorMapType(Integer.valueOf(preferences.getString(getString(R.string.pref_colorMapType),"4")));
 			analyzerSurface.setFftDrawingType(Integer.valueOf(preferences.getString(getString(R.string.pref_fftDrawingType),"2")));
 			analyzerSurface.setAverageLength(Integer.valueOf(preferences.getString(getString(R.string.pref_averaging),"0")));
@@ -957,10 +959,27 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		final double maxFreqMHz = source.getMaxFrequency() / 1000000f;
 
 		final LinearLayout ll_view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.tune_to_frequency, null);
-		final EditText et_input = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency);
+		final EditText et_frequency = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency);
+		final CheckBox cb_bandwidth = (CheckBox) ll_view.findViewById(R.id.cb_tune_to_frequency_bandwidth);
+		final EditText et_bandwidth = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency_bandwidth);
+		final Spinner sp_bandwidthUnit = (Spinner) ll_view.findViewById(R.id.sp_tune_to_frequency_bandwidth_unit);
 		final TextView tv_warning = (TextView) ll_view.findViewById(R.id.tv_tune_to_frequency_warning);
+
+		// Show warning if we are currently recording to file:
 		if(recordingFile != null)
 			tv_warning.setVisibility(View.VISIBLE);
+
+		cb_bandwidth.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_bandwidth.setEnabled(isChecked);
+				sp_bandwidthUnit.setEnabled(isChecked);
+			}
+		});
+		cb_bandwidth.toggle();	// to trigger the onCheckedChangeListener at least once to set inital state
+		cb_bandwidth.setChecked(preferences.getBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), false));
+		et_bandwidth.setText(preferences.getString(getString(R.string.pref_tune_to_frequency_bandwidth), "1"));
+		sp_bandwidthUnit.setSelection(preferences.getInt(getString(R.string.pref_tune_to_frequency_bandwidthUnit), 0));
 
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
@@ -970,7 +989,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
 					try {
-						double newFreq = Double.valueOf(et_input.getText().toString());
+						float newFreq = source.getFrequency()/1000000f;
+						if(et_frequency.getText().length() != 0)
+							newFreq = Float.valueOf(et_frequency.getText().toString());
 						if (newFreq < maxFreqMHz)
 							newFreq = newFreq * 1000000;
 						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
@@ -978,6 +999,26 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							analyzerSurface.setVirtualFrequency((long)newFreq);
 							if(demodulationMode != Demodulator.DEMODULATION_OFF)
 								analyzerSurface.setDemodulationEnabled(true);	// This will re-adjust the channel freq correctly
+
+							// Set bandwidth (virtual sample rate):
+							if(cb_bandwidth.isChecked() && et_bandwidth.getText().length() != 0) {
+								float bandwidth = Float.valueOf(et_bandwidth.getText().toString());
+								if(sp_bandwidthUnit.getSelectedItemPosition() == 0)			//MHz
+									bandwidth *= 1000000;
+								else if(sp_bandwidthUnit.getSelectedItemPosition() == 1)	//KHz
+									bandwidth *= 1000;
+								if(bandwidth > source.getMaxSampleRate())
+									bandwidth = source.getMaxFrequency();
+								source.setSampleRate(source.getNextHigherOptimalSampleRate((int)bandwidth));
+								analyzerSurface.setVirtualSampleRate((int)bandwidth);
+							}
+							// safe preferences:
+							SharedPreferences.Editor edit = preferences.edit();
+							edit.putBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), cb_bandwidth.isChecked());
+							edit.putString(getString(R.string.pref_tune_to_frequency_bandwidth), et_bandwidth.getText().toString());
+							edit.putInt(getString(R.string.pref_tune_to_frequency_bandwidthUnit), sp_bandwidthUnit.getSelectedItemPosition());
+							edit.apply();
+
 						} else {
 							Toast.makeText(MainActivity.this, "Frequency is out of the valid range: " + (long)newFreq + " Hz", Toast.LENGTH_LONG).show();
 						}
