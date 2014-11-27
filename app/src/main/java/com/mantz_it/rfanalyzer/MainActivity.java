@@ -1019,6 +1019,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 						tv_hackrf_vga.setText("" + progress * HackrfSource.VGA_RX_GAIN_STEP_SIZE);
+						((HackrfSource)source).setVgaRxGain(progress*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
 					}
 
 					@Override
@@ -1033,6 +1034,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 						tv_hackrf_lna.setText("" + progress * HackrfSource.LNA_GAIN_STEP_SIZE);
+						((HackrfSource)source).setLnaGain(progress*HackrfSource.LNA_GAIN_STEP_SIZE);
 					}
 
 					@Override
@@ -1047,13 +1049,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				sb_hackrf_lna.setProgress(((HackrfSource) source).getLnaGain() / HackrfSource.LNA_GAIN_STEP_SIZE);
 
 				// Show dialog:
-				new AlertDialog.Builder(this)
+				AlertDialog hackrfDialog = new AlertDialog.Builder(this)
 						.setTitle("Adjust Gain Settings")
 						.setView(view_hackrf)
 						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int whichButton) {
-								((HackrfSource)source).setVgaRxGain(sb_hackrf_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
-								((HackrfSource)source).setLnaGain(sb_hackrf_lna.getProgress()*HackrfSource.LNA_GAIN_STEP_SIZE);
 								// safe preferences:
 								SharedPreferences.Editor edit = preferences.edit();
 								edit.putInt(getString(R.string.pref_hackrf_vgaRxGain), sb_hackrf_vga.getProgress()*HackrfSource.VGA_RX_GAIN_STEP_SIZE);
@@ -1066,8 +1066,21 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 								// do nothing
 							}
 						})
-						.show()
-						.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+						.create();
+				hackrfDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+					@Override
+					public void onDismiss(DialogInterface dialog) {
+						// sync source with (new/old) settings
+						int vgaRxGain = preferences.getInt(getString(R.string.pref_hackrf_vgaRxGain),HackrfSource.MAX_VGA_RX_GAIN/2);
+						int lnaGain = preferences.getInt(getString(R.string.pref_hackrf_lnaGain),HackrfSource.MAX_LNA_GAIN/2);
+						if(((HackrfSource)source).getVgaRxGain() != vgaRxGain)
+							((HackrfSource)source).setVgaRxGain(vgaRxGain);
+						if(((HackrfSource)source).getLnaGain() != lnaGain)
+							((HackrfSource)source).setLnaGain(lnaGain);
+					}
+				});
+				hackrfDialog.show();
+				hackrfDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 				break;
 			case RTLSDR_SOURCE:
 				final int[] possibleGainValues = ((RtlsdrSource)source).getPossibleGainValues();
@@ -1088,17 +1101,21 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				sw_rtlsdr_manual_gain.setOnCheckedChangeListener(new Switch.OnCheckedChangeListener() {
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+						sb_rtlsdr_gain.setEnabled(isChecked);
+						tv_rtlsdr_gain.setEnabled(isChecked);
+						sb_rtlsdr_ifGain.setEnabled(isChecked);
+						tv_rtlsdr_ifGain.setEnabled(isChecked);
+						((RtlsdrSource)source).setManualGain(isChecked);
 						if(isChecked) {
-							sb_rtlsdr_gain.setEnabled(true);
-							tv_rtlsdr_gain.setEnabled(true);
-							sb_rtlsdr_ifGain.setEnabled(true);
-							tv_rtlsdr_ifGain.setEnabled(true);
-						} else {
-							sb_rtlsdr_gain.setEnabled(false);
-							tv_rtlsdr_gain.setEnabled(false);
-							sb_rtlsdr_ifGain.setEnabled(false);
-							tv_rtlsdr_ifGain.setEnabled(false);
+							((RtlsdrSource) source).setGain(possibleGainValues[sb_rtlsdr_gain.getProgress()]);
+							((RtlsdrSource) source).setIFGain(possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
 						}
+					}
+				});
+				cb_rtlsdr_agc.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+					@Override
+					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+						((RtlsdrSource)source).setAutomaticGainControl(isChecked);
 					}
 				});
 				sb_rtlsdr_gain.setMax(possibleGainValues.length - 1);
@@ -1107,6 +1124,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 						tv_rtlsdr_gain.setText("" + possibleGainValues[progress]);
+						((RtlsdrSource) source).setGain(possibleGainValues[progress]);
 					}
 
 					@Override
@@ -1121,6 +1139,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 						tv_rtlsdr_ifGain.setText("" + possibleIFGainValues[progress]);
+						((RtlsdrSource) source).setIFGain(possibleIFGainValues[progress]);
 					}
 
 					@Override
@@ -1169,18 +1188,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				}
 
 				// Show dialog:
-				new AlertDialog.Builder(this)
+				AlertDialog rtlsdrDialog = new AlertDialog.Builder(this)
 						.setTitle("Adjust Gain Settings")
 						.setView(view_rtlsdr)
 						.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int whichButton) {
-								((RtlsdrSource)source).setManualGain(sw_rtlsdr_manual_gain.isChecked());
-								((RtlsdrSource)source).setAutomaticGainControl(cb_rtlsdr_agc.isChecked());
-								if(sw_rtlsdr_manual_gain.isChecked()) {
-									((RtlsdrSource) source).setGain(possibleGainValues[sb_rtlsdr_gain.getProgress()]);
-									((RtlsdrSource) source).setIFGain(possibleIFGainValues[sb_rtlsdr_ifGain.getProgress()]);
-								}
-
 								// safe preferences:
 								SharedPreferences.Editor edit = preferences.edit();
 								edit.putBoolean(getString(R.string.pref_rtlsdr_manual_gain), sw_rtlsdr_manual_gain.isChecked());
@@ -1195,8 +1207,28 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 								// do nothing
 							}
 						})
-						.show()
-						.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+						.create();
+				rtlsdrDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+					@Override
+					public void onDismiss(DialogInterface dialog) {
+						boolean manualGain = preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false);
+						boolean agc = preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false);
+						int gain = preferences.getInt(getString(R.string.pref_rtlsdr_gain), 0);
+						int ifGain = preferences.getInt(getString(R.string.pref_rtlsdr_ifGain), 0);
+						((RtlsdrSource)source).setGain(gain);
+						((RtlsdrSource)source).setIFGain(ifGain);
+						((RtlsdrSource)source).setManualGain(manualGain);
+						((RtlsdrSource)source).setAutomaticGainControl(agc);
+						if(manualGain) {
+							// Note: This is a workaround. After setting manual gain to true we must
+							// rewrite the manual gain values:
+							((RtlsdrSource) source).setGain(gain);
+							((RtlsdrSource) source).setIFGain(ifGain);
+						}
+					}
+				});
+				rtlsdrDialog.show();
+				rtlsdrDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 				break;
 			default:
 				Log.e(LOGTAG, "adjustGain: Invalid source type: " + sourceType);
