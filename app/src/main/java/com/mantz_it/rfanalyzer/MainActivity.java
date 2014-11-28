@@ -1139,6 +1139,34 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				final SeekBar sb_rtlsdr_ifGain = (SeekBar) view_rtlsdr.findViewById(R.id.sb_rtlsdr_ifgain);
 				final TextView tv_rtlsdr_gain = (TextView) view_rtlsdr.findViewById(R.id.tv_rtlsdr_gain);
 				final TextView tv_rtlsdr_ifGain = (TextView) view_rtlsdr.findViewById(R.id.tv_rtlsdr_ifgain);
+
+				// Assign current gain:
+				int gainIndex = 0;
+				int ifGainIndex = 0;
+				for (int i = 0; i < possibleGainValues.length; i++) {
+					if(((RtlsdrSource)source).getGain() == possibleGainValues[i]) {
+						gainIndex = i;
+						break;
+					}
+				}
+				for (int i = 0; i < possibleIFGainValues.length; i++) {
+					if(((RtlsdrSource)source).getIFGain() == possibleIFGainValues[i]) {
+						ifGainIndex = i;
+						break;
+					}
+				}
+				sb_rtlsdr_gain.setMax(possibleGainValues.length - 1);
+				sb_rtlsdr_ifGain.setMax(possibleIFGainValues.length - 1);
+				sb_rtlsdr_gain.setProgress(gainIndex);
+				sb_rtlsdr_ifGain.setProgress(ifGainIndex);
+				tv_rtlsdr_gain.setText("" + possibleGainValues[gainIndex]);
+				tv_rtlsdr_ifGain.setText("" + possibleIFGainValues[ifGainIndex]);
+
+				// Assign current manual gain and agc setting
+				sw_rtlsdr_manual_gain.setChecked(((RtlsdrSource)source).isManualGain());
+				cb_rtlsdr_agc.setChecked(((RtlsdrSource)source).isAutomaticGainControl());
+
+				// Add listener to gui elements:
 				sw_rtlsdr_manual_gain.setOnCheckedChangeListener(new Switch.OnCheckedChangeListener() {
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1159,8 +1187,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						((RtlsdrSource)source).setAutomaticGainControl(isChecked);
 					}
 				});
-				sb_rtlsdr_gain.setMax(possibleGainValues.length - 1);
-				sb_rtlsdr_ifGain.setMax(possibleIFGainValues.length - 1);
 				sb_rtlsdr_gain.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 					@Override
 					public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -1191,29 +1217,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 					public void onStopTrackingTouch(SeekBar seekBar) {
 					}
 				});
-				// Assign current gain:
-				int gainIndex = 0;
-				int ifGainIndex = 0;
-				for (int i = 0; i < possibleGainValues.length; i++) {
-					if(((RtlsdrSource)source).getGain() == possibleGainValues[i]) {
-						gainIndex = i;
-						break;
-					}
-				}
-				for (int i = 0; i < possibleIFGainValues.length; i++) {
-					if(((RtlsdrSource)source).getIFGain() == possibleIFGainValues[i]) {
-						ifGainIndex = i;
-						break;
-					}
-				}
-				sb_rtlsdr_gain.setProgress(gainIndex);
-				sb_rtlsdr_ifGain.setProgress(ifGainIndex);
-				tv_rtlsdr_gain.setText("" + possibleGainValues[gainIndex]);
-				tv_rtlsdr_ifGain.setText("" + possibleIFGainValues[ifGainIndex]);
-
-				// Assign current manual gain and agc setting
-				sw_rtlsdr_manual_gain.setChecked(((RtlsdrSource)source).isManualGain());
-				cb_rtlsdr_agc.setChecked(((RtlsdrSource)source).isAutomaticGainControl());
 
 				// Disable gui elements if gain cannot be adjusted:
 				if(possibleGainValues.length <= 1)
