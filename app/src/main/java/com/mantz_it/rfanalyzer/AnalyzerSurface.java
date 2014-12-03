@@ -517,17 +517,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * If the array is not null, it will be recycled first.
 	 */
 	private void createWaterfallLineBitmaps() {
-		// Recycle bitmaps if not null:
-		if(this.waterfallLines != null) {
-			for(Bitmap b: this.waterfallLines)
-				b.recycle();
-		}
+		synchronized (this.getHolder()) {
+			// Recycle bitmaps if not null:
+			if (this.waterfallLines != null) {
+				for (Bitmap b : this.waterfallLines)
+					b.recycle();
+			}
 
-		// Create new array:
-		this.waterfallLinesTopIndex = 0;
-		this.waterfallLines = new Bitmap[getWaterfallHeight()/getPixelPerWaterfallLine()];
-		for (int i = 0; i < waterfallLines.length; i++)
-			waterfallLines[i] = Bitmap.createBitmap(width,getPixelPerWaterfallLine(), Bitmap.Config.ARGB_8888);
+			// Create new array:
+			this.waterfallLinesTopIndex = 0;
+			this.waterfallLines = new Bitmap[getWaterfallHeight() / getPixelPerWaterfallLine()];
+			for (int i = 0; i < waterfallLines.length; i++)
+				waterfallLines[i] = Bitmap.createBitmap(width, getPixelPerWaterfallLine(), Bitmap.Config.ARGB_8888);
+		}
 	}
 
 	/**
