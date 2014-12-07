@@ -203,6 +203,11 @@ public class Demodulator extends Thread {
 			// get buffer from audio sink
 			audioBuffer = audioSink.getPacketBuffer(1000);
 
+			if(audioBuffer == null) {
+				Log.d(LOGTAG, "run: Audio buffer is null. skip this round...");
+				continue;
+			}
+
 			// demodulate		[sample rate is QUADRATURE_RATE]
 			switch (demodulationMode) {
 				case DEMODULATION_OFF:
