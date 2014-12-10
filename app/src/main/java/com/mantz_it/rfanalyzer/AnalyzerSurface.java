@@ -875,7 +875,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * @return size of the grid (frequency grid height / power grid width) in px
 	 */
 	private int getGridSize() {
-		return (int) (75 * getResources().getDisplayMetrics().xdpi/200);
+		float xdpi = getResources().getDisplayMetrics().xdpi;
+		float xpixel = getResources().getDisplayMetrics().widthPixels;
+		float xinch = xpixel / xdpi;
+
+		if(xinch < 30)
+			return (int) (75 * xdpi/200);		// Smartphone / Tablet / Computer screen
+		else
+			return (int) (400 * xdpi/200);		// TV screen
 	}
 
 	/**
