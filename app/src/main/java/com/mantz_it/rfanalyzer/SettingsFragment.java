@@ -255,7 +255,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	 */
 	public void setScreenOrientation(String orientation) {
 		if(orientation.equals("auto"))
-			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 		else if(orientation.equals("landscape"))
 			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		else if(orientation.equals("portrait"))
