@@ -189,9 +189,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// Set the hardware volume keys to work on the music audio stream:
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-		// Hide application title in action bar (takes too much space)
-		getActionBar().setDisplayShowTitleEnabled(false);
 	}
 
 	@Override
@@ -577,7 +574,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Screen Orientation:
 		String screenOrientation = preferences.getString(getString(R.string.pref_screenOrientation), "auto");
 		if(screenOrientation.equals("auto"))
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 		else if(screenOrientation.equals("landscape"))
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		else if(screenOrientation.equals("portrait"))
