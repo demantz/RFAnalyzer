@@ -40,6 +40,7 @@ public class AnalyzerProcessingLoop extends Thread {
 	private boolean dynamicFrameRate = true;	// Turns on and off the automatic frame rate control
 	private boolean stopRequested = true;		// Will stop the thread when set to true
 	private float[] mag = null;					// Magnitude of the frequency spectrum
+	private Scanner scanner = null;				// Scanner (might be null)
 
 	private static final String LOGTAG = "AnalyzerProcessingLoop";
 	private static final int MAX_FRAMERATE = 30;		// Upper limit for the automatic frame rate control
@@ -116,6 +117,20 @@ public class AnalyzerProcessingLoop extends Thread {
 		return !stopRequested;
 	}
 
+	/**
+	 * @return		current scanner instance
+	 */
+	public Scanner getScanner() {
+		return  scanner;
+	}
+
+	/**
+	 * @param scanner		new scanner object to use (must not be null)
+	 */
+	public void setScanner(Scanner scanner) {
+		this.scanner = scanner;
+	}
+
 	@Override
 	public void run() {
 		Log.i(LOGTAG,"Processing loop started. (Thread: " + this.getName() + ")");
@@ -151,6 +166,9 @@ public class AnalyzerProcessingLoop extends Thread {
 			// return samples to the buffer pool
 			returnQueue.offer(samples);
 
+			if(scanner != null)
+				scanner.processFftSamples(mag);
+
 			// Push the results on the surface:
 			view.draw(mag, frequency, sampleRate, frameRate, load);
 
@@ -184,6 +202,8 @@ public class AnalyzerProcessingLoop extends Thread {
 			}
 		}
 		this.stopRequested = true;
+		if(scanner != null)
+			scanner.stopScanning();
 		Log.i(LOGTAG,"Processing loop stopped. (Thread: " + this.getName() + ")");
 	}
 

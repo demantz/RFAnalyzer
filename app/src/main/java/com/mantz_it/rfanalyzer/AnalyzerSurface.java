@@ -1,6 +1,8 @@
 package com.mantz_it.rfanalyzer;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -50,8 +52,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private ScaleGestureDetector scaleGestureDetector = null;
 	private GestureDetector gestureDetector = null;
 
-	private IQSourceInterface source = null;			// Reference to the IQ source for tuning and retrieving properties
-	private CallbackInterface callbackHandler = null;	// Reference to a callback handler
+	private IQSourceInterface source = null;						// Reference to the IQ source for tuning and retrieving properties
+	private ChannelControlInterface channelControlInterface = null;	// Reference to a ChannelControlInterface handler
 
 	private Paint defaultPaint = null;		// Paint object to draw bitmaps on the canvas
 	private Paint blackPaint = null;		// Paint object to draw black (erase)
@@ -108,11 +110,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 														// relative to the center frequency (true) or absolute (false)
 
 	private boolean recordingEnabled = false;		// indicates whether recording is currently running or not
+	private Scanner scanner = null;
 
 	private boolean demodulationEnabled = false;	// indicates whether demodulation is enabled or disabled
 	private long channelFrequency = -1;				// center frequency of the demodulator
 	private int channelWidth = -1;					// (half) width of the channel filter of the demodulator
-	private float squelch = -1;						// squelch threshold in dB
+	private float squelch = Float.NaN;				// squelch threshold in dB
 	private boolean squelchSatisfied = false;		// indicates whether the current signal is strong enough to cross the squelch threshold
 	private boolean showLowerBand = true;			// indicates whether the lower side band of the channel selector is visible
 	private boolean showUpperBand = true;			// indicates whether the upper side band of the channel selector is visible
@@ -140,9 +143,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 *
 	 * @param context
 	 */
-	public AnalyzerSurface(Context context, CallbackInterface callbackHandler) {
+	public AnalyzerSurface(Context context, ChannelControlInterface channelControlInterface) {
 		super(context);
-		this.callbackHandler = callbackHandler;
+		this.channelControlInterface = channelControlInterface;
 		this.defaultPaint = new Paint();
 		this.blackPaint = new Paint();
 		this.blackPaint.setColor(Color.BLACK);
@@ -464,6 +467,13 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
+	 * @param scanner	new Scanner object. must not be null!
+	 */
+	public void setScanner(Scanner scanner) {
+		this.scanner = scanner;
+	}
+
+	/**
 	 * If called with true, this will set the UI in demodulation mode:
 	 * - No more sample rate changes
 	 * - Showing channel selector
@@ -485,14 +495,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// initialize channel freq, width and squelch if they are out of range:
 				if(channelFrequency < virtualFrequency-virtualSampleRate/2 || channelFrequency > virtualFrequency+virtualSampleRate/2) {
 					this.channelFrequency = virtualFrequency;
-					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
 				}
-				if(!callbackHandler.onUpdateChannelWidth(channelWidth))	// try setting the channel width
-					this.channelWidth = callbackHandler.onCurrentChannelWidthRequested();	// width was not supported; inherit from demodulator
-				if(squelch < minDB || squelch > maxDB) {
+				if(!channelControlInterface.onUpdateChannelWidth(channelWidth))	// try setting the channel width
+					this.channelWidth = channelControlInterface.onCurrentChannelWidthRequested();	// width was not supported; inherit from demodulator
+				if(Float.isNaN(squelch) || squelch < minDB || squelch > maxDB) {
 					this.squelch = minDB + (maxDB - minDB) / 4;
 				}
-				callbackHandler.onUpdateSquelchSatisfied(squelchSatisfied);	// just to make sure the scheduler is still in sync with the gui
+				channelControlInterface.onUpdateSquelchSatisfied(squelchSatisfied);	// just to make sure the scheduler is still in sync with the gui
 			}
 			this.demodulationEnabled = demodulationEnabled;
 		}
@@ -628,7 +638,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 //------------------- <OnScaleGestureListener> ------------------------------//
 	@Override
 	public boolean onScale(ScaleGestureDetector detector) {
-		if(source != null) {
+		if(source != null && (scanner == null || !scanner.isScanRunning())) {
 			// Zoom horizontal if focus in the main area or always if decoupled axis is deactivated:
 			if(!decoupledAxis || detector.getFocusX() > getGridSize()*1.5) {
 				float xScale = detector.getCurrentSpanX() / detector.getPreviousSpanX();
@@ -643,11 +653,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// if we zoomed the channel selector out of the window, reset the channel selector:
 				if (demodulationEnabled && channelFrequency < virtualFrequency - virtualSampleRate / 2) {
 					channelFrequency = virtualFrequency - virtualSampleRate / 2;
-					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
 				}
 				if (demodulationEnabled && channelFrequency > virtualFrequency + virtualSampleRate / 2) {
 					channelFrequency = virtualFrequency + virtualSampleRate / 2;
-					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
 				}
 			}
 
@@ -740,18 +750,35 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onSingleTapUp(MotionEvent e) {
+		// if scanning is running, we pop up a dialog that asks the user to stop the scan
+		if(scanner != null && scanner.isScanRunning()) {
+			new AlertDialog.Builder(this.getContext())
+				.setTitle("Stop Scanning")
+				.setMessage("Do you like to stop the scan run?")
+				.setPositiveButton("Stop", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						scanner.stopScanning();
+					}
+				})
+				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// do nothing
+					}
+				})
+				.show();
+		}
 		// Set the channel frequency to the tapped position
-		if(demodulationEnabled) {
+		else if(demodulationEnabled) {
 			float hzPerPx = virtualSampleRate / (float) width;
 			channelFrequency = virtualFrequency - virtualSampleRate/2 + (long)(hzPerPx*e.getX());
-			callbackHandler.onUpdateChannelFrequency(channelFrequency);
+			channelControlInterface.onUpdateChannelFrequency(channelFrequency);
 		}
 		return true;
 	}
 
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-		if (source != null) {
+		if (source != null && (scanner == null || !scanner.isScanRunning())) {
 			float hzPerPx = virtualSampleRate / (float) width;
 
 			// scroll horizontally or adjust channel selector (scroll type was selected in onDown() event routine:
@@ -765,19 +792,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 						long virtualFrequencyShift = Math.min(Math.max((long) (hzPerPx * distanceX), minFrequencyShift), maxFrequencyShift);
 						virtualFrequency += virtualFrequencyShift;
 						channelFrequency += virtualFrequencyShift;
-						callbackHandler.onUpdateChannelFrequency(channelFrequency);
+						channelControlInterface.onUpdateChannelFrequency(channelFrequency);
 					}
 					break;
 				case SCROLLTYPE_CHANNEL_FREQUENCY:
 					channelFrequency -= distanceX*hzPerPx;
-					callbackHandler.onUpdateChannelFrequency(channelFrequency);
+					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
 					break;
 				case SCROLLTYPE_CHANNEL_WIDTH_LEFT:
 				case SCROLLTYPE_CHANNEL_WIDTH_RIGHT:
 					int tmpChannelWidth = scrollType == SCROLLTYPE_CHANNEL_WIDTH_LEFT
 																? (int)(channelWidth+distanceX*hzPerPx)
 																: (int)(channelWidth-distanceX*hzPerPx);
-					if(callbackHandler.onUpdateChannelWidth(tmpChannelWidth))
+					if(channelControlInterface.onUpdateChannelWidth(tmpChannelWidth))
 						channelWidth = tmpChannelWidth;
 					break;
 				case SCROLLTYPE_SQUELCH:
@@ -906,9 +933,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 */
 	public void draw(float[] mag, long frequency, int sampleRate, int frameRate, double load) {
 
-		if(virtualFrequency < 0)
+		if(virtualFrequency < 0 || (scanner != null && scanner.isScanRunning()))
 			virtualFrequency = frequency;
-		if(virtualSampleRate < 0)
+		if(virtualSampleRate < 0 || (scanner != null && scanner.isScanRunning()))
 			virtualSampleRate = sampleRate;
 
 		// Calculate the start and end index to draw mag according to frequency and sample rate and
@@ -1006,11 +1033,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				if(averageSignalStrengh >= squelch && squelchSatisfied==false) {
 					squelchSatisfied = true;
 					this.squelchPaint.setColor(Color.GREEN);
-					callbackHandler.onUpdateSquelchSatisfied(squelchSatisfied);
+					channelControlInterface.onUpdateSquelchSatisfied(squelchSatisfied);
 				} else if (averageSignalStrengh < squelch && squelchSatisfied==true) {
 					squelchSatisfied = false;
 					this.squelchPaint.setColor(Color.RED);
-					callbackHandler.onUpdateSquelchSatisfied(squelchSatisfied);
+					channelControlInterface.onUpdateSquelchSatisfied(squelchSatisfied);
 				}
 				// else the squelchSatisfied flag is still valid. no actions needed...
 			}
@@ -1464,6 +1491,16 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			yPos += bounds.height() * 1.1f;
 		}
 
+		// Draw scanning information
+		if(scanner != null && scanner.isScanRunning()) {
+			text = "Scanning!";
+			textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
+			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
+
+			// increase yPos:
+			yPos += bounds.height() * 1.1f;
+		}
+
 		if(showDebugInformation) {
 			// Draw the FFT/s rate
 			text = frameRate + " FPS";
@@ -1477,42 +1514,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
 			yPos += bounds.height() * 1.1f;
 		}
-	}
-
-	/**
-	 * Interface used to report user actions (channel frequency/width changes)
-	 */
-	public interface CallbackInterface {
-		/**
-		 * Is called when the user adjusts the channel width.
-		 *
-		 * @param newChannelWidth	new channel width (single sided) in Hz
-		 * @return true if valid width; false if width is out of range
-		 */
-		public boolean onUpdateChannelWidth(int newChannelWidth);
-
-		/**
-		 * Is called when the user adjusts the channel frequency.
-		 *
-		 * @param newChannelFrequency	new channel frequency in Hz
-		 */
-		public void onUpdateChannelFrequency(long newChannelFrequency);
-
-		/**
-		 * Is called when the signal strength of the selected channel
-		 * crosses the squelch threshold
-		 *
-		 * @param squelchSatisfied	true: the signal is now stronger than the threshold; false: signal is now weaker
-		 */
-		public void onUpdateSquelchSatisfied(boolean squelchSatisfied);
-
-		/**
-		 * Is called when the AnalyzerSurface has to determine the current
-		 * channel width
-		 *
-		 * @return	the current channel width
-		 */
-		public int onCurrentChannelWidthRequested();
 	}
 }
 

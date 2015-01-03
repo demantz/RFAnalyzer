@@ -16,6 +16,7 @@
     <string name="action_setGain">Set Gain</string>
     <string name="action_recordOff">Record</string>
     <string name="action_recordOn">Stop recording</string>
+    <string name="action_scan">Scan Spectrum</string>
     <string name="action_autoscale">Autoscale</string>
     <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
@@ -199,5 +200,17 @@
     <string name="pref_logfile_title">Log File</string>
     <string name="pref_logfile_summ">File path: %s</string>
     <string name="pref_logfile_default">RFAnalyzer/log.txt</string>
+    <string name="scanning_addRange">Add Range</string>
+    <string name="scanning_addChannel">Add Channel</string>
+    <string name="scanning_addBookmark">Add Bookmark</string>
+    <string name="scanning_clear">Clear</string>
+    <string name="scanning_logTo">log to</string>
+    <string name="scanning_demodulate">demodulate</string>
+    <string name="scanning_stopAfterFirstFound">stop after first found</string>
+    <string name="scanning_addRange_startFrequency">Start frequency (Hz)</string>
+    <string name="scanning_addRange_endFrequency">End frequency (Hz)</string>
+    <string name="scanning_addRange_channelWidth">Channel width (Hz)</string>
+    <string name="scanning_addRange_mode">Mode</string>
+    <string name="scanning_squelch">Squelch</string>
 
 </resources>

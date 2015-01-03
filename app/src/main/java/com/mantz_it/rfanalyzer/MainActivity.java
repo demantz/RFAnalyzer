@@ -66,7 +66,7 @@ import java.util.Locale;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback, AnalyzerSurface.CallbackInterface {
+public class MainActivity extends Activity implements IQSourceInterface.Callback, ChannelControlInterface {
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
@@ -85,7 +85,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private int demodulationMode = Demodulator.DEMODULATION_OFF;
 
 	private static final String LOGTAG = "MainActivity";
-	private static final String RECORDING_DIR = "RFAnalyzer";
+	private static final String APP_DIR = "RFAnalyzer";
 	public static final int RTL2832U_RESULT_CODE = 1234;	// arbitrary value, used when sending intent to RTL2832U
 	private static final int FILE_SOURCE = 0;
 	private static final int HACKRF_SOURCE = 1;
@@ -278,6 +278,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 												stopRecording();
 											else
 												showRecordingDialog();
+											break;
+			case R.id.action_scan:			showScanningDialog();
 											break;
 			case R.id.action_settings:		Intent intentShowSettings = new Intent(getApplicationContext(), SettingsActivity.class);
 											startActivity(intentShowSettings);
@@ -1401,7 +1403,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							source.setSampleRate((Integer)sp_sampleRate.getSelectedItem());
 
 						// Open file and start recording:
-						recordingFile = new File(externalDir + "/" + RECORDING_DIR + "/" + filename);
+						recordingFile = new File(externalDir + "/" + APP_DIR + "/" + filename);
 						recordingFile.getParentFile().mkdir();	// Create directory if it does not yet exist
 						try {
 							scheduler.startRecording(new BufferedOutputStream(new FileOutputStream(recordingFile)));
@@ -1496,8 +1498,33 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setRecordingEnabled(false);
 	}
 
+	public void showScanningDialog() {
+		if(!running || scheduler == null || demodulator == null || source == null) {
+			Toast.makeText(MainActivity.this, "Analyzer must be running to start scanning", Toast.LENGTH_LONG).show();
+			return;
+		}
+
+		String extStorage = Environment.getExternalStorageDirectory().getAbsolutePath();	// get the path to the ext. storage
+		new ScanDialog(this, source, analyzerProcessingLoop, analyzerSurface, this, extStorage + "/" + APP_DIR);
+
+	}
+
+	/**
+	 * Called by the Scanner to change the demodulation Mode.
+	 * @param newDemodulationMode
+	 */
+	public void onUpdateDemodulationMode(int newDemodulationMode) {
+		if(scheduler == null || demodulator == null || source == null) {
+			Log.e(LOGTAG,"onUpdateDemodulationMode: scheduler/demodulator/source is null (no demodulation running)");
+			return;
+		}
+
+		setDemodulationMode(newDemodulationMode);
+	}
+
 	/**
 	 * Called by the analyzer surface after the user changed the channel width
+	 * Also called by the Scanner.
 	 * @param newChannelWidth    new channel width (single sided) in Hz
 	 * @return true if channel width is valid; false if out of range
 	 */
