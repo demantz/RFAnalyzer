@@ -41,7 +41,7 @@ Implemented Features
 * Select a fixed frequency shift (for upconverters)
 
 
-Testet Devices
+Tested Devices
 --------------
 
 RF Analyzer uses the hackrf_android libaray. Have a look at the corresponding
