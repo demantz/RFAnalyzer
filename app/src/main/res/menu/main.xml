@@ -26,6 +26,10 @@
           android:title="@string/action_recordOff"
           android:orderInCategory="15"
           android:showAsAction="always" />
+    <item android:id="@+id/action_bookmarks"
+          android:title="@string/action_bookmarks"
+          android:orderInCategory="16"
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/action_scan"
           android:title="@string/action_scan"
           android:orderInCategory="16"

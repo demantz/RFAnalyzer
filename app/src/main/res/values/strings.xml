@@ -16,6 +16,7 @@
     <string name="action_setGain">Set Gain</string>
     <string name="action_recordOff">Record</string>
     <string name="action_recordOn">Stop recording</string>
+    <string name="action_bookmarks">Bookmarks</string>
     <string name="action_scan">Scan Spectrum</string>
     <string name="action_autoscale">Autoscale</string>
     <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
@@ -212,5 +213,7 @@
     <string name="scanning_addRange_channelWidth">Channel width (Hz)</string>
     <string name="scanning_addRange_mode">Mode</string>
     <string name="scanning_squelch">Squelch</string>
+    <string name="bookmarks_addBookmark">Add Bookmark</string>
+    <string name="bookmarks_addCategory">Add Category</string>
 
 </resources>
