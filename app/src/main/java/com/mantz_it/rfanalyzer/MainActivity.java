@@ -276,6 +276,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 											else
 												showRecordingDialog();
 											break;
+			case R.id.action_bookmarks:		showBookmarksDialog();
+											break;
 			case R.id.action_settings:		Intent intentShowSettings = new Intent(getApplicationContext(), SettingsActivity.class);
 											startActivity(intentShowSettings);
 											break;
@@ -1491,6 +1493,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		}
 		if(analyzerSurface != null)
 			analyzerSurface.setRecordingEnabled(false);
+	}
+
+	public void showBookmarksDialog() {
+		new BookmarksDialog(this);
 	}
 
 	/**
