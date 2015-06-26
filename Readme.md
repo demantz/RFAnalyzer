@@ -57,6 +57,8 @@ Known Issues
 ------------
 * HackRF: Strong aliasing images in some rare situations. Must be something wrong with the
   baseband filter width. But it's hard to reproduce.
+* Low quality USB cables and OTG adapters might cause powering issues with the HackRF. If
+  you can't get your HackRF to work, maybe try a different cable and/or a powered USB hub!
 
 
 Installation / Usage
