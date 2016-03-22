@@ -37,9 +37,8 @@ import java.util.Locale;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class Scanner {
-	private IQSourceInterface source;
 	private AnalyzerSurface analyzerSurface;
-	private ChannelControlInterface channelControlInterface;
+	private RFControlInterface rfControlInterface;
 	private boolean stopAfterFirstFound = false;
 	private String logFilename;
 	private List<Channel> channelList;
@@ -56,19 +55,17 @@ public class Scanner {
 
 	/**
 	 * constructor.
-	 * @param source					Current IQ source instance
 	 * @param analyzerSurface			AnalyzerSurface instance
-	 * @param channelControlInterface	ChannelControlInterface instance to manipulate the demodulation process
+	 * @param rfControlInterface	ChannelControlInterface instance to manipulate the demodulation process
 	 * @param channelList				List of Channels which should be scanned
 	 * @param squelch					The threshold to detect signals
 	 * @param stopAfterFirstFound		Stop scanning after first channel that exceeds the squelch threshold
 	 * @param logFilename				path to the log file
 	 */
-	public Scanner(IQSourceInterface source, AnalyzerSurface analyzerSurface, ChannelControlInterface channelControlInterface,
+	public Scanner(AnalyzerSurface analyzerSurface, RFControlInterface rfControlInterface,
 				   List<Channel> channelList, float squelch, boolean stopAfterFirstFound, String logFilename) {
-		this.source = source;
 		this.analyzerSurface = analyzerSurface;
-		this.channelControlInterface = channelControlInterface;
+		this.rfControlInterface = rfControlInterface;
 		this.channelList = channelList;
 		this.squelch = squelch;
 		this.stopAfterFirstFound = stopAfterFirstFound;
@@ -76,21 +73,22 @@ public class Scanner {
 		this.scanRunning = true;
 
 		// Create the frequency hopping list:
+		int sampleRate = rfControlInterface.requestCurrentSampleRate();
 		frequencyHoppingList = new ArrayList<>();
 		Channel firstChannel = channelList.get(0);
 		Channel lastChannel = channelList.get(channelList.size() - 1);
 		// add the first frequency:
-		frequencyHoppingList.add(firstChannel.getFrequency() - firstChannel.getBandwidth()/2 + source.getSampleRate()/2);
+		frequencyHoppingList.add(firstChannel.getFrequency() - firstChannel.getBandwidth()/2 + sampleRate/2);
 		frequencyHoppingListIndex = 0;
 		for(Channel channel: channelList) {
-			if(channel.getFrequency() + channel.getBandwidth()/2 > frequencyHoppingList.get(frequencyHoppingListIndex) + source.getSampleRate()/2) {
-				frequencyHoppingList.add(channel.getFrequency() - channel.getBandwidth() / 2 + source.getSampleRate() / 2);
+			if(channel.getFrequency() + channel.getBandwidth()/2 > frequencyHoppingList.get(frequencyHoppingListIndex) + sampleRate/2) {
+				frequencyHoppingList.add(channel.getFrequency() - channel.getBandwidth() / 2 + sampleRate/2);
 				frequencyHoppingListIndex++;
 			}
 		}
 		// Correct the last entry:
 		if(frequencyHoppingList.size() > 1)
-			frequencyHoppingList.set(frequencyHoppingListIndex, lastChannel.getFrequency() + lastChannel.getBandwidth() - source.getSampleRate() / 4);
+			frequencyHoppingList.set(frequencyHoppingListIndex, lastChannel.getFrequency() + lastChannel.getBandwidth() - sampleRate/4);
 		frequencyHoppingListIndex = 0;
 
 		// DEBUG:
@@ -121,9 +119,9 @@ public class Scanner {
 		}
 
 		List<Channel> logList = new ArrayList<Channel>();
-		float hzPerSample = (float) source.getSampleRate() / mag.length;
-		long startFrequency = source.getFrequency() - source.getSampleRate() / 2;
-		long endFrequency = source.getFrequency() + source.getSampleRate() / 2;
+		float hzPerSample = (float) rfControlInterface.requestCurrentSampleRate() / mag.length;
+		long startFrequency = rfControlInterface.requestCurrentSourceFrequency() - rfControlInterface.requestCurrentSampleRate() / 2;
+		long endFrequency = rfControlInterface.requestCurrentSourceFrequency() + rfControlInterface.requestCurrentSampleRate() / 2;
 
 		// calculate the noise floor level
 		float noiseFloorLevel =  Float.MAX_VALUE;
@@ -167,7 +165,7 @@ public class Scanner {
 				String date = simpleDateFormat.format(new Date());
 				FileWriter fileWriter = new FileWriter(logFilename, true);
 				for (Channel channel : logList) {
-					fileWriter.append(date + " center_freq " + source.getFrequency()
+					fileWriter.append(date + " center_freq " + rfControlInterface.requestCurrentSourceFrequency()
 							+ " freq " + channel.getFrequency() + " power_db " + channel.getLevel() +
 							" noise_floor_db " + noiseFloorLevel + "\n");
 					channel.setTimestamp(currentTimeMillis);    // Set the channel timestamp to the last logging time (now)
@@ -194,7 +192,7 @@ public class Scanner {
 			}
 		} else {
 			// No need for frequency changes just make sure the source is actually tuned to the correct frequency:
-			if(source.getFrequency() != frequencyHoppingList.get(0))
+			if(rfControlInterface.requestCurrentSourceFrequency() != frequencyHoppingList.get(0))
 			{
 				nextFrequency = frequencyHoppingList.get(0);
 
@@ -209,17 +207,17 @@ public class Scanner {
 			if (stopAfterFirstFound) {
 				scanRunning = false;
 				// Make sure we tune the source back to this channel
-				nextFrequency = candidateChannel.getFrequency() + source.getSampleRate() / 4;
+				nextFrequency = candidateChannel.getFrequency() + rfControlInterface.requestCurrentSampleRate() / 4;
 				analyzerSurface.setVirtualFrequency(nextFrequency);
-				analyzerSurface.setVirtualSampleRate(source.getSampleRate());
+				analyzerSurface.setVirtualSampleRate(rfControlInterface.requestCurrentSampleRate());
 			}
 			analyzerSurface.setChannelFrequency(candidateChannel.getFrequency());
 			analyzerSurface.setChannelWidth(candidateChannel.getBandwidth());
 			analyzerSurface.setSquelch(squelch);
-			if(channelControlInterface != null && candidateChannel.getMode() != Demodulator.DEMODULATION_OFF) {
-				channelControlInterface.onUpdateDemodulationMode(candidateChannel.getMode());
-				channelControlInterface.onUpdateChannelWidth(candidateChannel.getBandwidth());
-				channelControlInterface.onUpdateChannelFrequency(candidateChannel.getFrequency());
+			if(rfControlInterface != null && candidateChannel.getMode() != Demodulator.DEMODULATION_OFF) {
+				rfControlInterface.updateDemodulationMode(candidateChannel.getMode());
+				rfControlInterface.updateChannelWidth(candidateChannel.getBandwidth());
+				rfControlInterface.updateChannelFrequency(candidateChannel.getFrequency());
 			}
 			candidateChannel = null;
 		}
@@ -227,8 +225,8 @@ public class Scanner {
 		// Do frequency change
 		if(nextFrequency > 0) {
 			millisOfLastFrequencyChange = currentTimeMillis;
-			Log.d(LOGTAG, "processFftSamples: Change frequency from " + source.getFrequency() + " to " + nextFrequency);
-			source.setFrequency(nextFrequency);
+			Log.d(LOGTAG, "processFftSamples: Change frequency from " + rfControlInterface.requestCurrentSourceFrequency() + " to " + nextFrequency);
+			rfControlInterface.updateSourceFrequency(nextFrequency);
 		}
 	}
 

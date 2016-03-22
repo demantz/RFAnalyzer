@@ -54,10 +54,9 @@ import java.util.Locale;
  */
 public class ScanDialog implements DialogInterface.OnClickListener, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
 	private Activity activity;
-	private IQSourceInterface source;
 	private AnalyzerProcessingLoop analyzerProcessingLoop;
 	private AnalyzerSurface analyzerSurface;
-	private ChannelControlInterface channelControlInterface;
+	private RFControlInterface rfControlInterface;
 	private String logDir;
 	private SimpleDateFormat simpleDateFormat;
 	private float squelch;
@@ -79,13 +78,12 @@ public class ScanDialog implements DialogInterface.OnClickListener, View.OnClick
 	private CheckBox cb_stopAfterFirstFound;
 	private EditText et_logfile;
 
-	public ScanDialog(Activity activity, IQSourceInterface source, AnalyzerProcessingLoop analyzerProcessingLoop,
-					  AnalyzerSurface analyzerSurface, ChannelControlInterface channelControlInterface, String logDir) {
+	public ScanDialog(Activity activity, AnalyzerProcessingLoop analyzerProcessingLoop,
+					  AnalyzerSurface analyzerSurface, RFControlInterface rfControlInterface, String logDir) {
 		this.activity = activity;
-		this.source = source;
 		this.analyzerProcessingLoop = analyzerProcessingLoop;
 		this.analyzerSurface = analyzerSurface;
-		this.channelControlInterface = channelControlInterface;
+		this.rfControlInterface = rfControlInterface;
 		this.logDir = logDir;
 
 		// Get references to the GUI components:
@@ -116,9 +114,6 @@ public class ScanDialog implements DialogInterface.OnClickListener, View.OnClick
 			squelch = (analyzerSurface.getMinDB() + analyzerSurface.getMaxDB()) / 2f;
 		sb_squelch.setProgress((int)((squelch-analyzerSurface.getMinDB())*1000));
 
-
-		final int[] supportedSampleRates = source.getSupportedSampleRates();
-		final double maxFreqMHz = source.getMaxFrequency() / 1000000f; // max frequency of the source in MHz
 		simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
 		lv_channelList.setAdapter(channelListAdapter);
 
@@ -147,8 +142,8 @@ public class ScanDialog implements DialogInterface.OnClickListener, View.OnClick
 		modeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		sp_mode.setAdapter(modeAdapter);
 
-		et_startFrequency.setText("" + (source.getFrequency() - source.getSampleRate()/2));
-		et_endFrequency.setText("" + (source.getFrequency() + source.getSampleRate()/2));
+		et_startFrequency.setText("" + (rfControlInterface.requestCurrentSourceFrequency() - rfControlInterface.requestCurrentSampleRate()/2));
+		et_endFrequency.setText("" + (rfControlInterface.requestCurrentSourceFrequency() + rfControlInterface.requestCurrentSampleRate()/2));
 		et_channelWidth.setText("100000");
 		// Show dialog:
 		new AlertDialog.Builder(activity)
@@ -202,10 +197,10 @@ public class ScanDialog implements DialogInterface.OnClickListener, View.OnClick
 
 			Scanner scanner;
 			if(demodulate)
-				scanner = new Scanner(source, analyzerSurface, channelControlInterface, channelList,
+				scanner = new Scanner(analyzerSurface, rfControlInterface, channelList,
 										squelch, stopAfterFirstFound, filename);
 			else
-				scanner = new Scanner(source, analyzerSurface, null, channelList, squelch, stopAfterFirstFound, filename);
+				scanner = new Scanner(analyzerSurface, null, channelList, squelch, stopAfterFirstFound, filename);
 			analyzerProcessingLoop.setScanner(scanner);
 			analyzerSurface.setScanner(scanner);
 		}
@@ -240,7 +235,7 @@ public class ScanDialog implements DialogInterface.OnClickListener, View.OnClick
 
 	public class ChannelListAdapter extends ArrayAdapter<Channel> {
 		public ChannelListAdapter(Context context) {
-			super(context, R.layout.scanning_list_item);
+			super(context, R.layout.channel_list_item);
 		}
 
 		public View getView(int position, View convertView, ViewGroup parent) {
@@ -250,12 +245,12 @@ public class ScanDialog implements DialogInterface.OnClickListener, View.OnClick
 			// first check to see if the view is null and inflate a new one if necessary:
 			if (view == null) {
 				LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				view = inflater.inflate(R.layout.scanning_list_item, null);
+				view = inflater.inflate(R.layout.channel_list_item, null);
 			}
 
 			if (channel != null) {
-				TextView tv_channelFreq = (TextView) view.findViewById(R.id.tv_scanning_channelFreq);
-				TextView tv_channelRange = (TextView) view.findViewById(R.id.tv_scanning_channelRange);
+				TextView tv_channelFreq = (TextView) view.findViewById(R.id.tv_channelItem_title);
+				TextView tv_channelRange = (TextView) view.findViewById(R.id.tv_channelItem_details);
 				tv_channelFreq.setText("" + channel.getFrequency());
 				tv_channelRange.setText("" + channel.getStartFrequency() + " - " + channel.getEndFrequency());
 			}
