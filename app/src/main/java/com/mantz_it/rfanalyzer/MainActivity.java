@@ -66,7 +66,7 @@ import java.util.Locale;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback, ChannelControlInterface {
+public class MainActivity extends Activity implements IQSourceInterface.Callback, RFControlInterface {
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
@@ -299,68 +299,68 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		this.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-			// Set title and icon of the start/stop button according to the state:
-			if(mi_startStop != null) {
-				if (running) {
-					mi_startStop.setTitle(R.string.action_stop);
-					mi_startStop.setIcon(R.drawable.ic_action_pause);
-				} else {
-					mi_startStop.setTitle(R.string.action_start);
-					mi_startStop.setIcon(R.drawable.ic_action_play);
+				// Set title and icon of the start/stop button according to the state:
+				if (mi_startStop != null) {
+					if (running) {
+						mi_startStop.setTitle(R.string.action_stop);
+						mi_startStop.setIcon(R.drawable.ic_action_pause);
+					} else {
+						mi_startStop.setTitle(R.string.action_start);
+						mi_startStop.setIcon(R.drawable.ic_action_play);
+					}
 				}
-			}
 
-			// Set title and icon for the demodulator mode button
-			if(mi_demodulationMode != null) {
-				int iconRes;
-				int titleRes;
-				switch (demodulationMode) {
-					case Demodulator.DEMODULATION_OFF:
-						iconRes = R.drawable.ic_action_demod_off;
-						titleRes = R.string.action_demodulation_off;
-						break;
-					case Demodulator.DEMODULATION_AM:
-						iconRes = R.drawable.ic_action_demod_am;
-						titleRes = R.string.action_demodulation_am;
-						break;
-					case Demodulator.DEMODULATION_NFM:
-						iconRes = R.drawable.ic_action_demod_nfm;
-						titleRes = R.string.action_demodulation_nfm;
-						break;
-					case Demodulator.DEMODULATION_WFM:
-						iconRes = R.drawable.ic_action_demod_wfm;
-						titleRes = R.string.action_demodulation_wfm;
-						break;
-					case Demodulator.DEMODULATION_LSB:
-						iconRes = R.drawable.ic_action_demod_lsb;
-						titleRes = R.string.action_demodulation_lsb;
-						break;
-					case Demodulator.DEMODULATION_USB:
-						iconRes = R.drawable.ic_action_demod_usb;
-						titleRes = R.string.action_demodulation_usb;
-						break;
-					default:
-						Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
-						iconRes = -1;
-						titleRes = -1;
-						break;
+				// Set title and icon for the demodulator mode button
+				if (mi_demodulationMode != null) {
+					int iconRes;
+					int titleRes;
+					switch (demodulationMode) {
+						case Demodulator.DEMODULATION_OFF:
+							iconRes = R.drawable.ic_action_demod_off;
+							titleRes = R.string.action_demodulation_off;
+							break;
+						case Demodulator.DEMODULATION_AM:
+							iconRes = R.drawable.ic_action_demod_am;
+							titleRes = R.string.action_demodulation_am;
+							break;
+						case Demodulator.DEMODULATION_NFM:
+							iconRes = R.drawable.ic_action_demod_nfm;
+							titleRes = R.string.action_demodulation_nfm;
+							break;
+						case Demodulator.DEMODULATION_WFM:
+							iconRes = R.drawable.ic_action_demod_wfm;
+							titleRes = R.string.action_demodulation_wfm;
+							break;
+						case Demodulator.DEMODULATION_LSB:
+							iconRes = R.drawable.ic_action_demod_lsb;
+							titleRes = R.string.action_demodulation_lsb;
+							break;
+						case Demodulator.DEMODULATION_USB:
+							iconRes = R.drawable.ic_action_demod_usb;
+							titleRes = R.string.action_demodulation_usb;
+							break;
+						default:
+							Log.e(LOGTAG, "updateActionBar: invalid mode: " + demodulationMode);
+							iconRes = -1;
+							titleRes = -1;
+							break;
+					}
+					if (titleRes > 0 && iconRes > 0) {
+						mi_demodulationMode.setTitle(titleRes);
+						mi_demodulationMode.setIcon(iconRes);
+					}
 				}
-				if(titleRes > 0 && iconRes > 0) {
-					mi_demodulationMode.setTitle(titleRes);
-					mi_demodulationMode.setIcon(iconRes);
-				}
-			}
 
-			// Set title and icon of the record button according to the state:
-			if(mi_record != null) {
-				if (recordingFile != null) {
-					mi_record.setTitle(R.string.action_recordOn);
-					mi_record.setIcon(R.drawable.ic_action_record_on);
-				} else {
-					mi_record.setTitle(R.string.action_recordOff);
-					mi_record.setIcon(R.drawable.ic_action_record_off);
+				// Set title and icon of the record button according to the state:
+				if (mi_record != null) {
+					if (recordingFile != null) {
+						mi_record.setTitle(R.string.action_recordOn);
+						mi_record.setIcon(R.drawable.ic_action_record_on);
+					} else {
+						mi_record.setTitle(R.string.action_recordOff);
+						mi_record.setIcon(R.drawable.ic_action_record_off);
+					}
 				}
-			}
 			}
 		});
 
@@ -1498,7 +1498,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	}
 
 	public void showBookmarksDialog() {
-		new BookmarksDialog(this);
+		new BookmarksDialog(this, this);
 
 	}
 
@@ -1509,7 +1509,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		}
 
 		String extStorage = Environment.getExternalStorageDirectory().getAbsolutePath();	// get the path to the ext. storage
-		new ScanDialog(this, source, analyzerProcessingLoop, analyzerSurface, this, extStorage + "/" + APP_DIR);
+		new ScanDialog(this, analyzerProcessingLoop, analyzerSurface, this, extStorage + "/" + APP_DIR);
 
 	}
 
@@ -1517,9 +1517,9 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 * Called by the Scanner to change the demodulation Mode.
 	 * @param newDemodulationMode
 	 */
-	public void onUpdateDemodulationMode(int newDemodulationMode) {
+	public void updateDemodulationMode(int newDemodulationMode) {
 		if(scheduler == null || demodulator == null || source == null) {
-			Log.e(LOGTAG,"onUpdateDemodulationMode: scheduler/demodulator/source is null (no demodulation running)");
+			Log.e(LOGTAG,"updateDemodulationMode: scheduler/demodulator/source is null (no demodulation running)");
 			return;
 		}
 
@@ -1533,7 +1533,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 * @return true if channel width is valid; false if out of range
 	 */
 	@Override
-	public boolean onUpdateChannelWidth(int newChannelWidth) {
+	public boolean updateChannelWidth(int newChannelWidth) {
 		if(demodulator != null)
 			return demodulator.setChannelWidth(newChannelWidth);
 		else
@@ -1541,22 +1541,80 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	}
 
 	@Override
-	public void onUpdateChannelFrequency(long newChannelFrequency) {
+	public void updateChannelFrequency(long newChannelFrequency) {
 		if(scheduler != null)
 			scheduler.setChannelFrequency(newChannelFrequency);
 	}
 
+	public void updateSourceFrequency(long newSourceFrequency) {
+		if(source != null && newSourceFrequency <= source.getMaxFrequency() && newSourceFrequency >= source.getMinFrequency())
+			source.setFrequency(newSourceFrequency);
+	}
+
+	public void updateSampleRate(int newSampleRate) {
+		if(source != null) {
+			if(scheduler == null || !scheduler.isRecording())
+				source.setSampleRate(newSampleRate);
+		}
+	}
+
 	@Override
-	public void onUpdateSquelchSatisfied(boolean squelchSatisfied) {
+	public void updateSquelchSatisfied(boolean squelchSatisfied) {
 		if(scheduler != null)
 			scheduler.setSquelchSatisfied(squelchSatisfied);
 	}
 
 	@Override
-	public int onCurrentChannelWidthRequested() {
+	public int requestCurrentChannelWidth() {
 		if(demodulator != null)
 			return demodulator.getChannelWidth();
 		else
 			return -1;
+	}
+
+	public long requestCurrentChannelFrequency() {
+		if(scheduler != null)
+			return scheduler.getChannelFrequency();
+		else
+			return -1;
+	}
+
+	public int requestCurrentDemodulationMode() {
+		return demodulationMode;
+	}
+
+	public float requestCurrentSquelch() {
+		if(analyzerSurface != null)
+			return analyzerSurface.getSquelch();
+		else
+			return Float.NaN;
+	}
+
+	public long requestCurrentSourceFrequency() {
+		if(source != null)
+			return source.getFrequency();
+		else
+			return -1;
+	}
+
+	public int requestCurrentSampleRate() {
+		if(source != null)
+			return source.getSampleRate();
+		else
+			return -1;
+	}
+
+	public long requestMaxSourceFrequency() {
+		if(source != null)
+			return source.getMaxFrequency();
+		else
+			return -1;
+	}
+
+	public int[] requestSupportedSampleRates() {
+		if(source != null)
+			return source.getSupportedSampleRates();
+		else
+			return null;
 	}
 }

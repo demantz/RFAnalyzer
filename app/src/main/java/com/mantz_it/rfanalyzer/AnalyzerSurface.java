@@ -52,8 +52,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private ScaleGestureDetector scaleGestureDetector = null;
 	private GestureDetector gestureDetector = null;
 
-	private IQSourceInterface source = null;						// Reference to the IQ source for tuning and retrieving properties
-	private ChannelControlInterface channelControlInterface = null;	// Reference to a ChannelControlInterface handler
+	private IQSourceInterface source = null;				// Reference to the IQ source for tuning and retrieving properties
+	private RFControlInterface rfControlInterface = null;	// Reference to a ChannelControlInterface handler
 
 	private Paint defaultPaint = null;		// Paint object to draw bitmaps on the canvas
 	private Paint blackPaint = null;		// Paint object to draw black (erase)
@@ -143,9 +143,9 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 *
 	 * @param context
 	 */
-	public AnalyzerSurface(Context context, ChannelControlInterface channelControlInterface) {
+	public AnalyzerSurface(Context context, RFControlInterface rfControlInterface) {
 		super(context);
-		this.channelControlInterface = channelControlInterface;
+		this.rfControlInterface = rfControlInterface;
 		this.defaultPaint = new Paint();
 		this.blackPaint = new Paint();
 		this.blackPaint.setColor(Color.BLACK);
@@ -497,14 +497,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// initialize channel freq, width and squelch if they are out of range:
 				if(channelFrequency < virtualFrequency-virtualSampleRate/2 || channelFrequency > virtualFrequency+virtualSampleRate/2) {
 					this.channelFrequency = virtualFrequency;
-					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
+					rfControlInterface.updateChannelFrequency(channelFrequency);
 				}
-				if(!channelControlInterface.onUpdateChannelWidth(channelWidth))	// try setting the channel width
-					this.channelWidth = channelControlInterface.onCurrentChannelWidthRequested();	// width was not supported; inherit from demodulator
+				if(!rfControlInterface.updateChannelWidth(channelWidth))	// try setting the channel width
+					this.channelWidth = rfControlInterface.requestCurrentChannelWidth();	// width was not supported; inherit from demodulator
 				if(Float.isNaN(squelch) || squelch < minDB || squelch > maxDB) {
 					this.squelch = minDB + (maxDB - minDB) / 4;
 				}
-				channelControlInterface.onUpdateSquelchSatisfied(squelchSatisfied);	// just to make sure the scheduler is still in sync with the gui
+				rfControlInterface.updateSquelchSatisfied(squelchSatisfied);	// just to make sure the scheduler is still in sync with the gui
 			}
 			this.demodulationEnabled = demodulationEnabled;
 		}
@@ -655,11 +655,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				// if we zoomed the channel selector out of the window, reset the channel selector:
 				if (demodulationEnabled && channelFrequency < virtualFrequency - virtualSampleRate / 2) {
 					channelFrequency = virtualFrequency - virtualSampleRate / 2;
-					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
+					rfControlInterface.updateChannelFrequency(channelFrequency);
 				}
 				if (demodulationEnabled && channelFrequency > virtualFrequency + virtualSampleRate / 2) {
 					channelFrequency = virtualFrequency + virtualSampleRate / 2;
-					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
+					rfControlInterface.updateChannelFrequency(channelFrequency);
 				}
 			}
 
@@ -773,7 +773,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		else if(demodulationEnabled) {
 			float hzPerPx = virtualSampleRate / (float) width;
 			channelFrequency = virtualFrequency - virtualSampleRate/2 + (long)(hzPerPx*e.getX());
-			channelControlInterface.onUpdateChannelFrequency(channelFrequency);
+			rfControlInterface.updateChannelFrequency(channelFrequency);
 		}
 		return true;
 	}
@@ -794,19 +794,19 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 						long virtualFrequencyShift = Math.min(Math.max((long) (hzPerPx * distanceX), minFrequencyShift), maxFrequencyShift);
 						virtualFrequency += virtualFrequencyShift;
 						channelFrequency += virtualFrequencyShift;
-						channelControlInterface.onUpdateChannelFrequency(channelFrequency);
+						rfControlInterface.updateChannelFrequency(channelFrequency);
 					}
 					break;
 				case SCROLLTYPE_CHANNEL_FREQUENCY:
 					channelFrequency -= distanceX*hzPerPx;
-					channelControlInterface.onUpdateChannelFrequency(channelFrequency);
+					rfControlInterface.updateChannelFrequency(channelFrequency);
 					break;
 				case SCROLLTYPE_CHANNEL_WIDTH_LEFT:
 				case SCROLLTYPE_CHANNEL_WIDTH_RIGHT:
 					int tmpChannelWidth = scrollType == SCROLLTYPE_CHANNEL_WIDTH_LEFT
 																? (int)(channelWidth+distanceX*hzPerPx)
 																: (int)(channelWidth-distanceX*hzPerPx);
-					if(channelControlInterface.onUpdateChannelWidth(tmpChannelWidth))
+					if(rfControlInterface.updateChannelWidth(tmpChannelWidth))
 						channelWidth = tmpChannelWidth;
 					break;
 				case SCROLLTYPE_SQUELCH:
@@ -1035,11 +1035,11 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 				if(averageSignalStrengh >= squelch && squelchSatisfied==false) {
 					squelchSatisfied = true;
 					this.squelchPaint.setColor(Color.GREEN);
-					channelControlInterface.onUpdateSquelchSatisfied(squelchSatisfied);
+					rfControlInterface.updateSquelchSatisfied(squelchSatisfied);
 				} else if (averageSignalStrengh < squelch && squelchSatisfied==true) {
 					squelchSatisfied = false;
 					this.squelchPaint.setColor(Color.RED);
-					channelControlInterface.onUpdateSquelchSatisfied(squelchSatisfied);
+					rfControlInterface.updateSquelchSatisfied(squelchSatisfied);
 				}
 				// else the squelchSatisfied flag is still valid. no actions needed...
 			}
