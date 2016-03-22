@@ -40,10 +40,15 @@
             android:layout_height="match_parent"
             android:id="@+id/ll_bookmarks_list">
 
-            <TextView
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/bt_bookmarks_category"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="BLABLA"/>
+                android:text="&lt; tmp"
+                android:textStyle="bold"
+                style="?android:attr/borderlessButtonStyle"
+                android:textSize="@dimen/abc_text_size_large_material"
+                android:textColor="@android:color/holo_blue_dark"/>
 
             <ListView
                 android:layout_width="match_parent"

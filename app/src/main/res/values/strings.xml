@@ -202,5 +202,16 @@
     <string name="pref_logfile_default">RFAnalyzer/log.txt</string>
     <string name="bookmarks_addBookmark">Add Bookmark</string>
     <string name="bookmarks_addCategory">Add Category</string>
+    <string name="editBookmark_name">Name: </string>
+    <string name="editBookmark_category">Category: </string>
+    <string name="editBookmark_frequency">Frequency: </string>
+    <string name="editBookmark_channelWidth">Channel Width: </string>
+    <string name="editBookmark_mode">Mode: </string>
+    <string name="editBookmark_squelch">Squelch: </string>
+    <string name="editBookmark_comment">Comment: </string>
+    <string name="editBookmarkCategory_name">Name: </string>
+    <string name="editBookmarkCategory_description">Description: </string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
 
 </resources>
