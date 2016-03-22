@@ -1500,6 +1500,15 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 	}
 
+	public void updateDemodulationMode(int newDemodulationMode) {
+		if(scheduler == null || demodulator == null || source == null) {
+			Log.e(LOGTAG,"updateDemodulationMode: scheduler/demodulator/source is null (no demodulation running)");
+			return;
+		}
+
+		setDemodulationMode(newDemodulationMode);
+	}
+
 	/**
 	 * Called by the analyzer surface after the user changed the channel width
 	 * @param newChannelWidth    new channel width (single sided) in Hz
