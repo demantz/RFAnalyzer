@@ -470,7 +470,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	 * - No more sample rate changes
 	 * - Showing channel selector
 	 * This will also pass the current values of channel frequency, width and squelch
-	 * to the callback handler in order to sync with the demodulator.
+	 * to the control interface in order to sync with the demodulator.
 	 *
 	 * @param demodulationEnabled	true: set to demodulation mode;  false: set to regular mode
 	 */

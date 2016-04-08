@@ -92,6 +92,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 		lv_bookmarks.setAdapter(bookmarksAdapter);
 		lv_bookmarks.setLongClickable(true);
 		lv_bookmarks.setOnItemLongClickListener(this);
+		lv_bookmarks.setOnItemClickListener(this);
 
 		// create and show dialog:
 		dialog = new AlertDialog.Builder(activity)
@@ -156,6 +157,40 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 			lv_categories.setVisibility(View.GONE);
 			ll_bookmarks_list.setVisibility(View.VISIBLE);
 		} else if(parent == lv_bookmarks) {
+			bookmarksCursor.moveToPosition(position);
+			long newChannelFrequency 	= bookmarksCursor.getLong(bookmarksCursor.getColumnIndex(Bookmarks.COLUMN_NAME_FREQUENCY));
+			int newChannelWidth 		= bookmarksCursor.getInt(bookmarksCursor.getColumnIndex(Bookmarks.COLUMN_NAME_CHANNEL_WIDTH));
+			int newMode 				= bookmarksCursor.getInt(bookmarksCursor.getColumnIndex(Bookmarks.COLUMN_NAME_MODE));
+			int newSquelch		 		= bookmarksCursor.getInt(bookmarksCursor.getColumnIndex(Bookmarks.COLUMN_NAME_SQUELCH));
+
+			// Set the new demodulation mode:
+			boolean ret = rfControlInterface.updateDemodulationMode(newMode);
+
+			// Now check if we have to re-tune the source frequency:
+			long currentFrequency 		= rfControlInterface.requestCurrentSourceFrequency();
+			int currentSampleRate		= rfControlInterface.requestCurrentSampleRate();
+			if (ret && ((newChannelFrequency - newChannelWidth / 2) < (currentFrequency - currentSampleRate / 2)
+					|| (newChannelFrequency + newChannelWidth / 2) > (currentFrequency + currentSampleRate / 2))) {
+				Log.d(LOGTAG, "onItemClick(): [bookmark] Re-tune source from " + currentFrequency
+						+ " Hz to " + newChannelFrequency + " Hz.");
+				// We use offset tuning (off by 1/8 * sampleRate)
+				ret = rfControlInterface.updateSourceFrequency(newChannelFrequency - currentSampleRate/8);
+			}
+
+			if(ret)
+				ret = rfControlInterface.updateChannelWidth(newChannelWidth);
+			if (ret)
+				ret = rfControlInterface.updateChannelFrequency(newChannelFrequency);
+			if (ret)
+				rfControlInterface.updateSquelch(newSquelch);
+			if(ret) {
+				// Close dialog
+				dialog.dismiss();
+			} else {
+				// Show error
+				Log.i(LOGTAG, "onItemClick(): Could not tune to bookmark frequency!");
+				Toast.makeText(activity, "Cannot tune to bookmark frequency! Check that source is running and supports frequency.", Toast.LENGTH_LONG).show();
+			}
 
 		} else {
 			Log.e(LOGTAG, "onItemClick: Unknown parent: " + parent);
@@ -355,7 +390,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 								return;
 							}
 							double frequency = Double.valueOf(et_frequency.getText().toString());
-							if (frequency < rfControlInterface.requestMaxSourceFrequency())
+							if (frequency < rfControlInterface.requestMaxSourceFrequency()/1000000)
 								frequency = frequency * 1000000;
 
 							// Parse channel width

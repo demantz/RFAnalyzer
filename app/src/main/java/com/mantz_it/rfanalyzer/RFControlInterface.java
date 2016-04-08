@@ -28,13 +28,21 @@ package com.mantz_it.rfanalyzer;
  */
 public interface RFControlInterface {
 
-	public void updateDemodulationMode(int newDemodulationMode);
+	/**
+	 * Is called to adjust the demodulation mode
+	 *
+	 * @param newDemodulationMode	new demodulation mode: DEMODULATION_OFF, DEMODULATION_AM, ...
+	 *                              (see Demodulator)
+	 * @return true if success, false if analyzer not running
+	 */
+	public boolean updateDemodulationMode(int newDemodulationMode);
 
 	/**
 	 * Is called to adjust the channel width.
 	 *
 	 * @param newChannelWidth	new channel width (single sided) in Hz
 	 * @return true if valid width; false if width is out of range
+	 * not able to set channel width because scheduler not running
 	 */
 	public boolean updateChannelWidth(int newChannelWidth);
 
@@ -42,30 +50,41 @@ public interface RFControlInterface {
 	 * Is called to adjust the channel frequency.
 	 *
 	 * @param newChannelFrequency	new channel frequency in Hz
+	 * @return true if success, false if analyzer not running
 	 */
-	public void updateChannelFrequency(long newChannelFrequency);
+	public boolean updateChannelFrequency(long newChannelFrequency);
 
 	/**
 	 * Is called to adjust the frequency of the signal source.
 	 *
 	 * @param newSourceFrequency	new source frequency in Hz
+	 * @return true if success, false if source not running
 	 */
-	public void updateSourceFrequency(long newSourceFrequency);
+	public boolean updateSourceFrequency(long newSourceFrequency);
 
 	/**
 	 * Is called to adjust the sample rate of the signal source.
 	 *
 	 * @param newSampleRate			new sample rate in Sps
+	 * @return true if success, false if source not running
 	 */
-	public void updateSampleRate(int newSampleRate);
+	public boolean updateSampleRate(int newSampleRate);
+
+	/**
+	 * Is called to adjust the squelch level
+	 *
+	 * @param newSquelch	new squelch level
+	 */
+	public void updateSquelch(float newSquelch);
 
 	/**
 	 * Is called when the signal strength of the selected channel
 	 * crosses the squelch threshold
 	 *
 	 * @param squelchSatisfied	true: the signal is now stronger than the threshold; false: signal is now weaker
+	 * @return true if success, false if scheduler not running
 	 */
-	public void updateSquelchSatisfied(boolean squelchSatisfied);
+	public boolean updateSquelchSatisfied(boolean squelchSatisfied);
 
 	/**
 	 * Is called to determine the current channel width

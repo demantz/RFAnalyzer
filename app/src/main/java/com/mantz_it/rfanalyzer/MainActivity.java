@@ -982,8 +982,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
-			.setMessage("Frequency is " + source.getFrequency()/1000000f + "MHz. Type a new Frequency (Values below "
-					+ maxFreqMHz + " will be interpreted as MHz, higher values as Hz): ")
+			.setMessage(String.format("Frequency is %f MHz. Type a new Frequency (Values below %f will be interpreted as MHz, higher values as Hz): ",
+					source.getFrequency() / 1000000f, maxFreqMHz))
 			.setView(ll_view)
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
@@ -1500,13 +1500,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 	}
 
-	public void updateDemodulationMode(int newDemodulationMode) {
+	public boolean updateDemodulationMode(int newDemodulationMode) {
 		if(scheduler == null || demodulator == null || source == null) {
 			Log.e(LOGTAG,"updateDemodulationMode: scheduler/demodulator/source is null (no demodulation running)");
-			return;
+			return false;
 		}
 
 		setDemodulationMode(newDemodulationMode);
+		return true;
 	}
 
 	/**
@@ -1516,34 +1517,57 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	 */
 	@Override
 	public boolean updateChannelWidth(int newChannelWidth) {
-		if(demodulator != null)
-			return demodulator.setChannelWidth(newChannelWidth);
-		else
-			return false;
-	}
-
-	@Override
-	public void updateChannelFrequency(long newChannelFrequency) {
-		if(scheduler != null)
-			scheduler.setChannelFrequency(newChannelFrequency);
-	}
-
-	public void updateSourceFrequency(long newSourceFrequency) {
-		if(source != null && newSourceFrequency <= source.getMaxFrequency() && newSourceFrequency >= source.getMinFrequency())
-			source.setFrequency(newSourceFrequency);
-	}
-
-	public void updateSampleRate(int newSampleRate) {
-		if(source != null) {
-			if(scheduler == null || !scheduler.isRecording())
-				source.setSampleRate(newSampleRate);
+		if(demodulator != null) {
+			if(demodulator.setChannelWidth(newChannelWidth)) {
+				analyzerSurface.setChannelWidth(newChannelWidth);
+				return true;
+			}
 		}
+		return false;
 	}
 
 	@Override
-	public void updateSquelchSatisfied(boolean squelchSatisfied) {
-		if(scheduler != null)
+	public boolean updateChannelFrequency(long newChannelFrequency) {
+		if(scheduler != null) {
+			scheduler.setChannelFrequency(newChannelFrequency);
+			analyzerSurface.setChannelFrequency(newChannelFrequency);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean updateSourceFrequency(long newSourceFrequency) {
+		if(source != null 	&& newSourceFrequency <= source.getMaxFrequency()
+							&& newSourceFrequency >= source.getMinFrequency()) {
+			source.setFrequency(newSourceFrequency);
+			analyzerSurface.setVirtualFrequency(newSourceFrequency);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean updateSampleRate(int newSampleRate) {
+		if(source != null) {
+			if(scheduler == null || !scheduler.isRecording()) {
+				source.setSampleRate(newSampleRate);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void updateSquelch(float newSquelch) {
+		analyzerSurface.setSquelch(newSquelch);
+	}
+
+	@Override
+	public boolean updateSquelchSatisfied(boolean squelchSatisfied) {
+		if(scheduler != null) {
 			scheduler.setSquelchSatisfied(squelchSatisfied);
+			return true;
+		}
+		return false;
 	}
 
 	@Override
