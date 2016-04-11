@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -66,7 +67,7 @@ import java.util.Locale;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback, RFControlInterface {
+public class MainActivity extends AppCompatActivity implements IQSourceInterface.Callback, RFControlInterface {
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
