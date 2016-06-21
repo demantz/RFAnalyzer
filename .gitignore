@@ -12,3 +12,7 @@ local.properties
 .idea
 .gradle
 build/
+
+# Vim and ctags
+tags
+*.swp

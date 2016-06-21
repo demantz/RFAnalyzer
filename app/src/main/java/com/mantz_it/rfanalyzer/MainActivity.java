@@ -215,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 				&& !preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer),false)) {
 			try {
 				Intent intent = new Intent(Intent.ACTION_VIEW);
+				intent.setClassName("marto.rtl_tcp_andro", "com.sdrtouch.rtlsdr.DeviceOpenActivity");
 				intent.setData(Uri.parse("iqsrc://-x"));	// -x is invalid. will cause the driver to shut down (if running)
 				startActivity(intent);
 			} catch (ActivityNotFoundException e) {
@@ -695,6 +696,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 						// start local rtl_tcp instance:
 						try {
 							Intent intent = new Intent(Intent.ACTION_VIEW);
+							intent.setClassName("marto.rtl_tcp_andro", "com.sdrtouch.rtlsdr.DeviceOpenActivity");
 							intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 1"));
 							startActivityForResult(intent, RTL2832U_RESULT_CODE);
 						} catch (ActivityNotFoundException e) {
