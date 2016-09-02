@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.mantz_it.rfanalyzer" >
+    package="com.mantz_it.rfanalyzer">
 
     <!-- Write external storage is used to write log files to the SD card -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

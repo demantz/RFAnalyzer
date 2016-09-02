@@ -12,11 +12,13 @@
         <item>File Source</item>
         <item>HackRF</item>
         <item>RTL-SDR</item>
+        <item>St</item>
     </string-array>
     <string-array name="pref_sourceType_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
+        <item>3</item>
     </string-array>
     <string-array name="pref_screenOrientation_entries">
         <item>Auto</item>

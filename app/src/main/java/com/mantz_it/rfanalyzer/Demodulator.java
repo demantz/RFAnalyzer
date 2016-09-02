@@ -3,7 +3,6 @@ package com.mantz_it.rfanalyzer;
 import android.util.Log;
 
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <h1>RF Analyzer - Demodulator</h1>
