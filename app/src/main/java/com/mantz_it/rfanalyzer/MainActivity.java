@@ -90,9 +90,9 @@ public static final int RTL2832U_RESULT_CODE = 1234;    // arbitrary value, used
 private static final int FILE_SOURCE = 0;
 private static final int HACKRF_SOURCE = 1;
 private static final int RTLSDR_SOURCE = 2;
-private static final int ST_SOURCE = 3;
+private static final int HIQSDR_SOURCE = 3;
 
-private static final String[] SOURCE_NAMES = new String[]{"filesource", "hackrf", "rtlsdr", "st"};
+private static final String[] SOURCE_NAMES = new String[]{"filesource", "hackrf", "rtlsdr", "hiqsdr"};
 
 @Override
 protected void onCreate(Bundle savedInstanceState) {
@@ -552,8 +552,8 @@ public void checkForChangedPreferences() {
                         ((RtlsdrSource) source).setFrequencyShift(frequencyShift);
                 }
                 break;
-            case ST_SOURCE:
-                Log.e(LOGTAG, "checkForChangedPreferences: implement source type ST_SOURCE");
+            case HIQSDR_SOURCE:
+                Log.e(LOGTAG, "checkForChangedPreferences: implement source type HIQSDR_SOURCE");
 
             default:
         }
@@ -656,8 +656,8 @@ public boolean createSource() {
                 ((RtlsdrSource) source).setIFGain(preferences.getInt(getString(R.string.pref_rtlsdr_ifGain), 0));
             }
             break;
-        case ST_SOURCE:
-            Log.w(LOGTAG, "createSource: implement ST_SOURCE ("+sourceType+')');
+        case HIQSDR_SOURCE:
+            Log.w(LOGTAG, "createSource: implement HIQSDR_SOURCE ("+sourceType+')');
         default: Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
             return false;
     }
@@ -729,8 +729,8 @@ public boolean openSource() {
                 Log.e(LOGTAG, "openSource: sourceType is RTLSDR_SOURCE, but source is null or of other type.");
                 return false;
             }
-        case ST_SOURCE:
-            Log.w(LOGTAG, "openSource: implement ST_SOURCE");
+        case HIQSDR_SOURCE:
+            Log.w(LOGTAG, "openSource: implement HIQSDR_SOURCE");
             return false;
         default:
             Log.e(LOGTAG, "openSource: Invalid source type: " + sourceType);
@@ -1280,8 +1280,8 @@ private void adjustGain() {
             rtlsdrDialog.show();
             rtlsdrDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
             break;
-        case ST_SOURCE:
-            Log.e(LOGTAG, "adjustGain: implement source type ST_SOURCE");
+        case HIQSDR_SOURCE:
+            Log.e(LOGTAG, "adjustGain: implement source type HIQSDR_SOURCE");
         default:
             Log.e(LOGTAG, "adjustGain: Invalid source type: " + sourceType);
             break;

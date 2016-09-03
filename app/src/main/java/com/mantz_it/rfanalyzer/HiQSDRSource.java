@@ -9,9 +9,9 @@ import java.net.InetAddress;
 /**
  * Created by pavlus on 10.06.16.
  */
-public class StSource implements IQSourceInterface {
-private static final String LOGTAG = "StSource";
-private static final String NAME = "StSource";
+public class HiQSDRSource implements IQSourceInterface {
+private static final String LOGTAG = "HiQSDRSource";
+private static final String NAME = "HiQSDRSource";
 protected static final int MIN_SAMPLE_RATE = 48000;
 protected static final int MAX_SAMPLE_RATE = 384000;
 protected static final int[] SAMPLE_RATES = {48000, 96000, 192000, 384000};
