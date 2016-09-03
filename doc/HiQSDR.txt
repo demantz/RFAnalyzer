@@ -1,0 +1,33 @@
+Connection:
+    Default IP:             192.168.2.196
+    Control listener port:  UDP 48248
+    Received data port:     UDP 48247
+    Transmit data port:     UDP 48249
+
+Control frame (byte order: little endian):
+    [0:1]  'St'
+    [2:5]  Rx tune phase
+    [6:9]  Tx tune phase
+    [10]   Tx output level 0 to 255
+    [11]   Tx control bits:
+                0x01 Enable CW transmit
+                0x02 Enable all other transmit
+                0x04 Use the HiQSDR extended IO pins not present in
+                the 2010 QEX ver 1.0
+                0x08 The key is down (software key)
+    [12]   Rx control bits
+           Second stage decimation less one, 1-39, six bits
+    [13]   zero or firmware version number
+           The above is used for firmware version 1.0; add eight more
+           bytes for version 1.1:
+    [14]   X1 connector: Preselect pins 69, 68, 65, 64;
+           Preamp pin 63, Tx LED pin 57
+    [15]   Attenuator pins 84, 83, 82, 81, 80
+    [16]   More bits: AntSwitch pin 41 is 0x01
+           Remaining five bytes are sent as zero.
+           For version 1.2 include the VNA scan count:
+    [17:21] Unused (0x00).
+
+Receiving interface:
+    1. Send "rr" to device
+    2. Read frames:
