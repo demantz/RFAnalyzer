@@ -19,6 +19,8 @@ public class Unsigned24BitIQConverter extends IQConverter {
 
     protected static final float CONVERTER_SCALE = 1.0f / (1 << 23);
     protected static final float CONVERTER_SHIFT = (float) (1 << 23) - 1;
+    protected static final int SAMPLES_SHIFT = 2;
+    protected static final int SAMPLE_SIZE = 3;
     @Override
     public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
         int capacity = samplePacket.capacity();
@@ -26,8 +28,7 @@ public class Unsigned24BitIQConverter extends IQConverter {
         int startIndex = samplePacket.size();
         float[] re = samplePacket.re();
         float[] im = samplePacket.im();
-        // skip first two bytes, step is two 24bit values == 6 bytes
-        for (int i = 2; i < re.length; i += 6) {
+        for (int i = SAMPLES_SHIFT; i < re.length; i += SAMPLE_SIZE*2) {
             // interesting, but direct conversion w/ LUT works on 24bit samples even faster, than LUT on 8bit
             // and direct conversion on 8bit samples is slower, than LUT
             // 6 MiB 24 bits per sample packet filled in ≈40ms
@@ -54,8 +55,42 @@ public class Unsigned24BitIQConverter extends IQConverter {
 
     @Override
     public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-        // TODO: 25.06.16
-        return 0;
+        int mixFrequency = (int)(frequency - channelFrequency);
+
+        generateMixerLookupTable(mixFrequency);	// will only generate table if really necessary
+
+        // Mix the samples from packet and store the results in the samplePacket
+        int capacity = samplePacket.capacity();
+        int count = 0;
+        int startIndex = samplePacket.size();
+        float[] re = samplePacket.re();
+        float[] im = samplePacket.im();
+        // rewrite from 8bit and multiplied LUT to 24bit and multiplication with LUT
+        for (int i = SAMPLES_SHIFT; i < packet.length; i+=SAMPLE_SIZE) {
+            float reSample = ((packet[i] & 0xff
+                             | (packet[i + 1] & 0xff) << 8
+                             | (packet[i + 2] & 0xff) << 16
+                            ) - CONVERTER_SHIFT
+                           ) * CONVERTER_SCALE;
+            float imSample = ((packet[i+3] & 0xff
+                               | (packet[i + 1] & 0xff) << 8
+                               | (packet[i + 2] & 0xff) << 16
+                              ) - CONVERTER_SHIFT
+                             ) * CONVERTER_SCALE;
+
+            re[startIndex+count] = cosineRealLookupTable[cosineIndex][1]*reSample
+                                   - cosineImagLookupTable[cosineIndex][1]*reSample;
+            im[startIndex+count] = cosineRealLookupTable[cosineIndex][1]*imSample
+                                   + cosineImagLookupTable[cosineIndex][1]*imSample;
+            cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
+            count++;
+            if(startIndex+count >= capacity)
+                break;
+        }
+        samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
+        samplePacket.setSampleRate(sampleRate);				// update the sample rate
+        samplePacket.setFrequency(channelFrequency);		// update the frequency
+        return count;
     }
 
     @Override
@@ -65,6 +100,27 @@ public class Unsigned24BitIQConverter extends IQConverter {
 
     @Override
     protected void generateMixerLookupTable(int mixFrequency) {
-// TODO: 25.06.16  
+        // If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
+        if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
+            mixFrequency += sampleRate;
+
+        // Only generate lookupTable if null or invalid:
+        if(cosineRealLookupTable == null || mixFrequency != cosineFrequency) {
+            cosineFrequency = mixFrequency;
+            int bestLength = calcOptimalCosineLength();
+            // using parent's fields to store table, but it contains only cosine values,
+            // so multiplication is still required
+            cosineRealLookupTable = new float[bestLength][1];
+            cosineImagLookupTable = new float[bestLength][1];
+            float cosineAtT;
+            float sineAtT;
+            for (int t = 0; t < bestLength; t++) {
+                cosineAtT = (float) Math.cos(2 * Math.PI * cosineFrequency * t / (float) sampleRate);
+                sineAtT = (float) Math.sin(2 * Math.PI * cosineFrequency * t / (float) sampleRate);
+                    cosineRealLookupTable[t][1] = cosineAtT;
+                    cosineImagLookupTable[t][1] = sineAtT;
+            }
+            cosineIndex = 0;
+        }
     }
 }

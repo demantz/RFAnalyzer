@@ -51,6 +51,7 @@ public class FileIQSource implements IQSourceInterface {
 	private static final String LOGTAG = "FileIQSource";
 	public static final int FILE_FORMAT_8BIT_SIGNED = 0;
 	public static final int FILE_FORMAT_8BIT_UNSIGNED = 1;
+	public static final int FILE_FORMAT_24BIT_UNSIGNED = 2;
 
 	public FileIQSource(String filename, int sampleRate, long frequency, int packetSize, boolean repeat, int fileFormat) {
 		this.filename = filename;
@@ -69,6 +70,9 @@ public class FileIQSource implements IQSourceInterface {
 				break;
 			case FILE_FORMAT_8BIT_UNSIGNED:
 				iqConverter = new Unsigned8BitIQConverter();
+				break;
+			case FILE_FORMAT_24BIT_UNSIGNED:
+				iqConverter = new Unsigned24BitIQConverter();
 				break;
 			default:
 				Log.e(LOGTAG, "constructor: Invalid file format: " + fileFormat);
