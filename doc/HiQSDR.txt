@@ -1,10 +1,14 @@
 Connection:
     Default IP:             192.168.2.196
-    Control listener port:  UDP 48248
     Received data port:     UDP 48247
+    Control listener port:  UDP 48248
     Transmit data port:     UDP 48249
 
-Control frame (byte order: little endian):
+Data format:
+    LSB 0
+    Little endian
+
+Control frame:
     [0:1]  'St'
     [2:5]  Rx tune phase
     [6:9]  Tx tune phase
@@ -12,8 +16,7 @@ Control frame (byte order: little endian):
     [11]   Tx control bits:
                 0x01 Enable CW transmit
                 0x02 Enable all other transmit
-                0x04 Use the HiQSDR extended IO pins not present in
-                the 2010 QEX ver 1.0
+                0x04 Use the HiQSDR extended IO pins not present in the 2010 QEX ver 1.0
                 0x08 The key is down (software key)
     [12]   Rx control bits
            Second stage decimation less one, 1-39, six bits
@@ -31,3 +34,7 @@ Control frame (byte order: little endian):
 Receiving interface:
     1. Send "rr" to device
     2. Read frames:
+        [0]     packet serial number
+        [1]     status
+        [2:1442] IQ samples (I3 I2 I1 Q3 Q2 Q1) 240 times
+    3. send "ss" to stop receiving data
