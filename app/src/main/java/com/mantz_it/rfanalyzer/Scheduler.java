@@ -60,6 +60,7 @@ public class Scheduler extends Thread {
 	private static final String LOGTAG = "Scheduler";
 
 	public Scheduler(int fftSize, IQSourceInterface source) {
+		super("Scheduler Thread");
 		this.source = source;
 
 		// Create the fft input- and output queues and allocate the buffer packets.

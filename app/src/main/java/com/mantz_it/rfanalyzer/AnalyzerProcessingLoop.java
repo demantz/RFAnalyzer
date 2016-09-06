@@ -61,6 +61,7 @@ public class AnalyzerProcessingLoop extends Thread {
 	 */
 	public AnalyzerProcessingLoop(AnalyzerSurface view, int fftSize,
 				ArrayBlockingQueue<SamplePacket> inputQueue, ArrayBlockingQueue<SamplePacket> returnQueue) {
+		super("AnalyzerProcessingLoop Thread");
 		this.view = view;
 
 		// Check if fftSize is a power of 2

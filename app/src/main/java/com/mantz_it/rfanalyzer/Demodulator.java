@@ -93,6 +93,7 @@ public class Demodulator extends Thread {
 	 * @param packetSize	Size of the packets in the input queue
 	 */
 	public Demodulator (ArrayBlockingQueue<SamplePacket> inputQueue, ArrayBlockingQueue<SamplePacket> outputQueue, int packetSize) {
+		super("Demodulator Thread");
 		// Create internal sample buffers:
 		// Note that we create the buffers for the case that there is no downsampling necessary
 		// All other cases with input decimation > 1 are also possible because they only need

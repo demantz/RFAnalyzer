@@ -61,6 +61,7 @@ public class Decimator extends Thread {
 	 */
 	public Decimator (int outputSampleRate, int packetSize, ArrayBlockingQueue<SamplePacket> inputQueue,
 					  ArrayBlockingQueue<SamplePacket> inputReturnQueue) {
+		super("Decimator Thread");
 		this.outputSampleRate = outputSampleRate;
 		this.packetSize = packetSize;
 		this.inputQueue = inputQueue;

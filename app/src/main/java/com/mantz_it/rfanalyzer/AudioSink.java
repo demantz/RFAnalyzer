@@ -57,6 +57,7 @@ public class AudioSink extends Thread {
 	 * @param sampleRate	sample rate of the audio signal
 	 */
 	public AudioSink (int packetSize, int sampleRate) {
+		super("AudioSink Thread");
 		this.packetSize = packetSize;
 		this.sampleRate = sampleRate;
 
