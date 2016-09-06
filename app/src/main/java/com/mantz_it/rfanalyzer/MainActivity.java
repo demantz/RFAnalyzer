@@ -170,7 +170,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
                 Toast.makeText(MainActivity.this, "Stopping and restarting RTL2832U driver...", Toast.LENGTH_SHORT).show();
 
                 // 2) Delayed start of the Analyzer:
-                Thread timer = new Thread() {
+                Thread timer = new Thread("Timer Thread") {
                     @Override
                     public void run() {
                         try {
@@ -624,7 +624,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
                 String filename = preferences.getString(getString(R.string.pref_filesource_file), "");
                 int fileFormat = Integer.valueOf(preferences.getString(getString(R.string.pref_filesource_format), "0"));
                 boolean repeat = preferences.getBoolean(getString(R.string.pref_filesource_repeat), false);
-                source = new FileIQSource(filename, sampleRate, frequency, 16384, repeat, fileFormat);
+                // TODO: HACK: replace with constant (2==HiQSDR format)
+                source = new FileIQSource(filename, sampleRate, frequency, fileFormat==2?1442:16384, repeat, fileFormat);
                 break;
             case HACKRF_SOURCE:
                 // Create HackrfSource
@@ -665,6 +666,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
                 }
                 break;
             case HIQSDR_SOURCE:
+                // Create HiQSDR source
+                source = new HiQSDRSource(
+                        preferences.getString(getString(R.string.pref_hiqsdr_ip), "192.168.2.196"),
+                        Integer.valueOf(preferences.getString(getString(R.string.pref_hiqsdr_command_port), "48248")),
+                        Integer.valueOf(preferences.getString(getString(R.string.pref_hiqsdr_rx_port), "48247")),
+                        Integer.valueOf(preferences.getString(getString(R.string.pref_hiqsdr_tx_port), "48249"))
+                );
+                // TODO: 05.09.2016
                 Log.w(LOGTAG, "createSource: implement HIQSDR_SOURCE (" + sourceType + ')');
             default:
                 Log.e(LOGTAG, "createSource: Invalid source type: " + sourceType);
@@ -1446,7 +1455,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
                         // if stopAfter was selected, start thread to supervise the recording:
                         if (cb_stopAfter.isChecked()) {
-                            Thread supervisorThread = new Thread() {
+                            Thread supervisorThread = new Thread("Supervisor Thread") {
                                 @Override
                                 public void run() {
                                     Log.i(LOGTAG, "recording_superviser: Supervisor Thread started. (Thread: " + this.getName() + ")");
