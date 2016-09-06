@@ -105,6 +105,33 @@
                     android:defaultValue="0"
                     android:inputType="number|numberSigned"/>
             </PreferenceCategory>
+            <PreferenceCategory
+                android:key="@string/pref_hiqsdr_category"
+                android:title="@string/pref_hiqsdr_category_title">
+                <EditTextPreference
+                    android:key="@string/pref_hiqsdr_ip"
+                    android:title="@string/pref_hiqsdr_ip_title"
+                    android:dialogTitle="@string/pref_hiqsdr_ip_title"
+                    android:defaultValue="@string/pref_hiqsdr_ip_default" />
+                <EditTextPreference
+                    android:key="@string/pref_hiqsdr_command_port"
+                    android:title="@string/pref_hiqsdr_command_port_title"
+                    android:dialogTitle="@string/pref_hiqsdr_command_port_title"
+                    android:defaultValue="@string/pref_hiqsdr_command_port_default"
+                    android:inputType="number"/>
+                <EditTextPreference
+                    android:key="@string/pref_hiqsdr_rx_port"
+                    android:title="@string/pref_hiqsdr_rx_port_title"
+                    android:dialogTitle="@string/pref_hiqsdr_rx_port_title"
+                    android:defaultValue="@string/pref_hiqsdr_rx_port_default"
+                    android:inputType="number"/>
+                <EditTextPreference
+                    android:key="@string/pref_hiqsdr_tx_port"
+                    android:title="@string/pref_hiqsdr_tx_port_title"
+                    android:dialogTitle="@string/pref_hiqsdr_tx_port_title"
+                    android:defaultValue="@string/pref_hiqsdr_tx_port_default"
+                    android:inputType="number"/>
+            </PreferenceCategory>
         </PreferenceScreen>
         <ListPreference
             android:key="@string/pref_fftSize"
