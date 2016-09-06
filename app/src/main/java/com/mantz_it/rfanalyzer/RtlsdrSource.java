@@ -513,6 +513,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		private ArrayBlockingQueue<byte[]> outputQueue = null;
 
 		public ReceiverThread(InputStream inputStream, ArrayBlockingQueue<byte[]> inputQueue, ArrayBlockingQueue<byte[]> outputQueue) {
+			super("RtlSdr Reciever Thread");
 			this.inputStream 	= inputStream;
 			this.inputQueue 	= inputQueue;
 			this.outputQueue 	= outputQueue;
@@ -595,6 +596,7 @@ public class RtlsdrSource implements IQSourceInterface {
 		private boolean stopRequested = false;
 
 		public CommandThread() {
+			super("RtlSdr Command Thread");
 			// Create command queue:
 			this.commandQueue = new ArrayBlockingQueue<byte[]>(COMMAND_QUEUE_SIZE);
 			this.frequencyChangeCommandQueue = new ArrayBlockingQueue<byte[]>(1);	// work-around
