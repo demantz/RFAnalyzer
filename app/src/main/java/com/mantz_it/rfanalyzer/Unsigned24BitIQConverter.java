@@ -28,7 +28,7 @@ public class Unsigned24BitIQConverter extends IQConverter {
         int startIndex = samplePacket.size();
         float[] re = samplePacket.re();
         float[] im = samplePacket.im();
-        for (int i = SAMPLES_SHIFT; i < re.length; i += SAMPLE_SIZE*2) {
+        for (int i = SAMPLES_SHIFT; i < packet.length; i += SAMPLE_SIZE*2) {
             // interesting, but direct conversion w/ LUT works on 24bit samples even faster, than LUT on 8bit
             // and direct conversion on 8bit samples is slower, than LUT
             // 6 MiB 24 bits per sample packet filled in ≈40ms
@@ -66,22 +66,23 @@ public class Unsigned24BitIQConverter extends IQConverter {
         float[] re = samplePacket.re();
         float[] im = samplePacket.im();
         // rewrite from 8bit and multiplied LUT to 24bit and multiplication with LUT
-        for (int i = SAMPLES_SHIFT; i < packet.length; i+=SAMPLE_SIZE) {
+        int packetLength = packet.length;
+        for (int i = SAMPLES_SHIFT; i < packetLength; i+=SAMPLE_SIZE<<1) {
             float reSample = ((packet[i] & 0xff
                              | (packet[i + 1] & 0xff) << 8
                              | (packet[i + 2] & 0xff) << 16
                             ) - CONVERTER_SHIFT
                            ) * CONVERTER_SCALE;
             float imSample = ((packet[i+3] & 0xff
-                               | (packet[i + 1] & 0xff) << 8
-                               | (packet[i + 2] & 0xff) << 16
+                               | (packet[i + 4] & 0xff) << 8
+                               | (packet[i + 5] & 0xff) << 16
                               ) - CONVERTER_SHIFT
                              ) * CONVERTER_SCALE;
 
-            re[startIndex+count] = cosineRealLookupTable[cosineIndex][1]*reSample
-                                   - cosineImagLookupTable[cosineIndex][1]*reSample;
-            im[startIndex+count] = cosineRealLookupTable[cosineIndex][1]*imSample
-                                   + cosineImagLookupTable[cosineIndex][1]*imSample;
+            re[startIndex+count] = cosineRealLookupTable[cosineIndex][0]*reSample
+                                   - cosineImagLookupTable[cosineIndex][0]*reSample;
+            im[startIndex+count] = cosineRealLookupTable[cosineIndex][0]*imSample
+                                   + cosineImagLookupTable[cosineIndex][0]*imSample;
             cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
             count++;
             if(startIndex+count >= capacity)
@@ -117,8 +118,8 @@ public class Unsigned24BitIQConverter extends IQConverter {
             for (int t = 0; t < bestLength; t++) {
                 cosineAtT = (float) Math.cos(2 * Math.PI * cosineFrequency * t / (float) sampleRate);
                 sineAtT = (float) Math.sin(2 * Math.PI * cosineFrequency * t / (float) sampleRate);
-                    cosineRealLookupTable[t][1] = cosineAtT;
-                    cosineImagLookupTable[t][1] = sineAtT;
+                    cosineRealLookupTable[t][0] = cosineAtT;
+                    cosineImagLookupTable[t][0] = sineAtT;
             }
             cosineIndex = 0;
         }
