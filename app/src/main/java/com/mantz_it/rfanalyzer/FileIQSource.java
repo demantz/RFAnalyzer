@@ -95,6 +95,7 @@ public class FileIQSource implements IQSourceInterface {
 		// open the file
 		try {
 			this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
+			this.bufferedInputStream.mark((int)file.length());
 			callback.onIQSourceReady(this);
 			return true;
 		}catch (IOException e) {
@@ -231,10 +232,9 @@ public class FileIQSource implements IQSourceInterface {
 			// Read the samples.
 			if(bufferedInputStream.read(buffer, 0 , buffer.length) != buffer.length) {
 				if (repeat) {
-					// rewind and try again:
-					Log.i(LOGTAG,"getPacket: End of File. Rewind!");
-					bufferedInputStream.close();
-					this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
+					// reset stream and try again:
+					Log.i(LOGTAG,"getPacket: End of File. Reset!");
+					bufferedInputStream.reset();
 					if (bufferedInputStream.read(buffer, 0, buffer.length) != buffer.length)
 						return null;
 					else {
