@@ -37,7 +37,6 @@ public abstract class IQConverter {
 	protected int cosineFrequency;						// Frequency of the cosine that is mixed to the signal
 	protected int cosineIndex;							// current index within the cosine
 	protected static final int MAX_COSINE_LENGTH = 500;	// Max length of the cosine lookup table
-
 	public IQConverter() {
 		generateLookupTable();
 	}
@@ -83,5 +82,6 @@ public abstract class IQConverter {
 
 	protected abstract void generateMixerLookupTable(int mixFrequency);
 
+	public abstract int getSampleSize();
 
 }

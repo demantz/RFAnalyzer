@@ -16,7 +16,6 @@ package com.mantz_it.rfanalyzer;
  */
 
 public class Unsigned24BitIQConverter extends IQConverter {
-
     protected static final float CONVERTER_SCALE = 1.0f / (1 << 23);
     protected static final float CONVERTER_SHIFT = (float) (1 << 23) - 1;
     protected static final int SAMPLES_SHIFT = 2;
@@ -123,5 +122,9 @@ public class Unsigned24BitIQConverter extends IQConverter {
             }
             cosineIndex = 0;
         }
+    }
+    @Override
+    public int getSampleSize(){
+        return 3;
     }
 }

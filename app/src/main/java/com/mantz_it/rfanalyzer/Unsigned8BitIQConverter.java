@@ -121,4 +121,8 @@ public class Unsigned8BitIQConverter extends IQConverter {
 		samplePacket.setFrequency(channelFrequency);		// update the frequency
 		return count;
 	}
+	@Override
+	public int getSampleSize(){
+		return 1;
+	}
 }
