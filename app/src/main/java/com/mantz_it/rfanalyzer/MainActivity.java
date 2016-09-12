@@ -941,7 +941,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
             if (source.getSampleRate() != Demodulator.INPUT_RATE) {
                 Log.e(LOGTAG, "setDemodulationMode: cannot adjust source sample rate!");
                 Toast.makeText(MainActivity.this, "Source does not support the sample rate necessary for demodulation (" +
-                                                  Demodulator.INPUT_RATE / 1000000 + " Msps)", Toast.LENGTH_LONG).show();
+                                                  Demodulator.INPUT_RATE / 1000 + " Ksps)", Toast.LENGTH_LONG).show();
                 scheduler.setDemodulationActivated(false);
                 mode = Demodulator.DEMODULATION_OFF;    // deactivate demodulation...
             } else {
