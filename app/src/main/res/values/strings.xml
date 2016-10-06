@@ -18,7 +18,7 @@
     <string name="action_recordOn">Stop recording</string>
     <string name="action_bookmarks">Bookmarks</string>
     <string name="action_autoscale">Autoscale</string>
-    <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
+    <string name="help_url">https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/rf_analyzer_manual.mk</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="rtlsdr_manual_gain_label">Manual gain:</string>
