@@ -480,12 +480,14 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 						Log.e(LOGTAG, "onRequestPermissionResult: source is null or of other type.");
 					}
 				}
+				break;
 			}
 			case PERMISSION_REQUEST_RECORDING_WRITE_FILES: {
 				// If request is cancelled, the result arrays are empty.
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					showRecordingDialog();
 				}
+				break;
 			}
 		}
 	}

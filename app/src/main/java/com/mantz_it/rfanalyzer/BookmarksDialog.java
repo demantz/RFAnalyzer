@@ -164,6 +164,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 			int newSquelch		 		= bookmarksCursor.getInt(bookmarksCursor.getColumnIndex(Bookmarks.COLUMN_NAME_SQUELCH));
 
 			// Set the new demodulation mode:
+			int savedDemodulationMode = rfControlInterface.requestCurrentDemodulationMode();
 			boolean ret = rfControlInterface.updateDemodulationMode(newMode);
 
 			// Now check if we have to re-tune the source frequency:
@@ -190,6 +191,9 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 				// Show error
 				Log.i(LOGTAG, "onItemClick(): Could not tune to bookmark frequency!");
 				Toast.makeText(activity, "Cannot tune to bookmark frequency! Check that source is running and supports frequency.", Toast.LENGTH_LONG).show();
+
+				// Restore previous demodulation mode:
+				rfControlInterface.updateDemodulationMode(savedDemodulationMode);
 			}
 
 		} else {
@@ -347,7 +351,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 			// Otherwise fill the fields with given default values (current demodulation settings):
 			else {
 				// Query current demodulation settings from the control interface:
-				double frequency = rfControlInterface.requestCurrentChannelFrequency();
+				long frequency = rfControlInterface.requestCurrentChannelFrequency();
 				int channelWidth = rfControlInterface.requestCurrentChannelWidth();
 				int mode = rfControlInterface.requestCurrentDemodulationMode();
 				float squelch = rfControlInterface.requestCurrentSquelch();
@@ -357,8 +361,8 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 					frequency = 100000000;
 				if(channelWidth < 0)
 					channelWidth = 0;
-				if(squelch < 0)
-					squelch = -50;
+				if(squelch < -100 || squelch > 10)
+					squelch = -30;
 
 				et_name.setText("-new bookmark-");
 				et_frequency.setText("" + frequency);
@@ -369,7 +373,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 			}
 
 			// create and show dialog:
-			dialog = new AlertDialog.Builder(activity)
+			new AlertDialog.Builder(activity)
 					.setTitle(bookmarkID<0 ? "Add Bookmark" : "Edit Bookmark")
 					.setView(ll_root)
 					.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -421,8 +425,8 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 								bookmarksCursor.requery();
 						}
 					})
-					.create();
-			dialog.show();
+					.create()
+					.show();
 		}
 	}
 
@@ -449,7 +453,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 			}
 
 			// create and show dialog:
-			dialog = new AlertDialog.Builder(activity)
+			new AlertDialog.Builder(activity)
 					.setTitle(categoryID<0 ? "Add Category" : "Edit Category")
 					.setView(ll_root)
 					.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -476,8 +480,8 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 							reloadCategories();
 						}
 					})
-					.create();
-			dialog.show();
+					.create()
+					.show();
 		}
 	}
 
