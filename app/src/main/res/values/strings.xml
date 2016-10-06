@@ -45,6 +45,7 @@
     <string name="save_state_maxDB">save_state_maxDB</string>
     <string name="pref_frequency">pref_frequency</string>
     <string name="pref_sampleRate">pref_sampleRate</string>
+    <string name="pref_tune_to_frequency_unit">pref_tune_to_frequency_unit</string>
     <string name="pref_tune_to_frequency_setBandwidth">pref_tune_to_frequency_setBandwidth</string>
     <string name="pref_tune_to_frequency_bandwidth">pref_tune_to_frequency_bandwidth</string>
     <string name="pref_tune_to_frequency_bandwidthUnit">pref_tune_to_frequency_bandwidthUnit</string>

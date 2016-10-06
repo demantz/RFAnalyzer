@@ -1009,6 +1009,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 
 		final LinearLayout ll_view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.tune_to_frequency, null);
 		final EditText et_frequency = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency);
+		final Spinner sp_unit = (Spinner) ll_view.findViewById(R.id.sp_tune_to_frequency_unit);
 		final CheckBox cb_bandwidth = (CheckBox) ll_view.findViewById(R.id.cb_tune_to_frequency_bandwidth);
 		final EditText et_bandwidth = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency_bandwidth);
 		final Spinner sp_bandwidthUnit = (Spinner) ll_view.findViewById(R.id.sp_tune_to_frequency_bandwidth_unit);
@@ -1028,21 +1029,23 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 		cb_bandwidth.toggle();	// to trigger the onCheckedChangeListener at least once to set inital state
 		cb_bandwidth.setChecked(preferences.getBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), false));
 		et_bandwidth.setText(preferences.getString(getString(R.string.pref_tune_to_frequency_bandwidth), "1"));
+		sp_unit.setSelection(preferences.getInt(getString(R.string.pref_tune_to_frequency_unit), 0));
 		sp_bandwidthUnit.setSelection(preferences.getInt(getString(R.string.pref_tune_to_frequency_bandwidthUnit), 0));
 
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
-			.setMessage(String.format("Frequency is %f MHz. Type a new Frequency (Values below %f will be interpreted as MHz, higher values as Hz): ",
-					source.getFrequency() / 1000000f, maxFreqMHz))
+			.setMessage(String.format("Frequency is %f MHz. Type a new Frequency: ", source.getFrequency() / 1000000f))
 			.setView(ll_view)
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
 					try {
-						float newFreq = source.getFrequency()/1000000f;
+						double newFreq = source.getFrequency();
 						if(et_frequency.getText().length() != 0)
-							newFreq = Float.valueOf(et_frequency.getText().toString());
-						if (newFreq < maxFreqMHz)
-							newFreq = newFreq * 1000000;
+							newFreq = Double.valueOf(et_frequency.getText().toString());
+						if(sp_unit.getSelectedItemPosition() == 0)		//MHz
+							newFreq *= 1000000;
+						else if(sp_unit.getSelectedItemPosition() == 1)	//KHz
+							newFreq *= 1000;
 						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
 							source.setFrequency((long)newFreq);
 							analyzerSurface.setVirtualFrequency((long)newFreq);
@@ -1063,6 +1066,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 							}
 							// safe preferences:
 							SharedPreferences.Editor edit = preferences.edit();
+							edit.putInt(getString(R.string.pref_tune_to_frequency_unit), sp_unit.getSelectedItemPosition());
 							edit.putBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), cb_bandwidth.isChecked());
 							edit.putString(getString(R.string.pref_tune_to_frequency_bandwidth), et_bandwidth.getText().toString());
 							edit.putInt(getString(R.string.pref_tune_to_frequency_bandwidthUnit), sp_bandwidthUnit.getSelectedItemPosition());
