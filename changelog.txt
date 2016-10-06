@@ -1,5 +1,11 @@
 CHANGELOG - RF Analyzer
 
+version 1.13
+ - Bookmark frequencies
+ - Including hackrf_android 1.12 (support for rad1o)
+ - Select unit for frequency and bandwidth (MHz,kHz,Hz) in jump dialog
+ - Many bugfixes
+
 version 1.12
  - Gain settings are applied in real time
  - New setting to show frequencies on the horizontal axis relative to the center frequency
