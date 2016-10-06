@@ -1,17 +1,19 @@
 package com.mantz_it.rfanalyzer;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -88,6 +90,10 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 	private static final String LOGTAG = "MainActivity";
 	private static final String RECORDING_DIR = "RFAnalyzer";
 	public static final int RTL2832U_RESULT_CODE = 1234;	// arbitrary value, used when sending intent to RTL2832U
+	public static final int PERMISSION_REQUEST_FILE_SOURCE_READ_FILES = 1111;	// arbitrary value, used when requesting
+																				// permission to open file for the file source
+	public static final int PERMISSION_REQUEST_RECORDING_WRITE_FILES = 1112;	// arbitrary value, used when requesting
+																				// permission to write file for the recording feature
 	private static final int FILE_SOURCE = 0;
 	private static final int HACKRF_SOURCE = 1;
 	private static final int RTLSDR_SOURCE = 2;
@@ -118,13 +124,19 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 
 		// Start logging if enabled:
 		if(preferences.getBoolean(getString(R.string.pref_logging), false)) {
-			try{
-				File logfile = new File(preferences.getString(getString(R.string.pref_logfile), ""));
-				logfile.getParentFile().mkdir();	// Create folder
-				logcat = Runtime.getRuntime().exec("logcat -f " + logfile);
-				Log.i("MainActivity", "onCreate: started logcat ("+logcat.toString()+") to " + logfile);
-			} catch (Exception e) {
-				Log.e("MainActivity", "onCreate: Failed to start logging!");
+			if (ContextCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE")
+					== PackageManager.PERMISSION_GRANTED) {
+				try {
+					File logfile = new File(preferences.getString(getString(R.string.pref_logfile), ""));
+					logfile.getParentFile().mkdir();    // Create folder
+					logcat = Runtime.getRuntime().exec("logcat -f " + logfile);
+					Log.i("MainActivity", "onCreate: started logcat (" + logcat.toString() + ") to " + logfile);
+				} catch (Exception e) {
+					Log.e("MainActivity", "onCreate: Failed to start logging!");
+				}
+			} else {
+				preferences.edit().putBoolean(getString(R.string.pref_logging), false).apply();
+				Log.i(LOGTAG, "onCreate: deactivate logging because of missing storage permission.");
 			}
 		}
 
@@ -456,6 +468,29 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 	}
 
 	@Override
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case PERMISSION_REQUEST_FILE_SOURCE_READ_FILES: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					if (source != null && source instanceof FileIQSource) {
+						if (!source.open(this, this))
+							Log.e(LOGTAG, "onRequestPermissionResult: source.open() exited with an error.");
+					} else {
+						Log.e(LOGTAG, "onRequestPermissionResult: source is null or of other type.");
+					}
+				}
+			}
+			case PERMISSION_REQUEST_RECORDING_WRITE_FILES: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					showRecordingDialog();
+				}
+			}
+		}
+	}
+
+	@Override
 	public void onIQSourceReady(IQSourceInterface source) {	// is called after source.open()
 		if (running)
 			startAnalyzer();    // will start the processing loop, scheduler and source
@@ -676,9 +711,19 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 
 		switch (sourceType) {
 			case FILE_SOURCE:
-				if (source != null && source instanceof FileIQSource)
-					return source.open(this, this);
-				else {
+				if (source != null && source instanceof FileIQSource) {
+					// Check for the READ_EXTERNAL_STORAGE permission:
+					if (ContextCompat.checkSelfPermission(this, "android.permission.READ_EXTERNAL_STORAGE")
+							!= PackageManager.PERMISSION_GRANTED) {
+						// request permission:
+						ActivityCompat.requestPermissions(this,
+								new String[]{"android.permission.READ_EXTERNAL_STORAGE"},
+								PERMISSION_REQUEST_FILE_SOURCE_READ_FILES);
+						return true; // return and wait for the response (is handled in onRequestPermissionResult())
+					} else {
+						return source.open(this, this);
+					}
+				} else {
 					Log.e(LOGTAG, "openSource: sourceType is FILE_SOURCE, but source is null or of other type.");
 					return false;
 				}
@@ -1286,6 +1331,14 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 		if(!running || scheduler == null || demodulator == null || source == null) {
 			Toast.makeText(MainActivity.this, "Analyzer must be running to start recording", Toast.LENGTH_LONG).show();
 			return;
+		}
+
+		// Check for the WRITE_EXTERNAL_STORAGE permission:
+		if (ContextCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE")
+							!= PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(this, new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"},
+					PERMISSION_REQUEST_RECORDING_WRITE_FILES);
+			return; // wait for the permission response (handled in onRequestPermissionResult())
 		}
 
 		final String externalDir = Environment.getExternalStorageDirectory().getAbsolutePath();

@@ -6,18 +6,24 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceFragment;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
-import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import java.io.File;
+
+import static com.mantz_it.rfanalyzer.SettingsActivity.PERMISSION_REQUEST_LOGGING_WRITE_FILES;
 
 /**
  * <h1>RF Analyzer - Settings Fragment</h1>
@@ -144,12 +150,23 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
 		// update the summeries:
 		updateSummaries();
 
 		// Screen Orientation:
 		String screenOrientation = sharedPreferences.getString(getString(R.string.pref_screenOrientation), "auto");
 		setScreenOrientation(screenOrientation);
+
+		// check WRITE_EXTERNAL_STORAGE permission if logging is active:
+		if(sharedPreferences.getBoolean(getString(R.string.pref_logging), false)) {
+			if (ContextCompat.checkSelfPermission(this.getActivity(), "android.permission.WRITE_EXTERNAL_STORAGE")
+					!= PackageManager.PERMISSION_GRANTED) {
+				// request permission:
+				ActivityCompat.requestPermissions(this.getActivity(), new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"},
+						PERMISSION_REQUEST_LOGGING_WRITE_FILES);
+			}
+		}
 	}
 
 	/**
@@ -246,6 +263,12 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		// Logfile
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_logfile));
 		editTextPref.setSummary(getString(R.string.pref_logfile_summ, editTextPref.getText()));
+
+		// Shared preferences updated in e.g. the onRequestPermissionResult() method are
+		// not automatically updated in the preference fragment gui. do it manually:
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+		switchPref = (SwitchPreference) findPreference(getString(R.string.pref_logging));
+		switchPref.setChecked(preferences.getBoolean(getString(R.string.pref_logging), false));
 	}
 
 	/**
