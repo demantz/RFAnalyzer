@@ -121,7 +121,10 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 	@Override
 	public void onClick(View v) {
 		if(v == bt_addBookmark) {
-			new EditBookmarkDialog(activity, -1);
+			if(categoriesCursor.getCount() > 0)
+				new EditBookmarkDialog(activity, -1);
+			else
+				Toast.makeText(activity, "Please create a category first!", Toast.LENGTH_LONG).show();
 		}
 
 		else if(v == bt_addCategory) {
