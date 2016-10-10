@@ -74,14 +74,21 @@ following components are needed:
 
 Installation of the RF Analyzer app is very easy from the Google Play Store.
 It will automatically be updated once a new version is released.
+Link: https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer
+Beta-Program: https://play.google.com/apps/testing/com.mantz_it.rfanalyzer
 
-Alternativeley the app can be downloaded from GitHub and manually be installed
+Alternativeley the app can be downloaded from GitHub and be installed manually
 on the device. Just download the APK file on your device and open it. This
 only works if 'Apps from unkown sources' is enabled in the Android security
 settings. Keep in mind that with this method updates have to be installed
 manually too!
+Link: https://github.com/demantz/RFAnalyzer/blob/master/RFAnalyzer.apk?raw=true
 
-#todo: rtl2832u driver
+Some SDR hardware drivers are not directly included into the app, but available
+as external apps (e.g. the rtl2832u driver for RTL-SDR dongles). These
+driver apps have to be installed on the device. If RF Analyzer cannot find
+the correct driver app, it will show the option to download it from
+Google Play.
 
 
 3. Basic Usage
@@ -199,42 +206,138 @@ More signal processing settings are available for each specific hardware type.
 4.3 HackRF Settings
 -------------------
 
-
+ * RF Amplifier: Activate or deactivate the amplifier build into the HackRF.
+   CAUTION: Do not turn on the amplifier and expose the HackRF to strong
+            RF signals as that might destroy the amplifier circuit!
+ * Antenna Power: Activate or deactivate the antenna port power of the
+   HackRF (max. 50mA at 3.3V). This can be used with powered antennas and
+   low power external amplifiers.
+ * Up-/Down-converter frequency shift: Use this setting to apply a frequency
+   offset (positive or negative) to the frequency axis of RF Analyzer when
+   using a HackRF. This is intended to be used with external up- or down
+   converters.
 
 
 4.4 RTL-SDR Settings
 --------------------
 
+ * Use external rtl_tcp server: If enabled, this option allows the app to
+   use an external rtl_tcp server instance (not running on the Android
+   device). E.g. it is possible to run rtl_tcp on another machine on the
+   same Wi-Fi network and then connect RF Analyzer to this instance. Note
+   that the bandwidth of the network has to be sufficiently high.
+   * IP address: IP address of the external rtl_tcp instance
+   * TCP port: TCP port on which the external rtl_tcp instance listens
+   Example: start rtl_tcp with the following command:
+   > rtl_tcp -a <IP address> -p <TCP port>
+ * Frequency correction: Enter a frequency correction value in ppm
+   (parts-per-million). The correct ppm value can be measured manually
+   (tune to a known frequency and calculating the offset in ppm) or
+   on another machine by using rtl_test -p.
+ * Up-/Down-converter frequency shift: Use this setting to apply a frequency
+   offset (positive or negative) to the frequency axis of RF Analyzer when
+   using a RTL-SDR. This is intended to be used with external up- or down
+   converters such as the Ham-It-Up.
+   Example: For the Ham-It-Up converter the frequency shift setting should
+   be set to -125000000Hz. That means that the app will display the incoming
+   signals as if they were 125MHz lower than they actually are. Now
+   when tuning the app to 14MHz you see the signals that are actually
+   incoming at 139MHz (this is where the 14MHz band is found after up-
+   converting it with the Ham-It-Up converter).
 
 
 4.5 File Source Settings
 ------------------------
 
+ * File Source Frequency: The baseband frequency at which the replayed IQ
+   file was recorded. This setting is automatically adjusted when selecting
+   an IQ file with XXXHz (or similiar) in its file name. Therefore it is
+   not necessary to manually edit this setting if using recorded files from
+   RF Analyzer that have the default naming scheme.
+ * File Source Sample Rate: The sample rate at which the replayed IQ file
+   was recorded. This setting is automatically adjusted when selecting
+   an IQ file with XXXSps (or similiar) in its file name. Therefore it is
+   not necessary to manually edit this setting if using recorded files from
+   RF Analyzer that have the default naming scheme.
+ * Source File: Path to the IQ file that should be replayed.
+ * File Format: Currently two common IQ file formats are supported:
+   * 8-bit signed IQ values (e.g. used by the HackRF)
+   * 8-bit unsigned IQ values (e.g. used by RTL-SDR dongles)
+   This setting is automatically adjusted when selecting an IQ file with
+   'rtlsdr' or 'hackrf' in its file name. Therefore it is not necessary to
+   manually edit this setting if using recorded files from RF Analyzer that
+   have the default naming scheme.
+ * Repeat: If enabled, the file will be replayed in a loop (start from the
+   beginning after the end of the file has reached. Otherwise the analyzer
+   stops at the end of the file.
+
 
 4.6 Advanced Settings
 ---------------------
 
-
+ * Show debug information: Display additional information on the screen
+   (current frame rate and load on the FFT calculation process).
+ * Dynamic frame rate: Automatically adjust the frame rate to the current
+   load on the FFT calculation thread.
+ * Frame Rate: Fixed frame rate that shall be used if the dynamic frame
+   rate option is not enabled.
+ * Logging: Enable the creation of a log file.
+ * Log File: File path that shall be used to write the log file.
+ * Show Log: Start a text viewer application to show the current log
+   file. Usually the text viewer allows to share the log via email (e.g.
+   in order to report bugs and issues to the developer of RF Analyzer).
 
 
 5. Recording
 ---------
 
+RF Analyzer allows the recording of raw IQ data into a file. The feature
+is equivalent to using rtl_sdr or hackrf_transfer -r. The recording dialog
+can be opened if the FFT is currently running by using the record button
+(white circle) in the action bar. The following settings can be selected:
+ * Center frequency: The frequency to which the SDR hardware will be tuned
+   (this corresponds to the -f option of rtl_sdr and hackrf_transfer).
+ * Sample rate: The sample rate at which the SDR should be operated.
+   NOTE: During audio demodulation this value is always fixed to 1MSps.
+ * File name: Name of the recorded file. The file will be stored in the
+   RFAnalyzer directory in the default directory for external media.
+   On most Android devices this results in /sdcard/RFAnalyzer/ or
+   /storage/emulated/0/RFAnalyzer/. However, the actual directory can be
+   different on some devices.
+ * Stop after: If this option is enabled, the recording will automatically
+   stop after the defined time intervall has passed or the file reached
+   the defined file size.
+Once the recording is running, it is indicated on the screen and can be
+stopped by pressing the recording button again. Files that were recorded
+can be replayed using the File Source option of RF Analyzer.
 
 
 6. Bookmarks
 ------------
 
-<comming soon>
+The bookmarks dialog allows to save frequencies in order to easily tune
+to them later again. The dialog can be opend through the bookmark buttion
+(white star) in the action bar. Bookmarks are organised in categories.
+It is possible to add, edit and delete bookmarks as well as categories.
+A long press on a category or bookmark opens a context menu with the
+option to edit or delete the selected item.
+
+A bookmark stores the following attributes:
+ * Name: User defined name of the bookmark (does not have to be unique).
+ * Category: The category to which the bookmark belongs.
+ * Frequency: Channel frequency of the station that is bookmarked.
+ * Channel Width: Bandwidth of the station (this corresponds to the
+   setting of the channel filter when demodulating audio).
+ * Mode: Demodulation mode that shall be used with this channel.
+ * Squelch: Squelch threshold that shall be used with this channel.
+ * Comment: Arbitrary comment by the user.
+
+By selecting a bookmark from the dialog, RF Analyzer will automatically
+tune to the corresponding channel frequency and set up the demodulation
+according to the bookmark attributes.
 
 
-7. Scanning
------------
-
-<comming soon>
-
-
-8. Trouble Shooting
+7. Trouble Shooting
 -------------------
 
 This section is intended to help those who can't get the app to work. Please
@@ -253,7 +356,7 @@ In many cases I will ask for the log file which can be found under the
 Advanced Settings!
 
 
-8.1 Installation and Update Issues
+7.1 Installation and Update Issues
 ----------------------------------
 
 If you have trouble with installing the app or doing updates please note
@@ -272,7 +375,7 @@ the following:
   other than myself!
 
 
-8.2 App Crashes
+7.2 App Crashes
 ---------------
 
 The issue: The RF Analyzer app crashes.
@@ -286,7 +389,7 @@ crash is reproducable please add a note to the bug report and tell me how
 to reproduce the crash!
 
 
-8.3 SDR Hardware Issues
+7.3 SDR Hardware Issues
 -----------------------
 
 The issue: You managed to install the app and you are able to start it but
@@ -310,7 +413,7 @@ you somehow can't get the FFT to work.
   Uninstalling and reinstalling it might also help with strange issues.
 
 
-8.4 Demodulation Issues
+7.4 Demodulation Issues
 -----------------------
 
 The issue: Demodulation is running (is not OFF) but you can't hear anything.
