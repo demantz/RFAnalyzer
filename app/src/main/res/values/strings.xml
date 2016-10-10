@@ -4,6 +4,7 @@
     <string name="app_name">RF Analyzer</string>
     <string name="action_settings">Settings</string>
     <string name="action_help">Help</string>
+    <string name="action_info">Info</string>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
     <string name="action_demodulation_off">Demodulation: off</string>
@@ -18,7 +19,7 @@
     <string name="action_recordOn">Stop recording</string>
     <string name="action_bookmarks">Bookmarks</string>
     <string name="action_autoscale">Autoscale</string>
-    <string name="help_url">https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/rf_analyzer_manual.mk</string>
+    <string name="help_url">https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/rf_analyzer_manual.md</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="rtlsdr_manual_gain_label">Manual gain:</string>
@@ -214,5 +215,46 @@
     <string name="editBookmarkCategory_description">Description: </string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
+    <string name="info_title"><![CDATA[<h1>RF Analyzer %s</h1>]]></string>
+    <string name="info_msg_body"><![CDATA[
+Copyright &#169; 2016 Dennis Mantz<br /><br />
+
+<h1>About the App</h1>
+RF Analyzer is an open source spectrum analyzer that lets you use you
+SDR hardware together with an Android device. A detailed description
+can be found in the <a href=https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/rf_analyzer_manual.md>
+manual</a>.
+
+Show the <a href=https://raw.githubusercontent.com/demantz/RFAnalyzer/master/changelog.txt>
+changelog</a>.
+
+<h1>Reporting Bugs</h1>
+If you find any bugs or translation mistakes or if you want to request
+a new feature please use the GitHub page of the project:<br />
+<a href=https://github.com/demantz/RFAnalyzer/issues>
+https://github.com/demantz/RFAnalyzer/issues</a>
+<br /><br />
+Alternatively you could write me an email to
+<a href=mailto:dennis.mantz@googlemail.com>dennis.mantz@googlemail.com</a>.
+
+<h1>License</h1>
+<a href=http://www.gnu.org/licenses/gpl.html>GPL version 2 or higher</a>
+<br /><br />
+<small>This application is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+<br /><br />
+This application is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+<br /><br />
+You should have received a copy of the GNU General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</small>
+<br /><br />
+Get the source code of the app here on <a href=https://github.com/demantz/RFAnalyzer>GitHub</a>!
+]]></string>
 
 </resources>

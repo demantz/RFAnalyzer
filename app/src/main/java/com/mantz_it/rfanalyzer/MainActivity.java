@@ -16,7 +16,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -83,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 	private SharedPreferences preferences = null;
 	private Bundle savedInstanceState = null;
 	private Process logcat = null;
+	private String versionName = null;
 	private boolean running = false;
 	private File recordingFile = null;
 	private int demodulationMode = Demodulator.DEMODULATION_OFF;
@@ -138,6 +141,14 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 				preferences.edit().putBoolean(getString(R.string.pref_logging), false).apply();
 				Log.i(LOGTAG, "onCreate: deactivate logging because of missing storage permission.");
 			}
+		}
+
+		// Get version name:
+		try {
+			versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+			Log.i(LOGTAG, "This is RF Analyzer " + versionName + " by Dennis Mantz.");
+		} catch (PackageManager.NameNotFoundException e) {
+			Log.e(LOGTAG, "onCreate: Cannot read version name: " + e.getMessage());
 		}
 
 		// Get references to the GUI components:
@@ -298,6 +309,8 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 			case R.id.action_help:			Intent intentShowHelp = new Intent(Intent.ACTION_VIEW);
 											intentShowHelp.setData(Uri.parse(getString(R.string.help_url)));
 											startActivity(intentShowHelp);
+											break;
+			case R.id.action_info:			showInfoDialog();
 											break;
 			default:
 		}
@@ -1560,6 +1573,22 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 	public void showBookmarksDialog() {
 		new BookmarksDialog(this, this);
 
+	}
+
+	public void showInfoDialog() {
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setTitle(Html.fromHtml(getString(R.string.info_title, versionName)))
+				.setMessage(Html.fromHtml(getString(R.string.info_msg_body)))
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Do nothing
+					}
+				})
+				.create();
+		dialog.show();
+
+		// make links clickable:
+		((TextView)dialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
 	}
 
 	public boolean updateDemodulationMode(int newDemodulationMode) {
