@@ -1415,14 +1415,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 			// HackRF specific stuff:
 			if(source instanceof HackrfSource) {
-				text = String.format("shift=%4.6f MHz", ((HackrfSource)source).getFrequencyShift()/1000000f);
+				text = String.format("offset=%4.6f MHz", ((HackrfSource)source).getFrequencyOffset()/1000000f);
 				textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
 				c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
 				yPos += bounds.height() * 1.1f;
 			}
 			// RTLSDR specific stuff:
 			if(source instanceof RtlsdrSource) {
-				text = String.format("shift=%4.6f MHz", ((RtlsdrSource)source).getFrequencyShift()/1000000f);
+				text = String.format("offset=%4.6f MHz", ((RtlsdrSource)source).getFrequencyOffset()/1000000f);
 				textSmallPaint.getTextBounds(text, 0, text.length(), bounds);
 				c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
 				yPos += bounds.height() * 1.1f;

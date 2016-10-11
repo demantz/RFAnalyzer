@@ -77,7 +77,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	private boolean manualGain = true;	// true == manual; false == automatic
 	private int frequencyCorrection = 0;
 	private boolean automaticGainControl = false;
-	private int frequencyShift = 0;	// virtually shift the frequency according to an external up/down-converter
+	private int frequencyOffset = 0;	// virtually offset the frequency according to an external up/down-converter
 	private IQConverter iqConverter;
 	private static final String LOGTAG = "RtlsdrSource";
 	private static final int QUEUE_SIZE = 20;
@@ -228,16 +228,16 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public long getFrequency() {
-		return frequency + frequencyShift;
+		return frequency + frequencyOffset;
 	}
 
 	@Override
 	public void setFrequency(long frequency) {
-		long actualSourceFrequency = frequency - frequencyShift;
+		long actualSourceFrequency = frequency - frequencyOffset;
 		if(isOpen()) {
 			if(frequency < getMinFrequency() || frequency > getMaxFrequency()) {
 				Log.e(LOGTAG, "setFrequency: Frequency out of valid range: " + frequency
-								+ "  (upconverterFrequency="+ frequencyShift +" is subtracted!)");
+								+ "  (upconverterFrequency="+ frequencyOffset +" is subtracted!)");
 				return;
 			}
 
@@ -253,12 +253,12 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public long getMaxFrequency() {
-		return MAX_FREQUENCY[tuner] + frequencyShift;
+		return MAX_FREQUENCY[tuner] + frequencyOffset;
 	}
 
 	@Override
 	public long getMinFrequency() {
-		return MIN_FREQUENCY[tuner] + frequencyShift;
+		return MIN_FREQUENCY[tuner] + frequencyOffset;
 	}
 
 	@Override
@@ -374,12 +374,12 @@ public class RtlsdrSource implements IQSourceInterface {
 		this.automaticGainControl = enable;
 	}
 
-	public int getFrequencyShift() {
-		return frequencyShift;
+	public int getFrequencyOffset() {
+		return frequencyOffset;
 	}
 
-	public void setFrequencyShift(int frequencyShift) {
-		this.frequencyShift = frequencyShift;
+	public void setFrequencyOffset(int frequencyShift) {
+		this.frequencyOffset = frequencyShift;
 		this.iqConverter.setFrequency(frequency + frequencyShift);
 	}
 
@@ -711,7 +711,7 @@ public class RtlsdrSource implements IQSourceInterface {
 				if(frequency < MIN_FREQUENCY[tuner]) {
 					frequency = MIN_FREQUENCY[tuner];
 				}
-				iqConverter.setFrequency(frequency + frequencyShift);
+				iqConverter.setFrequency(frequency + frequencyOffset);
 				if(sampleRate > getMaxSampleRate())
 					sampleRate = getMaxSampleRate();
 				if(sampleRate < getMinSampleRate())

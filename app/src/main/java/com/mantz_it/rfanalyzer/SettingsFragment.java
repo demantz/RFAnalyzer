@@ -199,10 +199,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		listPref.setSummary(getString(R.string.pref_filesource_format_summ, listPref.getEntry()));
 
 		// HackRF frequency shift
-		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_frequencyShift));
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_frequencyOffset));
 		if(editTextPref.getText().length() == 0)
 			editTextPref.setText("0");
-		editTextPref.setSummary(getString(R.string.pref_hackrf_frequencyShift_summ, editTextPref.getText()));
+		editTextPref.setSummary(getString(R.string.pref_hackrf_frequencyOffset_summ, editTextPref.getText()));
 
 		// RTL-SDR IP
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_ip));
@@ -219,10 +219,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyCorrection_summ, editTextPref.getText()));
 
 		// RTL-SDR frequency shift
-		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyShift));
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyOffset));
 		if(editTextPref.getText().length() == 0)
 			editTextPref.setText("0");
-		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyShift_summ, editTextPref.getText()));
+		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyOffset_summ, editTextPref.getText()));
 
 		// FFT size
 		listPref = (ListPreference) findPreference(getString(R.string.pref_fftSize));

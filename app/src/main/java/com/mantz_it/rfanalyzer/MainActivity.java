@@ -562,13 +562,13 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 						// overwrite hackrf source settings if changed:
 						boolean amp = preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false);
 						boolean antennaPower = preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false);
-						int frequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_hackrf_frequencyShift), "0"));
+						int frequencyOffset = Integer.valueOf(preferences.getString(getString(R.string.pref_hackrf_frequencyOffset), "0"));
 						if(((HackrfSource)source).isAmplifierOn() != amp)
 							((HackrfSource)source).setAmplifier(amp);
 						if(((HackrfSource)source).isAntennaPowerOn() != antennaPower)
 							((HackrfSource)source).setAntennaPower(antennaPower);
-						if(((HackrfSource)source).getFrequencyShift() != frequencyShift)
-							((HackrfSource)source).setFrequencyShift(frequencyShift);
+						if(((HackrfSource)source).getFrequencyOffset() != frequencyOffset)
+							((HackrfSource)source).setFrequencyOffset(frequencyOffset);
 					}
 					break;
 				case RTLSDR_SOURCE:
@@ -597,11 +597,11 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 
 						// otherwise just overwrite rtl-sdr source settings if changed:
 						int frequencyCorrection = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0"));
-						int frequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyShift), "0"));
+						int frequencyOffset = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyOffset), "0"));
 						if(frequencyCorrection != ((RtlsdrSource) source).getFrequencyCorrection())
 							((RtlsdrSource) source).setFrequencyCorrection(frequencyCorrection);
-						if(((RtlsdrSource)source).getFrequencyShift() != frequencyShift)
-							((RtlsdrSource)source).setFrequencyShift(frequencyShift);
+						if(((RtlsdrSource)source).getFrequencyOffset() != frequencyOffset)
+							((RtlsdrSource)source).setFrequencyOffset(frequencyOffset);
 					}
 					break;
 				default:
@@ -676,8 +676,8 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.pref_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN/2));
 						((HackrfSource) source).setAmplifier(preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false));
 						((HackrfSource) source).setAntennaPower(preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false));
-						((HackrfSource)source).setFrequencyShift(Integer.valueOf(
-								preferences.getString(getString(R.string.pref_hackrf_frequencyShift), "0")));
+						((HackrfSource)source).setFrequencyOffset(Integer.valueOf(
+								preferences.getString(getString(R.string.pref_hackrf_frequencyOffset), "0")));
 						break;
 			case RTLSDR_SOURCE:
 						// Create RtlsdrSource
@@ -696,8 +696,8 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 						source.setSampleRate(sampleRate);
 
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
-						((RtlsdrSource)source).setFrequencyShift(Integer.valueOf(
-								preferences.getString(getString(R.string.pref_rtlsdr_frequencyShift), "0")));
+						((RtlsdrSource)source).setFrequencyOffset(Integer.valueOf(
+								preferences.getString(getString(R.string.pref_rtlsdr_frequencyOffset), "0")));
 						((RtlsdrSource)source).setManualGain(preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false));
 						((RtlsdrSource)source).setAutomaticGainControl(preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false));
 						if(((RtlsdrSource)source).isManualGain()) {
