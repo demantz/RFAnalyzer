@@ -212,7 +212,7 @@ More signal processing settings are available for each specific hardware type.
  * Antenna Power: Activate or deactivate the antenna port power of the
    HackRF (max. 50mA at 3.3V). This can be used with powered antennas and
    low power external amplifiers.
- * Up-/Down-converter frequency shift: Use this setting to apply a frequency
+ * Up-/Down-converter frequency offset: Use this setting to apply a frequency
    offset (positive or negative) to the frequency axis of RF Analyzer when
    using a HackRF. This is intended to be used with external up- or down
    converters.
@@ -234,11 +234,11 @@ More signal processing settings are available for each specific hardware type.
    (parts-per-million). The correct ppm value can be measured manually
    (tune to a known frequency and calculating the offset in ppm) or
    on another machine by using rtl_test -p.
- * Up-/Down-converter frequency shift: Use this setting to apply a frequency
+ * Up-/Down-converter frequency offset: Use this setting to apply a frequency
    offset (positive or negative) to the frequency axis of RF Analyzer when
    using a RTL-SDR. This is intended to be used with external up- or down
    converters such as the Ham-It-Up.
-   Example: For the Ham-It-Up converter the frequency shift setting should
+   Example: For the Ham-It-Up converter the frequency offset setting should
    be set to -125000000Hz. That means that the app will display the incoming
    signals as if they were 125MHz lower than they actually are. Now
    when tuning the app to 14MHz you see the signals that are actually
