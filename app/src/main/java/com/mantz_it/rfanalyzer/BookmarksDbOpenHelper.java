@@ -65,19 +65,19 @@ public class BookmarksDbOpenHelper extends SQLiteOpenHelper {
 	}
 
 	private void populateExampleBookmarks(SQLiteDatabase db) {
-		db.execSQL("INSERT INTO bookmarkCategories (categoryName, description) VALUES ('category1', 'Just for testing');");
-		db.execSQL("INSERT INTO bookmarkCategories (categoryName, description) VALUES ('FM Stations', 'Some FM radio stations');");
+		db.execSQL("INSERT INTO bookmarkCategories (categoryName, description) VALUES ('FM Stations', 'FM radio stations');");
 		db.execSQL("INSERT INTO bookmarkCategories (categoryName, description) VALUES ('Favorites', 'My favorite stations');");
+		//db.execSQL("INSERT INTO bookmarkCategories (categoryName, description) VALUES ('category3', 'Just for testing');");
 
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark1', 'Just for testing1', 1, 10012301, 10000, 2, -60);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark2', 'Just for testing2', 1, 10012302, 10000, 1, -50);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark3', 'Just for testing3', 1, 10012303, 10000, 2, -40);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark4', 'Just for testing4', 1, 10012304, 10000, 3, -30);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark5', 'Just for testing5', 1, 10012305, 10000, 4, -60);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark6', 'Just for testing6', 1, 10012306, 10000, 2, -50);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark7', 'Just for testing7', 1, 10012307, 10000, 2, -40);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark8', 'Just for testing8', 1, 10012308, 10000, 2, -30);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark9', 'Just for testing9', 1, 10012309, 10000, 2, -20);");
-		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('DasDing!', 'Cool radio station!', 2, 96000000, 100000, 3, -60);");
+		db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('DasDing!', 'German radio station', 1, 90800000, 100000, 3, -50);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark1', 'Just for testing1', 3, 10012301, 10000, 2, -60);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark2', 'Just for testing2', 3, 10012302, 10000, 1, -50);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark3', 'Just for testing3', 3, 10012303, 10000, 2, -40);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark4', 'Just for testing4', 3, 10012304, 10000, 3, -30);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark5', 'Just for testing5', 3, 10012305, 10000, 4, -60);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark6', 'Just for testing6', 3, 10012306, 10000, 2, -50);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark7', 'Just for testing7', 3, 10012307, 10000, 2, -40);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark8', 'Just for testing8', 3, 10012308, 10000, 2, -30);");
+		//db.execSQL("INSERT INTO bookmarks (name, comment, categoryID, frequency, channelWidth, mode, squelch) VALUES ('bookmark9', 'Just for testing9', 3, 10012309, 10000, 2, -20);");
 	}
 }
