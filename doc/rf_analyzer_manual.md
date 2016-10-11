@@ -7,8 +7,7 @@ received by a HackRF or RTL-SDR. It can also demodulate audio from AM and
 FM signals as well as record raw IQ samples and scan the spectrum for
 activity!
 
-![RF Analyzer](https://raw.githubusercontent.com/demantz/RFAnalyzer/
-master/doc/screenshots/IMG_1940.jpg)
+![RF Analyzer](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/IMG_1940.jpg)
 
 This manual is intended to help people to use the app for their needs. I
 try to explain how to use all the features and also explain (to a certain
@@ -100,13 +99,13 @@ type is set to HackRF. If you are using a RTL stick or if you want to use
 a precaptured IQ file as source you have to change the source type in the
 settings (see DSP settings).
 
-[Figure 1](bild)
+[Figure 1](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_not_running.jpg)
 
 To start the Analyzer press the 'play' button in the Action Bar of the app.
 This will put the SDR device into receive mode and starts the FFT (Fast
 Fourier Transform) processing (see figure 2).
 
-[Figure 2](bild)
+[Figure 2](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_running.jpg)
 
 
 3.1 FFT & Waterfall Plot
@@ -118,10 +117,10 @@ right it is possible to browse the spectrum. The SDR hardware will automatically
 re-tune in order to allow fluent browsing. By using horizontal pinch-to-zoom
 gestures you can adjust the frequency resolution. Again, the sample rate of
 the SDR device will automatically be adjusted accordingly. Pressing the
-'Jump to frequency' button in the Action Bar (figure 1 xx) will show a
-dialog to enter an absolute frequency and sample rate (figure 3).
+'Jump to frequency' button in the Action Bar will show a dialog to enter an
+absolute frequency and sample rate (figure 3).
 
-[Figure 3](bild)
+[Figure 3](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/tune_to_frequency.jpg)
 
 The vertical axis of the FFT plot show the magnitude in dB. This value is
 relative to the input signal from the SDR device. It is currently NOT possible
@@ -134,8 +133,7 @@ vertical axis will be scaled to fit the current signal.
 If the SDR device supports gain adjustment, the 'gain' button in the Action
 Bar will show you a dialog with gain control settings (figure 4).
 
-[Figure 4](bild)
-
+[Figure 4](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/gain_settings_hackrf.jpg)
 
 
 3.2 Audio Demodulation
@@ -151,7 +149,7 @@ the center of the needle) or by tapping to the desired position. The
 channel width can also be adjusted by dragging the left or right boundaries 
 of the selector. 
 
-[Figure 5](bild)
+[Figure 5](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/demodulation_running.jpg)
 
 The channel selector contains a horizontal line which indicates the squelch
 threshold that is currently set. It changes the color from red to green
@@ -173,7 +171,7 @@ your battery fast!
 All settings in the category 'View' will affect the appearance and basic
 behaviour of the app:
 * Color map type: Select a color map for the waterfall plot (JET, HOT, GQRX)
-* FFT drawing type: Use lines or bars to draw the FFT plot
+* FFT drawing type: Use lines or bars to draw the FFT plot (see figure 6)
 * Screen orientation: Auto / (inverse) portrait / (inverse) landscape
 * Spectrum-Waterfall ratio: Proportion of FFT and waterfall plot
 * Font Size:  Adjust the font size (e.g. if your device has a uncommon resolution)
@@ -185,11 +183,14 @@ behaviour of the app:
 * Relative Frequencies: If enabled, the horizontal axis will show the
   frequency relative to the current center frequency of the SDR hardware.
 
+[Figure 6](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/alternative_draw_mode_and_peak_hold.jpg)
+
 
 4.2 DSP Settings
 ----------------
 
 * Source Type: Set this according to your hardware: HackRF, RTL-SDR, IQ-File
+* Source Settings: Open the source settings screen (see chapter 4.3 - 4.5)
 * FFT size: Set the size of the FFT (256,..,65536). Higher values will increase
   the precision of the results but also the load on the CPU.
 * Averaging: Averaging the FFT results with previous results will make it
@@ -197,11 +198,14 @@ behaviour of the app:
   to values between 1 and 20.
 * Peak hold: If enabled, this option will show small dots to indicate the
   maximum magnitude for each frequency component. This helps to spot very
-  short and spontanious signals.
+  short and spontanious signals. (see figure 6)
 * Auto start: If enabled, RF Analyzer will start the FFT on each app start.
 
 More signal processing settings are available for each specific hardware type.
 
+[Figure 7](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/source_type_setting.jpg)
+
+[Figure 8](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/source_settings.jpg)
 
 4.3 HackRF Settings
 -------------------
@@ -294,7 +298,8 @@ More signal processing settings are available for each specific hardware type.
 RF Analyzer allows the recording of raw IQ data into a file. The feature
 is equivalent to using rtl_sdr or hackrf_transfer -r. The recording dialog
 can be opened if the FFT is currently running by using the record button
-(white circle) in the action bar. The following settings can be selected:
+(white circle) in the action bar (see figure 9). The following settings can
+be selected:
  * Center frequency: The frequency to which the SDR hardware will be tuned
    (this corresponds to the -f option of rtl_sdr and hackrf_transfer).
  * Sample rate: The sample rate at which the SDR should be operated.
@@ -311,18 +316,21 @@ Once the recording is running, it is indicated on the screen and can be
 stopped by pressing the recording button again. Files that were recorded
 can be replayed using the File Source option of RF Analyzer.
 
+[Figure 9](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/recording_dialog.jpg)
+
 
 6. Bookmarks
 ------------
 
 The bookmarks dialog allows to save frequencies in order to easily tune
 to them later again. The dialog can be opend through the bookmark buttion
-(white star) in the action bar. Bookmarks are organised in categories.
+(white star) in the action bar. Bookmarks are organised in categories
+(see figure 10).
 It is possible to add, edit and delete bookmarks as well as categories.
 A long press on a category or bookmark opens a context menu with the
 option to edit or delete the selected item.
 
-A bookmark stores the following attributes:
+A bookmark stores the following attributes (see figure 11):
  * Name: User defined name of the bookmark (does not have to be unique).
  * Category: The category to which the bookmark belongs.
  * Frequency: Channel frequency of the station that is bookmarked.
@@ -335,6 +343,10 @@ A bookmark stores the following attributes:
 By selecting a bookmark from the dialog, RF Analyzer will automatically
 tune to the corresponding channel frequency and set up the demodulation
 according to the bookmark attributes.
+
+[Figure 10](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_categories.jpg)
+
+[Figure 11](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_list.jpg)
 
 
 7. Trouble Shooting
