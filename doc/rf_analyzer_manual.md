@@ -7,8 +7,8 @@ received by a HackRF or RTL-SDR. It can also demodulate audio from AM and
 FM signals as well as record raw IQ samples and scan the spectrum for
 activity!
 
-![RF Analyzer](http://4.bp.blogspot.com/-gdSsQ1COybM/VEQkplyqFOI/
-AAAAAAAADt8/hJhA0i6WyYY/s0/RF%2BAnalyzer.jpg)
+![RF Analyzer](https://raw.githubusercontent.com/demantz/RFAnalyzer/
+master/doc/screenshots/IMG_1940.jpg)
 
 This manual is intended to help people to use the app for their needs. I
 try to explain how to use all the features and also explain (to a certain
