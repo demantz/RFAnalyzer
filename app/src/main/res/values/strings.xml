@@ -19,7 +19,7 @@
     <string name="action_recordOn">Stop recording</string>
     <string name="action_bookmarks">Bookmarks</string>
     <string name="action_autoscale">Autoscale</string>
-    <string name="help_url">https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/rf_analyzer_manual.md</string>
+    <string name="help_url">https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="rtlsdr_manual_gain_label">Manual gain:</string>
@@ -222,7 +222,7 @@ Copyright &#169; 2016 Dennis Mantz<br /><br />
 <h1>About the App</h1>
 RF Analyzer is an open source spectrum analyzer that lets you use you
 SDR hardware together with an Android device. A detailed description
-can be found in the <a href=https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/rf_analyzer_manual.md>
+can be found in the <a href=https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md>
 manual</a>.
 
 Show the <a href=https://raw.githubusercontent.com/demantz/RFAnalyzer/master/changelog.txt>
