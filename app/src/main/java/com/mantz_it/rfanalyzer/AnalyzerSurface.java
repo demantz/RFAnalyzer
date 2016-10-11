@@ -60,7 +60,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private Paint waterfallLinePaint = null;// Paint object to draw one waterfall pixel
 	private Paint textPaint = null;			// Paint object to draw text on the canvas
 	private Paint textSmallPaint = null;	// Paint object to draw small text on the canvas
-	private Paint demodSelectorPaint = null;// Paint object to draw the area of the channel
+	private Paint channelSelectorPaint = null;// Paint object to draw the area of the channel
+	private Paint channelWidthSelectorPaint = null;// Paint object to draw the borders of the channel
 	private Paint squelchPaint = null;		// Paint object to draw the squelch selector
 	private int width;						// current width (in pixels) of the SurfaceView
 	private int height;						// current height (in pixels) of the SurfaceView
@@ -127,6 +128,8 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	private float fftRatio = 0.5f;					// percentage of the height the fft consumes on the surface
 
+	public static final int STROKE_WIDTH_NORMAL = 1;
+	public static final int STROKE_WIDTH_THICK = 5;
 	public static final int FONT_SIZE_SMALL = 1;
 	public static final int FONT_SIZE_MEDIUM = 2;
 	public static final int FONT_SIZE_LARGE = 3;
@@ -158,8 +161,10 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		this.textSmallPaint.setColor(Color.WHITE);
 		this.textSmallPaint.setAntiAlias(true);
 		this.waterfallLinePaint = new Paint();
-		this.demodSelectorPaint = new Paint();
-		this.demodSelectorPaint.setColor(Color.WHITE);
+		this.channelSelectorPaint = new Paint();
+		this.channelSelectorPaint.setColor(Color.WHITE);
+		this.channelWidthSelectorPaint = new Paint();
+		this.channelWidthSelectorPaint.setColor(Color.WHITE);
 		this.squelchPaint = new Paint();
 		this.squelchPaint.setColor(Color.RED);
 
@@ -707,26 +712,34 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		if(demodulationEnabled 	&& touchedFrequency < channelFrequency + channelWidth
 								&& touchedFrequency > channelFrequency - channelWidth
 								&& touchedDB < squelch + (maxDB-minDB)/7
-								&& touchedDB > squelch - (maxDB-minDB)/7)
+								&& touchedDB > squelch - (maxDB-minDB)/7) {
 			this.scrollType = SCROLLTYPE_SQUELCH;
+			this.squelchPaint.setStrokeWidth(STROKE_WIDTH_THICK);
+		}
 
 		// if the user touched the channel frequency the user wants to shift the channel frequency:
 		else if(demodulationEnabled	&& e.getY() <= getFftHeight()
 								&& touchedFrequency < channelFrequency + channelFrequencyVariation
-								&& touchedFrequency > channelFrequency - channelFrequencyVariation)
+								&& touchedFrequency > channelFrequency - channelFrequencyVariation) {
 			this.scrollType = SCROLLTYPE_CHANNEL_FREQUENCY;
+			this.channelSelectorPaint.setStrokeWidth(STROKE_WIDTH_THICK);
+		}
 
 		// if the user touched the left channel selector border the user wants to adjust the channel width:
 		else if(demodulationEnabled	&& e.getY() <= getFftHeight() && showLowerBand
 									&& touchedFrequency < channelFrequency-channelWidth + channelWidthVariation
-									&& touchedFrequency > channelFrequency-channelWidth - channelWidthVariation)
+									&& touchedFrequency > channelFrequency-channelWidth - channelWidthVariation) {
 			this.scrollType = SCROLLTYPE_CHANNEL_WIDTH_LEFT;
+			this.channelWidthSelectorPaint.setStrokeWidth(STROKE_WIDTH_THICK);
+		}
 
 		// if the user touched the right channel selector border the user wants to adjust the channel width:
 		else if(demodulationEnabled	&& e.getY() <= getFftHeight() && showUpperBand
 									&& touchedFrequency < channelFrequency+channelWidth + channelWidthVariation
-									&& touchedFrequency > channelFrequency+channelWidth - channelWidthVariation)
+									&& touchedFrequency > channelFrequency+channelWidth - channelWidthVariation) {
 			this.scrollType = SCROLLTYPE_CHANNEL_WIDTH_RIGHT;
+			this.channelWidthSelectorPaint.setStrokeWidth(STROKE_WIDTH_THICK);
+		}
 
 		// otherwise the user wants to scroll the virtual frequency
 		else
@@ -847,6 +860,14 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+
+		// Reset the stroke width of the channel controls if the user lifts his finger:
+		if(event.getAction() == MotionEvent.ACTION_UP) {
+			this.squelchPaint.setStrokeWidth(STROKE_WIDTH_NORMAL);
+			this.channelSelectorPaint.setStrokeWidth(STROKE_WIDTH_NORMAL);
+			this.channelWidthSelectorPaint.setStrokeWidth(STROKE_WIDTH_NORMAL);
+		}
+
 		boolean retVal = this.scaleGestureDetector.onTouchEvent(event);
 		retVal = this.gestureDetector.onTouchEvent(event) || retVal;
 		return retVal;
@@ -1286,21 +1307,21 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			float squelchPosition =  getFftHeight() - (squelch - minDB) * dbWidth;
 
 			// draw half transparent channel area:
-			demodSelectorPaint.setAlpha(0x7f);
+			channelSelectorPaint.setAlpha(0x7f);
 			if(showLowerBand)
-				c.drawRect(leftBorder, 0, channelPosition, squelchPosition, demodSelectorPaint);
+				c.drawRect(leftBorder, 0, channelPosition, squelchPosition, channelSelectorPaint);
 			if(showUpperBand)
-				c.drawRect(channelPosition, 0, rightBorder, squelchPosition, demodSelectorPaint);
+				c.drawRect(channelPosition, 0, rightBorder, squelchPosition, channelSelectorPaint);
 
 			// draw center and borders:
-			demodSelectorPaint.setAlpha(0xff);
-			c.drawLine(channelPosition,getFftHeight(), channelPosition, 0, demodSelectorPaint);
+			channelSelectorPaint.setAlpha(0xff);
+			c.drawLine(channelPosition,getFftHeight(), channelPosition, 0, channelSelectorPaint);
 			if(showLowerBand) {
-				c.drawLine(leftBorder, getFftHeight(), leftBorder, 0, demodSelectorPaint);
+				c.drawLine(leftBorder, getFftHeight(), leftBorder, 0, channelWidthSelectorPaint);
 				c.drawLine(leftBorder,squelchPosition,channelPosition,squelchPosition,squelchPaint);
 			}
 			if(showUpperBand) {
-				c.drawLine(rightBorder, getFftHeight(), rightBorder, 0, demodSelectorPaint);
+				c.drawLine(rightBorder, getFftHeight(), rightBorder, 0, channelWidthSelectorPaint);
 				c.drawLine(channelPosition,squelchPosition,rightBorder,squelchPosition,squelchPaint);
 			}
 
