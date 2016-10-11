@@ -99,13 +99,13 @@ type is set to HackRF. If you are using a RTL stick or if you want to use
 a precaptured IQ file as source you have to change the source type in the
 settings (see DSP settings).
 
-[Figure 1](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_not_running.jpg)
+[Figure 1](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_not_running.png)
 
 To start the Analyzer press the 'play' button in the Action Bar of the app.
 This will put the SDR device into receive mode and starts the FFT (Fast
 Fourier Transform) processing (see figure 2).
 
-[Figure 2](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_running.jpg)
+[Figure 2](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_running.png)
 
 
 3.1 FFT & Waterfall Plot
@@ -120,7 +120,7 @@ the SDR device will automatically be adjusted accordingly. Pressing the
 'Jump to frequency' button in the Action Bar will show a dialog to enter an
 absolute frequency and sample rate (figure 3).
 
-[Figure 3](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/tune_to_frequency.jpg)
+[Figure 3](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/tune_to_frequency.png)
 
 The vertical axis of the FFT plot show the magnitude in dB. This value is
 relative to the input signal from the SDR device. It is currently NOT possible
@@ -133,7 +133,7 @@ vertical axis will be scaled to fit the current signal.
 If the SDR device supports gain adjustment, the 'gain' button in the Action
 Bar will show you a dialog with gain control settings (figure 4).
 
-[Figure 4](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/gain_settings_hackrf.jpg)
+[Figure 4](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/gain_settings_hackrf.png)
 
 
 3.2 Audio Demodulation
@@ -149,7 +149,7 @@ the center of the needle) or by tapping to the desired position. The
 channel width can also be adjusted by dragging the left or right boundaries 
 of the selector. 
 
-[Figure 5](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/demodulation_running.jpg)
+[Figure 5](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/demodulation_running.png)
 
 The channel selector contains a horizontal line which indicates the squelch
 threshold that is currently set. It changes the color from red to green
@@ -183,7 +183,7 @@ behaviour of the app:
 * Relative Frequencies: If enabled, the horizontal axis will show the
   frequency relative to the current center frequency of the SDR hardware.
 
-[Figure 6](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/alternative_draw_mode_and_peak_hold.jpg)
+[Figure 6](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/alternative_draw_mode_and_peak_hold.png)
 
 
 4.2 DSP Settings
@@ -203,9 +203,9 @@ behaviour of the app:
 
 More signal processing settings are available for each specific hardware type.
 
-[Figure 7](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/source_type_setting.jpg)
+[Figure 7](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/source_type_setting.png)
 
-[Figure 8](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/source_settings.jpg)
+[Figure 8](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/source_settings.png)
 
 4.3 HackRF Settings
 -------------------
@@ -316,7 +316,7 @@ Once the recording is running, it is indicated on the screen and can be
 stopped by pressing the recording button again. Files that were recorded
 can be replayed using the File Source option of RF Analyzer.
 
-[Figure 9](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/recording_dialog.jpg)
+[Figure 9](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/recording_dialog.png)
 
 
 6. Bookmarks
@@ -344,9 +344,9 @@ By selecting a bookmark from the dialog, RF Analyzer will automatically
 tune to the corresponding channel frequency and set up the demodulation
 according to the bookmark attributes.
 
-[Figure 10](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_categories.jpg)
+[Figure 10](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_categories.png)
 
-[Figure 11](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_list.jpg)
+[Figure 11](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_list.png)
 
 
 7. Trouble Shooting
