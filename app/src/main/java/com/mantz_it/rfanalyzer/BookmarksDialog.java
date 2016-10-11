@@ -52,6 +52,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 	private BookmarksCursorAdapter bookmarksAdapter;
 	private Cursor categoriesCursor;
 	private Cursor bookmarksCursor;
+	private int currentCategory = 0;
 
 	public BookmarksDialog(Activity activity, RFControlInterface rfControlInterface) {
 		this.activity = activity;
@@ -142,8 +143,9 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		if(parent == lv_categories) {
+			currentCategory = position;
 			// Get the category name:
-			categoriesCursor.moveToPosition(position);
+			categoriesCursor.moveToPosition(currentCategory);
 			String categoryName = categoriesCursor.getString(categoriesCursor.getColumnIndex(BookmarkCategories.COLUMN_NAME_CATEGORY_NAME));
 			bt_category.setText("◀ " + categoryName);
 
@@ -345,7 +347,8 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 
 				// Setting the category is a bit nasty:
 				int categoryPosition = getPositionOfId(categoriesCursor,
-						cursor.getLong(cursor.getColumnIndex(Bookmarks.COLUMN_NAME_CATEGORY_ID)), BookmarkCategories._ID);
+						cursor.getLong(cursor.getColumnIndex(Bookmarks.COLUMN_NAME_CATEGORY_ID)),
+						BookmarkCategories._ID);
 				if(categoryPosition >= 0)
 					sp_category.setSelection(categoryPosition);
 				cursor.close();
@@ -364,7 +367,7 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 					frequency = 100000000;
 				if(channelWidth < 0)
 					channelWidth = 0;
-				if(squelch < -100 || squelch > 10)
+				if(Float.isNaN(squelch) || squelch < -100 || squelch > 10)
 					squelch = -30;
 
 				et_name.setText("-new bookmark-");
@@ -373,10 +376,31 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 				sp_mode.setSelection(mode);
 				et_squelch.setText("" + squelch);
 				et_comment.setText("");
+
+				sp_category.setSelection(currentCategory);
 			}
 
+			// Add listener to mode spinner to automatically correct channel width on changes:
+			sp_mode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+				@Override
+				public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+					if(position > 0 && et_channelWidth.getText().length() > 0) {
+						int channelWidth = Integer.valueOf(et_channelWidth.getText().toString());
+						if(channelWidth < Demodulator.MIN_USER_FILTER_WIDTH[position])
+							et_channelWidth.setText("" + Demodulator.MIN_USER_FILTER_WIDTH[position]);
+						if(channelWidth > Demodulator.MAX_USER_FILTER_WIDTH[position])
+							et_channelWidth.setText("" + Demodulator.MAX_USER_FILTER_WIDTH[position]);
+					}
+				}
+
+				@Override
+				public void onNothingSelected(AdapterView<?> parent) {
+
+				}
+			});
+
 			// create and show dialog:
-			new AlertDialog.Builder(activity)
+			final AlertDialog d = new AlertDialog.Builder(activity)
 					.setTitle(bookmarkID<0 ? "Add Bookmark" : "Edit Bookmark")
 					.setView(ll_root)
 					.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -385,51 +409,56 @@ public class BookmarksDialog implements View.OnClickListener, AdapterView.OnItem
 							// do nothing
 						}
 					})
-					.setPositiveButton(bookmarkID<0 ? "Add" : "Save", new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							String name = et_name.getText().toString();
-							long categoryId = sp_category.getSelectedItemId();
+					.setPositiveButton(bookmarkID<0 ? "Add" : "Save", null) // set click listener later..
+					.create();
+			d.show();
+			d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v)
+				{
+					String name = et_name.getText().toString();
+					long categoryId = sp_category.getSelectedItemId();
 
-							// Parse frequency
-							if(et_frequency.getText().length() == 0) {
-								Toast.makeText(activity, "Please specify a center frequency!", Toast.LENGTH_LONG).show();
-								return;
-							}
-							double frequency = Double.valueOf(et_frequency.getText().toString());
-							if (frequency < rfControlInterface.requestMaxSourceFrequency()/1000000)
-								frequency = frequency * 1000000;
+					// Parse frequency
+					if(et_frequency.getText().length() == 0) {
+						Toast.makeText(activity, "Please specify a center frequency!", Toast.LENGTH_LONG).show();
+						return;
+					}
+					double frequency = Double.valueOf(et_frequency.getText().toString());
+					if (frequency < rfControlInterface.requestMaxSourceFrequency()/1000000)
+						frequency = frequency * 1000000;
 
-							// Parse channel width
-							if(et_channelWidth.getText().length() == 0) {
-								Toast.makeText(activity, "Please specify the channel width!", Toast.LENGTH_LONG).show();
-								return;
-							}
-							int channelWidth = Integer.valueOf(et_channelWidth.getText().toString());
-							int mode = sp_mode.getSelectedItemPosition();
-							float squelch = Float.valueOf(et_squelch.getText().toString());
-							String comment = et_comment.getText().toString();
+					// Parse channel width
+					if(et_channelWidth.getText().length() == 0) {
+						Toast.makeText(activity, "Please specify the channel width!", Toast.LENGTH_LONG).show();
+						return;
+					}
+					int channelWidth = Integer.valueOf(et_channelWidth.getText().toString());
+					int mode = sp_mode.getSelectedItemPosition();
+					float squelch = Float.valueOf(et_squelch.getText().toString());
+					String comment = et_comment.getText().toString();
 
-							ContentValues values = new ContentValues();
-							values.put(Bookmarks.COLUMN_NAME_NAME, name);
-							values.put(Bookmarks.COLUMN_NAME_COMMENT, comment);
-							values.put(Bookmarks.COLUMN_NAME_CATEGORY_ID, categoryId);
-							values.put(Bookmarks.COLUMN_NAME_FREQUENCY, frequency);
-							values.put(Bookmarks.COLUMN_NAME_CHANNEL_WIDTH, channelWidth);
-							values.put(Bookmarks.COLUMN_NAME_MODE, mode);
-							values.put(Bookmarks.COLUMN_NAME_SQUELCH, squelch);
+					ContentValues values = new ContentValues();
+					values.put(Bookmarks.COLUMN_NAME_NAME, name);
+					values.put(Bookmarks.COLUMN_NAME_COMMENT, comment);
+					values.put(Bookmarks.COLUMN_NAME_CATEGORY_ID, categoryId);
+					values.put(Bookmarks.COLUMN_NAME_FREQUENCY, frequency);
+					values.put(Bookmarks.COLUMN_NAME_CHANNEL_WIDTH, channelWidth);
+					values.put(Bookmarks.COLUMN_NAME_MODE, mode);
+					values.put(Bookmarks.COLUMN_NAME_SQUELCH, squelch);
 
-							if(bookmarkID >= 0)
-								activity.getContentResolver().update(ContentUris.withAppendedId(Bookmarks.CONTENT_URI,bookmarkID), values, null, null);
-							else
-								activity.getContentResolver().insert(Bookmarks.CONTENT_URI, values);
+					if(bookmarkID >= 0)
+						activity.getContentResolver().update(ContentUris.withAppendedId(Bookmarks.CONTENT_URI,bookmarkID), values, null, null);
+					else
+						activity.getContentResolver().insert(Bookmarks.CONTENT_URI, values);
 
-							if(bookmarksCursor != null)
-								bookmarksCursor.requery();
-						}
-					})
-					.create()
-					.show();
+					if(bookmarksCursor != null)
+						bookmarksCursor.requery();
+
+					d.dismiss();
+				}
+			});
+
 		}
 	}
 
