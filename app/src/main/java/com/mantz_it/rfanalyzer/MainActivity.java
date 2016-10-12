@@ -1571,8 +1571,10 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 	}
 
 	public void showBookmarksDialog() {
+		// show warning toast if recording is running:
+		if(recordingFile != null)
+			Toast.makeText(this, "WARNING: Recording is running!", Toast.LENGTH_LONG).show();
 		new BookmarksDialog(this, this);
-
 	}
 
 	public void showInfoDialog() {
