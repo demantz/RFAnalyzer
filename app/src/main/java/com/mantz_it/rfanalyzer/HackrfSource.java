@@ -49,7 +49,7 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	private int lnaGain = 0;
 	private boolean amplifier = false;
 	private boolean antennaPower = false;
-	private int frequencyShift = 0;	// virtually shift the frequency according to an external up/down-converter
+	private int frequencyOffset = 0;	// virtually offset the frequency according to an external up/down-converter
 	private IQConverter iqConverter;
 	private static final String LOGTAG = "HackRFSource";
 	public static final long MIN_FREQUENCY = 1l;
@@ -134,12 +134,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public long getFrequency() {
-		return frequency + frequencyShift;
+		return frequency + frequencyOffset;
 	}
 
 	@Override
 	public void setFrequency(long frequency) {
-		long actualFrequency = frequency - frequencyShift;
+		long actualFrequency = frequency - frequencyOffset;
 		// re-tune the hackrf:
 		if(hackrf != null) {
 			try {
@@ -161,12 +161,12 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	@Override
 	public long getMaxFrequency() {
-		return MAX_FREQUENCY + frequencyShift;
+		return MAX_FREQUENCY + frequencyOffset;
 	}
 
 	@Override
 	public long getMinFrequency() {
-		return MIN_FREQUENCY + frequencyShift;
+		return MIN_FREQUENCY + frequencyOffset;
 	}
 
 	@Override
@@ -356,13 +356,13 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 		this.antennaPower = antennaPower;
 	}
 
-	public int getFrequencyShift() {
-		return frequencyShift;
+	public int getFrequencyOffset() {
+		return frequencyOffset;
 	}
 
-	public void setFrequencyShift(int frequencyShift) {
-		this.frequencyShift = frequencyShift;
-		this.iqConverter.setFrequency(frequency+frequencyShift);
+	public void setFrequencyOffset(int frequencyOffset) {
+		this.frequencyOffset = frequencyOffset;
+		this.iqConverter.setFrequency(frequency+frequencyOffset);
 	}
 
 	@Override

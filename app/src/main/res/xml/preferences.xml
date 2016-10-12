@@ -64,9 +64,9 @@
                     android:summaryOff="@string/pref_hackrf_antennaPower_summ_off"
                     android:defaultValue="false" />
                 <EditTextPreference
-                    android:key="@string/pref_hackrf_frequencyShift"
-                    android:title="@string/pref_hackrf_frequencyShift_title"
-                    android:dialogTitle="@string/pref_hackrf_frequencyShift_title"
+                    android:key="@string/pref_hackrf_frequencyOffset"
+                    android:title="@string/pref_hackrf_frequencyOffset_title"
+                    android:dialogTitle="@string/pref_hackrf_frequencyOffset_title"
                     android:defaultValue="0"
                     android:inputType="number|numberSigned"/>
             </PreferenceCategory>
@@ -99,9 +99,9 @@
                     android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default"
                     android:inputType="number|numberSigned"/>
                 <EditTextPreference
-                    android:key="@string/pref_rtlsdr_frequencyShift"
-                    android:title="@string/pref_rtlsdr_frequencyShift_title"
-                    android:dialogTitle="@string/pref_rtlsdr_frequencyShift_title"
+                    android:key="@string/pref_rtlsdr_frequencyOffset"
+                    android:title="@string/pref_rtlsdr_frequencyOffset_title"
+                    android:dialogTitle="@string/pref_rtlsdr_frequencyOffset_title"
                     android:defaultValue="0"
                     android:inputType="number|numberSigned"/>
             </PreferenceCategory>

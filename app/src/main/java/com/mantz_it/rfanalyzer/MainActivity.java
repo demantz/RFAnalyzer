@@ -1,19 +1,24 @@
 package com.mantz_it.rfanalyzer;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -66,7 +71,7 @@ import java.util.Locale;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends Activity implements IQSourceInterface.Callback, AnalyzerSurface.CallbackInterface {
+public class MainActivity extends AppCompatActivity implements IQSourceInterface.Callback, RFControlInterface {
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
@@ -80,6 +85,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private SharedPreferences preferences = null;
 	private Bundle savedInstanceState = null;
 	private Process logcat = null;
+	private String versionName = null;
 	private boolean running = false;
 	private File recordingFile = null;
 	private int demodulationMode = Demodulator.DEMODULATION_OFF;
@@ -87,6 +93,10 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	private static final String LOGTAG = "MainActivity";
 	private static final String RECORDING_DIR = "RFAnalyzer";
 	public static final int RTL2832U_RESULT_CODE = 1234;	// arbitrary value, used when sending intent to RTL2832U
+	public static final int PERMISSION_REQUEST_FILE_SOURCE_READ_FILES = 1111;	// arbitrary value, used when requesting
+																				// permission to open file for the file source
+	public static final int PERMISSION_REQUEST_RECORDING_WRITE_FILES = 1112;	// arbitrary value, used when requesting
+																				// permission to write file for the recording feature
 	private static final int FILE_SOURCE = 0;
 	private static final int HACKRF_SOURCE = 1;
 	private static final int RTLSDR_SOURCE = 2;
@@ -117,14 +127,28 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// Start logging if enabled:
 		if(preferences.getBoolean(getString(R.string.pref_logging), false)) {
-			try{
-				File logfile = new File(preferences.getString(getString(R.string.pref_logfile), ""));
-				logfile.getParentFile().mkdir();	// Create folder
-				logcat = Runtime.getRuntime().exec("logcat -f " + logfile);
-				Log.i("MainActivity", "onCreate: started logcat ("+logcat.toString()+") to " + logfile);
-			} catch (Exception e) {
-				Log.e("MainActivity", "onCreate: Failed to start logging!");
+			if (ContextCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE")
+					== PackageManager.PERMISSION_GRANTED) {
+				try {
+					File logfile = new File(preferences.getString(getString(R.string.pref_logfile), ""));
+					logfile.getParentFile().mkdir();    // Create folder
+					logcat = Runtime.getRuntime().exec("logcat -f " + logfile);
+					Log.i("MainActivity", "onCreate: started logcat (" + logcat.toString() + ") to " + logfile);
+				} catch (Exception e) {
+					Log.e("MainActivity", "onCreate: Failed to start logging!");
+				}
+			} else {
+				preferences.edit().putBoolean(getString(R.string.pref_logging), false).apply();
+				Log.i(LOGTAG, "onCreate: deactivate logging because of missing storage permission.");
 			}
+		}
+
+		// Get version name:
+		try {
+			versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+			Log.i(LOGTAG, "This is RF Analyzer " + versionName + " by Dennis Mantz.");
+		} catch (PackageManager.NameNotFoundException e) {
+			Log.e(LOGTAG, "onCreate: Cannot read version name: " + e.getMessage());
 		}
 
 		// Get references to the GUI components:
@@ -189,9 +213,6 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		// Set the hardware volume keys to work on the music audio stream:
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-		// Hide application title in action bar (takes too much space)
-		getActionBar().setDisplayShowTitleEnabled(false);
 	}
 
 	@Override
@@ -217,6 +238,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 				&& !preferences.getBoolean(getString(R.string.pref_rtlsdr_externalServer),false)) {
 			try {
 				Intent intent = new Intent(Intent.ACTION_VIEW);
+				intent.setClassName("marto.rtl_tcp_andro", "com.sdrtouch.rtlsdr.DeviceOpenActivity");
 				intent.setData(Uri.parse("iqsrc://-x"));	// -x is invalid. will cause the driver to shut down (if running)
 				startActivity(intent);
 			} catch (ActivityNotFoundException e) {
@@ -279,12 +301,16 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 											else
 												showRecordingDialog();
 											break;
+			case R.id.action_bookmarks:		showBookmarksDialog();
+											break;
 			case R.id.action_settings:		Intent intentShowSettings = new Intent(getApplicationContext(), SettingsActivity.class);
 											startActivity(intentShowSettings);
 											break;
 			case R.id.action_help:			Intent intentShowHelp = new Intent(Intent.ACTION_VIEW);
 											intentShowHelp.setData(Uri.parse(getString(R.string.help_url)));
 											startActivity(intentShowHelp);
+											break;
+			case R.id.action_info:			showInfoDialog();
 											break;
 			default:
 		}
@@ -298,68 +324,68 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		this.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-			// Set title and icon of the start/stop button according to the state:
-			if(mi_startStop != null) {
-				if (running) {
-					mi_startStop.setTitle(R.string.action_stop);
-					mi_startStop.setIcon(R.drawable.ic_action_pause);
-				} else {
-					mi_startStop.setTitle(R.string.action_start);
-					mi_startStop.setIcon(R.drawable.ic_action_play);
+				// Set title and icon of the start/stop button according to the state:
+				if (mi_startStop != null) {
+					if (running) {
+						mi_startStop.setTitle(R.string.action_stop);
+						mi_startStop.setIcon(R.drawable.ic_action_pause);
+					} else {
+						mi_startStop.setTitle(R.string.action_start);
+						mi_startStop.setIcon(R.drawable.ic_action_play);
+					}
 				}
-			}
 
-			// Set title and icon for the demodulator mode button
-			if(mi_demodulationMode != null) {
-				int iconRes;
-				int titleRes;
-				switch (demodulationMode) {
-					case Demodulator.DEMODULATION_OFF:
-						iconRes = R.drawable.ic_action_demod_off;
-						titleRes = R.string.action_demodulation_off;
-						break;
-					case Demodulator.DEMODULATION_AM:
-						iconRes = R.drawable.ic_action_demod_am;
-						titleRes = R.string.action_demodulation_am;
-						break;
-					case Demodulator.DEMODULATION_NFM:
-						iconRes = R.drawable.ic_action_demod_nfm;
-						titleRes = R.string.action_demodulation_nfm;
-						break;
-					case Demodulator.DEMODULATION_WFM:
-						iconRes = R.drawable.ic_action_demod_wfm;
-						titleRes = R.string.action_demodulation_wfm;
-						break;
-					case Demodulator.DEMODULATION_LSB:
-						iconRes = R.drawable.ic_action_demod_lsb;
-						titleRes = R.string.action_demodulation_lsb;
-						break;
-					case Demodulator.DEMODULATION_USB:
-						iconRes = R.drawable.ic_action_demod_usb;
-						titleRes = R.string.action_demodulation_usb;
-						break;
-					default:
-						Log.e(LOGTAG,"updateActionBar: invalid mode: " + demodulationMode);
-						iconRes = -1;
-						titleRes = -1;
-						break;
+				// Set title and icon for the demodulator mode button
+				if (mi_demodulationMode != null) {
+					int iconRes;
+					int titleRes;
+					switch (demodulationMode) {
+						case Demodulator.DEMODULATION_OFF:
+							iconRes = R.drawable.ic_action_demod_off;
+							titleRes = R.string.action_demodulation_off;
+							break;
+						case Demodulator.DEMODULATION_AM:
+							iconRes = R.drawable.ic_action_demod_am;
+							titleRes = R.string.action_demodulation_am;
+							break;
+						case Demodulator.DEMODULATION_NFM:
+							iconRes = R.drawable.ic_action_demod_nfm;
+							titleRes = R.string.action_demodulation_nfm;
+							break;
+						case Demodulator.DEMODULATION_WFM:
+							iconRes = R.drawable.ic_action_demod_wfm;
+							titleRes = R.string.action_demodulation_wfm;
+							break;
+						case Demodulator.DEMODULATION_LSB:
+							iconRes = R.drawable.ic_action_demod_lsb;
+							titleRes = R.string.action_demodulation_lsb;
+							break;
+						case Demodulator.DEMODULATION_USB:
+							iconRes = R.drawable.ic_action_demod_usb;
+							titleRes = R.string.action_demodulation_usb;
+							break;
+						default:
+							Log.e(LOGTAG, "updateActionBar: invalid mode: " + demodulationMode);
+							iconRes = -1;
+							titleRes = -1;
+							break;
+					}
+					if (titleRes > 0 && iconRes > 0) {
+						mi_demodulationMode.setTitle(titleRes);
+						mi_demodulationMode.setIcon(iconRes);
+					}
 				}
-				if(titleRes > 0 && iconRes > 0) {
-					mi_demodulationMode.setTitle(titleRes);
-					mi_demodulationMode.setIcon(iconRes);
-				}
-			}
 
-			// Set title and icon of the record button according to the state:
-			if(mi_record != null) {
-				if (recordingFile != null) {
-					mi_record.setTitle(R.string.action_recordOn);
-					mi_record.setIcon(R.drawable.ic_action_record_on);
-				} else {
-					mi_record.setTitle(R.string.action_recordOff);
-					mi_record.setIcon(R.drawable.ic_action_record_off);
+				// Set title and icon of the record button according to the state:
+				if (mi_record != null) {
+					if (recordingFile != null) {
+						mi_record.setTitle(R.string.action_recordOn);
+						mi_record.setIcon(R.drawable.ic_action_record_on);
+					} else {
+						mi_record.setTitle(R.string.action_recordOff);
+						mi_record.setIcon(R.drawable.ic_action_record_off);
+					}
 				}
-			}
 			}
 		});
 
@@ -455,6 +481,31 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 	}
 
 	@Override
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case PERMISSION_REQUEST_FILE_SOURCE_READ_FILES: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					if (source != null && source instanceof FileIQSource) {
+						if (!source.open(this, this))
+							Log.e(LOGTAG, "onRequestPermissionResult: source.open() exited with an error.");
+					} else {
+						Log.e(LOGTAG, "onRequestPermissionResult: source is null or of other type.");
+					}
+				}
+				break;
+			}
+			case PERMISSION_REQUEST_RECORDING_WRITE_FILES: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					showRecordingDialog();
+				}
+				break;
+			}
+		}
+	}
+
+	@Override
 	public void onIQSourceReady(IQSourceInterface source) {	// is called after source.open()
 		if (running)
 			startAnalyzer();    // will start the processing loop, scheduler and source
@@ -511,13 +562,13 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						// overwrite hackrf source settings if changed:
 						boolean amp = preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false);
 						boolean antennaPower = preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false);
-						int frequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_hackrf_frequencyShift), "0"));
+						int frequencyOffset = Integer.valueOf(preferences.getString(getString(R.string.pref_hackrf_frequencyOffset), "0"));
 						if(((HackrfSource)source).isAmplifierOn() != amp)
 							((HackrfSource)source).setAmplifier(amp);
 						if(((HackrfSource)source).isAntennaPowerOn() != antennaPower)
 							((HackrfSource)source).setAntennaPower(antennaPower);
-						if(((HackrfSource)source).getFrequencyShift() != frequencyShift)
-							((HackrfSource)source).setFrequencyShift(frequencyShift);
+						if(((HackrfSource)source).getFrequencyOffset() != frequencyOffset)
+							((HackrfSource)source).setFrequencyOffset(frequencyOffset);
 					}
 					break;
 				case RTLSDR_SOURCE:
@@ -546,11 +597,11 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 						// otherwise just overwrite rtl-sdr source settings if changed:
 						int frequencyCorrection = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0"));
-						int frequencyShift = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyShift), "0"));
+						int frequencyOffset = Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyOffset), "0"));
 						if(frequencyCorrection != ((RtlsdrSource) source).getFrequencyCorrection())
 							((RtlsdrSource) source).setFrequencyCorrection(frequencyCorrection);
-						if(((RtlsdrSource)source).getFrequencyShift() != frequencyShift)
-							((RtlsdrSource)source).setFrequencyShift(frequencyShift);
+						if(((RtlsdrSource)source).getFrequencyOffset() != frequencyOffset)
+							((RtlsdrSource)source).setFrequencyOffset(frequencyOffset);
 					}
 					break;
 				default:
@@ -575,7 +626,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		// Screen Orientation:
 		String screenOrientation = preferences.getString(getString(R.string.pref_screenOrientation), "auto");
 		if(screenOrientation.equals("auto"))
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 		else if(screenOrientation.equals("landscape"))
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		else if(screenOrientation.equals("portrait"))
@@ -625,8 +676,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						((HackrfSource) source).setLnaGain(preferences.getInt(getString(R.string.pref_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN/2));
 						((HackrfSource) source).setAmplifier(preferences.getBoolean(getString(R.string.pref_hackrf_amplifier), false));
 						((HackrfSource) source).setAntennaPower(preferences.getBoolean(getString(R.string.pref_hackrf_antennaPower), false));
-						((HackrfSource)source).setFrequencyShift(Integer.valueOf(
-								preferences.getString(getString(R.string.pref_hackrf_frequencyShift), "0")));
+						((HackrfSource)source).setFrequencyOffset(Integer.valueOf(
+								preferences.getString(getString(R.string.pref_hackrf_frequencyOffset), "0")));
 						break;
 			case RTLSDR_SOURCE:
 						// Create RtlsdrSource
@@ -645,8 +696,8 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						source.setSampleRate(sampleRate);
 
 						((RtlsdrSource) source).setFrequencyCorrection(Integer.valueOf(preferences.getString(getString(R.string.pref_rtlsdr_frequencyCorrection), "0")));
-						((RtlsdrSource)source).setFrequencyShift(Integer.valueOf(
-								preferences.getString(getString(R.string.pref_rtlsdr_frequencyShift), "0")));
+						((RtlsdrSource)source).setFrequencyOffset(Integer.valueOf(
+								preferences.getString(getString(R.string.pref_rtlsdr_frequencyOffset), "0")));
 						((RtlsdrSource)source).setManualGain(preferences.getBoolean(getString(R.string.pref_rtlsdr_manual_gain), false));
 						((RtlsdrSource)source).setAutomaticGainControl(preferences.getBoolean(getString(R.string.pref_rtlsdr_agc), false));
 						if(((RtlsdrSource)source).isManualGain()) {
@@ -675,9 +726,19 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		switch (sourceType) {
 			case FILE_SOURCE:
-				if (source != null && source instanceof FileIQSource)
-					return source.open(this, this);
-				else {
+				if (source != null && source instanceof FileIQSource) {
+					// Check for the READ_EXTERNAL_STORAGE permission:
+					if (ContextCompat.checkSelfPermission(this, "android.permission.READ_EXTERNAL_STORAGE")
+							!= PackageManager.PERMISSION_GRANTED) {
+						// request permission:
+						ActivityCompat.requestPermissions(this,
+								new String[]{"android.permission.READ_EXTERNAL_STORAGE"},
+								PERMISSION_REQUEST_FILE_SOURCE_READ_FILES);
+						return true; // return and wait for the response (is handled in onRequestPermissionResult())
+					} else {
+						return source.open(this, this);
+					}
+				} else {
 					Log.e(LOGTAG, "openSource: sourceType is FILE_SOURCE, but source is null or of other type.");
 					return false;
 				}
@@ -695,6 +756,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 						// start local rtl_tcp instance:
 						try {
 							Intent intent = new Intent(Intent.ACTION_VIEW);
+							intent.setClassName("marto.rtl_tcp_andro", "com.sdrtouch.rtlsdr.DeviceOpenActivity");
 							intent.setData(Uri.parse("iqsrc://-a 127.0.0.1 -p 1234 -n 1"));
 							startActivityForResult(intent, RTL2832U_RESULT_CODE);
 						} catch (ActivityNotFoundException e) {
@@ -960,6 +1022,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 
 		final LinearLayout ll_view = (LinearLayout) this.getLayoutInflater().inflate(R.layout.tune_to_frequency, null);
 		final EditText et_frequency = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency);
+		final Spinner sp_unit = (Spinner) ll_view.findViewById(R.id.sp_tune_to_frequency_unit);
 		final CheckBox cb_bandwidth = (CheckBox) ll_view.findViewById(R.id.cb_tune_to_frequency_bandwidth);
 		final EditText et_bandwidth = (EditText) ll_view.findViewById(R.id.et_tune_to_frequency_bandwidth);
 		final Spinner sp_bandwidthUnit = (Spinner) ll_view.findViewById(R.id.sp_tune_to_frequency_bandwidth_unit);
@@ -979,21 +1042,23 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 		cb_bandwidth.toggle();	// to trigger the onCheckedChangeListener at least once to set inital state
 		cb_bandwidth.setChecked(preferences.getBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), false));
 		et_bandwidth.setText(preferences.getString(getString(R.string.pref_tune_to_frequency_bandwidth), "1"));
+		sp_unit.setSelection(preferences.getInt(getString(R.string.pref_tune_to_frequency_unit), 0));
 		sp_bandwidthUnit.setSelection(preferences.getInt(getString(R.string.pref_tune_to_frequency_bandwidthUnit), 0));
 
 		new AlertDialog.Builder(this)
 			.setTitle("Tune to Frequency")
-			.setMessage("Frequency is " + source.getFrequency()/1000000f + "MHz. Type a new Frequency (Values below "
-					+ maxFreqMHz + " will be interpreted as MHz, higher values as Hz): ")
+			.setMessage(String.format("Frequency is %f MHz. Type a new Frequency: ", source.getFrequency() / 1000000f))
 			.setView(ll_view)
 			.setPositiveButton("Set", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
 					try {
-						float newFreq = source.getFrequency()/1000000f;
+						double newFreq = source.getFrequency();
 						if(et_frequency.getText().length() != 0)
-							newFreq = Float.valueOf(et_frequency.getText().toString());
-						if (newFreq < maxFreqMHz)
-							newFreq = newFreq * 1000000;
+							newFreq = Double.valueOf(et_frequency.getText().toString());
+						if(sp_unit.getSelectedItemPosition() == 0)		//MHz
+							newFreq *= 1000000;
+						else if(sp_unit.getSelectedItemPosition() == 1)	//KHz
+							newFreq *= 1000;
 						if (newFreq <= source.getMaxFrequency() && newFreq >= source.getMinFrequency()) {
 							source.setFrequency((long)newFreq);
 							analyzerSurface.setVirtualFrequency((long)newFreq);
@@ -1014,6 +1079,7 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 							}
 							// safe preferences:
 							SharedPreferences.Editor edit = preferences.edit();
+							edit.putInt(getString(R.string.pref_tune_to_frequency_unit), sp_unit.getSelectedItemPosition());
 							edit.putBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), cb_bandwidth.isChecked());
 							edit.putString(getString(R.string.pref_tune_to_frequency_bandwidth), et_bandwidth.getText().toString());
 							edit.putInt(getString(R.string.pref_tune_to_frequency_bandwidthUnit), sp_bandwidthUnit.getSelectedItemPosition());
@@ -1286,6 +1352,14 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			return;
 		}
 
+		// Check for the WRITE_EXTERNAL_STORAGE permission:
+		if (ContextCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE")
+							!= PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(this, new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"},
+					PERMISSION_REQUEST_RECORDING_WRITE_FILES);
+			return; // wait for the permission response (handled in onRequestPermissionResult())
+		}
+
 		final String externalDir = Environment.getExternalStorageDirectory().getAbsolutePath();
 		final int[] supportedSampleRates = source.getSupportedSampleRates();
 		final double maxFreqMHz = source.getMaxFrequency() / 1000000f; // max frequency of the source in MHz
@@ -1496,36 +1570,150 @@ public class MainActivity extends Activity implements IQSourceInterface.Callback
 			analyzerSurface.setRecordingEnabled(false);
 	}
 
+	public void showBookmarksDialog() {
+		// show warning toast if recording is running:
+		if(recordingFile != null)
+			Toast.makeText(this, "WARNING: Recording is running!", Toast.LENGTH_LONG).show();
+		new BookmarksDialog(this, this);
+	}
+
+	public void showInfoDialog() {
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setTitle(Html.fromHtml(getString(R.string.info_title, versionName)))
+				.setMessage(Html.fromHtml(getString(R.string.info_msg_body)))
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Do nothing
+					}
+				})
+				.create();
+		dialog.show();
+
+		// make links clickable:
+		((TextView)dialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+	}
+
+	public boolean updateDemodulationMode(int newDemodulationMode) {
+		if(scheduler == null || demodulator == null || source == null) {
+			Log.e(LOGTAG,"updateDemodulationMode: scheduler/demodulator/source is null (no demodulation running)");
+			return false;
+		}
+
+		setDemodulationMode(newDemodulationMode);
+		return true;
+	}
+
 	/**
 	 * Called by the analyzer surface after the user changed the channel width
 	 * @param newChannelWidth    new channel width (single sided) in Hz
 	 * @return true if channel width is valid; false if out of range
 	 */
 	@Override
-	public boolean onUpdateChannelWidth(int newChannelWidth) {
-		if(demodulator != null)
-			return demodulator.setChannelWidth(newChannelWidth);
-		else
-			return false;
+	public boolean updateChannelWidth(int newChannelWidth) {
+		if(demodulator != null) {
+			if(demodulator.setChannelWidth(newChannelWidth)) {
+				analyzerSurface.setChannelWidth(newChannelWidth);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
-	public void onUpdateChannelFrequency(long newChannelFrequency) {
-		if(scheduler != null)
+	public boolean updateChannelFrequency(long newChannelFrequency) {
+		if(scheduler != null) {
 			scheduler.setChannelFrequency(newChannelFrequency);
+			analyzerSurface.setChannelFrequency(newChannelFrequency);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean updateSourceFrequency(long newSourceFrequency) {
+		if(source != null 	&& newSourceFrequency <= source.getMaxFrequency()
+							&& newSourceFrequency >= source.getMinFrequency()) {
+			source.setFrequency(newSourceFrequency);
+			analyzerSurface.setVirtualFrequency(newSourceFrequency);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean updateSampleRate(int newSampleRate) {
+		if(source != null) {
+			if(scheduler == null || !scheduler.isRecording()) {
+				source.setSampleRate(newSampleRate);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
-	public void onUpdateSquelchSatisfied(boolean squelchSatisfied) {
-		if(scheduler != null)
+	public void updateSquelch(float newSquelch) {
+		analyzerSurface.setSquelch(newSquelch);
+	}
+
+	@Override
+	public boolean updateSquelchSatisfied(boolean squelchSatisfied) {
+		if(scheduler != null) {
 			scheduler.setSquelchSatisfied(squelchSatisfied);
+			return true;
+		}
+		return false;
 	}
 
 	@Override
-	public int onCurrentChannelWidthRequested() {
+	public int requestCurrentChannelWidth() {
 		if(demodulator != null)
 			return demodulator.getChannelWidth();
 		else
 			return -1;
+	}
+
+	public long requestCurrentChannelFrequency() {
+		if(scheduler != null)
+			return scheduler.getChannelFrequency();
+		else
+			return -1;
+	}
+
+	public int requestCurrentDemodulationMode() {
+		return demodulationMode;
+	}
+
+	public float requestCurrentSquelch() {
+		if(analyzerSurface != null)
+			return analyzerSurface.getSquelch();
+		else
+			return Float.NaN;
+	}
+
+	public long requestCurrentSourceFrequency() {
+		if(source != null)
+			return source.getFrequency();
+		else
+			return -1;
+	}
+
+	public int requestCurrentSampleRate() {
+		if(source != null)
+			return source.getSampleRate();
+		else
+			return -1;
+	}
+
+	public long requestMaxSourceFrequency() {
+		if(source != null)
+			return source.getMaxFrequency();
+		else
+			return -1;
+	}
+
+	public int[] requestSupportedSampleRates() {
+		if(source != null)
+			return source.getSupportedSampleRates();
+		else
+			return null;
 	}
 }

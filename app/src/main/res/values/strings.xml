@@ -4,6 +4,7 @@
     <string name="app_name">RF Analyzer</string>
     <string name="action_settings">Settings</string>
     <string name="action_help">Help</string>
+    <string name="action_info">Info</string>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
     <string name="action_demodulation_off">Demodulation: off</string>
@@ -16,8 +17,9 @@
     <string name="action_setGain">Set Gain</string>
     <string name="action_recordOff">Record</string>
     <string name="action_recordOn">Stop recording</string>
+    <string name="action_bookmarks">Bookmarks</string>
     <string name="action_autoscale">Autoscale</string>
-    <string name="help_url">http://tech.mantz-it.com/2014/10/rf-analyzer-explore-frequency-spectrum.html</string>
+    <string name="help_url">https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md</string>
     <string name="hackrf_vga_gain_label">VGA Gain:</string>
     <string name="hackrf_lna_gain_label">LNA Gain:</string>
     <string name="rtlsdr_manual_gain_label">Manual gain:</string>
@@ -44,6 +46,7 @@
     <string name="save_state_maxDB">save_state_maxDB</string>
     <string name="pref_frequency">pref_frequency</string>
     <string name="pref_sampleRate">pref_sampleRate</string>
+    <string name="pref_tune_to_frequency_unit">pref_tune_to_frequency_unit</string>
     <string name="pref_tune_to_frequency_setBandwidth">pref_tune_to_frequency_setBandwidth</string>
     <string name="pref_tune_to_frequency_bandwidth">pref_tune_to_frequency_bandwidth</string>
     <string name="pref_tune_to_frequency_bandwidthUnit">pref_tune_to_frequency_bandwidthUnit</string>
@@ -97,9 +100,9 @@
     <string name="pref_hackrf_antennaPower_title">Antenna Power</string>
     <string name="pref_hackrf_antennaPower_summ_on">Antenna power is activated</string>
     <string name="pref_hackrf_antennaPower_summ_off">Antenna power is deactivated</string>
-    <string name="pref_hackrf_frequencyShift">pref_hackrf_frequencyShift</string>
-    <string name="pref_hackrf_frequencyShift_title">Up-/Down-converter frequency shift (Hz)</string>
-    <string name="pref_hackrf_frequencyShift_summ">Shown frequencies are shifted by: %s Hz</string>
+    <string name="pref_hackrf_frequencyOffset">pref_hackrf_frequencyOffset</string>
+    <string name="pref_hackrf_frequencyOffset_title">Up-/Down-converter frequency offset (Hz)</string>
+    <string name="pref_hackrf_frequencyOffset_summ">Frequencies are shown at an offset: %s Hz</string>
     <string name="pref_rtlsdr_category">pref_rtlsdr_category</string>
     <string name="pref_rtlsdr_category_title">RTL-SDR Settings</string>
     <string name="pref_rtlsdr_externalServer">pref_rtlsdr_externalServer</string>
@@ -118,9 +121,9 @@
     <string name="pref_rtlsdr_frequencyCorrection_title">Frequency correction (ppm)</string>
     <string name="pref_rtlsdr_frequencyCorrection_summ">Frequency correction is set to: %s ppm</string>
     <string name="pref_rtlsdr_frequencyCorrection_default">0</string>
-    <string name="pref_rtlsdr_frequencyShift">pref_rtlsdr_frequencyShift</string>
-    <string name="pref_rtlsdr_frequencyShift_title">Up-/Down-converter frequency shift (Hz)</string>
-    <string name="pref_rtlsdr_frequencyShift_summ">Shown frequencies are shifted by: %s Hz</string>
+    <string name="pref_rtlsdr_frequencyOffset">pref_rtlsdr_frequencyOffset</string>
+    <string name="pref_rtlsdr_frequencyOffset_title">Up-/Down-converter frequency offset (Hz)</string>
+    <string name="pref_rtlsdr_frequencyOffset_summ">Frequencies are shown at an offset: %s Hz</string>
     <string name="pref_fftSize">pref_fftSize</string>
     <string name="pref_fftSize_title">FFT Size</string>
     <string name="pref_fftSize_default">4096</string>
@@ -199,5 +202,65 @@
     <string name="pref_logfile_title">Log File</string>
     <string name="pref_logfile_summ">File path: %s</string>
     <string name="pref_logfile_default">RFAnalyzer/log.txt</string>
+    <string name="bookmarks_addBookmark">Add Bookmark</string>
+    <string name="bookmarks_addCategory">Add Category</string>
+    <string name="editBookmark_name">Name: </string>
+    <string name="editBookmark_category">Category: </string>
+    <string name="editBookmark_frequency">Frequency: </string>
+    <string name="editBookmark_channelWidth">Channel Width: </string>
+    <string name="editBookmark_mode">Mode: </string>
+    <string name="editBookmark_squelch">Squelch: </string>
+    <string name="editBookmark_comment">Comment: </string>
+    <string name="editBookmarkCategory_name">Name: </string>
+    <string name="editBookmarkCategory_description">Description: </string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="info_title"><![CDATA[<h1>RF Analyzer %s</h1>]]></string>
+    <string name="info_msg_body"><![CDATA[
+Copyright &#169; 2016 Dennis Mantz<br /><br />
+
+<h1>About the App</h1>
+RF Analyzer is an open source spectrum analyzer that lets you use you
+SDR hardware together with an Android device. A detailed description
+can be found in the <a href=https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md>
+manual</a>.
+
+Show the <a href=https://raw.githubusercontent.com/demantz/RFAnalyzer/master/changelog.txt>
+changelog</a>.
+
+<h1>Get Beta Releases</h1>
+If you want to help the developer by testing beta releases you can
+join the beta program on Google Play:<br />
+<a href=https://play.google.com/apps/testing/com.mantz_it.rfanalyzer>
+https://play.google.com/apps/testing/com.mantz_it.rfanalyzer</a>
+
+<h1>Reporting Bugs</h1>
+If you find any bugs or translation mistakes or if you want to request
+a new feature please use the GitHub page of the project:<br />
+<a href=https://github.com/demantz/RFAnalyzer/issues>
+https://github.com/demantz/RFAnalyzer/issues</a>
+<br /><br />
+Alternatively you could write me an email to
+<a href=mailto:dennis.mantz@googlemail.com>dennis.mantz@googlemail.com</a>.
+
+<h1>License</h1>
+<a href=http://www.gnu.org/licenses/gpl.html>GPL version 2 or higher</a>
+<br /><br />
+<small>This application is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+<br /><br />
+This application is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+<br /><br />
+You should have received a copy of the GNU General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</small>
+<br /><br />
+Get the source code of the app here on <a href=https://github.com/demantz/RFAnalyzer>GitHub</a>!
+]]></string>
 
 </resources>

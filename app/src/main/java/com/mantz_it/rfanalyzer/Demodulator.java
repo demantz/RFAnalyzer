@@ -55,13 +55,13 @@ public class Demodulator extends Thread {
 	private FirFilter userFilter = null;
 	private int userFilterCutOff = 0;
 	private SamplePacket quadratureSamples;
-	private static final int[] MIN_USER_FILTER_WIDTH = {0,		// off
+	public static final int[] MIN_USER_FILTER_WIDTH = {0,		// off
 														3000,	// AM
 														3000,	// nFM
 														50000,	// wFM
 														1500,	// LSB
 														1500};	// USB
-	private static final int[] MAX_USER_FILTER_WIDTH = {0,		// off
+	public static final int[] MAX_USER_FILTER_WIDTH = {0,		// off
 														15000,	// AM
 														15000,	// nFM
 														120000,	// wFM
@@ -202,6 +202,11 @@ public class Demodulator extends Thread {
 
 			// get buffer from audio sink
 			audioBuffer = audioSink.getPacketBuffer(1000);
+
+			if(audioBuffer == null) {
+				Log.d(LOGTAG, "run: Audio buffer is null. skip this round...");
+				continue;
+			}
 
 			// demodulate		[sample rate is QUADRATURE_RATE]
 			switch (demodulationMode) {

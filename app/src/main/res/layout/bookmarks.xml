@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/bookmarks_addBookmark"
+            android:id="@+id/bt_bookmarks_addBookmark"/>
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/bookmarks_addCategory"
+            android:id="@+id/bt_bookmarks_addCategory"/>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/fl_bookmarks_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/lv_bookmarks_categories"/>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/ll_bookmarks_list">
+
+            <Button
+                android:id="@+id/bt_bookmarks_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&lt; tmp"
+                android:textStyle="bold"
+                style="?android:attr/borderlessButtonStyle"
+                android:textSize="@dimen/abc_text_size_large_material"
+                android:textColor="@android:color/holo_blue_dark"/>
+
+            <ListView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:id="@+id/lv_bookmarks"/>
+        </LinearLayout>
+    </FrameLayout>
+
+</LinearLayout>
