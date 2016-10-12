@@ -778,6 +778,24 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 									source.getMinFrequency() - source.getSampleRate()/2 - virtualFrequency);
 						long maxFrequencyShift = source.getMaxFrequency() + source.getSampleRate()/2 - virtualFrequency;
 						long virtualFrequencyShift = Math.min(Math.max((long) (hzPerPx * distanceX), minFrequencyShift), maxFrequencyShift);
+						long newVirtualFrequency = virtualFrequency + virtualFrequencyShift;
+
+						// Automatically re-tune the source if we scrolled the samples out of the visible window:
+						// (only if not recording)
+						if(!recordingEnabled) {
+							if (source.getFrequency() + source.getSampleRate() / 2 < newVirtualFrequency + virtualSampleRate / 2 ||
+									source.getFrequency() - source.getSampleRate() / 2 > newVirtualFrequency - virtualSampleRate / 2) {
+								if (newVirtualFrequency >= source.getMinFrequency() && newVirtualFrequency <= source.getMaxFrequency())
+									source.setFrequency(newVirtualFrequency);
+							}
+						} else {
+							// if recording, we restrict scrolling outside the fft:
+							if(newVirtualFrequency + virtualSampleRate/2 > source.getFrequency() + source.getSampleRate()/2)
+								newVirtualFrequency = source.getFrequency() + source.getSampleRate()/2 - virtualSampleRate/2;
+							if(newVirtualFrequency - virtualSampleRate/2 < source.getFrequency() - source.getSampleRate()/2)
+								newVirtualFrequency = source.getFrequency() - source.getSampleRate()/2 + virtualSampleRate/2;
+							virtualFrequencyShift = newVirtualFrequency-virtualFrequency;
+						}
 						virtualFrequency += virtualFrequencyShift;
 						channelFrequency += virtualFrequencyShift;
 						rfControlInterface.updateChannelFrequency(channelFrequency);
@@ -825,22 +843,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 							squelch = maxDB;
 					}
 				}
-			}
-
-			// Automatically re-tune the source if we scrolled the samples out of the visible window:
-			// (only if not recording)
-			if(!recordingEnabled) {
-				if (source.getFrequency() + source.getSampleRate() / 2 < virtualFrequency + virtualSampleRate / 2 ||
-						source.getFrequency() - source.getSampleRate() / 2 > virtualFrequency - virtualSampleRate / 2) {
-					if (virtualFrequency >= source.getMinFrequency() && virtualFrequency <= source.getMaxFrequency())
-						source.setFrequency(virtualFrequency);
-				}
-			} else {
-				// if recording, we restrict scrolling outside the fft:
-				if(virtualFrequency + virtualSampleRate/2 > source.getFrequency() + source.getSampleRate()/2)
-					virtualFrequency = source.getFrequency() + source.getSampleRate()/2 - virtualSampleRate/2;
-				if(virtualFrequency - virtualSampleRate/2 < source.getFrequency() - source.getSampleRate()/2)
-					virtualFrequency = source.getFrequency() - source.getSampleRate()/2 + virtualSampleRate/2;
 			}
 		}
 
