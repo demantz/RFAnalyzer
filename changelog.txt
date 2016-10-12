@@ -4,6 +4,7 @@ version 1.13
  - Bookmark frequencies
  - Including hackrf_android 1.12 (support for rad1o)
  - Select unit for frequency and bandwidth (MHz,kHz,Hz) in jump dialog
+ - Support for Marshmallow permission model
  - Many bugfixes
 
 version 1.12
