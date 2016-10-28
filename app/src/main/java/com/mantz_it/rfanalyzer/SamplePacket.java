@@ -26,8 +26,8 @@ package com.mantz_it.rfanalyzer;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class SamplePacket {
-	private float[] re;			// real values
-	private float[] im;			// imag values
+	private final float[] re;	// real values
+	private final float[] im;	// imag values
 	private long frequency;		// center frequency
 	private int sampleRate;		// sample rate
 	private int size;			// number of samples in this packet
@@ -128,6 +128,12 @@ public class SamplePacket {
 		return size;
 	}
 
+	/**
+	 * @return capacity == size
+	 */
+	public boolean full(){
+		return re.length == size;
+	}
 	/**
 	 * Sets a new size (number of samples in this packet)
 	 * @param size	number of (valid) samples in this packet
