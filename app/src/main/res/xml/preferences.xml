@@ -5,264 +5,316 @@
         android:key="@string/pref_signalProcessing_category"
         android:title="@string/pref_signalProcessing_category_title">
         <ListPreference
-            android:key="@string/pref_sourceType"
-            android:title="@string/pref_sourceType_title"
+            android:defaultValue="@string/pref_sourceType_default"
             android:dialogTitle="@string/pref_sourceType_title"
             android:entries="@array/pref_sourceType_entries"
             android:entryValues="@array/pref_sourceType_values"
-            android:defaultValue="@string/pref_sourceType_default" />
+            android:key="@string/pref_sourceType"
+            android:title="@string/pref_sourceType_title"/>
         <PreferenceScreen
             android:key="@string/pref_sourceSettings"
-            android:title="@string/pref_sourceSettings_title"
-            android:persistent="false">
+            android:persistent="false"
+            android:title="@string/pref_sourceSettings_title">
             <PreferenceCategory
                 android:key="@string/pref_filesource_category"
                 android:title="@string/pref_filesource_category_title">
                 <EditTextPreference
-                    android:key="@string/pref_filesource_frequency"
-                    android:title="@string/pref_filesource_frequency_title"
-                    android:dialogTitle="@string/pref_filesource_frequency_title"
                     android:defaultValue="@string/pref_filesource_frequency_default"
-                    android:inputType="number"/>
+                    android:dialogTitle="@string/pref_filesource_frequency_title"
+                    android:inputType="number|numberDecimal"
+                    android:key="@string/pref_filesource_frequency"
+                    android:title="@string/pref_filesource_frequency_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_filesource_sampleRate"
-                    android:title="@string/pref_filesource_sampleRate_title"
-                    android:dialogTitle="@string/pref_filesource_sampleRate_title"
                     android:defaultValue="@string/pref_filesource_sampleRate_default"
-                    android:inputType="number"/>
+                    android:dialogTitle="@string/pref_filesource_sampleRate_title"
+                    android:inputType="number|numberDecimal"
+                    android:key="@string/pref_filesource_sampleRate"
+                    android:title="@string/pref_filesource_sampleRate_title"/>
                 <EditTextPreference
+                    android:defaultValue="@string/pref_filesource_file_default"
                     android:key="@string/pref_filesource_file"
-                    android:title="@string/pref_filesource_file_title"
-                    android:defaultValue="@string/pref_filesource_file_default" />
+                    android:title="@string/pref_filesource_file_title"/>
                 <ListPreference
-                    android:key="@string/pref_filesource_format"
-                    android:title="@string/pref_filesource_format_title"
+                    android:defaultValue="@string/pref_filesource_format_default"
                     android:dialogTitle="@string/pref_filesource_format_title"
                     android:entries="@array/pref_filesource_format_entries"
                     android:entryValues="@array/pref_filesource_format_values"
-                    android:defaultValue="@string/pref_filesource_format_default" />
+                    android:key="@string/pref_filesource_format"
+                    android:title="@string/pref_filesource_format_title"/>
                 <SwitchPreference
+                    android:defaultValue="false"
                     android:key="@string/pref_filesource_repeat"
-                    android:title="@string/pref_filesource_repeat_title"
-                    android:summaryOn="@string/pref_filesource_repeat_summ_on"
                     android:summaryOff="@string/pref_filesource_repeat_summ_off"
-                    android:defaultValue="false" />
+                    android:summaryOn="@string/pref_filesource_repeat_summ_on"
+                    android:title="@string/pref_filesource_repeat_title"/>
             </PreferenceCategory>
             <PreferenceCategory
                 android:key="@string/pref_hackrf_category"
                 android:title="@string/pref_hackrf_category_title">
                 <SwitchPreference
+                    android:defaultValue="false"
                     android:key="@string/pref_hackrf_amplifier"
-                    android:title="@string/pref_hackrf_amplifier_title"
-                    android:summaryOn="@string/pref_hackrf_amplifier_summ_on"
                     android:summaryOff="@string/pref_hackrf_amplifier_summ_off"
-                    android:defaultValue="false" />
+                    android:summaryOn="@string/pref_hackrf_amplifier_summ_on"
+                    android:title="@string/pref_hackrf_amplifier_title"/>
                 <SwitchPreference
+                    android:defaultValue="false"
                     android:key="@string/pref_hackrf_antennaPower"
-                    android:title="@string/pref_hackrf_antennaPower_title"
-                    android:summaryOn="@string/pref_hackrf_antennaPower_summ_on"
                     android:summaryOff="@string/pref_hackrf_antennaPower_summ_off"
-                    android:defaultValue="false" />
+                    android:summaryOn="@string/pref_hackrf_antennaPower_summ_on"
+                    android:title="@string/pref_hackrf_antennaPower_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_hackrf_frequencyShift"
-                    android:title="@string/pref_hackrf_frequencyShift_title"
-                    android:dialogTitle="@string/pref_hackrf_frequencyShift_title"
                     android:defaultValue="0"
-                    android:inputType="number|numberSigned"/>
+                    android:dialogTitle="@string/pref_hackrf_frequencyShift_title"
+                    android:inputType="number|numberSigned"
+                    android:key="@string/pref_hackrf_frequencyShift"
+                    android:title="@string/pref_hackrf_frequencyShift_title"/>
             </PreferenceCategory>
             <PreferenceCategory
                 android:key="@string/pref_rtlsdr_category"
                 android:title="@string/pref_rtlsdr_category_title">
                 <SwitchPreference
+                    android:defaultValue="false"
                     android:key="@string/pref_rtlsdr_externalServer"
-                    android:title="@string/pref_rtlsdr_externalServer_title"
-                    android:summaryOn="@string/pref_rtlsdr_externalServer_summ_on"
                     android:summaryOff="@string/pref_rtlsdr_externalServer_summ_off"
-                    android:defaultValue="false" />
+                    android:summaryOn="@string/pref_rtlsdr_externalServer_summ_on"
+                    android:title="@string/pref_rtlsdr_externalServer_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_rtlsdr_ip"
+                    android:defaultValue="@string/pref_rtlsdr_ip_default"
                     android:dependency="@string/pref_rtlsdr_externalServer"
-                    android:title="@string/pref_rtlsdr_ip_title"
                     android:dialogTitle="@string/pref_rtlsdr_ip_title"
-                    android:defaultValue="@string/pref_rtlsdr_ip_default" />
+                    android:key="@string/pref_rtlsdr_ip"
+                    android:title="@string/pref_rtlsdr_ip_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_rtlsdr_port"
-                    android:dependency="@string/pref_rtlsdr_externalServer"
-                    android:title="@string/pref_rtlsdr_port_title"
-                    android:dialogTitle="@string/pref_rtlsdr_port_title"
                     android:defaultValue="@string/pref_rtlsdr_port_default"
-                    android:inputType="number"/>
+                    android:dependency="@string/pref_rtlsdr_externalServer"
+                    android:dialogTitle="@string/pref_rtlsdr_port_title"
+                    android:inputType="number"
+                    android:key="@string/pref_rtlsdr_port"
+                    android:title="@string/pref_rtlsdr_port_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_rtlsdr_frequencyCorrection"
-                    android:title="@string/pref_rtlsdr_frequencyCorrection_title"
-                    android:dialogTitle="@string/pref_rtlsdr_frequencyCorrection_title"
                     android:defaultValue="@string/pref_rtlsdr_frequencyCorrection_default"
-                    android:inputType="number|numberSigned"/>
+                    android:dialogTitle="@string/pref_rtlsdr_frequencyCorrection_title"
+                    android:inputType="number|numberSigned"
+                    android:key="@string/pref_rtlsdr_frequencyCorrection"
+                    android:title="@string/pref_rtlsdr_frequencyCorrection_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_rtlsdr_frequencyShift"
-                    android:title="@string/pref_rtlsdr_frequencyShift_title"
-                    android:dialogTitle="@string/pref_rtlsdr_frequencyShift_title"
                     android:defaultValue="0"
-                    android:inputType="number|numberSigned"/>
+                    android:dialogTitle="@string/pref_rtlsdr_frequencyShift_title"
+                    android:inputType="number|numberSigned"
+                    android:key="@string/pref_rtlsdr_frequencyShift"
+                    android:title="@string/pref_rtlsdr_frequencyShift_title"/>
             </PreferenceCategory>
             <PreferenceCategory
                 android:key="@string/pref_hiqsdr_category"
                 android:title="@string/pref_hiqsdr_category_title">
                 <EditTextPreference
-                    android:key="@string/pref_hiqsdr_ip"
-                    android:title="@string/pref_hiqsdr_ip_title"
+                    android:defaultValue="@string/pref_hiqsdr_rx_frequency_default"
+                    android:dialogTitle="@string/pref_hiqsdr_rx_frequency_title"
+                    android:inputType="number|numberDecimal"
+                    android:key="@string/pref_hiqsdr_rx_frequency"
+                    android:title="@string/pref_hiqsdr_rx_frequency_title"/>
+                <SwitchPreference
+                    android:defaultValue="true"
+                    android:key="@string/pref_hiqsdr_tie_frequencies"
+                    android:summaryOn="@string/pref_hiqsdr_tie_frequencies_summ_on"
+                    android:summaryOff="@string/pref_hiqsdr_tie_frequencies_summ_off"
+                    android:title="@string/pref_hiqsdr_tie_frequencies_title"
+                    android:disableDependentsState="true"
+                    />
+                <EditTextPreference
+                    android:defaultValue="@string/pref_hiqsdr_tx_frequency_default"
+                    android:dependency="@string/pref_hiqsdr_tie_frequencies"
+                    android:dialogTitle="@string/pref_hiqsdr_tx_frequency_title"
+                    android:inputType="number|numberDecimal"
+                    android:key="@string/pref_hiqsdr_tx_frequency"
+                    android:title="@string/pref_hiqsdr_tx_frequency_title"/>
+                <EditTextPreference
+                    android:defaultValue="@string/pref_hiqsdr_sampleRate_default"
+                    android:dialogTitle="@string/pref_hiqsdr_sampleRate_title"
+                    android:inputType="number|numberDecimal"
+                    android:key="@string/pref_hiqsdr_sampleRate"
+                    android:title="@string/pref_hiqsdr_sampleRate_title"/>
+                <ListPreference
+                    android:defaultValue="@string/pref_hiqsdr_tx_mode_default"
+                    android:dialogTitle="@string/pref_hiqsdr_tx_mode_title"
+                    android:entries="@array/hiqsdr_tx_mode_names"
+                    android:entryValues="@array/hiqsdr_tx_mode_values"
+                    android:key="@string/pref_hiqsdr_tx_mode"
+                    android:title="@string/pref_hiqsdr_tx_mode_title"
+                    />
+                <ListPreference
+                    android:defaultValue="@string/pref_hiqsdr_firmware_default"
+                    android:dialogTitle="@string/pref_hiqsdr_firmware_title"
+                    android:entries="@array/hiqsdr_fw_version_names"
+                    android:entryValues="@array/hiqsdr_fw_version_values"
+                    android:key="@string/pref_hiqsdr_firmware"
+                    android:title="@string/pref_hiqsdr_firmware_title"
+                />
+                <ListPreference
+                    android:defaultValue="@string/pref_hiqsdr_antenna_default"
+                    android:dialogTitle="@string/pref_hiqsdr_antenna_title"
+                    android:entries="@array/hiqsdr_antenna_names"
+                    android:entryValues="@array/hiqsdr_antenna_values"
+                    android:key="@string/pref_hiqsdr_antenna"
+                    android:title="@string/pref_hiqsdr_antenna_title"
+                />
+
+                <EditTextPreference
+                    android:defaultValue="@string/pref_hiqsdr_ip_default"
                     android:dialogTitle="@string/pref_hiqsdr_ip_title"
-                    android:defaultValue="@string/pref_hiqsdr_ip_default" />
+                    android:key="@string/pref_hiqsdr_ip"
+                    android:title="@string/pref_hiqsdr_ip_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_hiqsdr_command_port"
-                    android:title="@string/pref_hiqsdr_command_port_title"
-                    android:dialogTitle="@string/pref_hiqsdr_command_port_title"
                     android:defaultValue="@string/pref_hiqsdr_command_port_default"
-                    android:inputType="number"/>
+                    android:dialogTitle="@string/pref_hiqsdr_command_port_title"
+                    android:inputType="number"
+                    android:key="@string/pref_hiqsdr_command_port"
+                    android:title="@string/pref_hiqsdr_command_port_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_hiqsdr_rx_port"
-                    android:title="@string/pref_hiqsdr_rx_port_title"
-                    android:dialogTitle="@string/pref_hiqsdr_rx_port_title"
                     android:defaultValue="@string/pref_hiqsdr_rx_port_default"
-                    android:inputType="number"/>
+                    android:dialogTitle="@string/pref_hiqsdr_rx_port_title"
+                    android:inputType="number"
+                    android:key="@string/pref_hiqsdr_rx_port"
+                    android:title="@string/pref_hiqsdr_rx_port_title"/>
                 <EditTextPreference
-                    android:key="@string/pref_hiqsdr_tx_port"
-                    android:title="@string/pref_hiqsdr_tx_port_title"
-                    android:dialogTitle="@string/pref_hiqsdr_tx_port_title"
                     android:defaultValue="@string/pref_hiqsdr_tx_port_default"
-                    android:inputType="number"/>
+                    android:dialogTitle="@string/pref_hiqsdr_tx_port_title"
+                    android:inputType="number"
+                    android:key="@string/pref_hiqsdr_tx_port"
+                    android:title="@string/pref_hiqsdr_tx_port_title"/>
             </PreferenceCategory>
         </PreferenceScreen>
         <ListPreference
-            android:key="@string/pref_fftSize"
-            android:title="@string/pref_fftSize_title"
+            android:defaultValue="@string/pref_fftSize_default"
             android:dialogTitle="@string/pref_fftSize_title"
             android:entries="@array/pref_fftSize_entries"
             android:entryValues="@array/pref_fftSize_values"
-            android:defaultValue="@string/pref_fftSize_default" />
+            android:key="@string/pref_fftSize"
+            android:title="@string/pref_fftSize_title"/>
         <ListPreference
-            android:key="@string/pref_averaging"
-            android:title="@string/pref_averaging_title"
+            android:defaultValue="@string/pref_averaging_default"
             android:dialogTitle="@string/pref_averaging_title"
             android:entries="@array/pref_averaging_entries"
             android:entryValues="@array/pref_averaging_values"
-            android:defaultValue="@string/pref_averaging_default" />
+            android:key="@string/pref_averaging"
+            android:title="@string/pref_averaging_title"/>
         <SwitchPreference
+            android:defaultValue="false"
             android:key="@string/pref_peakHold"
-            android:title="@string/pref_peakHold_title"
-            android:summaryOn="@string/pref_peakHold_summ_on"
             android:summaryOff="@string/pref_peakHold_summ_off"
-            android:defaultValue="false" />
+            android:summaryOn="@string/pref_peakHold_summ_on"
+            android:title="@string/pref_peakHold_title"/>
         <SwitchPreference
+            android:defaultValue="false"
             android:key="@string/pref_autostart"
-            android:title="@string/pref_autostart_title"
-            android:summaryOn="@string/pref_autostart_summ_on"
             android:summaryOff="@string/pref_autostart_summ_off"
-            android:defaultValue="false" />
+            android:summaryOn="@string/pref_autostart_summ_on"
+            android:title="@string/pref_autostart_title"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="@string/pref_view_category"
         android:title="@string/pref_view_category_title">
         <ListPreference
-            android:key="@string/pref_colorMapType"
-            android:title="@string/pref_colorMapType_title"
+            android:defaultValue="@string/pref_colorMapType_default"
             android:dialogTitle="@string/pref_colorMapType_title"
             android:entries="@array/pref_colorMapType_entries"
             android:entryValues="@array/pref_colorMapType_values"
-            android:defaultValue="@string/pref_colorMapType_default" />
+            android:key="@string/pref_colorMapType"
+            android:title="@string/pref_colorMapType_title"/>
         <ListPreference
-            android:key="@string/pref_fftDrawingType"
-            android:title="@string/pref_fftDrawingType_title"
+            android:defaultValue="@string/pref_fftDrawingType_default"
             android:dialogTitle="@string/pref_fftDrawingType_title"
             android:entries="@array/pref_fftDrawingType_entries"
             android:entryValues="@array/pref_fftDrawingType_values"
-            android:defaultValue="@string/pref_fftDrawingType_default" />
+            android:key="@string/pref_fftDrawingType"
+            android:title="@string/pref_fftDrawingType_title"/>
         <ListPreference
-            android:key="@string/pref_screenOrientation"
-            android:title="@string/pref_screenOrientation_title"
+            android:defaultValue="@string/pref_screenOrientation_default"
             android:dialogTitle="@string/pref_screenOrientation_title"
             android:entries="@array/pref_screenOrientation_entries"
             android:entryValues="@array/pref_screenOrientation_values"
-            android:defaultValue="@string/pref_screenOrientation_default" />
+            android:key="@string/pref_screenOrientation"
+            android:title="@string/pref_screenOrientation_title"/>
         <ListPreference
-            android:key="@string/pref_spectrumWaterfallRatio"
-            android:title="@string/pref_spectrumWaterfallRatio_title"
+            android:defaultValue="@string/pref_spectrumWaterfallRatio_default"
             android:dialogTitle="@string/pref_spectrumWaterfallRatio_title"
             android:entries="@array/pref_spectrumWaterfallRatio_entries"
             android:entryValues="@array/pref_spectrumWaterfallRatio_values"
-            android:defaultValue="@string/pref_spectrumWaterfallRatio_default" />
+            android:key="@string/pref_spectrumWaterfallRatio"
+            android:title="@string/pref_spectrumWaterfallRatio_title"/>
         <SwitchPreference
+            android:defaultValue="true"
             android:key="@string/pref_zoomDB"
-            android:title="@string/pref_zoomDB_title"
-            android:summaryOn="@string/pref_zoomDB_summ_on"
             android:summaryOff="@string/pref_zoomDB_summ_off"
-            android:defaultValue="true" />
+            android:summaryOn="@string/pref_zoomDB_summ_on"
+            android:title="@string/pref_zoomDB_title"/>
         <SwitchPreference
+            android:defaultValue="true"
             android:key="@string/pref_scrollDB"
-            android:title="@string/pref_scrollDB_title"
-            android:summaryOn="@string/pref_scrollDB_summ_on"
             android:summaryOff="@string/pref_scrollDB_summ_off"
-            android:defaultValue="true" />
+            android:summaryOn="@string/pref_scrollDB_summ_on"
+            android:title="@string/pref_scrollDB_title"/>
         <SwitchPreference
+            android:defaultValue="true"
             android:key="@string/pref_decoupledAxis"
-            android:title="@string/pref_decoupledAxis_title"
-            android:summaryOn="@string/pref_decoupledAxis_summ_on"
             android:summaryOff="@string/pref_decoupledAxis_summ_off"
-            android:defaultValue="true" />
+            android:summaryOn="@string/pref_decoupledAxis_summ_on"
+            android:title="@string/pref_decoupledAxis_title"/>
         <ListPreference
-            android:key="@string/pref_fontSize"
-            android:title="@string/pref_fontSize_title"
+            android:defaultValue="@string/pref_fontSize_default"
             android:dialogTitle="@string/pref_fontSize_title"
             android:entries="@array/pref_fontSize_entries"
             android:entryValues="@array/pref_fontSize_values"
-            android:defaultValue="@string/pref_fontSize_default" />
+            android:key="@string/pref_fontSize"
+            android:title="@string/pref_fontSize_title"/>
         <SwitchPreference
+            android:defaultValue="false"
             android:key="@string/pref_relativeFrequencies"
-            android:title="@string/pref_relativeFrequencies_title"
-            android:summaryOn="@string/pref_relativeFrequencies_summ_on"
             android:summaryOff="@string/pref_relativeFrequencies_summ_off"
-            android:defaultValue="false" />
+            android:summaryOn="@string/pref_relativeFrequencies_summ_on"
+            android:title="@string/pref_relativeFrequencies_title"/>
     </PreferenceCategory>
     <PreferenceScreen
         android:key="@string/pref_advancedSettings"
-        android:title="@string/pref_advancedSettings_title"
-        android:persistent="false">
+        android:persistent="false"
+        android:title="@string/pref_advancedSettings_title">
         <SwitchPreference
+            android:defaultValue="false"
             android:key="@string/pref_showDebugInformation"
-            android:title="@string/pref_showDebugInformation_title"
-            android:summaryOn="@string/pref_showDebugInformation_summ_on"
             android:summaryOff="@string/pref_showDebugInformation_summ_off"
-            android:defaultValue="false" />
+            android:summaryOn="@string/pref_showDebugInformation_summ_on"
+            android:title="@string/pref_showDebugInformation_title"/>
         <SwitchPreference
-            android:key="@string/pref_dynamicFrameRate"
-            android:title="@string/pref_dynamicFrameRate_title"
-            android:summaryOn="@string/pref_dynamicFrameRate_summ_on"
-            android:summaryOff="@string/pref_dynamicFrameRate_summ_off"
             android:defaultValue="true"
-            android:disableDependentsState="true" />
+            android:disableDependentsState="true"
+            android:key="@string/pref_dynamicFrameRate"
+            android:summaryOff="@string/pref_dynamicFrameRate_summ_off"
+            android:summaryOn="@string/pref_dynamicFrameRate_summ_on"
+            android:title="@string/pref_dynamicFrameRate_title"/>
         <ListPreference
-            android:key="@string/pref_frameRate"
+            android:defaultValue="@string/pref_frameRate_default"
             android:dependency="@string/pref_dynamicFrameRate"
-            android:title="@string/pref_frameRate_title"
             android:dialogTitle="@string/pref_frameRate_title"
             android:entries="@array/pref_frameRate_entries"
             android:entryValues="@array/pref_frameRate_values"
-            android:defaultValue="@string/pref_frameRate_default" />
+            android:key="@string/pref_frameRate"
+            android:title="@string/pref_frameRate_title"/>
         <SwitchPreference
+            android:defaultValue="false"
             android:key="@string/pref_logging"
-            android:title="@string/pref_logging_title"
-            android:summaryOn="@string/pref_logging_summ_on"
             android:summaryOff="@string/pref_logging_summ_off"
-            android:defaultValue="false" />
+            android:summaryOn="@string/pref_logging_summ_on"
+            android:title="@string/pref_logging_title"/>
         <EditTextPreference
+            android:defaultValue="@string/pref_logfile_default"
+            android:dependency="@string/pref_logging"
             android:key="@string/pref_logfile"
-            android:title="@string/pref_logfile_title"
-            android:dependency="@string/pref_logging"
-            android:defaultValue="@string/pref_logfile_default" />
+            android:title="@string/pref_logfile_title"/>
         <Preference
-            android:key="@string/pref_showLog"
-            android:title="@string/pref_showLog_title"
             android:dependency="@string/pref_logging"
-            android:persistent="false" />
+            android:key="@string/pref_showLog"
+            android:persistent="false"
+            android:title="@string/pref_showLog_title"/>
     </PreferenceScreen>
 </PreferenceScreen>
