@@ -1,6 +1,7 @@
 package com.mantz_it.rfanalyzer;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -53,7 +54,7 @@ public class FileIQSource implements IQSourceInterface {
 	public static final int FILE_FORMAT_8BIT_UNSIGNED = 1;
 	public static final int FILE_FORMAT_24BIT_UNSIGNED = 2;
 	protected boolean reopenStreamStrategy;
-	protected static final int REOPEN_STREAM_SIZE_THRESHOLD = 2 << 23 - 1; // 8 MB;
+	protected static final long REOPEN_STREAM_SIZE_THRESHOLD = 2 << 23 - 1; // 8 MB;
 
 	public FileIQSource(String filename, int sampleRate, long frequency, int packetSize, boolean repeat, int fileFormat) {
 		this.filename = filename;
@@ -80,7 +81,36 @@ public class FileIQSource implements IQSourceInterface {
 				break;
 		}
 
-		this.sleepTime = (int) ((packetSize /iqConverter.getSampleSize() / 2) / (float) sampleRate * 1000); // note: half packet size because of I and Q samples
+		this.sleepTime = (int) ((packetSize / iqConverter.getSampleSize() / 2) / (float) sampleRate * 1000); // note: half packet size because of I and Q samples
+		iqConverter.setFrequency(frequency);
+		iqConverter.setSampleRate(sampleRate);
+	}
+
+	public FileIQSource(Context context, SharedPreferences preferences) {
+		this.frequency = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_frequency), "97000000"));
+		this.sampleRate = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_sampleRate), "2000000"));
+		this.file = new File(this.filename = preferences.getString(context.getString(R.string.pref_filesource_file), ""));
+		this.fileFormat = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_format), "0"));
+		this.repeat = preferences.getBoolean(context.getString(R.string.pref_filesource_repeat), false);
+		switch (fileFormat) {
+			case FILE_FORMAT_8BIT_SIGNED:
+				this.iqConverter = new Signed8BitIQConverter();
+				this.packetSize = 16384;
+				break;
+			case FILE_FORMAT_8BIT_UNSIGNED:
+				this.iqConverter = new Unsigned8BitIQConverter();
+				this.packetSize = 16384;
+				break;
+			case FILE_FORMAT_24BIT_UNSIGNED:
+				this.iqConverter = new Unsigned24BitIQConverter();
+				this.packetSize = 1442; //todo: add separate preference for packet size by source type
+				break;
+			default:
+				Log.e(LOGTAG, "constructor: Invalid file format: " + fileFormat);
+				break;
+		}
+		this.buffer = new byte[packetSize];
+		this.sleepTime = (int) ((packetSize / iqConverter.getSampleSize() / 2) / (float) sampleRate * 1000); // note: half packet size because of I and Q samples
 		iqConverter.setFrequency(frequency);
 		iqConverter.setSampleRate(sampleRate);
 	}
@@ -99,9 +129,9 @@ public class FileIQSource implements IQSourceInterface {
 		try {
 			this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
 			reopenStreamStrategy = file.length() > REOPEN_STREAM_SIZE_THRESHOLD;
-			Log.i(LOGTAG, "File size: "+file.length()+" bytes");
-			Log.i(LOGTAG, "Reopen threshold: "+REOPEN_STREAM_SIZE_THRESHOLD+" bytes");
-			if(reopenStreamStrategy)
+			Log.i(LOGTAG, "File size: " + file.length() + " bytes");
+			Log.i(LOGTAG, "Reopen threshold: " + REOPEN_STREAM_SIZE_THRESHOLD + " bytes");
+			if (reopenStreamStrategy)
 				Log.i(LOGTAG, "Using reopen stream strategy");
 			else
 				Log.i(LOGTAG, "Using reset stream strategy");
@@ -145,6 +175,20 @@ public class FileIQSource implements IQSourceInterface {
 	@Override
 	public String getName() {
 		return "IQ-File: " + file.getName();
+	}
+
+	@Override
+	public FileIQSource updatePreferences(Context context, SharedPreferences preferences) {
+		int fileFormat = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_format), "0"));
+		String fileName = preferences.getString(context.getString(R.string.pref_filesource_file), "");
+		if (fileFormat != this.fileFormat || !fileName.equals(this.filename)){
+			this.close();
+			return new FileIQSource(context, preferences);
+		}
+		this.frequency = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_frequency), "97000000"));
+		this.sampleRate = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_sampleRate), "2000000"));
+		this.repeat = preferences.getBoolean(context.getString(R.string.pref_filesource_repeat), false);
+		return this;
 	}
 
 	/**

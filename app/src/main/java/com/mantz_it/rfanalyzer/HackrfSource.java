@@ -1,6 +1,7 @@
 package com.mantz_it.rfanalyzer;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.mantz_it.hackrf_android.Hackrf;
@@ -67,7 +68,17 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	public HackrfSource() {
 		iqConverter = new Signed8BitIQConverter();
 	}
-
+	public HackrfSource(Context context, SharedPreferences preferences){
+		this();
+		setFrequency(preferences.getLong(context.getString(R.string.pref_frequency), 97000000));
+		setSampleRate(preferences.getInt(context.getString(R.string.pref_sampleRate), HackrfSource.MAX_SAMPLERATE));
+		setVgaRxGain(preferences.getInt(context.getString(R.string.pref_hackrf_vgaRxGain), HackrfSource.MAX_VGA_RX_GAIN / 2));
+		setLnaGain(preferences.getInt(context.getString(R.string.pref_hackrf_lnaGain), HackrfSource.MAX_LNA_GAIN / 2));
+		setAmplifier(preferences.getBoolean(context.getString(R.string.pref_hackrf_amplifier), false));
+		setAntennaPower(preferences.getBoolean(context.getString(R.string.pref_hackrf_antennaPower), false));
+		setFrequencyShift(Integer.parseInt(
+				preferences.getString(context.getString(R.string.pref_hackrf_frequencyShift), "0")));
+	}
 	/**
 	 * Will forward an error message to the callback object
 	 *
@@ -130,6 +141,20 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 			return name;
 		else
 			return "HackRF";
+	}
+
+	@Override
+	public HackrfSource updatePreferences(Context context, SharedPreferences preferences) {
+		boolean amp = preferences.getBoolean(context.getString(R.string.pref_hackrf_amplifier), false);
+		boolean antennaPower = preferences.getBoolean(context.getString(R.string.pref_hackrf_antennaPower), false);
+		int frequencyShift = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hackrf_frequencyShift), "0"));
+		if (isAmplifierOn() != amp)
+			setAmplifier(amp);
+		if (isAntennaPowerOn() != antennaPower)
+			setAntennaPower(antennaPower);
+		if (getFrequencyShift() != frequencyShift)
+			setFrequencyShift(frequencyShift);
+		return this;
 	}
 
 	@Override
