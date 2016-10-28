@@ -21,31 +21,31 @@ import java.io.File;
 
 /**
  * <h1>RF Analyzer - Settings Fragment</h1>
- *
+ * <p>
  * Module:      SettingsFragment.java
  * Description: This fragment shows all app settings
  *
  * @author Dennis Mantz
- *
- * Copyright (C) 2014 Dennis Mantz
- * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *         <p>
+ *         Copyright (C) 2014 Dennis Mantz
+ *         License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ *         <p>
+ *         This library is free software; you can redistribute it and/or
+ *         modify it under the terms of the GNU General Public
+ *         License as published by the Free Software Foundation; either
+ *         version 2 of the License, or (at your option) any later version.
+ *         <p>
+ *         This library is distributed in the hope that it will be useful,
+ *         but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *         General Public License for more details.
+ *         <p>
+ *         You should have received a copy of the GNU General Public
+ *         License along with this library; if not, write to the Free Software
+ *         Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener,
-																	Preference.OnPreferenceClickListener {
+		Preference.OnPreferenceClickListener {
 
 	private static final int FILESOURCE_RESULT_CODE = 1;
 
@@ -83,7 +83,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	@Override
 	public boolean onPreferenceClick(Preference preference) {
 		// FileSource file:
-		if(preference.getKey().equals(getString(R.string.pref_filesource_file))) {
+		if (preference.getKey().equals(getString(R.string.pref_filesource_file))) {
 			try {
 				Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 				intent.setType("*/*");
@@ -91,8 +91,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 				startActivityForResult(Intent.createChooser(intent, "Select a file (8-bit complex IQ samples)"), FILESOURCE_RESULT_CODE);
 
 				// No error so far... let's dismiss the text input dialog:
-				Dialog dialog = ((EditTextPreference)preference).getDialog();
-				if(dialog != null)
+				Dialog dialog = ((EditTextPreference) preference).getDialog();
+				if (dialog != null)
 					dialog.dismiss();
 				return true;
 			} catch (ActivityNotFoundException e) {
@@ -121,17 +121,16 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if(data != null) {
+		if (data != null) {
 			switch (requestCode) {
 				case FILESOURCE_RESULT_CODE:
 					Uri uri = data.getData();
 					if (uri != null) {
 						String filepath = FileUtils.getPath(getActivity(), uri);
-						if(filepath != null) {
+						if (filepath != null) {
 							((EditTextPreference) findPreference(getString(R.string.pref_filesource_file))).setText(filepath);
 							updateFileSourcePrefs();
-						}
-						else {
+						} else {
 							Toast.makeText(SettingsFragment.this.getActivity(), "Can't resolve file path from: " + uri.toString(), Toast.LENGTH_LONG).show();
 						}
 					}
@@ -154,6 +153,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 	/**
 	 * Will go through each preference element and initialize/update the summary according to its value.
+	 *
 	 * @note this will also correct invalid user inputs on EdittextPreferences!
 	 */
 	public void updateSummaries() {
@@ -163,13 +163,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 		// FileSource Frequency
 		EditTextPreference editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_filesource_frequency));
-		if(editTextPref.getText().length() == 0)
+		if (editTextPref.getText().length() == 0)
 			editTextPref.setText(getString(R.string.pref_filesource_frequency_default));
 		editTextPref.setSummary(getString(R.string.pref_filesource_frequency_summ, editTextPref.getText()));
 
 		// FileSource Sample Rate
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_filesource_sampleRate));
-		if(editTextPref.getText().length() == 0)
+		if (editTextPref.getText().length() == 0)
 			editTextPref.setText(getString(R.string.pref_filesource_sampleRate_default));
 		editTextPref.setSummary(getString(R.string.pref_filesource_sampleRate_summ, editTextPref.getText()));
 
@@ -183,7 +183,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 		// HackRF frequency shift
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hackrf_frequencyShift));
-		if(editTextPref.getText().length() == 0)
+		if (editTextPref.getText().length() == 0)
 			editTextPref.setText("0");
 		editTextPref.setSummary(getString(R.string.pref_hackrf_frequencyShift_summ, editTextPref.getText()));
 
@@ -197,15 +197,69 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
 		// RTL-SDR frequency correction
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyCorrection));
-		if(editTextPref.getText().length() == 0)
+		if (editTextPref.getText().length() == 0)
 			editTextPref.setText(getString(R.string.pref_rtlsdr_frequencyCorrection_default));
 		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyCorrection_summ, editTextPref.getText()));
 
 		// RTL-SDR frequency shift
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_rtlsdr_frequencyShift));
-		if(editTextPref.getText().length() == 0)
+		if (editTextPref.getText().length() == 0)
 			editTextPref.setText("0");
 		editTextPref.setSummary(getString(R.string.pref_rtlsdr_frequencyShift_summ, editTextPref.getText()));
+
+		// HiQSDR RX frequency
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_rx_frequency));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_rx_frequency_summ, editTextPref.getText()));
+
+		// HiQSDR TX frequency
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_tx_frequency));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_tx_frequency_summ, editTextPref.getText()));
+
+		// HiQSDR sample rate
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_sampleRate));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_sampleRate_summ, editTextPref.getText()));
+
+		// HiQSDR TX mode
+		listPref = (ListPreference) findPreference(getString(R.string.pref_hiqsdr_tx_mode));
+		listPref.setSummary(getString(R.string.pref_hiqsdr_tx_mode_summ, listPref.getEntry()));
+
+		// HiQSDR firmware version
+		listPref = (ListPreference) findPreference(getString(R.string.pref_hiqsdr_firmware));
+		listPref.setSummary(getString(R.string.pref_hiqsdr_firmware_summ, listPref.getEntry()));
+
+		// HiQSDR antenna
+		listPref = (ListPreference) findPreference(getString(R.string.pref_hiqsdr_antenna));
+		listPref.setSummary(getString(R.string.pref_hiqsdr_antenna_summ, listPref.getEntry()));
+
+		// HiQSDR IP address
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_ip));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_ip_summ, editTextPref.getText()));
+
+		// HiQSDR command port
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_command_port));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_command_port_summ, editTextPref.getText()));
+
+		// HiQSDR RX port
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_rx_port));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_rx_port_summ, editTextPref.getText()));
+
+		// HiQSDR TX port
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_hiqsdr_tx_port));
+		if (editTextPref.getText().length() == 0)
+			editTextPref.setText("0");
+		editTextPref.setSummary(getString(R.string.pref_hiqsdr_tx_port_summ, editTextPref.getText()));
 
 		// FFT size
 		listPref = (ListPreference) findPreference(getString(R.string.pref_fftSize));
@@ -251,18 +305,18 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	/**
 	 * Will set the screen orientation of the hosting activity
 	 *
-	 * @param orientation		auto, landscape, portrait, reverse_landscape or reverse_portrait
+	 * @param orientation auto, landscape, portrait, reverse_landscape or reverse_portrait
 	 */
 	public void setScreenOrientation(String orientation) {
-		if(orientation.equals("auto"))
-			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
-		else if(orientation.equals("landscape"))
+		if (orientation.equals("auto"))
+			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+		else if (orientation.equals("landscape"))
 			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-		else if(orientation.equals("portrait"))
+		else if (orientation.equals("portrait"))
 			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-		else if(orientation.equals("reverse_landscape"))
+		else if (orientation.equals("reverse_landscape"))
 			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
-		else if(orientation.equals("reverse_portrait"))
+		else if (orientation.equals("reverse_portrait"))
 			getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
 	}
 
@@ -270,11 +324,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	 * Extract the path from an uri
 	 * This code was published on StackOverflow by dextor
 	 *
-	 * @param contentUri		uri that contains the file path
+	 * @param contentUri uri that contains the file path
 	 * @return absolute file path as string
 	 */
 	private String getRealPathFromURI(Uri contentUri) {
-		String[] proj = { MediaStore.Images.Media.DATA };
+		String[] proj = {MediaStore.Images.Media.DATA};
 		CursorLoader loader = new CursorLoader(this.getActivity(), contentUri, proj, null, null, null);
 		Cursor cursor = loader.loadInBackground();
 		int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
@@ -286,30 +340,30 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 	 * Will try to extract the file source preferences (frequency, sample rate, format) from the filename
 	 */
 	public void updateFileSourcePrefs() {
-		EditTextPreference etp_filename = 	(EditTextPreference) findPreference(getString(R.string.pref_filesource_file));
-		EditTextPreference etp_frequency = 	(EditTextPreference) findPreference(getString(R.string.pref_filesource_frequency));
+		EditTextPreference etp_filename = (EditTextPreference) findPreference(getString(R.string.pref_filesource_file));
+		EditTextPreference etp_frequency = (EditTextPreference) findPreference(getString(R.string.pref_filesource_frequency));
 		EditTextPreference etp_sampleRate = (EditTextPreference) findPreference(getString(R.string.pref_filesource_sampleRate));
-		ListPreference lp_format = 			(ListPreference) findPreference(getString(R.string.pref_filesource_format));
+		ListPreference lp_format = (ListPreference) findPreference(getString(R.string.pref_filesource_format));
 		String filename = etp_filename.getText();
 
 		// Format. Search for strings like hackrf, rtl-sdr, ...
-		if(filename.matches(".*hackrf.*") || filename.matches(".*HackRF.*") ||
-				filename.matches(".*HACKRF.*") || filename.matches(".*hackrfone.*"))
+		if (filename.matches(".*hackrf.*") || filename.matches(".*HackRF.*") ||
+		    filename.matches(".*HACKRF.*") || filename.matches(".*hackrfone.*"))
 			lp_format.setValue("0");
-		if(filename.matches(".*rtlsdr.*") || filename.matches(".*rtl-sdr.*") ||
-				filename.matches(".*RTLSDR.*") || filename.matches(".*RTL-SDR.*"))
+		if (filename.matches(".*rtlsdr.*") || filename.matches(".*rtl-sdr.*") ||
+		    filename.matches(".*RTLSDR.*") || filename.matches(".*RTL-SDR.*"))
 			lp_format.setValue("1");
 
 		// Sampe Rate. Search for pattern XXXXXXXSps
-		if(filename.matches(".*(_|-|\\s)([0-9]+)(sps|Sps|SPS).*"))
+		if (filename.matches(".*(_|-|\\s)([0-9]+)(sps|Sps|SPS).*"))
 			etp_sampleRate.setText(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(sps|Sps|SPS).*", "$2"));
-		if(filename.matches(".*(_|-|\\s)([0-9]+)(msps|Msps|MSps|MSPS).*"))
-			etp_sampleRate.setText("" + Integer.valueOf(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(msps|Msps|MSps|MSPS).*", "$2")) * 1000000);
+		if (filename.matches(".*(_|-|\\s)([0-9]+)(msps|Msps|MSps|MSPS).*"))
+			etp_sampleRate.setText(Integer.toString(Integer.parseInt(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(msps|Msps|MSps|MSPS).*", "$2")) * 1000000));
 
 		// Frequency. Search for pattern XXXXXXXHz
-		if(filename.matches(".*(_|-|\\s)([0-9]+)(hz|Hz|HZ).*"))
+		if (filename.matches(".*(_|-|\\s)([0-9]+)(hz|Hz|HZ).*"))
 			etp_frequency.setText(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(hz|Hz|HZ).*", "$2"));
-		if(filename.matches(".*(_|-|\\s)([0-9]+)(mhz|Mhz|MHz|MHZ).*"))
-			etp_frequency.setText("" + Integer.valueOf(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(mhz|Mhz|MHz|MHZ).*", "$2")) * 1000000);
+		if (filename.matches(".*(_|-|\\s)([0-9]+)(mhz|Mhz|MHz|MHZ).*"))
+			etp_frequency.setText(Integer.toString(Integer.parseInt(filename.replaceFirst(".*(_|-|\\s)([0-9]+)(mhz|Mhz|MHz|MHZ).*", "$2")) * 1000000));
 	}
 }
