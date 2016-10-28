@@ -52,6 +52,48 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		}
 	}
 
+	public void testHiQSDRPacketCntr() {
+		final byte[] buff = new byte[1442];
+		HiQSDRSource src = new HiQSDRSource();
+		src.previousPacketIdx = 0;
+		for (int i = 1; i < 520; ++i) {
+			buff[0] = (byte) (i & 0xff);
+			final int m = src.updatePacketIndex(buff);
+			if (m != 0)
+				System.out.println("testHiQSDRPacketCntr: false positive ("
+				                   + "i=" + i
+				                   + ", missed=" + m
+				                   + ", but must be 0).");
+			//else System.out.println("testHiQSDRPacketCntr: ok = "+m);
+		}
+		for (int j = 2; j < 255; ++j) {
+			src.previousPacketIdx = 0;
+			for (int i = j; i < j * 520; i += j) {
+				buff[0] = (byte) (i & 0xff);
+				final byte prev = src.previousPacketIdx;
+				final int m = src.updatePacketIndex(buff);
+				final byte current = src.previousPacketIdx;
+				if (m != (j - 1))
+					System.out.println("testHiQSDRPacketCntr: false negative ("
+					                   + "i=" + i
+					                   + ", j=" + j
+					                   + ",prev=" + prev
+					                   + ", current=" + current
+					                   + ", missed=" + m
+					                   + ", must be " + (j - 1) + ").");
+				/*else System.out.println("testHiQSDRPacketCntr: ok ("
+				                        + "i=" + i
+				                        + ", j=" + j
+				                        + ",prev=" + prev
+				                        + ", current=" + current
+				                        + ", missed=" + m
+				                        + ").");*/
+			}
+		}
+
+
+	}
+
 	public void testInitArrays() {
 		System.out.println("Testing HiQSDR.initArrays()");
 		HiQSDRSource.initArrays();
@@ -273,7 +315,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 	public void testFirFilterPerformance() {
 		int sampleRate = 4000000;
 		int packetSize = 16384;
-		int loopCycles = 1000;
+		int loopCycles = 10000;
 		SamplePacket in = new SamplePacket(packetSize);
 		SamplePacket out = new SamplePacket(packetSize);
 		out.setSize(0);
@@ -281,7 +323,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 		//Debug.startMethodTracing("FirFilter");
 		FirFilter filter = FirFilter.createLowPass(4, 1, sampleRate, 100000, 800000, 40);
-		System.out.println("Created filter with " + filter.getNumberOfTaps() + " taps!");
+		System.out.println("Created FIR filter with " + filter.getNumberOfTaps() + " taps!");
 
 		System.out.println("##### START ...");
 		long startTime = System.currentTimeMillis();
@@ -289,7 +331,36 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 			filter.filter(in, out, 0, in.size());
 			out.setSize(0);
 		}
-		System.out.println("##### DONE. Time needed for 1 sec of samples: " + (System.currentTimeMillis() - startTime) / (packetSize * loopCycles / 4000000.0));
+		System.out.println("##### DONE. Time needed for 1 sec of samples: "
+		                   + (System.currentTimeMillis() - startTime)
+		                     / (packetSize * loopCycles / (float) sampleRate)
+		                   + " ms");
+		//Debug.stopMethodTracing();
+	}
+
+	public void testComplexFirFilterPerformance() {
+		int sampleRate = 4000000;
+		int packetSize = 16384;
+		int loopCycles = 10000;
+		SamplePacket in = new SamplePacket(packetSize);
+		SamplePacket out = new SamplePacket(packetSize);
+		out.setSize(0);
+		in.setSize(in.capacity());
+
+		//Debug.startMethodTracing("FirFilter");
+		ComplexFirFilter filter = ComplexFirFilter.createBandPass(4, 1, sampleRate, 0, 100000, 800000, 40);
+		System.out.println("Created complex FIR filter with " + filter.getNumberOfTaps() + " taps!");
+
+		System.out.println("##### START ...");
+		long startTime = System.currentTimeMillis();
+		for (int i = 0; i < loopCycles; i++) {
+			filter.filter(in, out, 0, in.size());
+			out.setSize(0);
+		}
+		System.out.println("##### DONE. Time needed for 1 sec of samples: "
+		                   + (System.currentTimeMillis() - startTime)
+		                     / (packetSize * loopCycles / (float) sampleRate)
+		                   + " ms");
 		//Debug.stopMethodTracing();
 	}
 
