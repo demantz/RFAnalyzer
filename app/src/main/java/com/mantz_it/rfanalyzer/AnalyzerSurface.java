@@ -1019,7 +1019,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		}
 
 		// Update squelchSatisfied:
-		float averageSignalStrengh = -9999;		// avg magnitude of the signal in the center of the selected channel
+		float averageSignalStrength = -9999;		// avg magnitude of the signal in the center of the selected channel
 		if(demodulationEnabled) {
 			float sum = 0;
 			int chanStart = (int) ((channelFrequency - (frequency-sampleRate/2) - channelWidth/2) * samplesPerHz);
@@ -1027,12 +1027,12 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 			if(chanStart > 0 && chanEnd <= mag.length) {
 				for (int i = chanStart; i < chanEnd; i++)
 					sum += mag[i];
-				averageSignalStrengh = sum / (chanEnd - chanStart);
-				if(averageSignalStrengh >= squelch && squelchSatisfied==false) {
+				averageSignalStrength = sum / (chanEnd - chanStart);
+				if(averageSignalStrength >= squelch && squelchSatisfied==false) {
 					squelchSatisfied = true;
 					this.squelchPaint.setColor(Color.GREEN);
 					rfControlInterface.updateSquelchSatisfied(squelchSatisfied);
-				} else if (averageSignalStrengh < squelch && squelchSatisfied==true) {
+				} else if (averageSignalStrength < squelch && squelchSatisfied==true) {
 					squelchSatisfied = false;
 					this.squelchPaint.setColor(Color.RED);
 					rfControlInterface.updateSquelchSatisfied(squelchSatisfied);
@@ -1053,7 +1053,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 					drawWaterfall(c);
 					drawFrequencyGrid(c);
 					drawPowerGrid(c);
-					drawPerformanceInfo(c, frameRate, load, averageSignalStrengh);
+					drawPerformanceInfo(c, frameRate, load, averageSignalStrength);
 				} else
 					Log.d(LOGTAG, "draw: Canvas is null.");
 			}
