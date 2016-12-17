@@ -222,6 +222,17 @@
             android:entryValues="@array/pref_frameRate_values"
             android:defaultValue="@string/pref_frameRate_default" />
         <SwitchPreference
+            android:key="@string/pref_gps"
+            android:title="@string/pref_gps_title"
+            android:summaryOn="@string/pref_gps_summ_on"
+            android:summaryOff="@string/pref_gps_summ_off"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="@string/pref_gpsfile"
+            android:title="@string/pref_gpsfile_title"
+            android:dependency="@string/pref_gps"
+            android:defaultValue="@string/pref_gpsfile_default" />
+        <SwitchPreference
             android:key="@string/pref_logging"
             android:title="@string/pref_logging_title"
             android:summaryOn="@string/pref_logging_summ_on"

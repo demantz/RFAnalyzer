@@ -136,6 +136,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private int fontSize = FONT_SIZE_MEDIUM;		// Indicates the font size of the grid labels
 	private boolean showDebugInformation = false;
 
+	public static float averageSignalStrength = -9999;	// avg magnitude of the signal in the center of the selected channel. pulled out of draw() function to let GPS-logging access it
 
 	/**
 	 * Constructor. Will initialize the Paint instances and register the callback
@@ -1019,7 +1020,6 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 		}
 
 		// Update squelchSatisfied:
-		float averageSignalStrength = -9999;		// avg magnitude of the signal in the center of the selected channel
 		if(demodulationEnabled) {
 			float sum = 0;
 			int chanStart = (int) ((channelFrequency - (frequency-sampleRate/2) - channelWidth/2) * samplesPerHz);

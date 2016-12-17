@@ -37,6 +37,10 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.content.Context;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -45,6 +49,9 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Calendar;
+import java.io.PrintWriter;
+import java.io.FileWriter;
 
 /**
  * <h1>RF Analyzer - Main Activity</h1>
@@ -71,7 +78,7 @@ import java.util.Locale;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class MainActivity extends AppCompatActivity implements IQSourceInterface.Callback, RFControlInterface {
+public class MainActivity extends AppCompatActivity implements IQSourceInterface.Callback, RFControlInterface, LocationListener {
 
 	private MenuItem mi_startStop = null;
 	private MenuItem mi_demodulationMode = null;
@@ -97,10 +104,14 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 																				// permission to open file for the file source
 	public static final int PERMISSION_REQUEST_RECORDING_WRITE_FILES = 1112;	// arbitrary value, used when requesting
 																				// permission to write file for the recording feature
+	public static final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 1113; 	// arbitrary value, used when requesting
+																				// permission to access GPS
 	private static final int FILE_SOURCE = 0;
 	private static final int HACKRF_SOURCE = 1;
 	private static final int RTLSDR_SOURCE = 2;
 	private static final String[] SOURCE_NAMES = new String[] {"filesource", "hackrf", "rtlsdr"};
+
+	private LocationManager locationManager;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +154,33 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 			}
 		}
 
+		// GPS file:
+		defaultFile = getString(R.string.pref_gpsfile_default);
+		if(preferences.getString(getString(R.string.pref_gpsfile), "").equals(defaultFile))
+			preferences.edit().putString(getString(R.string.pref_gpsfile), extStorage + "/" + defaultFile).apply();
+
+		// Start GPS if enabled:
+		if(preferences.getBoolean(getString(R.string.pref_gps), false)) {
+			// Request permission for GPS
+			if (ContextCompat.checkSelfPermission(this,
+					android.Manifest.permission.ACCESS_FINE_LOCATION)
+					!= PackageManager.PERMISSION_GRANTED) {
+					ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_ACCESS_FINE_LOCATION);
+			}
+			else {
+				// Permissions OK - Activate GPS
+				locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 1, this);
+			}
+
+			if (ContextCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE")
+					== PackageManager.PERMISSION_GRANTED) {
+			} else {
+				preferences.edit().putBoolean(getString(R.string.pref_gps), false).apply();
+				Log.i(LOGTAG, "onCreate: deactivate GPS logging because of missing storage permission.");
+			}
+		}
+		
 		// Get version name:
 		try {
 			versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -215,7 +253,46 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 	}
 
-	@Override
+
+    @Override
+    public void onLocationChanged(Location location) {
+		if (running && demodulationMode != Demodulator.DEMODULATION_OFF) {
+			// Message on screen
+			String msg = "Latitude: " + location.getLatitude() + "\n"
+						+ "Longitude: " + location.getLongitude() + "\n"
+						+ "SignalStrength: " + String.format(Locale.US, "%2.1f dB", AnalyzerSurface.averageSignalStrength);
+			Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
+
+			// Log to disk
+			try {
+				Calendar c = Calendar.getInstance();
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				String datetime = df.format(c.getTime());
+
+				PrintWriter GPSLOG = new PrintWriter(new FileWriter(preferences.getString(getString(R.string.pref_gpsfile), ""), true));
+				GPSLOG.printf("%s\t%s\t%s\t%s\n", datetime, location.getLatitude(), location.getLongitude(), String.format(Locale.US, "%2.1f", AnalyzerSurface.averageSignalStrength));
+				GPSLOG.flush();
+				GPSLOG.close();
+			} catch (Exception e) {
+				Log.e(LOGTAG, "onLocationChanged: couldn't log: " + e.getMessage());
+			}
+		}
+	}
+
+
+    @Override
+    public void onProviderDisabled(String provider) {
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+
+    @Override
 	protected void onDestroy() {
 		super.onDestroy();
 		// close source
@@ -244,6 +321,15 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 			} catch (ActivityNotFoundException e) {
 				Log.e(LOGTAG, "onDestroy: RTL2832U is not installed");
 			}
+		}
+		// stop GPS if active:
+		boolean gps_enabled = false;
+		try {
+			gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		}
+		catch (Exception ex) {}
+		if(gps_enabled) {
+			locationManager.removeUpdates(this);
 		}
 	}
 
@@ -499,6 +585,14 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 				// If request is cancelled, the result arrays are empty.
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					showRecordingDialog();
+				}
+				break;
+			}
+			case PERMISSION_REQUEST_ACCESS_FINE_LOCATION: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 1, this);
 				}
 				break;
 			}

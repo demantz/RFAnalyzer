@@ -59,6 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
 					Log.i(LOGTAG, "onRequestPermissionResult: User denied to write files for logging. deactivate setting..");
 					SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 					preferences.edit().putBoolean(getString(R.string.pref_logging), false).apply();
+					preferences.edit().putBoolean(getString(R.string.pref_gps), false).apply();
 				}
 			}
 		}
