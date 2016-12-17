@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 			// Message on screen
 			String msg = "Latitude: " + location.getLatitude() + "\n"
 						+ "Longitude: " + location.getLongitude() + "\n"
-						+ "SignalStrength: " + String.format(Locale.US, "%2.1f dB", AnalyzerSurface.averageSignalStrength);
+						+ "SignalStrength: " + String.format(Locale.US, "%.1f dB", AnalyzerSurface.averageSignalStrength);
 			Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
 
 			// Log to disk
@@ -270,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 				String datetime = df.format(c.getTime());
 
 				PrintWriter GPSLOG = new PrintWriter(new FileWriter(preferences.getString(getString(R.string.pref_gpsfile), ""), true));
-				GPSLOG.printf("%s\t%s\t%s\t%s\n", datetime, location.getLatitude(), location.getLongitude(), String.format(Locale.US, "%2.1f", AnalyzerSurface.averageSignalStrength));
+				GPSLOG.printf("%s\t%s\t%s\t%s\n", datetime, location.getLatitude(), location.getLongitude(), String.format(Locale.US, "%.1f", AnalyzerSurface.averageSignalStrength));
 				GPSLOG.flush();
 				GPSLOG.close();
 			} catch (Exception e) {
