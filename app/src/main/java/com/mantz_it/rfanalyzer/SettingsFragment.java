@@ -24,6 +24,7 @@ import android.widget.Toast;
 import java.io.File;
 
 import static com.mantz_it.rfanalyzer.SettingsActivity.PERMISSION_REQUEST_LOGGING_WRITE_FILES;
+import static com.mantz_it.rfanalyzer.MainActivity.PERMISSION_REQUEST_ACCESS_FINE_LOCATION;
 
 /**
  * <h1>RF Analyzer - Settings Fragment</h1>
@@ -167,6 +168,22 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 						PERMISSION_REQUEST_LOGGING_WRITE_FILES);
 			}
 		}
+
+		// check WRITE_EXTERNAL_STORAGE and ACCESS_FINE_LOCATION permission if GPS is active:
+		if(sharedPreferences.getBoolean(getString(R.string.pref_gps), false)) {
+			if (ContextCompat.checkSelfPermission(this.getActivity(), "android.permission.WRITE_EXTERNAL_STORAGE")
+					!= PackageManager.PERMISSION_GRANTED) {
+				// request permission:
+				ActivityCompat.requestPermissions(this.getActivity(), new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"},
+						PERMISSION_REQUEST_LOGGING_WRITE_FILES);
+			}
+			if (ContextCompat.checkSelfPermission(this.getActivity(), "android.permission.ACCESS_FINE_LOCATION")
+					!= PackageManager.PERMISSION_GRANTED) {
+				// request permission:
+				ActivityCompat.requestPermissions(this.getActivity(), new String[]{"android.permission.ACCESS_FINE_LOCATION"},
+						PERMISSION_REQUEST_ACCESS_FINE_LOCATION);
+			}
+		}
 	}
 
 	/**
@@ -260,6 +277,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		else
 			listPref.setSummary(getString(R.string.pref_frameRate_summ, listPref.getEntry()));
 
+		// GPSfile
+		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_gpsfile));
+		editTextPref.setSummary(getString(R.string.pref_gpsfile_summ, editTextPref.getText()));
+
 		// Logfile
 		editTextPref = (EditTextPreference) findPreference(getString(R.string.pref_logfile));
 		editTextPref.setSummary(getString(R.string.pref_logfile_summ, editTextPref.getText()));
@@ -267,6 +288,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 		// Shared preferences updated in e.g. the onRequestPermissionResult() method are
 		// not automatically updated in the preference fragment gui. do it manually:
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+		switchPref = (SwitchPreference) findPreference(getString(R.string.pref_gps));
+		switchPref.setChecked(preferences.getBoolean(getString(R.string.pref_gps), false));
 		switchPref = (SwitchPreference) findPreference(getString(R.string.pref_logging));
 		switchPref.setChecked(preferences.getBoolean(getString(R.string.pref_logging), false));
 	}

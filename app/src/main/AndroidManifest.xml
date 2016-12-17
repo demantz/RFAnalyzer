@@ -10,7 +10,10 @@
 
     <!-- Internet is used to connect to local and remote rtl_tcp instances -->
     <uses-permission android:name="android.permission.INTERNET" />
-    
+
+    <!-- GPS is used for mapping signal strength -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <!-- Declare permissions to read and write the bookmarks database -->
     <permission android:name="com.mantz_it.rfanalyzer.permission.READ_BOOKMARKS"
                 android:label="Read access to the bookmarks of RF Analyzer" />
