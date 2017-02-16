@@ -58,6 +58,7 @@ public class AudioSink extends Thread {
 	 */
 	public AudioSink(int packetSize, int sampleRate) {
 		super("AudioSink Thread");
+		Log.v(LOGTAG, "constructor: packetSize: " + packetSize + ", sampleRate: " + sampleRate);
 		this.packetSize = packetSize;
 		this.sampleRate = sampleRate;
 
@@ -126,7 +127,7 @@ public class AudioSink extends Thread {
 	 */
 	public boolean enqueuePacket(SamplePacket packet) {
 		if (packet == null) {
-			Log.e(LOGTAG, "enqueuePacket: Packet is null.");
+			Log.e(LOGTAG, "enqueuePacket: InterleavedPacket is null.");
 			return false;
 		}
 		if (!inputQueue.offer(packet)) {
@@ -136,13 +137,15 @@ public class AudioSink extends Thread {
 		return true;
 	}
 
+	short[] shortPacket;
+
 	@Override
 	public void run() {
 		SamplePacket packet;
 		SamplePacket filteredPacket;
 		SamplePacket tempPacket = new SamplePacket(packetSize);
 		float[] floatPacket;
-		short[] shortPacket = new short[packetSize];
+		shortPacket = new short[packetSize];
 
 		Log.i(LOGTAG, "AudioSink started. (Thread: " + this.getName() + ")");
 
@@ -159,7 +162,7 @@ public class AudioSink extends Thread {
 					//Log.d(LOGTAG, "run: Queue is empty. skip this round");
 					continue;
 				}
-
+				//Log.v(LOGTAG, "packet rate: " + packet.getSampleRate()+'('+this.sampleRate+'*'+(packet.getSampleRate()/this.sampleRate)+')');
 				// apply audio filter (decimation)
 				if (packet.getSampleRate() > this.sampleRate) {
 					applyAudioFilter(packet, tempPacket);
@@ -170,10 +173,11 @@ public class AudioSink extends Thread {
 				// Convert doubles to shorts [expect doubles to be in [-1...1]
 				floatPacket = filteredPacket.re();
 				final int filteredPacketSize = filteredPacket.size();
+				//Log.v(LOGTAG, "filteredPacket size: " + filteredPacketSize);
+				//Log.v(LOGTAG, "filteredPacket: " + Arrays.toString(floatPacket));
 				for (int i = 0; i < filteredPacketSize; i++) {
 					shortPacket[i] = (short) (floatPacket[i] * 32767);
 				}
-
 				// Write it to the audioTrack:
 				if (audioTrack.write(shortPacket, 0, filteredPacketSize) != filteredPacketSize) {
 					Log.e(LOGTAG, "run: write() returned with error! stop");
@@ -195,7 +199,7 @@ public class AudioSink extends Thread {
 	}
 
 	/**
-	 * Will filter the real array contained in input and decimate them to the audio rate.
+	 * Will apply the real array contained in input and decimate them to the audio rate.
 	 *
 	 * @param input  incoming (unfiltered) samples at the incoming rate (quadrature rate)
 	 * @param output outgoing (filtered, decimated) samples at audio rate
@@ -203,7 +207,8 @@ public class AudioSink extends Thread {
 	public void applyAudioFilter(SamplePacket input, SamplePacket output) {
 		// if we need a decimation of 8: apply first and second filter (decimate to input_rate/8)
 		final int inputSize = input.size();
-		if (input.getSampleRate() / sampleRate == 8) {
+		final int decimation = input.getSampleRate() / sampleRate;
+		if ( decimation == 8) {
 			// apply first filter (decimate to input_rate/2)
 			tmpAudioSamples.setSize(0);    // mark buffer as empty
 			if (audioFilter1.filterReal(input, tmpAudioSamples, 0, inputSize) < inputSize) {
@@ -214,13 +219,13 @@ public class AudioSink extends Thread {
 			output.setSize(0);
 			final int tmpAudioSamplesSize = tmpAudioSamples.size();
 			if (audioFilter2.filterReal(tmpAudioSamples, output, 0, tmpAudioSamplesSize) < tmpAudioSamplesSize) {
-				Log.e(LOGTAG, "applyAudioFilter: [audioFilter2] could not filter all samples from input packet.");
+				Log.e(LOGTAG, "applyAudioFilter: [audioFilter2] could not apply all samples from input packet.");
 			}
-		} else if (input.getSampleRate() / sampleRate == 2) {
+		} else if (decimation == 2) {
 			// apply first filter (decimate to input_rate/2 )
 			output.setSize(0);
 			if (audioFilter1.filterReal(input, output, 0, inputSize) < inputSize) {
-				Log.e(LOGTAG, "applyAudioFilter: [audioFilter1] could not filter all samples from input packet.");
+				Log.e(LOGTAG, "applyAudioFilter: [audioFilter1] could not apply all samples from input packet.");
 			}
 		} else
 			Log.e(LOGTAG, "applyAudioFilter: incoming sample rate is not supported!");
