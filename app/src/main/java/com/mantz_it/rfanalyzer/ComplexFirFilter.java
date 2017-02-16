@@ -2,6 +2,8 @@ package com.mantz_it.rfanalyzer;
 
 import android.util.Log;
 
+import static com.mantz_it.rfanalyzer.Filter.FilterFamily.FIR;
+
 /**
  * <h1>RF Analyzer - complex FIR Filter</h1>
  *
@@ -28,20 +30,9 @@ import android.util.Log;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-public class ComplexFirFilter {
-	private int tapCounter = 0;
-	private float[] tapsReal;
-	private float[] tapsImag;
-	private float[] delaysReal;
-	private float[] delaysImag;
-	private int decimation;
-	private int decimationCounter = 1;
-	private float gain;
-	private float sampleRate;
-	private float lowCutOffFrequency;
-	private float highCutOffFrequency;
-	private float transitionWidth;
-	private float attenuation;
+@Deprecated
+public class ComplexFirFilter extends Filter {
+
 	private static final String LOGTAG = "ComplexFirFilter";
 
 	/**
@@ -61,10 +52,12 @@ public class ComplexFirFilter {
 					  float highCutOffFrequency, float transitionWidth, float attenuation) {
 		if(tapsReal.length != tapsImag.length)
 			throw new IllegalArgumentException("real and imag filter taps have to be of the same length!");
+		this.family = FIR;
+		this.tapsCount = tapsReal.length;
 		this.tapsReal = tapsReal;
 		this.tapsImag = tapsImag;
-		this.delaysReal = new float[tapsReal.length];
-		this.delaysImag = new float[tapsImag.length];
+		this.delaysReal = new float[tapsCount];
+		this.delaysImag = new float[tapsCount];
 		this.decimation = decimation;
 		this.gain = gain;
 		this.sampleRate = sampleRate;
@@ -74,40 +67,8 @@ public class ComplexFirFilter {
 		this.attenuation = attenuation;
 	}
 
-	/**
-	 * @return length of the taps array
-	 */
-	public int getNumberOfTaps() {
-		return tapsReal.length;
-	}
 
-	public int getDecimation() {
-		return decimation;
-	}
 
-	public float getGain() {
-		return gain;
-	}
-
-	public float getSampleRate() {
-		return sampleRate;
-	}
-
-	public float getLowCutOffFrequency() {
-		return lowCutOffFrequency;
-	}
-
-	public float getHighCutOffFrequency() {
-		return highCutOffFrequency;
-	}
-
-	public float getTransitionWidth() {
-		return transitionWidth;
-	}
-
-	public float getAttenuation() {
-		return attenuation;
-	}
 
 	/**
 	 * Filters the samples from the input sample packet and appends filter output to the output
@@ -118,19 +79,21 @@ public class ComplexFirFilter {
 	 * @param length	max number of samples processed from the input packet
 	 * @return number of samples consumed from the input packet
 	 */
+	@Deprecated
 	public int filter(SamplePacket in, SamplePacket out, int offset, int length) {
 		int index;
 		int indexOut = out.size();
 		int outputCapacity = out.capacity();
 		float[] reIn = in.re(), imIn = in.im(), reOut = out.re(), imOut = out.im();
 
+
 		// insert each input sample into the delay line:
 		for (int i = 0; i < length; i++) {
-			delaysReal[tapCounter] = reIn[offset + i];
-			delaysImag[tapCounter] = imIn[offset + i];
+			delaysReal[tapIter] = reIn[offset + i];
+			delaysImag[tapIter] = imIn[offset + i];
 
 			// Calculate the filter output for every Mth element (were M = decimation)
-			if(decimationCounter == 0) {
+			if(decimationIter == 0) {
 				// first check if we have enough space in the output buffers:
 				if(indexOut == outputCapacity) {
 					out.setSize(indexOut);	// update size of output sample packet
@@ -141,13 +104,17 @@ public class ComplexFirFilter {
 				// Calculate the results:
 				reOut[indexOut] = 0;
 				imOut[indexOut] = 0;
-				index = tapCounter;
-				for (int j = 0; j < tapsReal.length; j++) {
-					reOut[indexOut] += tapsReal[j]*delaysReal[index] - tapsImag[j]*delaysImag[index];
-					imOut[indexOut] += tapsImag[j]*delaysReal[index] + tapsReal[j]*delaysImag[index];
+				index = tapIter;
+				for (int j = 0; j < tapsCount; j++) {
+					final float tapRe = tapsReal[j];
+					final float tapIm = tapsImag[j];
+					final float delayRe = delaysReal[index];
+					final float delayIm = delaysImag[index];
+					reOut[indexOut] += tapRe*delayRe - tapIm*delayIm;
+					imOut[indexOut] += tapIm*delayRe + tapIm*delayIm;
 					index--;
 					if (index < 0)
-						index = tapsReal.length - 1;
+						index = tapsCount - 1;
 				}
 
 				// increase indexOut:
@@ -155,16 +122,21 @@ public class ComplexFirFilter {
 			}
 
 			// update counters:
-			decimationCounter++;
-			if(decimationCounter >= decimation)
-				decimationCounter = 0;
-			tapCounter++;
-			if(tapCounter >= tapsReal.length)
-				tapCounter = 0;
+			decimationIter++;
+			if(decimationIter >= decimation)
+				decimationIter = 0;
+			tapIter++;
+			if(tapIter >= tapsCount)
+				tapIter = 0;
 		}
 		out.setSize(indexOut);	// update size of output sample packet
 		out.setSampleRate(in.getSampleRate()/decimation);	// update the sample rate of the output sample packet
 		return length;			// We return the number of consumed samples from the input buffers
+	}
+
+	@Override
+	public int filterReal(SamplePacket in, SamplePacket out, int offset, int length) {
+		throw new UnsupportedOperationException("ComplexFirFilter does not support filterReal method.");
 	}
 
 	/**
@@ -181,6 +153,7 @@ public class ComplexFirFilter {
 	 * @param attenuation_dB		attenuation of stop band
 	 * @return instance of FirFilter
 	 */
+	@Deprecated
 	public static ComplexFirFilter createBandPass(int decimation,
 										  float gain,
 										  float sampling_freq,    // Hz
