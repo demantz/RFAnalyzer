@@ -111,7 +111,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 
 	private boolean demodulationEnabled = false;    // indicates whether demodulation is enabled or disabled
 	private long channelFrequency = -1;                // center frequency of the demodulator
-	private int channelWidth = -1;                    // (half) width of the channel filter of the demodulator
+	private int channelWidth = -1;                    // (half) width of the channel apply of the demodulator
 	private float squelch = -1;                        // squelch threshold in dB
 	private boolean squelchSatisfied = false;        // indicates whether the current signal is strong enough to cross the squelch threshold
 	private boolean showLowerBand = true;            // indicates whether the lower side band of the channel selector is visible
@@ -340,7 +340,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
-	 * @return current channel width (cut-off frequency - single sided) of the channel filter in Hz
+	 * @return current channel width (cut-off frequency - single sided) of the channel apply in Hz
 	 */
 	public int getChannelWidth() {
 		return channelWidth;
@@ -361,7 +361,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	}
 
 	/**
-	 * @param channelWidth new channel width (cut-off frequency - single sided) of the channel filter in Hz
+	 * @param channelWidth new channel width (cut-off frequency - single sided) of the channel apply in Hz
 	 */
 	public void setChannelWidth(int channelWidth) {
 		this.channelWidth = channelWidth;
