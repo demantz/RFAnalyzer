@@ -181,9 +181,9 @@ public class Decimator extends Thread {
 		final int inputSize = input.size();
 		float sampleRateRatio = outputSampleRate / (float) input.getSampleRate();
 		int decimation = input.getSampleRate() / outputSampleRate;
-		// Verify that the input apply 4 is still correct configured (gain):
+		// Verify that the input filter 4 is still correct configured (gain):
 		if (inputFilter4 == null || inputFilter4.getGain() != 2 * sampleRateRatio) {
-			// We have to (re-)create the apply:
+			// We have to (re-)create the filter:
 			this.inputFilter4 = FirFilter.createLowPass(2, 2 * sampleRateRatio, 1, 0.15f, 0.2f, 20);
 			Log.d(LOGTAG, "downsampling: created new inputFilter4 with " + inputFilter4.getNumberOfTaps()
 			              + " taps. Decimation=" + inputFilter4.getDecimation() + " High Cut-Off=" + inputFilter4.getHighCutOffFrequency()
@@ -191,33 +191,33 @@ public class Decimator extends Thread {
 		}
 
 		// by 2
-		// apply first apply (decimate to INPUT_RATE/2)
+		// apply first filter (decimate to INPUT_RATE/2)
 		tmpDownsampledSamples.setSize(0);    // mark buffer as empty
 		if (inputFilter1.filterN8(input, tmpDownsampledSamples, 0, inputSize) < inputSize) {
-			Log.e(LOGTAG, "downsampling: [inputFilter1] could not apply all samples from input packet.");
+			Log.e(LOGTAG, "downsampling: [inputFilter1] could not filter all samples from input packet.");
 		}
 		// AM, nbFM, SSB
-		// if we need a decimation of 16: apply second and third apply (decimate to INPUT_RATE/8)
+		// if we need a decimation of 16: apply second and third filter (decimate to INPUT_RATE/8)
 		if (decimation == 16) {
 			//by 2 (implied 4 now)
 			output.setSize(0);    // mark buffer as empty
 			final int tmpDownsalmpledSize = tmpDownsampledSamples.size();
 			if (inputFilter2.filterN8(tmpDownsampledSamples, output, 0, tmpDownsalmpledSize) < tmpDownsalmpledSize) {
-				Log.e(LOGTAG, "downsampling: [inputFilter2] could not apply all samples from input packet.");
+				Log.e(LOGTAG, "downsampling: [inputFilter2] could not filter all samples from input packet.");
 			}
 			// by 2 (implied 8 now)
 			tmpDownsampledSamples.setSize(0);    // mark tmp buffer as again
 			final int outputSize = output.size();
 			if (inputFilter3.filterN8(output, tmpDownsampledSamples, 0, outputSize) < outputSize) {
-				Log.e(LOGTAG, "downsampling: [inputFilter3] could not apply all samples from input packet.");
+				Log.e(LOGTAG, "downsampling: [inputFilter3] could not filter all samples from input packet.");
 			}
 		}
 		// by 2 (now implied 4 or 16, depending on previous branch)
-		// apply fourth apply (decimate either to INPUT_RATE/4 or INPUT_RATE/16)
+		// apply fourth filter (decimate either to INPUT_RATE/4 or INPUT_RATE/16)
 		output.setSize(0);    // mark buffer as empty
 		final int tmpDownsampledSize = tmpDownsampledSamples.size();
 		if (inputFilter4.filter(tmpDownsampledSamples, output, 0, tmpDownsampledSize) < tmpDownsampledSize) {
-			Log.e(LOGTAG, "downsampling: [inputFilter4] could not apply all samples from input packet.");
+			Log.e(LOGTAG, "downsampling: [inputFilter4] could not filter all samples from input packet.");
 		}
 	}
 
