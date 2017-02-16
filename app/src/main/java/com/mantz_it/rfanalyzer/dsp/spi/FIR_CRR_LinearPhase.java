@@ -40,7 +40,7 @@ public int apply(@NonNull Packet src, @NonNull Packet dst) {
 	for (int i = 0; i < count; i++) {
 		delay[tapIter] = srcBuff.get();
 		srcBuff.get(); //im
-		// Calculate the apply output for every Mth element (were M = decimation)
+		// Calculate the filter output for every Mth element (were M = decimation)
 		if (decimationIter == 0) {
 			// Calculate the results:
 			//System.out.printf("tapIter == %d;\n", tapIter);

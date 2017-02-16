@@ -32,7 +32,7 @@ public class FIR_CCC extends FIR {
 			delay[tapIter] = srcBuff.get();
 			delay[tapIter + 1] = srcBuff.get();
 
-			// Calculate the apply output for every Mth element (were M = decimation)
+			// Calculate the filter output for every Mth element (were M = decimation)
 			if (decimationIter == 0) {
 				// Calculate the results:
 				float re = 0;

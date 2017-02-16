@@ -89,7 +89,7 @@ public class FilterChain implements Filter {
 			if (list.size() < 1)
 				throw new IllegalArgumentException();
 			if (list.size() < 2)
-				throw new IllegalArgumentException("For only one apply use pure Filter instead.");
+				throw new IllegalArgumentException("For only one filter use pure Filter instead.");
 			if (tmp1 == null || tmp2 == null)
 				throw new NullPointerException("Temporary buffers must be non-null");
 
