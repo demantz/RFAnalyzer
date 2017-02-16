@@ -4,12 +4,16 @@ import time
 import socket
 from errno import EWOULDBLOCK
 import random
-packet_loose_prob=0.0 # probability of loosing packet ftom 0 to 1
+packet_loose_prob=0.0 # probability of loosing packet from 0 to 1
 
 refClk = 122880000
+defPrescaler = 8 # can be 8, 2, 40
+prescaler = defPrescaler
 rx_packet_size = 1442
-dump_name = """C:\\Users\Pavel\\Desktop\\HiQSDR\\1.iq"""
-rate = 48000
+#dump_name = """C:\\Users\Pavel\\Desktop\\HiQSDR\\1.iq"""
+dump_name = """C:\\Users\Pavel\\Desktop\HiQSDR\\2016-11-03-15-11-14_hiqsdr_50000000Hz_960000Sps.patched.iq"""
+#dump_name = """C:\\Users\Pavel\\Desktop\\HiQSDR\RFAnalyzer\\2016-11-03-16-18-52_hiqsdr_1234567Hz_960000Sps.iq"""
+rate = 960000
 
 samples_per_packet = (rx_packet_size-2)/(3+3) # 2 bytes for header, I and Q interleaved, 3 bytes each
 
@@ -26,7 +30,7 @@ def tunePhase2Freq(phase):
 
 
 def RXCtrl2SampleRate(ctrl):
-    return refClk / ((ctrl - 1)*64)
+    return refClk / ((ctrl + 1)*8*prescaler)
 
 
 def sampleRate2delay(rate):
@@ -65,7 +69,7 @@ rx_udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 print 'Staring HiQSDR emulation server on '+host
 print 'Predefined package loss rate: '+str(packet_loose_prob)
-
+print 'Packets source: ' + dump_name
 cmd_udp_sock.bind((host, cmdPort))
 cmd_udp_sock.setblocking(False)
 print 'Command interface on ' + str(host) + ':' + str(cmdPort)
@@ -76,6 +80,9 @@ print 'RX interface on ' + str(host) + ':' + str(rxPort)
 
 send = False
 file = open(dump_name, "rb")
+
+burst_cnt = 256;
+burst_iter = 0;
 while True:
     try:
         cmd, cmd_sender = cmd_udp_sock.recvfrom(22)
@@ -116,4 +123,8 @@ while True:
             else:
                 print "sendto: Socket exception[{0}]: {1}".format(e.errno, e.strerror)
                 raise
-    time.sleep(sampleRate2delay(rate))  # 200 Pps, 48000Sps
+    burst_iter += 1
+    # delay after burst, to pass around timer granularity
+    if(burst_iter >= burst_cnt):
+        burst_iter=0
+        time.sleep(sampleRate2delay(rate) * burst_cnt)
