@@ -1,9 +1,6 @@
-package com.mantz_it.rfanalyzer.dsp;
+package com.mantz_it.rfanalyzer.dsp.spi;
 
-import com.mantz_it.rfanalyzer.dsp.spi.FFT;
-import com.mantz_it.rfanalyzer.dsp.spi.FloatMixer;
-import com.mantz_it.rfanalyzer.dsp.spi.Packet;
-import com.mantz_it.rfanalyzer.dsp.spi.PacketPool;
+import com.mantz_it.rfanalyzer.dsp.Util;
 import com.mantz_it.rfanalyzer.dsp.impl.SoftFFT;
 
 import org.junit.Assert;
