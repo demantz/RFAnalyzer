@@ -6,10 +6,10 @@ import android.util.Log;
  * <h1>RF Analyzer - Half Band Low Pass Filter</h1>
  *
  * Module:      HalfBandLowPassFilter.java
- * Description: This class implements a half-band lowpass filter that decimates by 2.
+ * Description: This class implements a half-band lowpass apply that decimates by 2.
  *              In order to gain performance this is a very specific and unflexible
  *              implementation. It is used to downsample a high rate signal.
- *              NOTE: This filter amplifies the signal by factor 2!
+ *              NOTE: This apply amplifies the signal by factor 2!
  *
  * @author Dennis Mantz
  *
@@ -70,10 +70,10 @@ public class HalfBandLowPassFilter {
 	}
 
 	/**
-	 * Filters the samples from the input sample packet and appends filter output to the output
+	 * Filters the samples from the input sample packet and appends apply output to the output
 	 * sample packet. Stops automatically if output sample packet is full.
 	 *
-	 * This method uses a half band low pass filter with N taps. It will decimate by 2 and
+	 * This method uses a half band low pass apply with N taps. It will decimate by 2 and
 	 * amplify the signal by 2.
 	 *
 	 * @param in		input sample packet
@@ -131,10 +131,10 @@ public class HalfBandLowPassFilter {
 	}
 
 	/**
-	 * Filters the samples from the input sample packet and appends filter output to the output
+	 * Filters the samples from the input sample packet and appends apply output to the output
 	 * sample packet. Stops automatically if output sample packet is full.
 	 *
-	 * This method uses a half band low pass filter with 8 taps. It will decimate by 2 and
+	 * This method uses a half band low pass apply with 8 taps. It will decimate by 2 and
 	 * amplify the signal by 2. First 30% of the output signal frequency spectrum are protected
 	 * from aliasing (-30dB)
 	 *
@@ -219,10 +219,10 @@ public class HalfBandLowPassFilter {
 	}
 
 	/**
-	 * Filters the samples from the input sample packet and appends filter output to the output
+	 * Filters the samples from the input sample packet and appends apply output to the output
 	 * sample packet. Stops automatically if output sample packet is full.
 	 *
-	 * This method uses a half band low pass filter with 12 taps. It will decimate by 2 and
+	 * This method uses a half band low pass apply with 12 taps. It will decimate by 2 and
 	 * amplify the signal by 2. First 50% of the input signal frequency spectrum are protected
 	 * from aliasing (-30dB)
 	 *
