@@ -1,7 +1,7 @@
 package com.mantz_it.rfanalyzer;
 
 /**
- * <h1>RF Analyzer - unsigned 8-bit IQ Converter</h1>
+ * <h1>RF Analyzer - unsigned 8-bit IQ Conversion</h1>
  *
  * Module:      Unsigned8BitIQConverter.java
  * Description: This class implements methods to convert the raw input data of IQ sources (8 bit unsigned)
@@ -27,6 +27,7 @@ package com.mantz_it.rfanalyzer;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+@Deprecated
 public class Unsigned8BitIQConverter extends IQConverter {
 
 	public Unsigned8BitIQConverter() {
@@ -37,7 +38,7 @@ public class Unsigned8BitIQConverter extends IQConverter {
 	protected void generateLookupTable() {
 		/**
 		 * The rtl_sdr delivers samples in the following format:
-		 * The bytes are interleaved, 8-bit, unsigned IQ samples (in-phase
+		 * The bytes are complex, 8-bit, unsigned IQ samples (in-phase
 		 *  component first, followed by the quadrature component):
 		 *
 		 *  [--------- first sample ----------]   [-------- second sample --------]
@@ -77,7 +78,7 @@ public class Unsigned8BitIQConverter extends IQConverter {
 	}
 
 	@Override
-	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
+	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int offset) {
 		int capacity = samplePacket.capacity();
 		int count = 0;
 		int startIndex = samplePacket.size();
@@ -97,7 +98,7 @@ public class Unsigned8BitIQConverter extends IQConverter {
 	}
 
 	@Override
-	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int offset, long channelFrequency) {
 		int mixFrequency = (int)(frequency - channelFrequency);
 
 		generateMixerLookupTable(mixFrequency);	// will only generate table if really necessary
