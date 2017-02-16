@@ -25,6 +25,7 @@ package com.mantz_it.rfanalyzer;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+@Deprecated
 public class SamplePacket {
 	private final float[] re;	// real values
 	private final float[] im;	// imag values
@@ -41,6 +42,7 @@ public class SamplePacket {
 	 * @param frequency		center frequency
 	 * @param sampleRate	sample rate
 	 */
+	@Deprecated
 	public SamplePacket(float[] re, float im[], long frequency, int sampleRate) {
 		this(re, im, frequency, sampleRate, re.length);
 	}
@@ -55,6 +57,7 @@ public class SamplePacket {
 	 * @param sampleRate	sample rate
 	 * @param size	number of samples in this packet ( <= arrays.length )
 	 */
+	@Deprecated
 	public SamplePacket(float[] re, float im[], long frequency, int sampleRate, int size) {
 		if(re.length != im.length)
 			throw new IllegalArgumentException("Arrays must be of the same length");
@@ -72,6 +75,7 @@ public class SamplePacket {
 	 *
 	 * @param size	Number of samples in this packet
 	 */
+	@Deprecated
 	public SamplePacket(int size) {
 		this.re = new float[size];
 		this.im = new float[size];
