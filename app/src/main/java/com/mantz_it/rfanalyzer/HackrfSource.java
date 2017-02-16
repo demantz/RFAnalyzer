@@ -286,13 +286,13 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 
 	public void setBasebandFilterWidth(int basebandFilterWidth) {
 		this.basebandFilterWidth = hackrf.computeBasebandFilterBandwidth(basebandFilterWidth);
-		Log.d(LOGTAG,"setBasebandFilterWidth: Setting BB filter width to " + this.basebandFilterWidth);
+		Log.d(LOGTAG,"setBasebandFilterWidth: Setting BB apply width to " + this.basebandFilterWidth);
 		if(hackrf != null) {
 			try {
 				hackrf.setBasebandFilterBandwidth(this.basebandFilterWidth);
 			} catch (HackrfUsbException e) {
-				Log.e(LOGTAG, "setBasebandFilterWidth: Error while setting base band filter width: " + e.getMessage());
-				reportError("Error while setting base band filter width");
+				Log.e(LOGTAG, "setBasebandFilterWidth: Error while setting base band apply width: " + e.getMessage());
+				reportError("Error while setting base band apply width");
 			}
 		}
 	}
@@ -391,11 +391,11 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	@Override
-	public int getPacketSize() {
+	public int getSampledPacketSize() {
 		if(hackrf != null)
 			return hackrf.getPacketSize();
 		else {
-			Log.e(LOGTAG, "getPacketSize: Hackrf instance is null");
+			Log.e(LOGTAG, "getSampledPacketSize: Hackrf instance is null");
 			return 0;
 		}
 	}
