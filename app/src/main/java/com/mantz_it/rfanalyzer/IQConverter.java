@@ -2,7 +2,7 @@ package com.mantz_it.rfanalyzer;
 
 
 /**
- * <h1>RF Analyzer - IQ Converter</h1>
+ * <h1>RF Analyzer - IQ Conversion</h1>
  *
  * Module:      IQConverter.java
  * Description: This class implements methods to convert the raw input data of IQ sources (bytes)
@@ -28,6 +28,7 @@ package com.mantz_it.rfanalyzer;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+@Deprecated
 public abstract class IQConverter {
 	protected long frequency = 0;						// Baseband frequency of the converted samples (is put into the SamplePacket)
 	protected int sampleRate = 0;						// Sample rate of the converted samples (is put into the SamplePacket)
@@ -74,9 +75,19 @@ public abstract class IQConverter {
 		return bestLength;
 	}
 
-	public abstract int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket);
+	@Deprecated
+	public abstract int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int offset);
+	@Deprecated
+	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket){
+		return fillPacketIntoSamplePacket(packet, samplePacket, -1);
+	}
 
-	public abstract int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency);
+	@Deprecated
+	public abstract int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, int offset, long channelFrequency);
+	@Deprecated
+	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency){
+		return mixPacketIntoSamplePacket(packet, samplePacket, 0, channelFrequency);
+	}
 
 	protected abstract void generateLookupTable();
 
