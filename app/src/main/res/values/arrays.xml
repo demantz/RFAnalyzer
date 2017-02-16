@@ -189,4 +189,35 @@
         <item>KHz</item>
         <item>Hz</item>
     </string-array>
+    <string-array name="hiqsdr_fw_version_names">
+        <item>1.0</item>
+        <item>1.1</item>
+        <item>1.2</item>
+    </string-array>
+    <string-array name="hiqsdr_fw_version_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="hiqsdr_antenna_names">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="hiqsdr_antenna_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="hiqsdr_tx_mode_names">
+        <item>Keyed CW</item>
+        <item>PTT</item>
+        <item>Extended IO</item>
+        <item>Hardware CW</item>
+    </string-array>
+    <string-array name="hiqsdr_tx_mode_values">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+    </string-array>
+
 </resources>

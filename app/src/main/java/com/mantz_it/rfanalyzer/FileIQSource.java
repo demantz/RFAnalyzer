@@ -1,6 +1,8 @@
 package com.mantz_it.rfanalyzer;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -47,13 +49,14 @@ public class FileIQSource implements IQSourceInterface {
 	private String filename = null;
 	private BufferedInputStream bufferedInputStream = null;
 	private IQConverter iqConverter;
+	private int offset;
 	private int fileFormat;
 	private static final String LOGTAG = "FileIQSource";
 	public static final int FILE_FORMAT_8BIT_SIGNED = 0;
 	public static final int FILE_FORMAT_8BIT_UNSIGNED = 1;
-	public static final int FILE_FORMAT_24BIT_UNSIGNED = 2;
+	public static final int FILE_FORMAT_24BIT_SIGNED = 2;
 	protected boolean reopenStreamStrategy;
-	protected static final int REOPEN_STREAM_SIZE_THRESHOLD = 2 << 23 - 1; // 8 MB;
+	protected static final long REOPEN_STREAM_SIZE_THRESHOLD = 2 << 23 - 1; // 8 MB;
 
 	public FileIQSource(String filename, int sampleRate, long frequency, int packetSize, boolean repeat, int fileFormat) {
 		this.filename = filename;
@@ -63,24 +66,61 @@ public class FileIQSource implements IQSourceInterface {
 		this.sampleRate = sampleRate;
 		this.frequency = frequency;
 		this.packetSize = packetSize;
-		this.buffer = new byte[packetSize];
+		this.buffer = new byte[packetSize * 10];
 
 		switch (fileFormat) {
 			case FILE_FORMAT_8BIT_SIGNED:
+				Log.w(LOGTAG, "Format: FILE_FORMAT_8BIT_SIGNED");
 				iqConverter = new Signed8BitIQConverter();
+				offset = 0;
 				break;
 			case FILE_FORMAT_8BIT_UNSIGNED:
+				Log.w(LOGTAG, "Format: FILE_FORMAT_8BIT_UNSIGNED");
 				iqConverter = new Unsigned8BitIQConverter();
+				offset = 0;
 				break;
-			case FILE_FORMAT_24BIT_UNSIGNED:
-				iqConverter = new Unsigned24BitIQConverter();
+			case FILE_FORMAT_24BIT_SIGNED:
+				Log.w(LOGTAG, "Format: FILE_FORMAT_24BIT_SIGNED");
+				iqConverter = new Signed24BitIQConverter();
+				offset = 2;
 				break;
 			default:
 				Log.e(LOGTAG, "constructor: Invalid file format: " + fileFormat);
 				break;
 		}
+		Log.w(LOGTAG, "Offset: " + offset);
 
-		this.sleepTime = (int) ((packetSize /iqConverter.getSampleSize() / 2) / (float) sampleRate * 1000); // note: half packet size because of I and Q samples
+		this.sleepTime = (int) (((packetSize - offset) / iqConverter.getSampleSize() / 2) / (float) sampleRate * 10000); // note: half packet size because of I and Q samples
+		iqConverter.setFrequency(frequency);
+		iqConverter.setSampleRate(sampleRate);
+	}
+
+	public FileIQSource(Context context, SharedPreferences preferences) {
+		this.frequency = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_frequency), "97000000"));
+		this.sampleRate = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_sampleRate), "2000000"));
+		this.file = new File(this.filename = preferences.getString(context.getString(R.string.pref_filesource_file), ""));
+		this.fileFormat = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_format), "0"));
+		this.repeat = preferences.getBoolean(context.getString(R.string.pref_filesource_repeat), false);
+		switch (fileFormat) {
+			case FILE_FORMAT_8BIT_SIGNED:
+				this.iqConverter = new Signed8BitIQConverter();
+				this.packetSize = 16384;
+				break;
+			case FILE_FORMAT_8BIT_UNSIGNED:
+				this.iqConverter = new Unsigned8BitIQConverter();
+				this.packetSize = 16384;
+				break;
+			case FILE_FORMAT_24BIT_SIGNED:
+				this.iqConverter = new Signed24BitIQConverter();
+				this.packetSize = 1440; //todo: add separate preference for packet size by source type
+				offset = 0;
+				break;
+			default:
+				Log.e(LOGTAG, "constructor: Invalid file format: " + fileFormat);
+				break;
+		}
+		this.buffer = new byte[packetSize * 10];
+		this.sleepTime = (int) ((packetSize / iqConverter.getSampleSize() / 2) / (float) sampleRate * 10000); // note: half packet size because of I and Q samples
 		iqConverter.setFrequency(frequency);
 		iqConverter.setSampleRate(sampleRate);
 	}
@@ -99,9 +139,9 @@ public class FileIQSource implements IQSourceInterface {
 		try {
 			this.bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
 			reopenStreamStrategy = file.length() > REOPEN_STREAM_SIZE_THRESHOLD;
-			Log.i(LOGTAG, "File size: "+file.length()+" bytes");
-			Log.i(LOGTAG, "Reopen threshold: "+REOPEN_STREAM_SIZE_THRESHOLD+" bytes");
-			if(reopenStreamStrategy)
+			Log.i(LOGTAG, "File size: " + file.length() + " bytes");
+			Log.i(LOGTAG, "Reopen threshold: " + REOPEN_STREAM_SIZE_THRESHOLD + " bytes");
+			if (reopenStreamStrategy)
 				Log.i(LOGTAG, "Using reopen stream strategy");
 			else
 				Log.i(LOGTAG, "Using reset stream strategy");
@@ -145,6 +185,20 @@ public class FileIQSource implements IQSourceInterface {
 	@Override
 	public String getName() {
 		return "IQ-File: " + file.getName();
+	}
+
+	@Override
+	public FileIQSource updatePreferences(Context context, SharedPreferences preferences) {
+		int fileFormat = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_format), "0"));
+		String fileName = preferences.getString(context.getString(R.string.pref_filesource_file), "");
+		if (fileFormat != this.fileFormat || !fileName.equals(this.filename)) {
+			this.close();
+			return new FileIQSource(context, preferences);
+		}
+		this.frequency = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_frequency), "97000000"));
+		this.sampleRate = Integer.parseInt(preferences.getString(context.getString(R.string.pref_filesource_sampleRate), "2000000"));
+		this.repeat = preferences.getBoolean(context.getString(R.string.pref_filesource_repeat), false);
+		return this;
 	}
 
 	/**
@@ -224,7 +278,7 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
-	public int getPacketSize() {
+	public int getSampledPacketSize() {
 		return packetSize;
 	}
 
@@ -237,7 +291,7 @@ public class FileIQSource implements IQSourceInterface {
 			// Simulate sample rate of real hardware:
 			int sleep = Math.min(sleepTime - (int) (System.currentTimeMillis() - lastAccessTime), timeout);
 			if (sleep > 0)
-				Thread.sleep(sleep);
+				SystemClock.sleep(sleep);
 
 			// Read the samples.
 			if (bufferedInputStream.read(buffer, 0, buffer.length) != buffer.length) {
@@ -268,9 +322,6 @@ public class FileIQSource implements IQSourceInterface {
 			Log.e(LOGTAG, "getPacket: Error while reading from file: " + e.getMessage());
 			reportError("Unexpected error while reading file: " + e.getMessage());
 			return null;
-		} catch (InterruptedException e) {
-			Log.w(LOGTAG, "getPacket: Interrupted while sleeping!");
-			return null;
 		}
 
 		lastAccessTime = System.currentTimeMillis();
@@ -294,10 +345,11 @@ public class FileIQSource implements IQSourceInterface {
 
 	@Override
 	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
-		return this.iqConverter.fillPacketIntoSamplePacket(packet, samplePacket);
+		return this.iqConverter.fillPacketIntoSamplePacket(packet, samplePacket, offset);
 	}
 
+	@Override
 	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-		return this.iqConverter.mixPacketIntoSamplePacket(packet, samplePacket, channelFrequency);
+		return this.iqConverter.mixPacketIntoSamplePacket(packet, samplePacket, offset, channelFrequency);
 	}
 }

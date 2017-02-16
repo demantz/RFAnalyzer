@@ -25,9 +25,10 @@ package com.mantz_it.rfanalyzer;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+@Deprecated
 public class SamplePacket {
-	private float[] re;			// real values
-	private float[] im;			// imag values
+	private final float[] re;	// real values
+	private final float[] im;	// imag values
 	private long frequency;		// center frequency
 	private int sampleRate;		// sample rate
 	private int size;			// number of samples in this packet
@@ -41,6 +42,7 @@ public class SamplePacket {
 	 * @param frequency		center frequency
 	 * @param sampleRate	sample rate
 	 */
+	@Deprecated
 	public SamplePacket(float[] re, float im[], long frequency, int sampleRate) {
 		this(re, im, frequency, sampleRate, re.length);
 	}
@@ -55,6 +57,7 @@ public class SamplePacket {
 	 * @param sampleRate	sample rate
 	 * @param size	number of samples in this packet ( <= arrays.length )
 	 */
+	@Deprecated
 	public SamplePacket(float[] re, float im[], long frequency, int sampleRate, int size) {
 		if(re.length != im.length)
 			throw new IllegalArgumentException("Arrays must be of the same length");
@@ -72,6 +75,7 @@ public class SamplePacket {
 	 *
 	 * @param size	Number of samples in this packet
 	 */
+	@Deprecated
 	public SamplePacket(int size) {
 		this.re = new float[size];
 		this.im = new float[size];
@@ -128,6 +132,12 @@ public class SamplePacket {
 		return size;
 	}
 
+	/**
+	 * @return capacity == size
+	 */
+	public boolean full(){
+		return re.length == size;
+	}
 	/**
 	 * Sets a new size (number of samples in this packet)
 	 * @param size	number of (valid) samples in this packet

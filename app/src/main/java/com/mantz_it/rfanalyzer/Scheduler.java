@@ -8,46 +8,45 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * <h1>RF Analyzer - Scheduler</h1>
- *
+ * <p>
  * Module:      Scheduler.java
  * Description: This Thread is responsible for forwarding the samples from the input hardware
- *              to the Demodulator and to the Processing Loop and at the correct speed and format.
- *              Sample packets are passed to other blocks by using blocking queues. The samples passed
- *              to the Demodulator will be shifted to base band first.
- *              If the Demodulator or the Processing Loop are to slow, the scheduler will automatically
- *              drop incoming samples to keep the buffer of the hackrf_android library from beeing filled up.
- *
+ * to the Demodulator and to the Processing Loop and at the correct speed and format.
+ * Sample packets are passed to other blocks by using blocking queues. The samples passed
+ * to the Demodulator will be shifted to base band first.
+ * If the Demodulator or the Processing Loop are to slow, the scheduler will automatically
+ * drop incoming samples to keep the buffer of the hackrf_android library from beeing filled up.
  *
  * @author Dennis Mantz
- *
- * Copyright (C) 2014 Dennis Mantz
- * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *         <p>
+ *         Copyright (C) 2014 Dennis Mantz
+ *         License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ *         <p>
+ *         This library is free software; you can redistribute it and/or
+ *         modify it under the terms of the GNU General Public
+ *         License as published by the Free Software Foundation; either
+ *         version 2 of the License, or (at your option) any later version.
+ *         <p>
+ *         This library is distributed in the hope that it will be useful,
+ *         but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *         General Public License for more details.
+ *         <p>
+ *         You should have received a copy of the GNU General Public
+ *         License along with this library; if not, write to the Free Software
+ *         Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class Scheduler extends Thread {
-	private IQSourceInterface source = null;	// Reference to the source of the IQ samples
-	private ArrayBlockingQueue<SamplePacket> fftOutputQueue = null;	// Queue that delivers samples to the Processing Loop
-	private ArrayBlockingQueue<SamplePacket> fftInputQueue = null;	// Queue that collects used buffers from the Processing Loop
-	private ArrayBlockingQueue<SamplePacket> demodOutputQueue = null;	// Queue that delivers samples to the Demodulator block
-	private ArrayBlockingQueue<SamplePacket> demodInputQueue = null;	// Queue that collects used buffers from the Demodulator block
-	private long channelFrequency = 0;					// Shift frequency to this value when passing packets to demodulator
-	private boolean demodulationActivated = false;		// Indicates if samples should be forwarded to the demodulator queues or not.
-	private boolean squelchSatisfied = false;			// indicates whether the current signal is strong enough to cross the squelch threshold
+	private IQSourceInterface source = null;    // Reference to the source of the IQ samples
+	private ArrayBlockingQueue<SamplePacket> fftOutputQueue = null;    // Queue that delivers samples to the Processing Loop
+	private ArrayBlockingQueue<SamplePacket> fftInputQueue = null;    // Queue that collects used buffers from the Processing Loop
+	private ArrayBlockingQueue<SamplePacket> demodOutputQueue = null;    // Queue that delivers samples to the Demodulator block
+	private ArrayBlockingQueue<SamplePacket> demodInputQueue = null;    // Queue that collects used buffers from the Demodulator block
+	private long channelFrequency = 0;                    // Shift frequency to this value when passing packets to demodulator
+	private boolean demodulationActivated = false;        // Indicates if samples should be forwarded to the demodulator queues or not.
+	private boolean squelchSatisfied = false;            // indicates whether the current signal is strong enough to cross the squelch threshold
 	private boolean stopRequested = true;
-	private BufferedOutputStream bufferedOutputStream = null;	// Used for recording
+	private BufferedOutputStream bufferedOutputStream = null;    // Used for recording
 	private boolean stopRecording = false;
 
 	// Define the size of the fft output and input Queues. By setting this value to 2 we basically end up
@@ -73,7 +72,7 @@ public class Scheduler extends Thread {
 		this.demodOutputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
 		this.demodInputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
 		for (int i = 0; i < DEMOD_QUEUE_SIZE; i++)
-			demodInputQueue.offer(new SamplePacket(source.getPacketSize()));
+			demodInputQueue.offer(new SamplePacket(source.getSampledPacketSize()));
 	}
 
 	public void stopScheduler() {
@@ -129,7 +128,7 @@ public class Scheduler extends Thread {
 	/**
 	 * Has to be called when the signal strength of the selected channel crosses the squelch threshold
 	 *
-	 * @param squelchSatisfied	true: the signal is now stronger than the threshold; false: signal is now weaker
+	 * @param squelchSatisfied true: the signal is now stronger than the threshold; false: signal is now weaker
 	 */
 	public void setSquelchSatisfied(boolean squelchSatisfied) {
 		this.squelchSatisfied = squelchSatisfied;
@@ -146,7 +145,7 @@ public class Scheduler extends Thread {
 	 * Will start writing the raw samples to the bufferedOutputStream. Stream will be
 	 * closed on error, on stopRecording() and on stopSampling()
 	 *
-	 * @param bufferedOutputStream		stream to write the samples out.
+	 * @param bufferedOutputStream stream to write the samples out.
 	 */
 	public void startRecording(BufferedOutputStream bufferedOutputStream) {
 		this.stopRecording = false;
@@ -163,29 +162,27 @@ public class Scheduler extends Thread {
 
 	@Override
 	public void run() {
-		Log.i(LOGTAG,"Scheduler started. (Thread: " + this.getName() + ")");
-		SamplePacket fftBuffer = null;		// reference to a buffer we got from the fft input queue to fill
-		SamplePacket demodBuffer = null;	// reference to a buffer we got from the demod input queue to fill
-		SamplePacket tmpFlushBuffer = null;	// Just a tmp buffer to flush a queue if necessary
-
-		while(!stopRequested) {
+		Log.i(LOGTAG, "Scheduler started. (Thread: " + this.getName() + ")");
+		SamplePacket fftBuffer = null;        // reference to a buffer we got from the fft input queue to fill
+		SamplePacket demodBuffer = null;    // reference to a buffer we got from the demod input queue to fill
+		while (!stopRequested) {
 			// Get a new packet from the source:
 			byte[] packet = source.getPacket(1000);
-			if(packet == null) {
+			if (packet == null) {
 				Log.e(LOGTAG, "run: No more packets from source. Shutting down...");
 				this.stopScheduler();
 				break;
 			}
 
 			///// Recording ////////////////////////////////////////////////////////////////////////
-			if(bufferedOutputStream != null) {
+			if (bufferedOutputStream != null) {
 				try {
 					bufferedOutputStream.write(packet);
 				} catch (IOException e) {
 					Log.e(LOGTAG, "run: Error while writing to output stream (recording): " + e.getMessage());
 					this.stopRecording();
 				}
-				if(stopRecording) {
+				if (stopRecording) {
 					try {
 						bufferedOutputStream.close();
 					} catch (IOException e) {
@@ -197,7 +194,7 @@ public class Scheduler extends Thread {
 			}
 
 			///// Demodulation /////////////////////////////////////////////////////////////////////
-			if(demodulationActivated && squelchSatisfied) {
+			if (demodulationActivated && squelchSatisfied) {
 				// Get a buffer from the demodulator inputQueue
 				demodBuffer = demodInputQueue.poll();
 				if (demodBuffer != null) {
@@ -207,27 +204,25 @@ public class Scheduler extends Thread {
 					demodOutputQueue.offer(demodBuffer);    // deliver packet
 				} else {
 					Log.d(LOGTAG, "run: Flush the demod queue because demodulator is too slow!");
-					while ((tmpFlushBuffer = demodOutputQueue.poll()) != null)
-						demodInputQueue.offer(tmpFlushBuffer);
+					demodOutputQueue.drainTo(demodInputQueue);
 				}
 			}
 
 			///// FFT //////////////////////////////////////////////////////////////////////////////
 			// If buffer is null we request a new buffer from the fft input queue:
-			if(fftBuffer == null) {
+			if (fftBuffer == null) {
 				fftBuffer = fftInputQueue.poll();
-				if(fftBuffer != null)
-					fftBuffer.setSize(0);	// mark buffer as empty
+				if (fftBuffer != null)
+					fftBuffer.setSize(0);    // mark buffer as empty
 			}
 
 			// If we got a buffer, fill it!
-			if(fftBuffer != null)
-			{
+			if (fftBuffer != null) {
 				// fill the packet into the buffer:
-				source.fillPacketIntoSamplePacket(packet,fftBuffer);
+				source.fillPacketIntoSamplePacket(packet, fftBuffer);
 
 				// check if the buffer is now full and if so: deliver it to the output queue
-				if(fftBuffer.capacity() == fftBuffer.size()) {
+				if (fftBuffer.full()) {
 					fftOutputQueue.offer(fftBuffer);
 					fftBuffer = null;
 				}
@@ -240,7 +235,7 @@ public class Scheduler extends Thread {
 			source.returnPacket(packet);
 		}
 		this.stopRequested = true;
-		if(bufferedOutputStream != null) {
+		if (bufferedOutputStream != null) {
 			try {
 				bufferedOutputStream.close();
 			} catch (IOException e) {
@@ -248,6 +243,6 @@ public class Scheduler extends Thread {
 			}
 			bufferedOutputStream = null;
 		}
-		Log.i(LOGTAG,"Scheduler stopped. (Thread: " + this.getName() + ")");
+		Log.i(LOGTAG, "Scheduler stopped. (Thread: " + this.getName() + ")");
 	}
 }

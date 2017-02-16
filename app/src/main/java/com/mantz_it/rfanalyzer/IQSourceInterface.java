@@ -1,6 +1,7 @@
 package com.mantz_it.rfanalyzer;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 /**
  * <h1>RF Analyzer - IQ Source Interface</h1>
@@ -8,6 +9,10 @@ import android.content.Context;
  * Module:      IQSourceInterface.java
  * Description: This interface represents a source of IQ samples. It allows the Scheduler to
  *              be independent of the SDR hardware.
+ *              <p>
+ *              <b>Implementers of this interface also have to implement constructor which takes two parameters:
+ *              android.content.Context and android.content.SharedPreferences, so it can load it preferences from preference repository.
+ *              If no such constructor provided, application may and will fail instantiating it.<b/>
  *
  * @author Dennis Mantz
  *
@@ -39,89 +44,91 @@ public interface IQSourceInterface {
 	 * @param callback		reference to a class that implements the Callback interface for notification
 	 * @return false if an error occurred.
 	 */
-	public boolean open(Context context, Callback callback);
+	boolean open(Context context, Callback callback);
 
 	/**
 	 * Will return true if the source is opened and ready to use
 	 *
 	 * @return true if open, false if not open
 	 */
-	public boolean isOpen();
+	boolean isOpen();
 
 	/**
 	 * Will close the device.
 	 *
 	 * @return false if an error occurred.
 	 */
-	public boolean close();
+	boolean close();
 
 	/**
 	 * @return a human readable Name of the source
 	 */
-	public String getName();
+	String getName();
+
+	IQSourceInterface updatePreferences(Context context, SharedPreferences preferences);
 
 	/**
 	 * @return the rate at which this source receives samples
 	 */
-	public int getSampleRate();
+	int getSampleRate();
 
 	/**
 	 * @param sampleRate	sample rate that should be set for the IQ source
 	 */
-	public void setSampleRate(int sampleRate);
+	void setSampleRate(int sampleRate);
 
 	/**
 	 * @return the Frequency to which the source is tuned
 	 */
-	public long getFrequency();
+	long getFrequency();
 
 	/**
 	 * @param frequency		frequency to which the IQ source should be tuned
 	 */
-	public void setFrequency(long frequency);
+	void setFrequency(long frequency);
 
 
 	/**
 	 * @return the maximum frequency to which the source can be tuned
 	 */
-	public long getMaxFrequency();
+	long getMaxFrequency();
 
 	/**
 	 * @return the minimum frequency to which the source can be tuned
 	 */
-	public long getMinFrequency();
+	long getMinFrequency();
 
 	/**
 	 * @return the maximum sample rate to which the source can be set
 	 */
-	public int getMaxSampleRate();
+	int getMaxSampleRate();
 
 	/**
 	 * @return the minimum sample rate to which the source can be set
 	 */
-	public int getMinSampleRate();
+	int getMinSampleRate();
 
 	/**
 	 * @param sampleRate	initial sample rate for the lookup
 	 * @return next optimal sample rate that is higher than sampleRate
 	 */
-	public int getNextHigherOptimalSampleRate(int sampleRate);
+	int getNextHigherOptimalSampleRate(int sampleRate);
 
 	/**
 	 * @param sampleRate	initial sample rate for the lookup
 	 * @return next optimal sample rate that is lower than sampleRate
 	 */
-	public int getNextLowerOptimalSampleRate(int sampleRate);
+	int getNextLowerOptimalSampleRate(int sampleRate);
 
 	/**
 	 * @return Array of all supported (optimal) sample rates
 	 */
-	public int[] getSupportedSampleRates();
+	int[] getSupportedSampleRates();
 
 	/**
 	 * @return the size (in byte) of a packet that is returned by getPacket()
 	 */
-	public int getPacketSize();
+	int getSampledPacketSize();
 
 	/**
 	 * This method will grab the next packet from the source and return it. If no
@@ -130,7 +137,7 @@ public interface IQSourceInterface {
 	 *
 	 * @return packet containing received samples
 	 */
-	public byte[] getPacket(int timeout);
+	byte[] getPacket(int timeout);
 
 	/**
 	 * This method will return the given buffer (packet) to the buffer pool of the
@@ -138,17 +145,17 @@ public interface IQSourceInterface {
 	 *
 	 * @param buffer	A packet that was returned by getPacket() and is now no longer used
 	 */
-	public void returnPacket(byte[] buffer);
+	void returnPacket(byte[] buffer);
 
 	/**
 	 * Start receiving samples.
 	 */
-	public void startSampling();
+	void startSampling();
 
 	/**
 	 * Stop receiving samples.
 	 */
-	public void stopSampling();
+	void stopSampling();
 
 	/**
 	 * Used to convert a packet from this source to the SamplePacket format. That means the samples
@@ -161,7 +168,7 @@ public interface IQSourceInterface {
 	 * @param samplePacket	SamplePacket that should be filled with samples from the packet.
 	 * @return the number of samples filled into the samplePacket.
 	 */
-	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket);
+	int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket);
 
 	/**
 	 * Used to convert a packet from this source to the SamplePacket format while at the same
@@ -176,19 +183,19 @@ public interface IQSourceInterface {
 	 * @param channelFrequency	frequency to which the spectrum of the signal should be shifted
 	 * @return the number of samples filled into the samplePacket and shifted by mixFrequency.
 	 */
-	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency);
+	int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency);
 
 	/**
 	 * Callback interface for asynchronous interactions with the source.
 	 */
-	public static interface Callback {
+	interface Callback {
 		/**
 		 * This method will be called when the source is ready to use after the application
 		 * called open()
 		 *
 		 * @param source	A reference to the IQSource that is now ready
 		 */
-		public void onIQSourceReady(IQSourceInterface source);
+		void onIQSourceReady(IQSourceInterface source);
 
 		/**
 		 * This method will be called when there is an error with the source
@@ -196,6 +203,6 @@ public interface IQSourceInterface {
 		 * @param source	A reference to the IQSource that caused the error
 		 * @param message	Description of the error
 		 */
-		public void onIQSourceError(IQSourceInterface source, String message);
+		void onIQSourceError(IQSourceInterface source, String message);
 	}
 }
