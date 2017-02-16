@@ -2,6 +2,10 @@ package com.mantz_it.rfanalyzer;
 
 import android.util.Log;
 
+import com.mantz_it.rfanalyzer.dsp.spi.Packet;
+import com.mantz_it.rfanalyzer.dsp.impl.SoftFFT;
+
+import java.nio.FloatBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +42,7 @@ public class AnalyzerProcessingLoop extends Thread {
 	private int frameRate = 10;					// Frames per Second
 	private double load = 0;					// Time_for_processing_and_drawing / Time_per_Frame
 	private boolean dynamicFrameRate = true;	// Turns on and off the automatic frame rate control
-	private boolean stopRequested = true;		// Will stop the thread when set to true
+	private volatile boolean stopRequested = true;		// Will stop the thread when set to true
 	private float[] mag = null;					// Magnitude of the frequency spectrum
 
 	private static final String LOGTAG = "AnalyzerProcessingLoop";
@@ -47,7 +51,8 @@ public class AnalyzerProcessingLoop extends Thread {
 	private static final double HIGH_THRESHOLD = 0.85;	// at every load value above this threshold we decrease the frame rate
 
 	private AnalyzerSurface view;
-	private FFT fftBlock = null;
+	//private FFT fftBlock = null;
+	private SoftFFT fftBlock;
 	private ArrayBlockingQueue<SamplePacket> inputQueue = null;		// queue that delivers sample packets
 	private ArrayBlockingQueue<SamplePacket> returnQueue = null;	// queue to return unused buffers
 
@@ -69,8 +74,8 @@ public class AnalyzerProcessingLoop extends Thread {
 		if(fftSize != (1<<order))
 			throw new IllegalArgumentException("FFT size must be power of 2");
 		this.fftSize = fftSize;
-
-		this.fftBlock = new FFT(fftSize);
+		Log.i(LOGTAG, "FFT size: "+fftSize);
+		this.fftBlock = new SoftFFT(fftSize);
 		this.mag = new float[fftSize];
 		this.inputQueue = inputQueue;
 		this.returnQueue = returnQueue;
@@ -184,7 +189,6 @@ public class AnalyzerProcessingLoop extends Thread {
 				Log.e(LOGTAG,"Error while calling sleep()");
 			}
 		}
-		this.stopRequested = true;
 		Log.i(LOGTAG,"Processing loop stopped. (Thread: " + this.getName() + ")");
 	}
 
@@ -193,27 +197,32 @@ public class AnalyzerProcessingLoop extends Thread {
 	 *
 	 * @param samples	input samples for the signal processing
 	 */
+	private Packet fftSrc;
+	private Packet fftDst;
 	public void doProcessing(SamplePacket samples) {
-		float[] re=samples.re(), im=samples.im();
+		fftSrc=new Packet(samples);
+		fftDst=new Packet(samples);
+		FloatBuffer dstBuff = fftDst.getBuffer();
+		FloatBuffer srcBuff = fftSrc.getBuffer();
+		srcBuff.flip();
+		dstBuff.clear();
 		// Multiply the samples with a Window function:
-		this.fftBlock.applyWindow(re, im);
-
+		this.fftBlock.applyWindow(srcBuff.array(), dstBuff.arrayOffset());
 		// Calculate the fft:
-		this.fftBlock.fft(re, im);
-
+		this.fftBlock.apply(fftSrc, fftDst);
 		// Calculate the logarithmic magnitude:
 		float realPower;
 		float imagPower;
 		int size = samples.size();
 		for (int i = 0; i < size; i++) {
 			// We have to flip both sides of the fft to draw it centered on the screen:
-			int targetIndex = (i+size/2) % size;
+			int targetIndex = i+size/2 & size-1; // "& size - 1" equals to "% size" if size is power of two
 
 			// Calc the magnitude = log(  re^2 + im^2  )
 			// note that we still have to divide re and im by the fft size
-			realPower = re[i]/fftSize;
+			realPower = fftDst.re(i)/fftSize;
 			realPower = realPower * realPower;
-			imagPower = im[i]/fftSize;
+			imagPower = fftDst.im(i)/fftSize;
 			imagPower = imagPower * imagPower;
 			mag[targetIndex] = (float) (10* Math.log10(Math.sqrt(realPower + imagPower)));
 		}
