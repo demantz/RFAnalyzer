@@ -2,777 +2,887 @@ package com.mantz_it.rfanalyzer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.InterfaceAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by pavlus on 10.06.16.
  */
-public class HiQSDRSource implements IQSourceInterface {
-	private static final String LOGTAG = "HiQSDRSource";
-	private static final String NAME = "HiQSDRSource";
-
-	protected static final byte MAXIMUM_DECIMATION = 40;
-	protected static final int CLOCK_RATE = 122880000;
-	protected static final int UDP_CLK_RATE = CLOCK_RATE / 64;
-
-	protected static int MIN_SAMPLE_RATE = -1;// = 48000;
-	protected static int MAX_SAMPLE_RATE = -1;// 1920000;
-	protected static int[] SAMPLE_RATES = null;
-	protected static byte[] SAMPLE_RATE_CODES = null;
-
-	// TODO: determine exact frequency limits
-	protected static final int MIN_FREQUENCY = 100000; // 100 kHz
-	protected static final int MAX_FREQUENCY = CLOCK_RATE / 2; // (?)61 MHz, but there is info, that 66 MHz
-
-	protected static final int RX_PACKET_SIZE = 1442;
-	protected static final int CMD_PACKET_SIZE = 22;
-	//---------------------------------------
-	// todo: check names and actual modes
-	public static final byte TX_MODE_INVALID = 0x0;
-	public static final byte TX_MODE_KEYED_CONTINIOUS_WAVE = 0x1;
-	public static final byte TX_MODE_RECEIVED_PTT = 0x2;
-	public static final byte TX_MODE_EXTENDED_IO = 0x4;
-	public static final byte TX_MODE_HW_CONTNIOUS_WAVE = 0x8;
-	protected Config config;
-	protected String ipAddress;
-	protected int cmdPort;
-	protected int rxPort;
-	protected int txPort;
-	//---------------------------------------
-	private AsyncTask<Void, Void, Void> openerTask;
-	protected Callback callback;
-	protected Context context;
-	protected UDPSessionThread commandThread;
-	protected UDPSessionThread receiverThread;
-	//protected UDPSessionThread transmitterThread;
-	protected IQConverter iqConverter;
-	protected InetAddress remoteAddr;
-	private boolean deviceResponded = false;
-	protected byte previousPacketIdx = 0;
-	protected int stub_sent_counter = 0;
-	protected int MAX_STUB_SENT = 10;
-	// commands
-	static final byte[] START_RECEIVING_CMD = {'r', 'r'};
-	static final byte[] STOP_RECEIVING_CMD = {'s', 's'};
-	// stub
-	static final byte[] stub_packet = new byte[RX_PACKET_SIZE];
-
-	public static void initArrays() {
-		if (SAMPLE_RATE_CODES == null) {
-			byte[] tmp = new byte[MAXIMUM_DECIMATION];
-			int cnt = 0;
-			for (byte i = 1; i <= MAXIMUM_DECIMATION; i++)
-				if (UDP_CLK_RATE % i == 0) {
-					tmp[cnt++] = (byte) (i + 1);
-				}
-			SAMPLE_RATE_CODES = Arrays.copyOf(tmp, cnt);
-		}
-		if (SAMPLE_RATES == null) {
-			SAMPLE_RATES = new int[SAMPLE_RATE_CODES.length];
-			for (int i = 0; i < SAMPLE_RATES.length; ++i)
-				SAMPLE_RATES[i] = UDP_CLK_RATE / (SAMPLE_RATE_CODES[i] - 1);
-			MAX_SAMPLE_RATE = SAMPLE_RATES[0];
-			MIN_SAMPLE_RATE = SAMPLE_RATES[SAMPLE_RATES.length - 1];
-		}
-	}
-
-	public HiQSDRSource() {
-		initArrays();
-		config = new Config();
-		this.iqConverter = new Unsigned24BitIQConverter();
-	}
-
-	public HiQSDRSource(String host, int cmdPort, int rxPort, int txPort) {
-		this();
-		this.ipAddress = host;
-		this.cmdPort = cmdPort;
-		this.rxPort = rxPort;
-		this.txPort = txPort;
-	}
-
-	public HiQSDRSource(Context context, SharedPreferences preferences) {
-		initArrays();
-		this.iqConverter = new Unsigned24BitIQConverter();
-
-		this.ipAddress = preferences.getString(context.getString(R.string.pref_hiqsdr_ip), "192.168.2.196");
-		this.cmdPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_command_port), "48248"));
-		this.rxPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_rx_port), "48247"));
-		this.txPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_tx_port), "48249"));
-
-		config = new Config(
-				Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_firmware), "2")));
-		setFrequency(Long.parseLong(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_rx_frequency), "10000000")));
-		tieTXFrequencyToRXFrequency(
-				preferences.getBoolean(context.getString(R.string.pref_hiqsdr_tie_frequencies), true));
-		setTxFrequency(Long.parseLong(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_tx_frequency), "10000000")));
-		setTxMode(Byte.parseByte(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_tx_mode), Byte.toString(TX_MODE_HW_CONTNIOUS_WAVE))));
-		setAntenna(
-				Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_antenna), "0")));
-		setSampleRate(Integer.parseInt(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_sampleRate)
-						, Integer.toString(MIN_SAMPLE_RATE))));
-	}
-
-	@Override
-	public boolean open(Context context, Callback callback) {
-		Log.i(LOGTAG, "open: called");
-		this.context = context;
-		this.callback = callback;
-		(openerTask = new SourceOpener()).execute();
-		return true;
-	}
-
-	@Override
-	public boolean isOpen() {
-		return deviceResponded
-		       && receiverThread != null
-		       && commandThread != null
-		       && receiverThread.socket != null
-		       && commandThread.socket != null
-		       && receiverThread.isRunning()
-		       && commandThread.isRunning();
-	}
-
-	@Override
-	public boolean close() {
-		Log.i(LOGTAG, "close: called");
-
-		if (receiverThread != null) {
-			stopSampling();
-			receiverThread.shutdown();
-			receiverThread = null;
-		}
-
-		if (commandThread != null) {
-			commandThread.shutdown();
-			commandThread = null;
-		}
-		deviceResponded = false;
-		stub_sent_counter = 0;
-		return true;
-	}
-
-	@Override
-	public String getName() {
-		return NAME + " at " + ipAddress;
-	}
-
-	@Override
-	public HiQSDRSource updatePreferences(Context context, SharedPreferences preferences) {
-		String ip = preferences.getString(context.getString(R.string.pref_hiqsdr_ip), "192.168.2.196");
-		int rxPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_rx_port), "48247"));
-		int cmdPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_command_port), "48248"));
-
-		if (!ipAddress.equals(ip) || this.rxPort != rxPort || this.cmdPort != cmdPort) {
-			this.close();
-			return new HiQSDRSource(context, preferences);
-		}
-
-		config.setFirmwareVersion(Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_firmware), "2")));
-		final long rxFreq = Long.parseLong(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_rx_frequency), "10000000"));
-		config.setRxFrequency(rxFreq);
-		iqConverter.setFrequency(rxFreq);
-		config.tieTxToRx(preferences.getBoolean(context.getString(R.string.pref_hiqsdr_tie_frequencies), true));
-		config.setTxFrequency(Long.parseLong(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_tx_frequency), "10000000")));
-		config.setTxMode(Byte.parseByte(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_tx_mode), Integer.toString( TX_MODE_HW_CONTNIOUS_WAVE))));
-		config.setAntenna(
-				Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_antenna), "0")));
-		final int sampleRate = Integer.parseInt(
-				preferences.getString(context.getString(R.string.pref_hiqsdr_sampleRate)
-						, Integer.toString( MIN_SAMPLE_RATE)));
-		config.setSampleRate(sampleRate);
-		iqConverter.setSampleRate(sampleRate);
-		updateDeviceConfig();
-		return this;
-	}
-
-	@Override
-	public int getSampleRate() {
-		return config.sampleRate;
-	}
-
-	@Override
-	public void setSampleRate(int sampleRate) {
-		try {
-			config.setSampleRate(sampleRate);
-			updateDeviceConfig();
-			iqConverter.setSampleRate(sampleRate);
-			Log.d(LOGTAG, "setSampleRate: sample rate set to " + sampleRate);
-		} catch (IllegalArgumentException iae) {
-			reportError(iae.getMessage());
-		}
-
-	}
-
-	@Override
-	public long getFrequency() {
-		return config.rxTuneFrequency;
-	}
-
-	@Override
-	public void setFrequency(long frequency) {
-		config.setRxFrequency(frequency);
-		iqConverter.setFrequency(frequency);
-		updateDeviceConfig();
-	}
-
-	public void setFirmwareVersion(byte ver) {
-		config.setFirmwareVersion(ver);
-		updateDeviceConfig();
-	}
-
-	public void setTxFrequency(long frequency) {
-		config.setTxFrequency(frequency);
-		updateDeviceConfig();
-	}
-
-	public void tieTXFrequencyToRXFrequency(boolean tie) {
-		config.tieTxToRx(tie);
-		updateDeviceConfig();
-	}
-
-	public void setTxMode(byte mode) {
-		config.setTxMode(mode);
-		updateDeviceConfig();
-	}
-
-	public void setAntenna(byte ant) {
-		config.setAntenna(ant);
-		updateDeviceConfig();
-	}
-
-	@Override
-	public long getMaxFrequency() {
-		return MAX_FREQUENCY;
-	}
-
-	@Override
-	public long getMinFrequency() {
-		return MIN_FREQUENCY;
-	}
-
-	@Override
-	public int getMaxSampleRate() {
-		return MAX_SAMPLE_RATE;
-	}
-
-	@Override
-	public int getMinSampleRate() {
-		return MIN_SAMPLE_RATE;
-	}
-
-	@Override
-	public int getNextHigherOptimalSampleRate(int sampleRate) {
-		// sample rates sorted in descending order, start checking from the end
-		for (int i = SAMPLE_RATES.length - 1; i >= 0; --i)
-			if (SAMPLE_RATES[i] > sampleRate) {
-				Log.d(LOGTAG, "getNextHigherOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[i]);
-				return SAMPLE_RATES[i]; // return first met higher
-			}
-		Log.d(LOGTAG, "getNextHigherOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[0]);
-		return SAMPLE_RATES[0]; // if not found - return first one
-	}
-
-	@Override
-	public int getNextLowerOptimalSampleRate(int sampleRate) {
-		for (int i = 0; i < SAMPLE_RATES.length; ++i)
-			if (SAMPLE_RATES[i] < sampleRate) {
-				Log.d(LOGTAG, "getNextLowerOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[i]);
-				return SAMPLE_RATES[i]; // return first met lower
-			}
-		Log.d(LOGTAG, "getNextLowerOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[SAMPLE_RATES.length - 1]);
-		return SAMPLE_RATES[SAMPLE_RATES.length - 1]; // if not found - return last one
-
-	}
-
-	@Override
-	public int[] getSupportedSampleRates() {
-		return SAMPLE_RATES;
-	}
-
-	@Override
-	public int getPacketSize() {
-		return RX_PACKET_SIZE;
-	}
-
-	protected int updatePacketIndex(byte[] buff) {
-		final int ret = (buff[0] + 256 - 1 - previousPacketIdx) & 0xff; // overflow magic
-		previousPacketIdx = buff[0];
-		return ret;
-	}
-
-	@Override
-	public byte[] getPacket(int timeout) {
-		if (receiverThread.receivedPackets != null) {
-			try {
-				final byte[] packet = receiverThread.receivedPackets.poll(timeout, TimeUnit.MILLISECONDS);
-				if (packet == null) {
-					stub_sent_counter++;
-					//Log.d(LOGTAG, "getPacket: returning stub packet #" + stub_sent_counter
-					//              + " after waiting for " + timeout + " ms.");
-					stub_packet[0] = ++previousPacketIdx;
-					if (stub_sent_counter >= MAX_STUB_SENT) {
-						deviceResponded = false;
-						reportError("Missed too much packets from source. Stopped.");
-						return null;
-					}
-				} else {
-					final int missed_packets = updatePacketIndex(packet);
-					stub_sent_counter = 0;
-					//if (missed_packets != 0)
-					//	Log.v(LOGTAG, "getPacket: missed " + missed_packets + (missed_packets == 1 ? " packet" : " packets"));
-				}
-
-				return packet == null ? stub_packet : packet;
-			} catch (InterruptedException e) {
-				Log.e(LOGTAG, "getPacket: Interrupted while polling packet from queue: " + e.getMessage());
-			}
-		} else {
-			Log.e(LOGTAG, "getPacket: Queue is null");
-		}
-		Log.d(LOGTAG, "getPacket: returning null");
-		return null;
-	}
-
-	private void updateDeviceConfig() {
-		if (isOpen()) {
-			commandThread.send(config.getCmdPacket());
-		}
-	}
-
-	@Override
-	public void returnPacket(byte[] buffer) {
-		if (buffer == stub_packet) {
-			//Log.v(LOGTAG, "returnPacket: called for stub packet.");
-			return;
-		}
-		if (receiverThread.receivePacketsPool != null) {
-			receiverThread.receivePacketsPool.offer(buffer);
-		} else {
-			Log.e(LOGTAG, "returnPacket: Return queue is null");
-		}
-	}
-
-	@Override
-	public void startSampling() {
-		stub_sent_counter = 0;
-		if (receiverThread != null && receiverThread.isRunning()) {
-			//Log.i(LOGTAG, "startSampling: sending receive request");
-			// try few times in case packet got lost
-			for (int i = 0; i < 3; ++i) {
-				receiverThread.send(START_RECEIVING_CMD);
-			}
-		} else Log.w(LOGTAG, "startSampling: receiverThread is null or not working.");
-	}
-
-
-	@Override
-	public void stopSampling() {
-		stub_sent_counter = 0;
-		if (receiverThread != null && receiverThread.isRunning()) {
-			//Log.i(LOGTAG, "stopSampling: sending stop receiving request");
-			// try few times in case packet got lost
-			for (int i = 0; i < 3; ++i) {
-				receiverThread.send(STOP_RECEIVING_CMD);
-			}
-		} else Log.w(LOGTAG, "stopSampling: receiver thread is null or not working.");
-	}
-
-	@Override
-	public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
-		return this.iqConverter.fillPacketIntoSamplePacket(packet, samplePacket);
-	}
-
-	@Override
-	public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-		return this.iqConverter.mixPacketIntoSamplePacket(packet, samplePacket, channelFrequency);
-	}
-
-	/**
-	 * Will forward an error message to the callback object
-	 *
-	 * @param msg error message
-	 */
-	protected void reportError(String msg) {
-		if (callback != null)
-			callback.onIQSourceError(this, msg);
-		else
-			Log.e(LOGTAG, "reportError: Callback is null. (Error: " + msg + ")");
-	}
-
-	protected void reportReady() {
-		if (callback != null)
-			callback.onIQSourceReady(this);
-		else
-			Log.e(LOGTAG, "reportReady: Callback is null.");
-	}
-
-	public static long frequencyToTunePhase(long frequency) {
-		return (long) (((frequency / (float) CLOCK_RATE) * (1L << 32)) + 0.5);
-	}
-
-	private class SourceOpener extends AsyncTask<Void, Void, Void> {
-		private String resultMsg = "Success";
-
-		@Override
-		protected Void doInBackground(Void... params) {
-			deviceResponded = false;
-			// resolve host
-			try {
-				Log.i(LOGTAG, "Host: " + ipAddress);
-				InetAddress[] addrs = InetAddress.getAllByName(ipAddress);
-				// find first reachable address
-				for (InetAddress addr : addrs) {
-					//Log.i(LOGTAG, "Trying address " + addr.toString());
-					//if (addr.isReachable(5000)) { // don't use this, it won't work. I love Android too (not really).
-					Log.i(LOGTAG, "Selected address " + addr.toString());
-					remoteAddr = addr;
-					//	break;
-					//}
-				}
-				if (remoteAddr == null) {
-					resultMsg = "Could not resolve address";
-				} else {
-					commandThread = new UDPSessionThread(remoteAddr, cmdPort, CMD_PACKET_SIZE);
-					receiverThread = new UDPSessionThread(remoteAddr, rxPort, RX_PACKET_SIZE);
-				}
-			} catch (IOException ioe) {
-				resultMsg = ioe.getMessage();
-				return null;
-			}
-			// open
-			if (commandThread == null || receiverThread == null) {
-				resultMsg = "Communication threads are not created";
-				return null;
-			} else {
-				if (!commandThread.connect()) {
-					resultMsg = "Cannot connect to command channel";
-					return null;
-				}
-				if (!receiverThread.connect()) {
-					resultMsg = "Cannot connect to receiver channel";
-					return null;
-				}
-				config.fillCtrlPacket();
-				commandThread.send(config.cmdPacket);
-				try {
-					if (null != commandThread.receivedPackets.poll(5000, TimeUnit.MILLISECONDS)) // 5 seconds more than enough
-						deviceResponded = true;
-				} catch (InterruptedException e) {
-					resultMsg = "Timeout for devices response";
-					e.printStackTrace();
-				}
-
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void aVoid) {
-			if (deviceResponded) {
-				reportReady();
-			} else reportError("Could not open HiQSDR source: " + resultMsg);
-			super.onPostExecute(aVoid);
-		}
-	}
-
-	protected class Config {
-		byte[] cmdPacket = new byte[22];
-		private byte[] ctrlCmdBuf = new byte[22];
-		private volatile boolean needToFillPacket = true;
-
-		int txPowerLevel;
-		byte txControl;
-		byte rxControl;
-		byte firmwareVersion;
-		byte preselector;
-		byte attenuator;
-		byte antenna;
-		long rxTunePhase;
-		long txTunePhase;
-
-		int sampleRate;
-		long txTuneFrequency;
-		long rxTuneFrequency;
-
-		boolean tieTX2RXFreq = true;
-
-		public Config() {
-			this((byte) 0x02);
-		}
-
-		public Config(byte fwVersion) {
-			firmwareVersion = fwVersion;
-		}
-
-		public void setTxMode(byte mode) {
-			switch (mode) {
-				case TX_MODE_EXTENDED_IO:
-				case TX_MODE_HW_CONTNIOUS_WAVE:
-					if (firmwareVersion == 0)
-						throw new UnsupportedOperationException("Specified mode is not supported by HiQSDR firmware v1.0");
-				case TX_MODE_KEYED_CONTINIOUS_WAVE:
-				case TX_MODE_RECEIVED_PTT:
-					txControl = mode;
-					break;
-				default: throw new IllegalArgumentException("Unknown TX mode " + mode + '.');
-			}
-			needToFillPacket = true;
-		}
-
-		public void setTxPowerLevel(int powerLevel) {
-			if (powerLevel > 255 || powerLevel < 0)
-				throw new IllegalArgumentException("TxPowerLevel must be in range 0-255.");
-			txPowerLevel = powerLevel;
-			needToFillPacket = true;
-		}
-
-		public void setAntenna(byte ant) {
-			if (firmwareVersion == 0)
-				throw new UnsupportedOperationException("Antenna selection is not supported by HiQSDR fw v1.0");
-			antenna = ant;
-			needToFillPacket = true;
-		}
-
-		public void setFirmwareVersion(byte fwv) {
-			if (fwv > 2 || fwv < 0)
-				throw new IllegalArgumentException("Supported fw versions: 0, 1, 2");
-			firmwareVersion = fwv;
-			needToFillPacket = true;
-		}
-
-		public void setRxFrequency(long frequency) {
-			rxTuneFrequency = frequency;
-			rxTunePhase = frequencyToTunePhase(frequency);
-			needToFillPacket = true;
-		}
-
-		public void setTxFrequency(long frequency) {
-			txTuneFrequency = frequency;
-			txTunePhase = frequencyToTunePhase(frequency);
-			needToFillPacket = true;
-		}
-
-		public void tieTxToRx(boolean tie) {
-			tieTX2RXFreq = tie;
-			needToFillPacket = true;
-		}
-
-		public void setSampleRate(int sampleRate) throws IllegalArgumentException {
-			// lazy
-			if (this.sampleRate == sampleRate)
-				return;
-
-			if (sampleRate <= 0)
-				throw new IllegalArgumentException("Sample rate must be positive number and one of supported values.");
-			byte code = -1;
-			for (int i = 0; i < SAMPLE_RATES.length; ++i) {
-				if (SAMPLE_RATES[i] == sampleRate) {
-					code = SAMPLE_RATE_CODES[i];
-					break;
-				}
-			}
-			if (code < 0)
-				throw new IllegalArgumentException("Specified sample rate (" + sampleRate + " is not supported");
-			this.sampleRate = sampleRate;
-			rxControl = code;
-			needToFillPacket = true;
-		}
-
-		protected synchronized void fillCtrlPacket() {
-			if (needToFillPacket) {
-				ctrlCmdBuf[0] = 'S';
-				ctrlCmdBuf[1] = 't';
-				ctrlCmdBuf[2] = (byte) (rxTunePhase & 0xff);
-				ctrlCmdBuf[3] = (byte) (rxTunePhase >> 8 & 0xff);
-				ctrlCmdBuf[4] = (byte) (rxTunePhase >> 16 & 0xff);
-				ctrlCmdBuf[5] = (byte) (rxTunePhase >> 24 & 0xff);
-				if (tieTX2RXFreq) {
-					ctrlCmdBuf[6] = ctrlCmdBuf[2];
-					ctrlCmdBuf[7] = ctrlCmdBuf[3];
-					ctrlCmdBuf[8] = ctrlCmdBuf[4];
-					ctrlCmdBuf[9] = ctrlCmdBuf[5];
-				} else {
-					ctrlCmdBuf[6] = (byte) (txTunePhase & 0xff);
-					ctrlCmdBuf[7] = (byte) (txTunePhase >> 8 & 0xff);
-					ctrlCmdBuf[8] = (byte) (txTunePhase >> 16 & 0xff);
-					ctrlCmdBuf[9] = (byte) (txTunePhase >> 24 & 0xff);
-				}
-				ctrlCmdBuf[10] = (byte) (txPowerLevel & 0xff);
-				ctrlCmdBuf[11] = txControl;
-				ctrlCmdBuf[12] = rxControl;
-				ctrlCmdBuf[13] = firmwareVersion;
-				if (firmwareVersion < 1) {
-					ctrlCmdBuf[14] = 0;
-					ctrlCmdBuf[15] = 0;
-					ctrlCmdBuf[16] = 0;
-				} else {
-					ctrlCmdBuf[14] = preselector;
-					ctrlCmdBuf[15] = attenuator;
-					ctrlCmdBuf[16] = antenna;
-				}
-				ctrlCmdBuf[17] = 0;
-				ctrlCmdBuf[18] = 0;
-				ctrlCmdBuf[19] = 0;
-				ctrlCmdBuf[20] = 0;
-				ctrlCmdBuf[21] = 0;
-				final byte[] tmp = cmdPacket;
-				cmdPacket = ctrlCmdBuf;
-				ctrlCmdBuf = tmp;
-				needToFillPacket = false;
-			}
-		}
-
-		public byte[] getCmdPacket() {
-			fillCtrlPacket();
-			return cmdPacket;
-		}
-	}
-
-	protected class UDPSessionThread extends Thread {
-		final String threadName;
-		final int remotePort;
-		final InetSocketAddress socketAddr;
-		volatile boolean continueWork;
-		DatagramSocket socket;
-		ArrayBlockingQueue<DatagramPacket> packetsToSend;
-		ArrayBlockingQueue<byte[]> receivedPackets;
-		ArrayBlockingQueue<byte[]> receivePacketsPool;
-
-		final int PACKETS_SEND_POOL_SIZE = 16;
-		final int PACKETS_RECV_POOL_SIZE = 100;
-		//private final int MAX_SEND_BUFFER_SIZE = 22;
-		final int MAX_RECV_BUFFER_SIZE;
-		final int SOCK_RECV_TIMEOUT = (1000 / PACKETS_RECV_POOL_SIZE) + 1; //+1 in case something changes and we get 0
-
-		public UDPSessionThread(InetAddress addr, int port, int recvBuffSize) {
-			super("HiQSDR UDPSessionThread (" + addr.getCanonicalHostName() + ':' + port + ')');
-			threadName = "HiQSDR UDPSessionThread (" + addr.getCanonicalHostName() + ':' + port + ')';
-			remoteAddr = addr;
-			this.remotePort = port;
-			//Log.i("UDPSessionThread", "Addr: "+addr.getCanonicalHostName()+", port: "+port);
-			socketAddr = new InetSocketAddress(remoteAddr, remotePort);
-			//Log.i("UDPSessionThread", "socketAddr="+socketAddr.toString());
-			MAX_RECV_BUFFER_SIZE = recvBuffSize;
-			packetsToSend = new ArrayBlockingQueue<>(PACKETS_SEND_POOL_SIZE);
-			receivedPackets = new ArrayBlockingQueue<>(PACKETS_RECV_POOL_SIZE);
-			receivePacketsPool = new ArrayBlockingQueue<>(PACKETS_RECV_POOL_SIZE);
-			for (int i = 0; i < PACKETS_RECV_POOL_SIZE; ++i) {
-				receivePacketsPool.offer(new byte[RX_PACKET_SIZE]);
-			}
-		}
-
-		public boolean isRunning() {
-			return continueWork;
-		}
-
-		public void shutdown() {
-			continueWork = false;
-		}
-
-		public void send(byte[] buffer) {
-			if (!continueWork) {
-				Log.w(LOGTAG, "send: Won't send packet -- session is shutting down or hasn't started yet.");
-			}
-			if (socket == null) {
-				Log.w(LOGTAG, "send: Won't send packet -- socket is null(probably not connected)");
-				return;
-			}
-			try {
-				DatagramPacket packet = new DatagramPacket(buffer, buffer.length, socketAddr);
-				if (!packetsToSend.offer(packet)) {
-					Log.w(LOGTAG, "send: Offering packet to send queue rejected, try again.");
-				}// else Log.i(LOGTAG, "send: packet successfully put into send queue");
-			} catch (SocketException se) {
-				reportError(se.getMessage());
-			}
-		}
-
-		boolean connect() {
-			if (continueWork) {
-				Log.e(LOGTAG, "connect: Still connected");
-				return false;
-			}
-			try {
-				socket = new DatagramSocket();
-				socket.setReceiveBufferSize(MAX_RECV_BUFFER_SIZE);
-				socket.setSoTimeout(SOCK_RECV_TIMEOUT);
-				socket.connect(socketAddr);
-				continueWork = true;
-				super.start();
-				return true;
-			} catch (SocketException se) {
-				se.printStackTrace();
-				reportError(se.getMessage());
-			}
-			Log.e(LOGTAG, "Not connected.");
-			return false;
-		}
-
-		@Override
-		public void run() {
-			DatagramPacket sendPacket;
-			DatagramPacket recvPacket;
-			while (continueWork || packetsToSend.peek() != null) {
-				// send all packets
-				while (null != (sendPacket = packetsToSend.poll())) {
-					try {/*
-						Log.i(LOGTAG, "Sending packet to "
-						              + sendPacket.getAddress().getCanonicalHostName()
-						              + ':' + sendPacket.getPort());
-						              */
-						socket.send(sendPacket);
-					} catch (IOException ioe) {
-						ioe.printStackTrace();
-						reportError(ioe.getMessage());
-					}
-				}
-
-				byte[] recvBuff = receivePacketsPool.poll();
-				if (recvBuff == null) {
-					recvBuff = new byte[MAX_RECV_BUFFER_SIZE];
-					//Log.w(LOGTAG, "run: receivePacketsPool underflow!");
-				}
-				try {
-					recvPacket = new DatagramPacket(recvBuff, MAX_RECV_BUFFER_SIZE, socketAddr);
-					try {
-						socket.receive(recvPacket);
-						receivedPackets.offer(recvPacket.getData());
-					} catch (SocketTimeoutException ste) {
-						// nothing to receive, return packet back to the pool
-						receivePacketsPool.offer(recvBuff);
-					} catch (IOException e) {
-						e.printStackTrace();
-						reportError(e.getMessage());
-					}
-				} catch (SocketException e) {
-					e.printStackTrace();
-					reportError(e.getMessage());
-				}
-			}
-			socket.close();
-			packetsToSend.clear(); // just precaution, should be empty at this point
-			socket = null;
-		}
-	}
+public class HiQSDRSource implements IQSourceInterface, Runnable {
+    private static final String LOGTAG = "HiQSDRSource";
+    private static final String NAME = "HiQSDRSource";
+
+    protected static final int CLOCK_RATE = 122880000;
+    protected static final int UDP_CLK_RATE = CLOCK_RATE / 64; // actually 64 is prescaler*8, and default prescaler is 8, TBD.
+
+    protected static int MIN_SAMPLE_RATE = 48000;
+    protected static int MAX_SAMPLE_RATE = 960000;
+    protected static int[] SAMPLE_RATES = {
+            960000,  // decimation 2
+            640000,  // d3
+            480000,  // d4
+            384000,  // d5
+            320000,  // d6
+            240000,  // d8
+            192000,  // d10
+            120000,  // d16
+            96000,   // d20
+            60000,   // d32
+            48000    // d40
+    };
+    protected static byte[] SAMPLE_RATE_CODES = {1, 2, 3, 4, 5, 7, 9, 15, 19, 31, 39}; // decimation-1
+
+    // TODO: determine exact frequency limits
+    protected static final int MIN_FREQUENCY = 100000; // 100 kHz
+    protected static final int MAX_FREQUENCY = CLOCK_RATE / 2; // (?)61 MHz, but there is info, that 66 MHz
+
+    protected static final int RX_PACKET_SIZE = 1442;
+    protected static final int RX_PAYLOAD_OFFSET = 2;
+    protected static final int RX_PAYLOAD_SIZE = 1440;
+    protected static final int CFG_PACKET_SIZE = 22;
+    protected static final int CMD_PACKET_SIZE = 2;
+    //---------------------------------------
+    // todo: check names and actual modes
+    public static final byte TX_MODE_INVALID = 0x0;
+    public static final byte TX_MODE_KEYED_CONTINIOUS_WAVE = 0x1;
+    public static final byte TX_MODE_RECEIVED_PTT = 0x2;
+    public static final byte TX_MODE_EXTENDED_IO = 0x4;
+    public static final byte TX_MODE_HW_CONTNIOUS_WAVE = 0x8;
+    // FSM
+    private volatile int state;
+    private static final int STATE_EXIT = -1;
+    private static final int STATE_IDLE = 0;
+    private static final int STATE_UPDATE_CFG = 1;
+    private static final int STATE_START_RECEIVING = 2;
+    private static final int STATE_RECEIVING = 3;
+    private static final int STATE_STOP_RECEIVING = 4;
+    private static final int STATE_CLOSE = 5;
+    // commands
+    protected final static ByteBuffer START_RECEIVING_CMD = ByteBuffer.allocateDirect(2).put(new byte[]{'r', 'r'}).asReadOnlyBuffer();
+    protected final static ByteBuffer STOP_RECEIVING_CMD = ByteBuffer.allocateDirect(2).put(new byte[]{'s', 's'}).asReadOnlyBuffer();
+
+    //---------------------------------------
+    protected Config config;
+    protected String ipAddress;
+    protected int cmdPort;
+    protected int rxPort;
+    protected int txPort;
+
+    protected Object lock = new Object();
+    protected Callback callback;
+    protected Context context;
+    protected IQConverter iqConverter;
+    protected Thread workerThread;
+    protected InetAddress remoteAddr;
+
+    protected InetSocketAddress cfgAddr;
+    protected DatagramChannel configChannel;
+    protected Selector configSelector;
+
+    protected InetSocketAddress rxAddr;
+    protected Selector receiverSelector;
+    protected DatagramChannel receiverChannel;
+
+    private volatile boolean deviceResponded = false;
+    private volatile boolean receiving = false;
+    private volatile boolean closing = false;
+    protected volatile byte previousPacketIdx = 0;
+
+    protected static final int INTERMEDIATE_BUFFER_SCALE = 10; // 12+ will fragment buffer,
+    protected static final int INTERMEDIATE_BUFFER_SIZE = RX_PAYLOAD_SIZE * INTERMEDIATE_BUFFER_SCALE;
+    protected static final int INTERMEDIATE_POOL_SIZE = 256;
+
+    protected ArrayBlockingQueue<ByteBuffer> intermediateBufferQueue = new ArrayBlockingQueue<>(INTERMEDIATE_POOL_SIZE);
+    protected ArrayBlockingQueue<ByteBuffer> intermediateBufferBusyQueue = new ArrayBlockingQueue<>(INTERMEDIATE_POOL_SIZE);
+    protected ArrayBlockingQueue<ByteBuffer> intermediateBufferPool = new ArrayBlockingQueue<>(INTERMEDIATE_POOL_SIZE);
+    protected ByteBuffer intermediateBuffer;
+    protected byte[] stubBuffer;
+    protected ByteBuffer headerBuffer = ByteBuffer.allocateDirect(RX_PAYLOAD_OFFSET);
+    protected final ByteBuffer[] scatteringBuffer = {headerBuffer, intermediateBuffer};
+    protected HashMap<byte[], ByteBuffer> arrayToBufferMap = new HashMap<>(INTERMEDIATE_POOL_SIZE);
+    protected HashMap<ByteBuffer, byte[]> bufferToArrayMap = new HashMap<>(INTERMEDIATE_POOL_SIZE);
+    private volatile long missedPacketsCtr;
+    private volatile long packetsCtr;
+
+
+    protected HiQSDRSource() {
+        config = new Config();
+        this.iqConverter = new Signed24BitIQConverter();
+        stubBuffer = new byte[INTERMEDIATE_BUFFER_SIZE];
+        for (int i = 0; i < INTERMEDIATE_POOL_SIZE; ++i) {
+            ByteBuffer bb = ByteBuffer.allocateDirect(INTERMEDIATE_BUFFER_SIZE);
+            if (bb.hasArray()) {
+                arrayToBufferMap.put(bb.array(), bb);
+                bufferToArrayMap.put(bb, bb.array());
+            } else {
+                byte[] arr = new byte[INTERMEDIATE_POOL_SIZE];
+                arrayToBufferMap.put(arr, bb);
+                bufferToArrayMap.put(bb, arr);
+            }
+            if (!intermediateBufferPool.offer(bb))
+                Log.e(LOGTAG, "constructor: can not add intermediate buffer to the pool.");
+        }
+    }
+
+
+    public HiQSDRSource(String host, int cmdPort, int rxPort, int txPort) {
+        this();
+        this.ipAddress = host;
+        this.cmdPort = cmdPort;
+        this.rxPort = rxPort;
+        this.txPort = txPort;
+    }
+
+    public HiQSDRSource(Context context, SharedPreferences preferences) {
+        this();
+        this.iqConverter = new Signed24BitIQConverter();
+        this.ipAddress = preferences.getString(context.getString(R.string.pref_hiqsdr_ip), "192.168.2.196");
+        this.cmdPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_command_port), "48248"));
+        this.rxPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_rx_port), "48247"));
+        this.txPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_tx_port), "48249"));
+
+        config = new Config(
+                Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_firmware), "2")));
+        setFrequency(Long.parseLong(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_rx_frequency), "10000000")));
+        tieTXFrequencyToRXFrequency(
+                preferences.getBoolean(context.getString(R.string.pref_hiqsdr_tie_frequencies), true));
+        setTxFrequency(Long.parseLong(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_tx_frequency), "10000000")));
+        setTxMode(Byte.parseByte(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_tx_mode), Byte.toString(TX_MODE_HW_CONTNIOUS_WAVE))));
+        setAntenna(
+                Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_antenna), "0")));
+        setSampleRate(Integer.parseInt(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_sampleRate)
+                        , Integer.toString(MIN_SAMPLE_RATE))));
+    }
+
+    @Override
+    public boolean open(Context context, Callback callback) {
+        Log.i(LOGTAG, "open: called");
+        this.context = context;
+        this.callback = callback;
+        workerThread = new Thread(this, NAME);
+        // receiver thread is the most performance-dependant part, use high priority
+        workerThread.setPriority(Thread.MAX_PRIORITY);
+        workerThread.start();
+        return true;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return deviceResponded;
+    }
+
+    protected void changeState(int state) {
+        this.state = state;
+        if (receiverSelector != null) receiverSelector.wakeup();
+        if (configSelector != null) configSelector.wakeup();
+    }
+
+    @Override
+    public boolean close() {
+        Log.i(LOGTAG, "close: called");
+        changeState(STATE_CLOSE);
+        return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME + " at " + ipAddress;
+    }
+
+    @Override
+    public HiQSDRSource updatePreferences(Context context, SharedPreferences preferences) {
+        String ip = preferences.getString(context.getString(R.string.pref_hiqsdr_ip), "192.168.2.196");
+        int rxPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_rx_port), "48247"));
+        int cmdPort = Integer.parseInt(preferences.getString(context.getString(R.string.pref_hiqsdr_command_port), "48248"));
+
+        if (!ipAddress.equals(ip) || this.rxPort != rxPort || this.cmdPort != cmdPort) {
+            this.close();
+            return new HiQSDRSource(context, preferences);
+        }
+
+        config.setFirmwareVersion(Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_firmware), "2")));
+        final long rxFreq = Long.parseLong(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_rx_frequency), "10000000"));
+        config.setRxFrequency(rxFreq);
+        iqConverter.setFrequency(rxFreq);
+        config.tieTxToRx(preferences.getBoolean(context.getString(R.string.pref_hiqsdr_tie_frequencies), true));
+        config.setTxFrequency(Long.parseLong(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_tx_frequency), "10000000")));
+        config.setTxMode(Byte.parseByte(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_tx_mode), Integer.toString(TX_MODE_HW_CONTNIOUS_WAVE))));
+        config.setAntenna(
+                Byte.parseByte(preferences.getString(context.getString(R.string.pref_hiqsdr_antenna), "0")));
+        final int sampleRate = Integer.parseInt(
+                preferences.getString(context.getString(R.string.pref_hiqsdr_sampleRate)
+                        , Integer.toString(MIN_SAMPLE_RATE)));
+        config.setSampleRate(sampleRate);
+        iqConverter.setSampleRate(sampleRate);
+        updateDeviceConfig();
+        return this;
+    }
+
+    @Override
+    public int getSampleRate() {
+        return config.sampleRate;
+    }
+
+    @Override
+    public void setSampleRate(int sampleRate) {
+        try {
+            config.setSampleRate(sampleRate);
+            updateDeviceConfig();
+            iqConverter.setSampleRate(sampleRate);
+            Log.d(LOGTAG, "setSampleRate: sample rate set to " + sampleRate);
+        } catch (IllegalArgumentException iae) {
+            reportError(iae.getMessage());
+        }
+
+    }
+
+    @Override
+    public long getFrequency() {
+        return config.rxTuneFrequency;
+    }
+
+    @Override
+    public void setFrequency(long frequency) {
+        config.setRxFrequency(frequency);
+        iqConverter.setFrequency(frequency);
+        updateDeviceConfig();
+    }
+
+    public void setFirmwareVersion(byte ver) {
+        config.setFirmwareVersion(ver);
+        updateDeviceConfig();
+    }
+
+    public void setTxFrequency(long frequency) {
+        config.setTxFrequency(frequency);
+        updateDeviceConfig();
+    }
+
+    public void tieTXFrequencyToRXFrequency(boolean tie) {
+        config.tieTxToRx(tie);
+        updateDeviceConfig();
+    }
+
+    public void setTxMode(byte mode) {
+        config.setTxMode(mode);
+        updateDeviceConfig();
+    }
+
+    public void setAntenna(byte ant) {
+        config.setAntenna(ant);
+        updateDeviceConfig();
+    }
+
+    @Override
+    public long getMaxFrequency() {
+        return MAX_FREQUENCY;
+    }
+
+    @Override
+    public long getMinFrequency() {
+        return MIN_FREQUENCY;
+    }
+
+    @Override
+    public int getMaxSampleRate() {
+        return MAX_SAMPLE_RATE;
+    }
+
+    @Override
+    public int getMinSampleRate() {
+        return MIN_SAMPLE_RATE;
+    }
+
+    @Override
+    public int getNextHigherOptimalSampleRate(int sampleRate) {
+        // sample rates sorted in descending order, start checking from the end
+        for (int i = SAMPLE_RATES.length - 1; i >= 0; --i)
+            if (SAMPLE_RATES[i] > sampleRate) {
+                Log.d(LOGTAG, "getNextHigherOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[i]);
+                return SAMPLE_RATES[i]; // return first met higher
+            }
+        Log.d(LOGTAG, "getNextHigherOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[0]);
+        return SAMPLE_RATES[0]; // if not found - return first one
+    }
+
+    @Override
+    public int getNextLowerOptimalSampleRate(int sampleRate) {
+        for (int i = 0; i < SAMPLE_RATES.length; ++i)
+            if (SAMPLE_RATES[i] < sampleRate) {
+                Log.d(LOGTAG, "getNextLowerOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[i]);
+                return SAMPLE_RATES[i]; // return first met lower
+            }
+        Log.d(LOGTAG, "getNextLowerOptimalSampleRate: " + sampleRate + "->" + SAMPLE_RATES[SAMPLE_RATES.length - 1]);
+        return SAMPLE_RATES[SAMPLE_RATES.length - 1]; // if not found - return last one
+
+    }
+
+    @Override
+    public int[] getSupportedSampleRates() {
+        return SAMPLE_RATES;
+    }
+
+    @Override
+    public int getSampledPacketSize() {
+        return INTERMEDIATE_BUFFER_SIZE / 3 / 2; //% 3 bytes per sample, samples I and Q, making 2
+    }
+
+    protected int updatePacketIndex(byte index) {
+        final int ret = (index + 256 - 1 - previousPacketIdx) & 0xff; // overflow magic
+        previousPacketIdx = index;
+        return ret;
+    }
+
+    @Override
+    public byte[] getPacket(int timeout) {
+        try {
+            ByteBuffer buf = intermediateBufferQueue.poll(timeout, TimeUnit.MILLISECONDS);
+            if (buf == null) {
+                stubBuffer[0] = ++previousPacketIdx;
+                return stubBuffer;
+            }
+            intermediateBufferBusyQueue.offer(buf);
+            if (buf.hasArray())
+                return buf.array();
+            else {
+                byte[] arr = bufferToArrayMap.get(buf);
+                if (arr == null) {
+                    arr = new byte[INTERMEDIATE_BUFFER_SIZE];
+                    bufferToArrayMap.put(buf, arr);
+                    arrayToBufferMap.put(arr, buf);
+                }
+                buf.get(arr);
+                return arr;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null; // todo: fixme
+    }
+
+    private void updateDeviceConfig() {
+        if (!deviceResponded) return;
+        if (configChannel != null && configChannel.isConnected()) {
+            changeState(STATE_UPDATE_CFG);
+        } else reportError("updateDeviceConfig: Configuration channel is not opened.");
+    }
+
+    @Override
+    public void returnPacket(byte[] buffer) {
+        if (buffer == stubBuffer) return;
+        if (intermediateBufferPool != null) {
+            ByteBuffer buff = arrayToBufferMap.get(buffer);
+            if (buff == null)
+                for (ByteBuffer bb : intermediateBufferBusyQueue) {
+                    if (bb.hasArray() && bb.array() == buffer) {
+                        buff = bb;
+                        intermediateBufferBusyQueue.remove(bb);
+                        break;
+                    }
+                }
+            if (buff == null) Log.e(LOGTAG, "returnPacket: somehow we lost buffer tied to this array");
+            else intermediateBufferPool.offer(buff);
+        } else {
+            Log.e(LOGTAG, "returnPacket: Return queue is null");
+        }
+    }
+
+    @Override
+    public void startSampling() {
+        if (!deviceResponded) {
+            Log.d(LOGTAG, "startSampling: called from invalid state: " + state);
+            reportError("startSampling: called before opened.");
+            return;
+        }
+        if (receiverChannel != null && receiverChannel.isConnected()) {
+            changeState(STATE_START_RECEIVING);
+        } else reportError("startSampling: Receiver channel is not opened.");
+    }
+
+
+    @Override
+    public void stopSampling() {
+        if (receiverChannel != null && receiverChannel.isConnected()) {
+            changeState(STATE_STOP_RECEIVING);
+        } else Log.w(LOGTAG, "stopSampling: receiver channel is not opened.");
+    }
+
+    @Deprecated
+    @Override
+    public int fillPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket) {
+        return this.iqConverter.fillPacketIntoSamplePacket(packet, samplePacket, RX_PAYLOAD_OFFSET);
+    }
+
+    @Deprecated
+    @Override
+    public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
+        return this.iqConverter.mixPacketIntoSamplePacket(packet, samplePacket, RX_PAYLOAD_OFFSET, channelFrequency);
+    }
+
+    /**
+     * Will forward an error message to the callback object
+     *
+     * @param msg error message
+     */
+    protected void reportError(String msg) {
+        if (callback != null)
+            callback.onIQSourceError(this, msg);
+        else
+            Log.e(LOGTAG, "reportError: Callback is null. (Error: " + msg + ")");
+    }
+
+    protected void reportReady() {
+        if (callback != null)
+            callback.onIQSourceReady(this);
+        else
+            Log.e(LOGTAG, "reportReady: Callback is null.");
+    }
+
+    public static long frequencyToTunePhase(long frequency) {
+        return (long) (((frequency / (double) CLOCK_RATE) * (1L << 32)) + 0.5);
+    }
+
+    public static long tunePhaseToFrequency(long phase) {
+        return (long) ((phase - 0.5) * CLOCK_RATE / (1L << 32));
+    }
+
+    public static int rxControlToSampleRate(byte rxCtrl) {
+        return UDP_CLK_RATE / (rxCtrl + 1);
+    }
+
+
+    @Override
+    public void run() {
+        // resolve host
+        try {
+            Log.i(LOGTAG, "Host: " + ipAddress);
+            InetAddress[] addrs = InetAddress.getAllByName(ipAddress);
+            // find first reachable address
+            for (InetAddress addr : addrs) {
+                //Log.i(LOGTAG, "Trying address " + addr.toString());
+                //if (addr.isReachable(5000)) { // don't use this, it won't work. I love Android too (not really).
+                Log.i(LOGTAG, "Selected address " + addr.toString());
+                remoteAddr = addr;
+                //	break;
+                //}
+            }
+        } catch (IOException ioe) {
+            reportError(ioe.getMessage());
+        }
+        // init channels
+        try {
+            if (remoteAddr == null) {
+                reportError("Could not resolve address");
+            } else {
+                Log.i(LOGTAG, "Creating command channel...");
+                configChannel = DatagramChannel.open();
+                configSelector = Selector.open();
+                Log.i(LOGTAG, "Creating receiver channel...");
+                receiverChannel = DatagramChannel.open();
+                receiverSelector = Selector.open();
+            }
+        } catch (IOException ioe) {
+            reportError(ioe.getMessage());
+        }
+        if (configChannel == null || receiverChannel == null) {
+            reportError("Communication channels are not created");
+            return;
+        }
+
+        Log.i(LOGTAG, "Connecting command channel...");
+        cfgAddr = new InetSocketAddress(remoteAddr, cmdPort);
+        try {
+            configChannel.socket().setSendBufferSize(CFG_PACKET_SIZE * 2);
+            configChannel.socket().setReceiveBufferSize(CFG_PACKET_SIZE * 2);
+            configChannel.configureBlocking(false);
+            configChannel.register(configSelector, SelectionKey.OP_READ);
+            configChannel.connect(cfgAddr);
+        } catch (IOException e) {
+            reportError("Cannot connect to command channel");
+            e.printStackTrace();
+            return;
+        }
+
+        Log.i(LOGTAG, "Connecting receiver channel...");
+        rxAddr = new InetSocketAddress(remoteAddr, rxPort);
+        try {
+            receiverChannel.socket().setSendBufferSize(CMD_PACKET_SIZE * 2);
+            int rxBufSz = RX_PACKET_SIZE * INTERMEDIATE_BUFFER_SCALE * INTERMEDIATE_POOL_SIZE / 2;
+            Log.d(LOGTAG, "Trying to set socket receive buffer size to " + rxBufSz);
+            receiverChannel.socket().setReceiveBufferSize(rxBufSz);
+            Log.d(LOGTAG, "socket receive buffer size set to " + receiverChannel.socket().getReceiveBufferSize());
+
+            receiverChannel.configureBlocking(false);
+            receiverChannel.register(receiverSelector, SelectionKey.OP_READ);
+            receiverChannel.connect(rxAddr);
+        } catch (IOException e) {
+            reportError("Cannot connect to receiver channel");
+            e.printStackTrace();
+            return;
+        }
+
+        state = STATE_UPDATE_CFG;
+        while (true) {
+            switch (state) {
+                case STATE_IDLE: {
+                    //Log.v(LOGTAG, "state: IDLE");
+                    SystemClock.sleep(16);
+                    break;
+                }
+                case STATE_START_RECEIVING: {
+                    Log.v(LOGTAG, "state: START_RECEIVING");
+                    try {
+                        if (receiverChannel != null && receiverChannel.isConnected()) {
+                            START_RECEIVING_CMD.flip();
+                            receiverChannel.write(START_RECEIVING_CMD);
+                            receiving = true;
+                            state = STATE_RECEIVING;
+                        } else reportError("Receiver channel is not opened");
+                    } catch (IOException e) {
+                        reportError(e.getMessage());
+                        e.printStackTrace();
+                    }
+                    break;
+                }
+                case STATE_RECEIVING: {
+                    //Log.v(LOGTAG, "state: RECEIVING");
+                    if (intermediateBuffer == null) {
+                        Log.v(LOGTAG, "STATE_RECEIVING: pooling new intermediate buffer.");
+                        intermediateBuffer = intermediateBufferPool.poll();
+                        intermediateBuffer.clear();
+                        scatteringBuffer[1] = intermediateBuffer;
+                    }
+                    headerBuffer.clear();
+                    try {
+                        //Log.v(LOGTAG, "STATE_RECEIVING: waiting for data to arrive.");
+                        if (receiverSelector.select() > 0) { // if there are data to read from
+                            receiverSelector.selectedKeys().clear();
+                            //Log.v(LOGTAG, "STATE_RECEIVING: something arrived");
+                            intermediateBuffer.mark(); // put a pillow in case something goes wrong
+                            long read = receiverChannel.read(scatteringBuffer); // reads header to headerBuffer and payload to intermediateBuffer
+                            //Log.v(LOGTAG, "STATE_RECEIVING: read "+read+" bytes from receiving channel");
+                            headerBuffer.flip();
+                            missedPacketsCtr += updatePacketIndex(headerBuffer.get());
+                            packetsCtr++;
+                            if (!intermediateBuffer.hasRemaining()) {
+                                intermediateBuffer.flip(); // prepare for reading data from it
+                                if (!intermediateBufferQueue.offer(intermediateBuffer)) {
+                                    // return back to pool
+                                    Log.w(LOGTAG, "Intermediate buffer queue overflow! Returning buffer back to pool.");
+                                    if (!intermediateBufferPool.offer(intermediateBuffer)) {
+                                        Log.w(LOGTAG, "Intermediate buffer pool overflow! Rewinding buffer and keeping for the next round.");
+                                        intermediateBuffer.rewind();
+                                    }
+                                    intermediateBuffer = null;
+                                }
+                            }
+                        }
+                    } catch (IOException ioe) {
+                        intermediateBuffer.reset(); // leap back in time-space before we did mistake trying to receive this packet.
+                        Log.w(LOGTAG, "IOException while receiving. Loosing one packet.");
+                        ioe.printStackTrace();
+                    }
+                    break;
+                }
+                case STATE_STOP_RECEIVING: {
+                    Log.v(LOGTAG, "state: STOP_RECEIVING");
+                    Log.d(LOGTAG, "Processed packets: " + packetsCtr);
+                    Log.d(LOGTAG, "Missed packets: " + missedPacketsCtr);
+                    Log.d(LOGTAG, "Missed packets ratio: " + (float) missedPacketsCtr * 100 / (packetsCtr + missedPacketsCtr) + '%');
+                    packetsCtr = 0;
+                    missedPacketsCtr = 0;
+                    try {
+                        if (receiverChannel != null && receiverChannel.isConnected()) {
+                            STOP_RECEIVING_CMD.flip();
+                            receiverChannel.write(STOP_RECEIVING_CMD);
+                            receiving = false;
+                            state = closing ? STATE_CLOSE : STATE_IDLE;
+                        } else reportError("Receiver channel is not opened");
+                    } catch (IOException e) {
+                        reportError(e.getMessage());
+                        e.printStackTrace();
+                    }
+                    break;
+                }
+                case STATE_UPDATE_CFG: {
+                    Log.v(LOGTAG, "state: UPDATE_CFG");
+                    try {
+                        configChannel.write(config.getCfgBuffer());
+                        int availableChannels;
+                        if (deviceResponded)
+                            availableChannels = configSelector.select(32);
+                        else {
+                            Log.i(LOGTAG, "Waiting for configuration echo...");
+                            availableChannels = configSelector.select(5000);
+                        }
+                        if (availableChannels > 0) {
+                            configSelector.selectedKeys().clear();
+                            Log.v(LOGTAG, "read " + configChannel.read(config.cmdPacket) + " bytes on config channel");
+                            config.cmdPacket.flip();
+                            try {
+                                config.fillFromPacket();
+                            } catch (IllegalArgumentException iae) {
+                                Log.w(LOGTAG, "UPDATE_CFG: received malformed configuration packet");
+                            }
+                            intermediateBufferQueue.drainTo(intermediateBufferPool);
+                            if (!deviceResponded) {
+                                Log.i(LOGTAG, "Device responded.");
+                                deviceResponded = true;
+                                state = STATE_IDLE;
+                                reportReady();
+                                break;
+                            }
+                        } else {
+                            if (!deviceResponded) {
+                                reportError("Timeout for devices response");
+                                state = STATE_CLOSE;
+                                break;
+                            }
+                        }
+                    } catch (IOException e) {
+                        reportError(e.getMessage());
+                        e.printStackTrace();
+                        state = STATE_CLOSE;
+                        break;
+                    }
+                    state = receiving ? STATE_RECEIVING : STATE_IDLE;
+                    break;
+                }
+                case STATE_CLOSE:
+                    Log.v(LOGTAG, "state: CLOSE");
+                    closing = true;
+                    if (receiving) {
+                        state = STATE_STOP_RECEIVING;
+                        break;
+                    }
+                    try {
+                        if (receiverSelector != null) receiverSelector.close();
+                        receiverSelector = null;
+                        if (receiverChannel != null) receiverChannel.close();
+                        receiverChannel = null;
+                        if (configSelector != null) configSelector.close();
+                        configSelector = null;
+                        if (configChannel != null) configChannel.close();
+                        configChannel = null;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    state = STATE_EXIT;
+                default:
+                case STATE_EXIT:
+                    Log.v(LOGTAG, "state: EXIT");
+                    deviceResponded = false;
+                    closing = false;
+                    receiving = false;
+                    return;
+            }
+        }
+    }
+
+
+    class Config {
+        // received packet
+        ByteBuffer cmdPacket = ByteBuffer.allocate(HiQSDRSource.CFG_PACKET_SIZE);
+        // sent packet
+        ByteBuffer ctrlCmdBuf = ByteBuffer.allocate(HiQSDRSource.CFG_PACKET_SIZE);
+        private volatile boolean needToFillPacket = true;
+
+        byte txPowerLevel;
+        byte txControl;
+        byte rxControl;
+        byte firmwareVersion;
+        byte preselector;
+        byte attenuator;
+        byte antenna;
+        long rxTunePhase;
+        long txTunePhase;
+
+        int sampleRate;
+        long txTuneFrequency;
+        long rxTuneFrequency;
+
+        boolean tieTX2RXFreq = true;
+
+        public Config() {
+            this((byte) 0x02);
+        }
+
+        public void fillFromPacket() throws IllegalArgumentException {
+            fillFromPacket(cmdPacket);
+        }
+
+        public void fillFromPacket(ByteBuffer packet) throws IllegalArgumentException {
+            packet.order(ByteOrder.LITTLE_ENDIAN);
+            byte S = packet.get();
+            byte t = packet.get();
+            if (S != 0x53 || t != 0x74)
+                throw new IllegalArgumentException("Malformed packet");
+            rxTunePhase = packet.getInt();
+            rxTuneFrequency = tunePhaseToFrequency(rxTunePhase);
+            txTunePhase = packet.getInt();
+            txTuneFrequency = tunePhaseToFrequency(txTunePhase);
+            if (rxTuneFrequency == txTuneFrequency) {
+                tieTX2RXFreq = true;
+            }
+            txPowerLevel = packet.get();
+            txControl = packet.get();
+            rxControl = packet.get();
+            sampleRate = rxControlToSampleRate(rxControl);
+            firmwareVersion = packet.get();
+            if (firmwareVersion < 1) {
+                preselector = 0;
+                attenuator = 0;
+                antenna = 0;
+            } else {
+                preselector = packet.get();
+                attenuator = packet.get();
+                antenna = packet.get();
+            }
+        }
+
+        public Config(ByteBuffer packet) {
+            this();
+            fillFromPacket(packet);
+        }
+
+        public Config(byte fwVersion) {
+            firmwareVersion = fwVersion;
+            ctrlCmdBuf.order(ByteOrder.LITTLE_ENDIAN);
+            cmdPacket.order(ByteOrder.LITTLE_ENDIAN);
+        }
+
+        public void setTxMode(byte mode) {
+            switch (mode) {
+                case TX_MODE_EXTENDED_IO:
+                case TX_MODE_HW_CONTNIOUS_WAVE:
+                    if (firmwareVersion == 0)
+                        throw new UnsupportedOperationException("Specified mode is not supported by HiQSDR firmware v1.0");
+                case TX_MODE_KEYED_CONTINIOUS_WAVE:
+                case TX_MODE_RECEIVED_PTT:
+                    txControl = mode;
+                    break;
+                default: throw new IllegalArgumentException("Unknown TX mode " + mode + '.');
+            }
+            needToFillPacket = true;
+        }
+
+        public void setTxPowerLevel(int powerLevel) {
+            if (powerLevel > 255 || powerLevel < 0)
+                throw new IllegalArgumentException("TxPowerLevel must be in range 0-255.");
+            txPowerLevel = (byte) (powerLevel & 0xff);
+            needToFillPacket = true;
+        }
+
+        public void setAntenna(byte ant) {
+            if (firmwareVersion == 0)
+                throw new UnsupportedOperationException("Antenna selection is not supported by HiQSDR fw v1.0");
+            antenna = ant;
+            needToFillPacket = true;
+        }
+
+        public void setFirmwareVersion(byte fwv) {
+            if (fwv > 2 || fwv < 0)
+                throw new IllegalArgumentException("Supported fw versions: 0, 1, 2");
+            firmwareVersion = fwv;
+            needToFillPacket = true;
+        }
+
+        public void setRxFrequency(long frequency) {
+            rxTuneFrequency = frequency;
+            rxTunePhase = frequencyToTunePhase(frequency);
+            needToFillPacket = true;
+        }
+
+        public void setTxFrequency(long frequency) {
+            txTuneFrequency = frequency;
+            txTunePhase = frequencyToTunePhase(frequency);
+            needToFillPacket = true;
+        }
+
+        public void tieTxToRx(boolean tie) {
+            tieTX2RXFreq = tie;
+            needToFillPacket = true;
+        }
+
+        public void setSampleRate(int sampleRate) throws IllegalArgumentException {
+            // lazy
+            if (this.sampleRate == sampleRate)
+                return;
+
+            if (sampleRate <= 0)
+                throw new IllegalArgumentException("Sample rate must be positive number and one of supported values.");
+            byte code = -1;
+            for (int i = 0; i < SAMPLE_RATES.length; ++i) {
+                if (SAMPLE_RATES[i] == sampleRate) {
+                    code = SAMPLE_RATE_CODES[i];
+                    break;
+                }
+            }
+            if (code < 0)
+                throw new IllegalArgumentException("Specified sample rate (" + sampleRate + " is not supported");
+            this.sampleRate = sampleRate;
+            rxControl = code;
+            needToFillPacket = true;
+        }
+
+        protected synchronized void fillCtrlPacket() {
+            if (needToFillPacket) {
+                ctrlCmdBuf.position(0);
+                ctrlCmdBuf
+                        .put((byte) 0x53) // 'S'
+                        .put((byte) 0x74) // 't'
+                        .putInt((int) (rxTunePhase))
+                        .putInt((int) (tieTX2RXFreq ? rxTunePhase : txTunePhase))
+                        .put(txPowerLevel)
+                        .put(txControl)
+                        .put(rxControl)
+                        .put(firmwareVersion);
+                if (firmwareVersion < 1) {
+                    ctrlCmdBuf
+                            .put((byte) 0)
+                            .put((byte) 0)
+                            .put((byte) 0);
+                } else {
+                    ctrlCmdBuf
+                            .put(preselector)
+                            .put(attenuator)
+                            .put(antenna);
+                }
+                ctrlCmdBuf
+                        .put((byte) 0)
+                        .put((byte) 0)
+                        .put((byte) 0)
+                        .put((byte) 0)
+                        .put((byte) 0);
+                ctrlCmdBuf.flip();
+                needToFillPacket = false;
+            }
+        }
+
+        public ByteBuffer getCfgBuffer() {
+            fillCtrlPacket();
+            return ctrlCmdBuf;
+        }
+    }
 
 }
+
