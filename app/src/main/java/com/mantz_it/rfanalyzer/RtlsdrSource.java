@@ -448,7 +448,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	}
 
 	@Override
-	public int getPacketSize() {
+	public int getSampledPacketSize() {
 		return PACKET_SIZE;
 	}
 

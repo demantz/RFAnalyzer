@@ -128,7 +128,7 @@ public interface IQSourceInterface {
 	/**
 	 * @return the size (in byte) of a packet that is returned by getPacket()
 	 */
-	int getPacketSize();
+	int getSampledPacketSize();
 
 	/**
 	 * This method will grab the next packet from the source and return it. If no

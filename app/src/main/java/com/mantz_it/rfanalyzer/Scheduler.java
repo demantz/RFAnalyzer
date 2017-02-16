@@ -72,7 +72,7 @@ public class Scheduler extends Thread {
 		this.demodOutputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
 		this.demodInputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
 		for (int i = 0; i < DEMOD_QUEUE_SIZE; i++)
-			demodInputQueue.offer(new SamplePacket(source.getPacketSize()));
+			demodInputQueue.offer(new SamplePacket(source.getSampledPacketSize()));
 	}
 
 	public void stopScheduler() {
