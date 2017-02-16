@@ -1,12 +1,8 @@
-package com.mantz_it.rfanalyzer.dsp;
+package com.mantz_it.rfanalyzer.dsp.spi;
 
 import android.app.Application;
 import android.os.SystemClock;
 import android.test.ApplicationTestCase;
-
-import com.mantz_it.rfanalyzer.dsp.spi.FloatMixer;
-import com.mantz_it.rfanalyzer.dsp.spi.Packet;
-import com.mantz_it.rfanalyzer.dsp.spi.PacketPool;
 
 import java.nio.FloatBuffer;
 import java.util.GregorianCalendar;
