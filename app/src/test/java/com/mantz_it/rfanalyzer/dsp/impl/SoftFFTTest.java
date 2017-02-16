@@ -1,6 +1,5 @@
-package com.mantz_it.rfanalyzer.dsp.core;
+package com.mantz_it.rfanalyzer.dsp.impl;
 
-import com.mantz_it.rfanalyzer.dsp.impl.SoftFFT;
 import com.mantz_it.rfanalyzer.dsp.spi.FFT;
 
 import org.junit.Before;
