@@ -37,7 +37,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  *         Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 public class Scheduler extends Thread {
-	private IQSourceInterface source = null;    // Reference to the source of the IQ samples
+	private IQSource source = null;    // Reference to the source of the IQ samples
 	private ArrayBlockingQueue<SamplePacket> fftOutputQueue = null;    // Queue that delivers samples to the Processing Loop
 	private ArrayBlockingQueue<SamplePacket> fftInputQueue = null;    // Queue that collects used buffers from the Processing Loop
 	private ArrayBlockingQueue<SamplePacket> demodOutputQueue = null;    // Queue that delivers samples to the Demodulator block
@@ -58,19 +58,19 @@ public class Scheduler extends Thread {
 	private static final int DEMOD_QUEUE_SIZE = 20;
 	private static final String LOGTAG = "Scheduler";
 
-	public Scheduler(int fftSize, IQSourceInterface source) {
+	public Scheduler(int fftSize, IQSource source) {
 		super("Scheduler Thread");
 		this.source = source;
 
 		// Create the fft input- and output queues and allocate the buffer packets.
-		this.fftOutputQueue = new ArrayBlockingQueue<SamplePacket>(FFT_QUEUE_SIZE);
-		this.fftInputQueue = new ArrayBlockingQueue<SamplePacket>(FFT_QUEUE_SIZE);
+		this.fftOutputQueue = new ArrayBlockingQueue<>(FFT_QUEUE_SIZE);
+		this.fftInputQueue = new ArrayBlockingQueue<>(FFT_QUEUE_SIZE);
 		for (int i = 0; i < FFT_QUEUE_SIZE; i++)
 			fftInputQueue.offer(new SamplePacket(fftSize));
 
 		// Create the demod input- and output queues and allocate the buffer packets.
-		this.demodOutputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
-		this.demodInputQueue = new ArrayBlockingQueue<SamplePacket>(DEMOD_QUEUE_SIZE);
+		this.demodOutputQueue = new ArrayBlockingQueue<>(DEMOD_QUEUE_SIZE);
+		this.demodInputQueue = new ArrayBlockingQueue<>(DEMOD_QUEUE_SIZE);
 		for (int i = 0; i < DEMOD_QUEUE_SIZE; i++)
 			demodInputQueue.offer(new SamplePacket(source.getSampledPacketSize()));
 	}
