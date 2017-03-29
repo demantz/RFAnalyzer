@@ -3,7 +3,6 @@ package com.mantz_it.rfanalyzer;
 import android.app.Application;
 import android.test.ApplicationTestCase;
 
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -30,57 +29,6 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		rnd.nextBytes(test24bitPacket);
 	}
 
-	public void testHiQSDRPacketCntr() {
-		final byte[] buff = new byte[1442];
-		HiQSDRSource src = new HiQSDRSource();
-		src.previousPacketIdx = 0;
-		for (int i = 1; i < 520; ++i) {
-			buff[0] = (byte) (i & 0xff);
-			final int m = src.updatePacketIndex(buff[0]);
-			if (m != 0)
-				System.out.println("testHiQSDRPacketCntr: false positive ("
-				                   + "i=" + i
-				                   + ", missed=" + m
-				                   + ", but must be 0).");
-			//else System.out.println("testHiQSDRPacketCntr: ok = "+m);
-		}
-		for (int j = 2; j < 255; ++j) {
-			src.previousPacketIdx = 0;
-			for (int i = j; i < j * 520; i += j) {
-				buff[0] = (byte) (i & 0xff);
-				final byte prev = src.previousPacketIdx;
-				final int m = src.updatePacketIndex(buff[0]);
-				final byte current = src.previousPacketIdx;
-				if (m != (j - 1))
-					System.out.println("testHiQSDRPacketCntr: false negative ("
-					                   + "i=" + i
-					                   + ", j=" + j
-					                   + ",prev=" + prev
-					                   + ", current=" + current
-					                   + ", missed=" + m
-					                   + ", must be " + (j - 1) + ").");
-				/*else System.out.println("testHiQSDRPacketCntr: ok ("
-				                        + "i=" + i
-				                        + ", j=" + j
-				                        + ",prev=" + prev
-				                        + ", current=" + current
-				                        + ", missed=" + m
-				                        + ").");*/
-			}
-		}
-
-
-	}
-
-	public void testInitArrays() {
-		System.out.println("Testing HiQSDR._init()");
-		System.out.println("\tSamplerate codes: " + Arrays.toString(HiQSDRSource.SAMPLE_RATE_CODES));
-		System.out.println("\tSamplerates     : " + Arrays.toString(HiQSDRSource.SAMPLE_RATES));
-		System.out.println("\tPairs:");
-		for (int i = 0; i < HiQSDRSource.SAMPLE_RATE_CODES.length; ++i)
-			System.out.println("\t\t" + HiQSDRSource.SAMPLE_RATE_CODES[i] + ':' + HiQSDRSource.SAMPLE_RATES[i]);
-		System.out.println("---------------------------------------------------------------------");
-	}
 
 	public long testConverterPerformance(IQConverter converter, byte[] packet, SamplePacket samplePacket) {
 		long start = System.currentTimeMillis();
