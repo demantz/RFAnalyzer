@@ -78,7 +78,7 @@ Beta-Program: https://play.google.com/apps/testing/com.mantz_it.rfanalyzer
 
 Alternativeley the app can be downloaded from GitHub and be installed manually
 on the device. Just download the APK file on your device and open it. This
-only works if 'Apps from unkown sources' is enabled in the Android security
+only works if 'Apps from unknown sources' is enabled in the Android security
 settings. Keep in mind that with this method updates have to be installed
 manually too!
 Link: https://github.com/demantz/RFAnalyzer/blob/master/RFAnalyzer.apk?raw=true
