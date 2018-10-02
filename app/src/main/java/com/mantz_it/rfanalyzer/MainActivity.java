@@ -1039,7 +1039,7 @@ public class MainActivity extends AppCompatActivity implements IQSourceInterface
 				sp_bandwidthUnit.setEnabled(isChecked);
 			}
 		});
-		cb_bandwidth.toggle();	// to trigger the onCheckedChangeListener at least once to set inital state
+		cb_bandwidth.toggle();	// to trigger the onCheckedChangeListener at least once to set initial state
 		cb_bandwidth.setChecked(preferences.getBoolean(getString(R.string.pref_tune_to_frequency_setBandwidth), false));
 		et_bandwidth.setText(preferences.getString(getString(R.string.pref_tune_to_frequency_bandwidth), "1"));
 		sp_unit.setSelection(preferences.getInt(getString(R.string.pref_tune_to_frequency_unit), 0));

@@ -32,7 +32,7 @@ version 1.10
 
 version 1.09
  - RTL-SDR support (EXPERIMENTAL)
- - Updating hackrf_android libary to version 1.08
+ - Updating hackrf_android library to version 1.08
 
 version 1.08
  - Enable/disable HackRF amplifier and antenna power in settings

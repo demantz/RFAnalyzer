@@ -15,7 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  *              Sample packets are passed to other blocks by using blocking queues. The samples passed
  *              to the Demodulator will be shifted to base band first.
  *              If the Demodulator or the Processing Loop are to slow, the scheduler will automatically
- *              drop incoming samples to keep the buffer of the hackrf_android library from beeing filled up.
+ *              drop incoming samples to keep the buffer of the hackrf_android library from being filled up.
  *
  *
  * @author Dennis Mantz
