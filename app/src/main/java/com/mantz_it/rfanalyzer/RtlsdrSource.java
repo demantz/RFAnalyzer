@@ -165,7 +165,7 @@ public class RtlsdrSource implements IQSourceInterface {
 
 	@Override
 	public boolean close() {
-		// Stop receving:
+		// Stop receiving:
 		if(receiverThread != null)
 			stopSampling();
 
@@ -765,7 +765,7 @@ public class RtlsdrSource implements IQSourceInterface {
 			threadName = this.getName();
 			byte[] nextCommand = null;
 
-			// Perfom "device open". This means connect to the rtl_tcp instance; get the information
+			// Perform "device open". This means connect to the rtl_tcp instance; get the information
 			if(connect(10000)) {	// 10 seconds for the user to accept permission request
 				// report that the device is ready:
 				callback.onIQSourceReady(RtlsdrSource.this);

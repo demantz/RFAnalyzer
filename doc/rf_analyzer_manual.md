@@ -58,7 +58,7 @@ following components are needed:
 
 * SDR hardware: Supported SDR devices are:
 	* HackRF
-	* RTL-SDR (with extern RTL2832U driver - see 'Installation')
+	* RTL-SDR (with external RTL2832U driver - see 'Installation')
 	* IQFile: RF Analyzer also supports replaying of captured sample files. 
 	  You don't need SDR hardware just to test the app with precaptured 
 	  samples!
@@ -76,9 +76,9 @@ It will automatically be updated once a new version is released.
 Link: https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer
 Beta-Program: https://play.google.com/apps/testing/com.mantz_it.rfanalyzer
 
-Alternativeley the app can be downloaded from GitHub and be installed manually
+Alternatively the app can be downloaded from GitHub and be installed manually
 on the device. Just download the APK file on your device and open it. This
-only works if 'Apps from unkown sources' is enabled in the Android security
+only works if 'Apps from unknown sources' is enabled in the Android security
 settings. Keep in mind that with this method updates have to be installed
 manually too!
 Link: https://github.com/demantz/RFAnalyzer/blob/master/RFAnalyzer.apk?raw=true
@@ -96,7 +96,7 @@ Google Play.
 Exploring the electro-magnetic spectrum with RF Analyzer is easy. Figure 1
 shows the main screen of the app after the first start. The default device
 type is set to HackRF. If you are using a RTL stick or if you want to use
-a precaptured IQ file as source you have to change the source type in the
+a pre-captured IQ file as source you have to change the source type in the
 settings (see DSP settings).
 
 ![Figure 1](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/rf_analyzer_not_running.png)
@@ -194,11 +194,11 @@ behaviour of the app:
 * FFT size: Set the size of the FFT (256,..,65536). Higher values will increase
   the precision of the results but also the load on the CPU.
 * Averaging: Averaging the FFT results with previous results will make it
-  easy to spot a very noisy but continous signal. Default is off. Can be set
+  easy to spot a very noisy but continuous signal. Default is off. Can be set
   to values between 1 and 20.
 * Peak hold: If enabled, this option will show small dots to indicate the
   maximum magnitude for each frequency component. This helps to spot very
-  short and spontanious signals. (see figure 6)
+  short and spontaneous signals. (see figure 6)
 * Auto start: If enabled, RF Analyzer will start the FFT on each app start.
 
 More signal processing settings are available for each specific hardware type.
@@ -255,12 +255,12 @@ More signal processing settings are available for each specific hardware type.
 
  * File Source Frequency: The baseband frequency at which the replayed IQ
    file was recorded. This setting is automatically adjusted when selecting
-   an IQ file with XXXHz (or similiar) in its file name. Therefore it is
+   an IQ file with XXXHz (or similar) in its file name. Therefore it is
    not necessary to manually edit this setting if using recorded files from
    RF Analyzer that have the default naming scheme.
  * File Source Sample Rate: The sample rate at which the replayed IQ file
    was recorded. This setting is automatically adjusted when selecting
-   an IQ file with XXXSps (or similiar) in its file name. Therefore it is
+   an IQ file with XXXSps (or similar) in its file name. Therefore it is
    not necessary to manually edit this setting if using recorded files from
    RF Analyzer that have the default naming scheme.
  * Source File: Path to the IQ file that should be replayed.
@@ -310,7 +310,7 @@ be selected:
    /storage/emulated/0/RFAnalyzer/. However, the actual directory can be
    different on some devices.
  * Stop after: If this option is enabled, the recording will automatically
-   stop after the defined time intervall has passed or the file reached
+   stop after the defined time interval has passed or the file reached
    the defined file size.
 Once the recording is running, it is indicated on the screen and can be
 stopped by pressing the recording button again. Files that were recorded
@@ -323,7 +323,7 @@ can be replayed using the File Source option of RF Analyzer.
 ------------
 
 The bookmarks dialog allows to save frequencies in order to easily tune
-to them later again. The dialog can be opend through the bookmark buttion
+to them later again. The dialog can be opened through the bookmark button
 (white star) in the action bar. Bookmarks are organised in categories
 (see figure 10).
 It is possible to add, edit and delete bookmarks as well as categories.
@@ -349,12 +349,12 @@ according to the bookmark attributes.
 ![Figure 11](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/doc/screenshots/bookmark_list.png)
 
 
-7. Trouble Shooting
+7. Troubleshooting
 -------------------
 
 This section is intended to help those who can't get the app to work. Please
 note that RF Analyzer is currently developed by only one person and this
-project was born out of a hobby. I depent on helpful people who tell me
+project was born out of a hobby. I depend on helpful people who tell me
 their problems with the app and provide the necessary information so that
 I can fix bugs in the software.
 
@@ -378,7 +378,7 @@ the following:
   The Google Play version is signed with my developer key while the GitHub
   version is signed with a debug key. This makes the versions incompatible!
 * Installing the Google Play version on top of the GitHub version or vice
-  verca is not possible. You have to uninstall the old version first!
+  versa is not possible. You have to uninstall the old version first!
 * The GitHub version does not get updated automatically. You have to check
   for updates yourself and install them manually!
 * The app is open source and everyone can build their own version of the
@@ -397,7 +397,7 @@ rid of them as good as I can, but nobody is perfect. If the app crashes
 please send the bug report through the Android system. This report will
 appear on my Google developer console and provides me with all information
 that is needed to locate the bug in the code. If you found out that the
-crash is reproducable please add a note to the bug report and tell me how
+crash is reproducible please add a note to the bug report and tell me how
 to reproduce the crash!
 
 
@@ -419,7 +419,7 @@ you somehow can't get the FFT to work.
 * 'RTL-SDR: root required':
   This is an error from the RTL2832U driver. Please use the RTL2832U driver
   with the same settings as with the SDR Touch app (if you use this app too).
-  For most Android devices and versions you don't need root priviledges to
+  For most Android devices and versions you don't need root privileges to
   access the RTL dongle. But wrong settings in the RTL2832U app might cause
   this issue. Also make sure you are using the latest version of this driver.
   Uninstalling and reinstalling it might also help with strange issues.
@@ -441,8 +441,8 @@ The issue: Demodulation is running (is not OFF) but you can't hear anything.
 The issue: The demodulated audio is stuttering.
 
 * Device processor to slow:
-  In order to demodulate audio a recent multicore processer is recomended
-* Background activiy:
+  In order to demodulate audio a recent multicore processor is recommended
+* Background activity:
   Is another app running expensive tasks in the background. Is RF Analyzer
   recording to a file?
 

@@ -68,7 +68,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	private boolean doAutoscaleInNextDraw = false;	// will cause draw() to adjust minDB and maxDB according to the samples
 	private boolean verticalZoomEnabled = true;		// Enables vertical zooming (dB scale)
 	private boolean verticalScrollEnabled = true;	// Enables vertical scrolling (dB scale)
-	private boolean decoupledAxis = true;			// Will seperate the scrolling/zooming sensitive areas for vertical and
+	private boolean decoupledAxis = true;			// Will separate the scrolling/zooming sensitive areas for vertical and
 													// horizontal axis.
 
 	private static final String LOGTAG = "AnalyzerSurface";
@@ -879,7 +879,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	/**
 	 * Returns the height of the fft plot in px (y coordinate of the bottom line of the fft spectrum)
 	 *
-	 * @return heigth (in px) of the fft
+	 * @return height (in px) of the fft
 	 */
 	private int getFftHeight() {
 		return (int) (height * fftRatio);
@@ -888,7 +888,7 @@ public class AnalyzerSurface extends SurfaceView implements SurfaceHolder.Callba
 	/**
 	 * Returns the height of the waterfall plot in px
 	 *
-	 * @return heigth (in px) of the waterfall
+	 * @return height (in px) of the waterfall
 	 */
 	private int getWaterfallHeight() {
 		return (int) (height * (1-fftRatio));
