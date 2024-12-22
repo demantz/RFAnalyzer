@@ -88,7 +88,7 @@ public class RtlsdrSource implements IQSourceInterface {
 												22000000l,	// FC0013
 												146000000l,	// FC2580
 												24000000l,	// R820T
-												24000000l};	// R828D
+												00000000l};	// R828D
 	public static final long[] MAX_FREQUENCY = { 0l,			// invalid
 												3000000000l,	// E4000		actual max freq: 2200000000l
 												3000000000l,	// FC0012		actual max freq: 948000000l
