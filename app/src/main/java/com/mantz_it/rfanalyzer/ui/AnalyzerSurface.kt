@@ -530,6 +530,10 @@ class AnalyzerSurface(context: Context,
                     frameRateTimestamp = startTimestamp
                 }
 
+                // Local current state (better performance, and safer because width/height could change at any time)
+                val width = width
+                val fftHeight = fftHeight
+
                 if(timeAverageSamples == null || timeAverageSamples!!.size != width)
                     timeAverageSamples = FloatArray(width)
                 if(fftPeakHold.value && (peaksYCoordinates == null || peaksYCoordinates!!.size != width))
@@ -574,7 +578,9 @@ class AnalyzerSurface(context: Context,
                             waterfallBufferDirtyMap,
                             frequency,
                             sampleRate,
-                            readIndex
+                            readIndex,
+                            width,
+                            fftHeight
                         )
                     }
                 } finally {
@@ -598,12 +604,12 @@ class AnalyzerSurface(context: Context,
                                       frequency: Long,          // center frequency of the fft samples
                                       sampleRate: Long,         // sample rate of the fft samples
                                       currentRowIdx: Int,       // Index of the most recent row in waterfallBuffer
+                                      width: Int,
+                                      fftHeight: Int
         ) {
             val startTimestamp = System.currentTimeMillis()
 
             // performance optimization:
-            val width = width
-            val fftHeight = fftHeight
             val timeAverageSamples = timeAverageSamples!!
             val waterfallColorMapArray = waterfallColorMapArray
             val colorMapSize = waterfallColorMapArray.size
