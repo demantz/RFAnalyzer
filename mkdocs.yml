@@ -1,0 +1,29 @@
+site_name: RF Analyzer 2.0 User Manual
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.instant
+    - search.suggest
+    - search.highlight
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Installation & Setup: setup.md
+  - User Interface: ui-overview.md
+  - SDR Source: sdr-source.md
+  - FFT & Waterfall Display: fft.md
+  - Signal Demodulation: demodulation.md
+  - Recording & Playback: recording.md
+  - App Settings: settings.md
+  - Additional Information: advanced.md
+  - Troubleshooting & FAQs: troubleshooting.md
+  - About: about.md
+
+# create pdf:
+# mkdocs serve
+# a=1; for i in "" quickstart setup ui-overview sdr-source fft demodulation recording settings advanced troubleshooting about; do cnt=0000$a; wkhtmltopdf http://127.0.0.1:8000/$i "${cnt:(-3)}_$i.pdf"; a=$(($a+1)); done; pdfunite * out.pdf

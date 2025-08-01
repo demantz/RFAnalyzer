@@ -2,48 +2,65 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mantz_it.rfanalyzer" >
 
-    <!-- Read external storage is used for the FileSource -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-    <!-- Write external storage is used to write recordings and log files to the SD card -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
     <!-- Internet is used to connect to local and remote rtl_tcp instances -->
     <uses-permission android:name="android.permission.INTERNET" />
-    
-    <!-- Declare permissions to read and write the bookmarks database -->
-    <permission android:name="com.mantz_it.rfanalyzer.permission.READ_BOOKMARKS"
-                android:label="Read access to the bookmarks of RF Analyzer" />
-    <permission android:name="com.mantz_it.rfanalyzer.permission.WRITE_BOOKMARKS"
-                android:label="Write access to the bookmarks of RF Analyzer" />
+
+    <!-- Permissions for the AnalyzerService -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".RFAnalyzerApplication"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:largeHeap="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher_round"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:launchMode="singleTop" >
+            android:name=".ui.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <activity
-            android:name=".SettingsActivity"
-            android:parentActivityName=".MainActivity">
+            android:name=".ui.FileOpenActivity"
+            android:exported="true"
+            android:launchMode="standard"
+            android:taskAffinity="com.mantz_it.rfanalyzer"
+            android:theme="@style/AppTheme"
+            android:noHistory="true"> <!-- prevents it from staying in the stack -->
+
+            <intent-filter>
+                <!-- Filter for binary files (filter on extension is not possible unfortunately) -->
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" android:mimeType="application/octet-stream" />
+            </intent-filter>
         </activity>
 
+        <service
+            android:name=".analyzer.AnalyzerService"
+            android:enabled="true"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
+
         <provider
-            android:name=".BookmarksProvider"
-            android:authorities="com.mantz_it.rfanalyzer.provider"
-            android:readPermission="com.mantz_it.rfanalyzer.permission.READ_BOOKMARKS"
-            android:writePermission="com.mantz_it.rfanalyzer.permission.WRITE_BOOKMARKS">
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/fileproviderpaths" />
         </provider>
+
+
     </application>
 
 </manifest>

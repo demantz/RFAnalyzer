@@ -1,223 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">RF Analyzer</string>
-    <string name="action_settings">Settings</string>
-    <string name="action_help">Help</string>
-    <string name="action_info">Info</string>
-    <string name="action_start">Start</string>
-    <string name="action_stop">Stop</string>
-    <string name="action_demodulation_off">Demodulation: off</string>
-    <string name="action_demodulation_am">Demodulation: AM</string>
-    <string name="action_demodulation_nfm">Demodulation: narrow FM</string>
-    <string name="action_demodulation_wfm">Demodulation: wide FM</string>
-    <string name="action_demodulation_lsb">Demodulation: LSB</string>
-    <string name="action_demodulation_usb">Demodulation: USB</string>
-    <string name="action_setFrequency">Set Frequency</string>
-    <string name="action_setGain">Set Gain</string>
-    <string name="action_recordOff">Record</string>
-    <string name="action_recordOn">Stop recording</string>
-    <string name="action_bookmarks">Bookmarks</string>
-    <string name="action_autoscale">Autoscale</string>
-    <string name="help_url">https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md</string>
-    <string name="hackrf_vga_gain_label">VGA Gain:</string>
-    <string name="hackrf_lna_gain_label">LNA Gain:</string>
-    <string name="rtlsdr_manual_gain_label">Manual gain:</string>
-    <string name="rtlsdr_agc_label">AGC:</string>
-    <string name="rtlsdr_gain_label">Gain:</string>
-    <string name="rtlsdr_ifgain_label">IF Gain:</string>
-    <string name="filesource_doesnt_support_gain">A file source doesn\'t support gain adjustment!</string>
-    <string name="rtl2832u_is_not_installed">RTL2832U driver is not installed</string>
-    <string name="warning_recording_is_running">Warning: Recording is running!</string>
-    <string name="tuneToFrequency_setFrequencyRange">Set bandwidth:</string>
-    <string name="recording_filename">File name:</string>
-    <string name="recording_frequency">Center frequency (Hz or MHz):</string>
-    <string name="recording_sampleRate">Sample rate:</string>
-    <string name="recording_fixedSampleRateHint">Sample rate is fixed because demodulation is running!</string>
-    <string name="recording_stopAfter">Stop after:</string>
-    <string name="save_state_running">save_state_running</string>
-    <string name="save_state_demodulatorMode">save_state_demodulatorMode</string>
-    <string name="save_state_channelFrequency">save_state_channelFrequency</string>
-    <string name="save_state_channelWidth">save_state_channelWidth</string>
-    <string name="save_state_squelch">save_state_squelch</string>
-    <string name="save_state_virtualFrequency">save_state_virtualFrequency</string>
-    <string name="save_state_virtualSampleRate">save_state_virtualSampleRate</string>
-    <string name="save_state_minDB">save_state_minDB</string>
-    <string name="save_state_maxDB">save_state_maxDB</string>
-    <string name="pref_frequency">pref_frequency</string>
-    <string name="pref_sampleRate">pref_sampleRate</string>
-    <string name="pref_tune_to_frequency_unit">pref_tune_to_frequency_unit</string>
-    <string name="pref_tune_to_frequency_setBandwidth">pref_tune_to_frequency_setBandwidth</string>
-    <string name="pref_tune_to_frequency_bandwidth">pref_tune_to_frequency_bandwidth</string>
-    <string name="pref_tune_to_frequency_bandwidthUnit">pref_tune_to_frequency_bandwidthUnit</string>
-    <string name="pref_recordingSampleRate">pref_recordingSampleRate</string>
-    <string name="pref_recordingStopAfterEnabled">pref_recordingStopAfterEnabled</string>
-    <string name="pref_recordingStopAfterValue">pref_recordingStopAfterValue</string>
-    <string name="pref_recordingStopAfterUnit">pref_recordingStopAfterUnit</string>
-    <string name="pref_hackrf_vgaRxGain">pref_hackrf_vgaRxGain</string>
-    <string name="pref_hackrf_lnaGain">pref_hackrf_lnaGain</string>
-    <string name="pref_rtlsdr_manual_gain">pref_rtlsdr_manual_gain</string>
-    <string name="pref_rtlsdr_agc">pref_rtlsdr_agc</string>
-    <string name="pref_rtlsdr_gain">pref_rtlsdr_gain</string>
-    <string name="pref_rtlsdr_ifGain">pref_rtlsdr_ifGain</string>
-    <string name="pref_signalProcessing_category">pref_signalProcessing_category</string>
-    <string name="pref_signalProcessing_category_title">Signal Processing</string>
-    <string name="pref_sourceType">pref_sourceType</string>
-    <string name="pref_sourceType_title">Source Type</string>
-    <string name="pref_sourceType_default">1</string>
-    <string name="pref_sourceType_summ">Source type is set to: %s</string>
-    <string name="pref_sourceSettings">pref_sourceSettings</string>
-    <string name="pref_sourceSettings_title">Source Settings</string>
-    <string name="pref_filesource_category">pref_filesource_category</string>
-    <string name="pref_filesource_category_title">File Source Settings</string>
-    <string name="pref_filesource_frequency">pref_filesource_frequency</string>
-    <string name="pref_filesource_frequency_title">File Source: Frequency (Hz)</string>
-    <string name="pref_filesource_frequency_summ">Baseband Frequency of the recorded file: %s Hz</string>
-    <string name="pref_filesource_frequency_default">97000000</string>
-    <string name="pref_filesource_sampleRate">pref_filesource_sampleRate</string>
-    <string name="pref_filesource_sampleRate_title">File Source: Sample Rate (Sps)</string>
-    <string name="pref_filesource_sampleRate_summ">Sample rate of the recorded file: %s Sps</string>
-    <string name="pref_filesource_sampleRate_default">2000000</string>
-    <string name="pref_filesource_file">pref_filesource_file</string>
-    <string name="pref_filesource_file_title">Source File</string>
-    <string name="pref_filesource_file_summ">File path: %s</string>
-    <string name="pref_filesource_file_default">Test_Hackrf/hackrf_android.iq</string>
-    <string name="pref_filesource_format">pref_filesource_format</string>
-    <string name="pref_filesource_format_title">File format:</string>
-    <string name="pref_filesource_format_default">0</string>
-    <string name="pref_filesource_format_summ">File format is set to: %s</string>
-    <string name="pref_filesource_repeat">pref_filesource_repeat</string>
-    <string name="pref_filesource_repeat_title">Repeat</string>
-    <string name="pref_filesource_repeat_summ_on">Start from beginning after end of file</string>
-    <string name="pref_filesource_repeat_summ_off">Stop after end of file</string>
-    <string name="pref_hackrf_category">pref_hackrf_category</string>
-    <string name="pref_hackrf_category_title">HackRF Settings</string>
-    <string name="pref_hackrf_amplifier">pref_hackrf_amplifier</string>
-    <string name="pref_hackrf_amplifier_title">RF amplifier</string>
-    <string name="pref_hackrf_amplifier_summ_on">RF amplifier is activated</string>
-    <string name="pref_hackrf_amplifier_summ_off">RF amplifier is deactivated</string>
-    <string name="pref_hackrf_antennaPower">pref_hackrf_antennaPower</string>
-    <string name="pref_hackrf_antennaPower_title">Antenna Power</string>
-    <string name="pref_hackrf_antennaPower_summ_on">Antenna power is activated</string>
-    <string name="pref_hackrf_antennaPower_summ_off">Antenna power is deactivated</string>
-    <string name="pref_hackrf_frequencyOffset">pref_hackrf_frequencyOffset</string>
-    <string name="pref_hackrf_frequencyOffset_title">Up-/Down-converter frequency offset (Hz)</string>
-    <string name="pref_hackrf_frequencyOffset_summ">Frequencies are shown at an offset: %s Hz</string>
-    <string name="pref_rtlsdr_category">pref_rtlsdr_category</string>
-    <string name="pref_rtlsdr_category_title">RTL-SDR Settings</string>
-    <string name="pref_rtlsdr_externalServer">pref_rtlsdr_externalServer</string>
-    <string name="pref_rtlsdr_externalServer_title">Use external rtl_tcp server</string>
-    <string name="pref_rtlsdr_externalServer_summ_on">Using external server</string>
-    <string name="pref_rtlsdr_externalServer_summ_off">Using local device</string>
-    <string name="pref_rtlsdr_ip">pref_rtlsdr_ip</string>
-    <string name="pref_rtlsdr_ip_title">IP address</string>
-    <string name="pref_rtlsdr_ip_summ">IP of the rtl_tcp server: %s</string>
-    <string name="pref_rtlsdr_ip_default">192.168.0.100</string>
-    <string name="pref_rtlsdr_port">pref_rtlsdr_port</string>
-    <string name="pref_rtlsdr_port_title">TCP port</string>
-    <string name="pref_rtlsdr_port_summ">TCP port of the rtl_tcp server: %s</string>
-    <string name="pref_rtlsdr_port_default">1234</string>
-    <string name="pref_rtlsdr_frequencyCorrection">pref_rtlsdr_frequencyCorrection</string>
-    <string name="pref_rtlsdr_frequencyCorrection_title">Frequency correction (ppm)</string>
-    <string name="pref_rtlsdr_frequencyCorrection_summ">Frequency correction is set to: %s ppm</string>
-    <string name="pref_rtlsdr_frequencyCorrection_default">0</string>
-    <string name="pref_rtlsdr_frequencyOffset">pref_rtlsdr_frequencyOffset</string>
-    <string name="pref_rtlsdr_frequencyOffset_title">Up-/Down-converter frequency offset (Hz)</string>
-    <string name="pref_rtlsdr_frequencyOffset_summ">Frequencies are shown at an offset: %s Hz</string>
-    <string name="pref_fftSize">pref_fftSize</string>
-    <string name="pref_fftSize_title">FFT Size</string>
-    <string name="pref_fftSize_default">4096</string>
-    <string name="pref_fftSize_summ">FFT size is set to: %s</string>
-    <string name="pref_averaging">pref_averaging</string>
-    <string name="pref_averaging_title">Averaging</string>
-    <string name="pref_averaging_default">0</string>
-    <string name="pref_averaging_summ">Averaging is set to: %s</string>
-    <string name="pref_peakHold">pref_peakHold</string>
-    <string name="pref_peakHold_title">Peak hold</string>
-    <string name="pref_peakHold_summ_on">Peak hold is turned on</string>
-    <string name="pref_peakHold_summ_off">Peak hold is turned off</string>
-    <string name="pref_autostart">pref_autostart</string>
-    <string name="pref_autostart_title">Auto start</string>
-    <string name="pref_autostart_summ_on">FFT starts at application start</string>
-    <string name="pref_autostart_summ_off">FFT has to be started manually</string>
-    <string name="pref_view_category">pref_view_category</string>
-    <string name="pref_view_category_title">View</string>
-    <string name="pref_colorMapType">pref_colorMapType</string>
-    <string name="pref_colorMapType_title">Color map type</string>
-    <string name="pref_colorMapType_default">4</string>
-    <string name="pref_colorMapType_summ">Color map type is set to: %s</string>
-    <string name="pref_fftDrawingType">pref_fftDrawingType</string>
-    <string name="pref_fftDrawingType_title">FFT drawing type</string>
-    <string name="pref_fftDrawingType_default">2</string>
-    <string name="pref_fftDrawingType_summ">FFT drawing type is set to: %s</string>
-    <string name="pref_screenOrientation">pref_screenOrientation</string>
-    <string name="pref_screenOrientation_title">Screen orientation</string>
-    <string name="pref_screenOrientation_default">auto</string>
-    <string name="pref_screenOrientation_summ">Screen orientation is set to: %s</string>
-    <string name="pref_spectrumWaterfallRatio">pref_spectrumWaterfallRatio</string>
-    <string name="pref_spectrumWaterfallRatio_title">Spectrum - Waterfall ratio</string>
-    <string name="pref_spectrumWaterfallRatio_default">0.5</string>
-    <string name="pref_spectrumWaterfallRatio_summ">Ratio is set to: %s</string>
-    <string name="pref_zoomDB">pref_zoomDB</string>
-    <string name="pref_zoomDB_title">Vertical pinch to zoom</string>
-    <string name="pref_zoomDB_summ_on">Vertical zoom is enabled</string>
-    <string name="pref_zoomDB_summ_off">Vertical zoom is disabled</string>
-    <string name="pref_scrollDB">pref_scrollDB</string>
-    <string name="pref_scrollDB_title">Vertical scrolling</string>
-    <string name="pref_scrollDB_summ_on">Vertical scroll is enabled</string>
-    <string name="pref_scrollDB_summ_off">Vertical scroll is disabled</string>
-    <string name="pref_decoupledAxis">pref_decoupledAxis</string>
-    <string name="pref_decoupledAxis_title">Separate horizontal/vertical zoom/scroll</string>
-    <string name="pref_decoupledAxis_summ_on">Vertical zoom/scroll only in the left area</string>
-    <string name="pref_decoupledAxis_summ_off">Vertical zoom/scroll everywhere</string>
-    <string name="pref_relativeFrequencies">pref_relativeFrequencies</string>
-    <string name="pref_relativeFrequencies_title">Relative Frequencies</string>
-    <string name="pref_relativeFrequencies_summ_on">Frequencies are displayed relative to center frequency</string>
-    <string name="pref_relativeFrequencies_summ_off">Frequencies are displayed absolute</string>
-    <string name="pref_advancedSettings">pref_advancedSettings</string>
-    <string name="pref_advancedSettings_title">Advanced Settings</string>
-    <string name="pref_fontSize">pref_fontSize</string>
-    <string name="pref_fontSize_title">Font size</string>
-    <string name="pref_fontSize_default">2</string>
-    <string name="pref_fontSize_summ">Font size is set to: %s</string>
-    <string name="pref_showDebugInformation">pref_showDebugInformation</string>
-    <string name="pref_showDebugInformation_title">Show debug information</string>
-    <string name="pref_showDebugInformation_summ_on">Debug information is shown</string>
-    <string name="pref_showDebugInformation_summ_off">Debug information is hidden</string>
-    <string name="pref_dynamicFrameRate">pref_dynamicFrameRate</string>
-    <string name="pref_dynamicFrameRate_title">Dynamic frame rate</string>
-    <string name="pref_dynamicFrameRate_summ_on">Frame rate is dynamically adjusted to the load</string>
-    <string name="pref_dynamicFrameRate_summ_off">Frame rate is fixed</string>
-    <string name="pref_frameRate">pref_frameRate</string>
-    <string name="pref_frameRate_title">Frame Rate</string>
-    <string name="pref_frameRate_default">10</string>
-    <string name="pref_frameRate_summ">Frame rate is set to: %s</string>
-    <string name="pref_logging">pref_logging</string>
-    <string name="pref_logging_title">Logging</string>
-    <string name="pref_logging_summ_on">Logging is enabled</string>
-    <string name="pref_logging_summ_off">Logging is disabled</string>
-    <string name="pref_showLog">pref_showLog</string>
-    <string name="pref_showLog_title">Show Log</string>
-    <string name="pref_logfile">pref_logfile</string>
-    <string name="pref_logfile_title">Log File</string>
-    <string name="pref_logfile_summ">File path: %s</string>
-    <string name="pref_logfile_default">RFAnalyzer/log.txt</string>
-    <string name="bookmarks_addBookmark">Add Bookmark</string>
-    <string name="bookmarks_addCategory">Add Category</string>
-    <string name="editBookmark_name">Name: </string>
-    <string name="editBookmark_category">Category: </string>
-    <string name="editBookmark_frequency">Frequency: </string>
-    <string name="editBookmark_channelWidth">Channel Width: </string>
-    <string name="editBookmark_mode">Mode: </string>
-    <string name="editBookmark_squelch">Squelch: </string>
-    <string name="editBookmark_comment">Comment: </string>
-    <string name="editBookmarkCategory_name">Name: </string>
-    <string name="editBookmarkCategory_description">Description: </string>
-    <string name="edit">Edit</string>
-    <string name="delete">Delete</string>
-    <string name="info_title"><![CDATA[<h1>RF Analyzer %s</h1>]]></string>
-    <string name="info_msg_body"><![CDATA[
-Copyright &#169; 2016 Dennis Mantz<br /><br />
+    <string name="about_screen_html"><![CDATA[
+Copyright &#169; 2025 Dennis Mantz<br /><br />
 
 <h1>About the App</h1>
 RF Analyzer is an open source spectrum analyzer that lets you use you
@@ -241,7 +26,7 @@ a new feature please use the GitHub page of the project:<br />
 https://github.com/demantz/RFAnalyzer/issues</a>
 <br /><br />
 Alternatively you could write me an email to
-<a href=mailto:dennis.mantz@googlemail.com>dennis.mantz@googlemail.com</a>.
+<a href=mailto:rfanalyzerapp@gmail.com>rfanalyzerapp@gmail.com</a>.
 
 <h1>License</h1>
 <a href=http://www.gnu.org/licenses/gpl.html>GPL version 2 or higher</a>
@@ -261,6 +46,64 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</small>
 <br /><br />
 Get the source code of the app here on <a href=https://github.com/demantz/RFAnalyzer>GitHub</a>!
+
+<h1>Third Party Licenses</h1>
+This app uses the following third party software modules:
+
+<h2>pffft</h2>
+Copyright (c) 2013  Julien Pommier ( pommier@modartt.com )
+<br /><br />
+Based on original fortran 77 code from FFTPACKv4 from NETLIB
+(http://www.netlib.org/fftpack), authored by Dr Paul Swarztrauber
+of NCAR, in 1985.
+<br /><br />
+As confirmed by the NCAR fftpack software curators, the following
+FFTPACKv5 license applies to FFTPACKv4 sources. My changes are
+released under the same terms.
+<br /><br />
+FFTPACK license:
+<br /><br />
+http://www.cisl.ucar.edu/css/software/fftpack5/ftpk.html
+<br /><br />
+Copyright (c) 2004 the University Corporation for Atmospheric
+Research ("UCAR"). All rights reserved. Developed by NCARs
+Computational and Information Systems Laboratory, UCAR,
+www.cisl.ucar.edu.
+<br /><br />
+Redistribution and use of the Software in source and binary forms,
+with or without modification, is permitted provided that the
+following conditions are met:
+<br /><br />
+- Neither the names of NCARs Computational and Information Systems
+Laboratory, the University Corporation for Atmospheric Research,
+nor the names of its sponsors or contributors may be used to
+endorse or promote products derived from this Software without
+specific prior written permission.
+<br /><br />
+- Redistributions of source code must retain the above copyright
+notices, this list of conditions, and the disclaimer below.
+<br /><br />
+- Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions, and the disclaimer below in the
+documentation and/or other materials provided with the
+distribution.
+<br /><br />
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
+SOFTWARE.
+
+<h2>hackrf_android (based on libhackrf)</h2>
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+<br /><br />
+principal author of hackrf_android: Dennis Mantz <dennis.mantzgooglemail.com>
+<br /><br />
+principal author of libhackrf: Michael Ossmann <mikeossmann.com>
 ]]></string>
 
 </resources>

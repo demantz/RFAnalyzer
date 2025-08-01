@@ -1,0 +1,6 @@
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/launcher_with_padding"/>
+    <foreground android:drawable="@drawable/launcher_with_padding"/>
+    <!-- optional mono layer for theme adaptive icons -->
+    <monochrome android:drawable="@drawable/launcher_with_padding"/>
+</adaptive-icon>

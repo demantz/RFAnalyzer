@@ -1,5 +1,16 @@
 CHANGELOG - RF Analyzer
 
+version 2.0
+- Complete rewrite of the app from scratch
+- New modern Material Design UI with improved usability
+- New bottom (or side) drawer UI for controls
+- Imporved waterfall plot
+- New custom Tuner-Wheel UI element
+- Integrated in-app help system and extensive user manual
+- Recordings are saved inside the App and can be downloaded/shared.
+- Sampling and Demodulation while the app is in the background
+- Support for CW (Morse) audio demodulation
+
 version 1.13
  - Bookmark frequencies
  - Including hackrf_android 1.12 (support for rad1o)

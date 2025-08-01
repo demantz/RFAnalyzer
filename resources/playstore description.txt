@@ -1,0 +1,81 @@
+# What’s New
+
+RF Analyzer 2.0 is here!
+
+The app has been completely rewritten from scratch. It now features a modern
+Material Design UI, a more powerful and intuitive interface, and improved
+performance across the board.
+
+- Support for demodulation while app is in the background
+- Reworked controls in a flexible control drawer
+- Improved demodulation and recording features
+- Integrated user manual and contextual help
+
+
+DESCRIPTION 
+
+Analyze RF signals on Android with HackRF or RTL-SDR.
+
+RF Analyzer turns your Android device into a real-time spectrum analyzer for
+Software Defined Radio (SDR). Visualize and listen to radio signals around you
+ - from amateur radio to broadcast signals and beyond.
+
+Whether you're a curious beginner or a seasoned ham, RF Analyzer offers a
+hands-on, interactive way to explore radio signals.
+
+FEATURES
+
+- Works with HackRF, RTL-SDR, or pre-recorded IQ files
+- View live spectrum (FFT) and waterfall plots
+- Demodulate AM, FM, SSB, and CW signals
+- Record raw IQ samples for offline analysis
+- A responsive and modern Material Design interface
+- Scroll, zoom, and tune through the bands
+- Built-in context-aware help and a full offline in-app manual
+
+PRICING
+
+You can try all features for free with a 7-day trial and up to 60 minutes of
+analyzer usage.
+
+If you like it, a one-time in-app purchase unlocks the full version - no
+subscriptions, no accounts, no ads.
+
+This app is a hobby project, built with passion and countless hours of work.
+Supporting the app helps me continue developing and improving it. Thank you! 🙏
+
+REQUIREMENTS
+
+- Android phone or tablet (with USB OTG support)
+- Supported SDR hardware (HackRF or RTL-SDR)
+- USB OTG adapter (USB-A female to USB-C for modern phones)
+
+LEARN MORE
+
+Want to go deeper? The full user manual is available with signal identification
+tips, ham radio basics, and more: https:// todo //
+
+
+
+Have fun exploring, learning, and listening to radio signals :) 
+
+73!
+
+- Dennis (DM4NTZ), Heidelberg, Germany
+
+
+
+LICENSE
+
+This application is released under the GNU General Public License v2. It is
+free software and the source code is available on GitHub.
+
+LEGAL ISSUES
+
+Please note that I am not responsible for any legal issues caused by the usage
+of this application. Be responsible and comply with your local law!
+
+
+
+
+

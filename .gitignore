@@ -4,6 +4,7 @@
 # generated files
 bin/
 gen/
+.cxx/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -11,7 +12,13 @@ local.properties
 # Android Studio
 .idea
 .gradle
+.kotlin
 build/
+app/release/
+
+# mkdocs generated files
+build_site/
+app/src/main/assets/docs
 
 # Vim and ctags
 tags
