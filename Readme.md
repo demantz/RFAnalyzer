@@ -9,7 +9,7 @@ Whether you're a radio hobbyist, ham operator, or just curious about what's
 flying through the airwaves, RF Analyzer makes exploring the RF world from your
 phone both practical and fun.
 
-![RF Analyzer Screenshot](todo)
+![RF Analyzer Screenshot](./resources/graphics/appstore/feature_graphic.png)
 
 ---
 
@@ -41,7 +41,7 @@ phone both practical and fun.
 
 A full **user manual** is available in the `docs/` folder and online via MkDocs:
 
-[**Read the RF Analyzer Manual**](todo)
+[**Read the RF Analyzer Manual**](https://demantz.github.io/RFAnalyzer/)
 
 Topics include:
 
@@ -59,7 +59,7 @@ Topics include:
 
 Get RF Analyzer on **Google Play**:
 
-[![Get it on Google Play](docs/assets/google-play-badge.png)](https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)
+[![Get it on Google Play](./docs/assets/google_play_badge.png)](https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)
 
 The app is available as a **free trial**, giving you 7 days of usage after
 installation and up to 60 minutes of operation time. This allows you to fully
@@ -82,9 +82,8 @@ Hello, my name is Dennis Mantz and I greet you from Heidelberg in Germany! How
 to reach me:
 
 - Callsign: DM4NTZ
-- Mastodon: @dm4ntz@chaos.social
-- Blog: http://tech.mantz-it.com
-- Mail: rfanalyzerapp -at- gmail.com
+- Mastodon: [@dm4ntz@chaos.social](https://chaos.social/@dm4ntz)
+- Mail: rfanalyzerapp -at- gmail -dot- com
 
 ## License
 

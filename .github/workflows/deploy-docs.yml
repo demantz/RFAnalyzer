@@ -26,4 +26,4 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material pymdown-extensions
-      - run: mkdocs gh-deploy --force
+      - run: mkdocs gh-deploy --no-directory-urls --force

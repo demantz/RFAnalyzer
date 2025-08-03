@@ -10,7 +10,10 @@ section [SDR Source](./sdr-source.md).
 
 The app can be downloaded via the Google Play Store. Use the following link:
 
-[<img src="/assets/google_play_badge.png" alt="RF Analyzer on Google Play" width="200px">](https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)
+[https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer](https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)
+
+<a href="https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer"><p align="center"><img src="./assets/google_play_badge.png" alt="RF Analyzer on Google Play" width="200px"></p></a>
+
 
 You can try all features for free with a 7-day trial and up to 60 minutes of
 analyzer usage.
@@ -43,7 +46,7 @@ using a [USB OTG adapter](https://en.wikipedia.org/wiki/USB_On-The-Go). You
 might have received such an adapter with your phone as it is usually used to
 transfer data from you old phone to the new one.
 
-!!! warning "TODO: add image of OTG adapter and connected sdr"
+![](./assets/tutorial_connect_sdr.png)
 
 When connecting the SDR, the RTL-SDR driver app immediatly shows a dialog
 requesting permissions to the device.
@@ -68,9 +71,7 @@ Select **RTL-SDR** in the source tab dropdown menu in the RF Analyzer app.
 Before starting the analyzer, scroll down and enable **External Server**.
 Enter the IP address and port:
 
-!!! warning "TODO: screenshot"
-
-Afterwards, start the analyzer by pressing the **Play** Button ().
+Afterwards, start the analyzer by pressing the **Play** Button.
 
 !!! warning "Firewall might block access to the server"
     If your host computer is behind a firewall or has a local firewall
