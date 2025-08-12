@@ -31,6 +31,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
@@ -311,10 +313,11 @@ class MainActivity: ComponentActivity() {
                             modifier = Modifier
                                 .background(Color.Black)
                                 .statusBarsPadding()
+                                .navigationBarsPadding()
                                 .pointerInput(Unit) {
                                 detectTapGestures { focusManager.clearFocus() } // Clears focus when tapping anywhere
                             }
-                        ) {
+                        ) { innerPadding ->
                             LaunchedEffect(Unit) {
                                 mainViewModel.snackbarEvent.collect { snackbarEvent ->
                                     val result = snackbarHostState.showSnackbar(
@@ -330,7 +333,8 @@ class MainActivity: ComponentActivity() {
                                 startDestination = if (appStateRepository.welcomeScreenFinished.value)
                                                        AppScreen.MainScreen.route
                                                    else
-                                                       AppScreen.WelcomeScreen.route
+                                                       AppScreen.WelcomeScreen.route,
+                                modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable(AppScreen.WelcomeScreen.route) { WelcomeScreen(onFinish = {
                                     appStateRepository.welcomeScreenFinished.set(true)

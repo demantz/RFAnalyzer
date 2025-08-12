@@ -7,7 +7,7 @@ Copyright &#169; 2025 Dennis Mantz<br /><br />
 <h1>About the App</h1>
 RF Analyzer is an open source spectrum analyzer that lets you use you
 SDR hardware together with an Android device. A detailed description
-can be found in the <a href=https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md>
+can be found in the <a href=https://demantz.github.io/RFAnalyzer/>
 manual</a>.
 
 Show the <a href=https://raw.githubusercontent.com/demantz/RFAnalyzer/master/changelog.txt>

@@ -1,6 +1,8 @@
 package com.mantz_it.rfanalyzer.ui.screens
 
 import android.content.res.Configuration
+import android.util.Log
+import android.view.ViewGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -63,7 +65,13 @@ fun MainScreen(analyzerSurface: AnalyzerSurface, viewModel: MainViewModel, appSt
         content = {
             Box(modifier = Modifier.fillMaxSize()) {
                 AndroidView(
-                    factory = { _ -> analyzerSurface },
+                    factory = { _ ->
+                        Log.d("MainScreen", "AndroidView.factory: reusing surface: ${System.identityHashCode(analyzerSurface)} (parent: ${analyzerSurface.parent})")
+                        // Detach from previous parent if it exists
+                        (analyzerSurface.parent as? ViewGroup)?.removeView(analyzerSurface)
+                        // Return analyzer surface:
+                        analyzerSurface
+                    },
                     modifier = Modifier
                         .fillMaxSize()
                 )

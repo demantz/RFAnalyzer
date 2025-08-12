@@ -42,6 +42,15 @@ long press on any UI element **label** will open the user manual section for
 this UI element. The label is located in the upper left gap of the border of
 each UI element.
 
+## Reverse Tuning Wheel
+
+This checkbox allows you to reverse the direction in which the tuning wheel
+moves the channel indicator. The default (disabled) is that a swipe to the
+left on the tuning wheel also moves the channel to the left (i.e. decreasing
+the frequency). However, a physical tuning wheel on an old radio did actually
+work the other way around which can be enabled with this setting. Choose which
+behavior feels better or more natural for you.
+
 ## Control Drawer Alignment (Landscape)
 
 The Control Drawer is accessible on the side of the screen when the device is

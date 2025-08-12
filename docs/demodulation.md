@@ -52,7 +52,9 @@ There are several ways to set the **channel frequency**:
    mode which means it is possible to just *type over* the current value.
    Pressing enter on the keyboard or the **Apply** button sets the new frequency.
 2. **Using the tuning wheel** below the textbox - swipe or fling the wheel left
-   or right. The step size is determined by the current demoulation mode.
+   or right. The step size is determined by the current demoulation mode. (Note:
+   the direction of the wheel can be reversed via the [Reverse Tuning Wheel](./settings.md#reverse-tuning-wheel)
+   setting if desired.)
 3. **Dragging the channel selector** at the orange drag button in the FFT view.
 
 !!! tip "Quick Tuning"

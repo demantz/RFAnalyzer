@@ -196,6 +196,7 @@ class AppStateRepository @Inject constructor(
     val colorTheme = Setting("colorTheme", ColorTheme.RFANALYZER_DARK, scope, dataStore)
     val controlDrawerSide = Setting("controlDrawerSide", ControlDrawerSide.RIGHT, scope, dataStore)
     val longPressHelpEnabled = Setting("longPressHelpEnabled", true, scope, dataStore)
+    val reverseTuningWheel = Setting("reverseTuningWheel", false, scope, dataStore)
 
     // Recordings Screen
     val displayOnlyFavoriteRecordings = Setting("displayOnlyFavoriteRecordings", false, scope, dataStore)

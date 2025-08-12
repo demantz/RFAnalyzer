@@ -91,7 +91,7 @@ enum class DemodulationMode(val displayName: String, val minChannelWidth: Int, v
     OFF("OFF", 0, 50000, 0, 0),  //dummy channel width values; equals largest channel width (=WFM)
     AM("AM", 3000, 15000, 8000, 1000),
     NFM("FM (narrow)", 3000, 15000, 10000, 1000),
-    WFM("FM (wide)", 30000, 100000, 65000, 100000),
+    WFM("FM (wide)", 30000, 125000, 65000, 100000),
     LSB("LSB", 1500, 5000, 2800, 100),
     USB("USB", 1500, 5000, 2800, 100),
     CW("CW", 150, 800, 300, 50),

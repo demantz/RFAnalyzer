@@ -75,6 +75,7 @@ data class SettingsTabActions(
     val onColorThemeChanged: (ColorTheme) -> Unit,
     val onLongPressHelpEnabledChanged: (Boolean) -> Unit,
     val onControlDrawerSideChanged: (ControlDrawerSide) -> Unit,
+    val onReverseTuningWheelChanged: (Boolean) -> Unit,
     val onRtlsdrAllowOutOfBoundFrequencyChanged: (Boolean) -> Unit,
     val onShowDebugInformationChanged: (Boolean) -> Unit,
     val onLoggingEnabledChanged: (Boolean) -> Unit,
@@ -91,6 +92,7 @@ fun SettingsTabComposable(
     fontSize: FontSize,
     colorTheme: ColorTheme,
     longPressHelpEnabled: Boolean,
+    reverseTuningWheel: Boolean,
     controlDrawerSide: ControlDrawerSide,
     rtlsdrAllowOutOfBoundFrequency: Boolean,
     showDebugInformation: Boolean,
@@ -133,6 +135,13 @@ fun SettingsTabComposable(
             isChecked = longPressHelpEnabled,
             onCheckedChange = settingsTabActions.onLongPressHelpEnabledChanged,
             helpSubPath = "settings.html#context-help-system"
+        )
+        OutlinedSwitch(
+            label = "Reverse Tuning Wheel",
+            helpText = "If enabled, the tuning wheel direction is reversed. This might feel more natural for some users.",
+            isChecked = reverseTuningWheel,
+            onCheckedChange = settingsTabActions.onReverseTuningWheelChanged,
+            helpSubPath = "settings.html#reverse-tuning-wheel"
         )
         OutlinedEnumDropDown(
             label = "Control Drawer Alignment (Landscape)",
@@ -220,6 +229,7 @@ fun SettingsTabPreview() {
                 fontSize = FontSize.NORMAL,
                 colorTheme = ColorTheme.RFANALYZER_DARK,
                 longPressHelpEnabled = true,
+                reverseTuningWheel = false,
                 controlDrawerSide = ControlDrawerSide.RIGHT,
                 rtlsdrAllowOutOfBoundFrequency = false,
                 loggingEnabled = true,
@@ -229,6 +239,7 @@ fun SettingsTabPreview() {
                     onFontSizeChanged = { },
                     onColorThemeChanged = { },
                     onLongPressHelpEnabledChanged = { },
+                    onReverseTuningWheelChanged = { },
                     onControlDrawerSideChanged = { },
                     onRtlsdrAllowOutOfBoundFrequencyChanged = { },
                     onShowDebugInformationChanged = { },

@@ -128,6 +128,7 @@ fun AnalyzerTabsComposable(
     val fontSize by appStateRepository.fontSize.stateFlow.collectAsState()
     val colorTheme by appStateRepository.colorTheme.stateFlow.collectAsState()
     val longPressHelpEnabled by appStateRepository.longPressHelpEnabled.stateFlow.collectAsState()
+    val reverseTuningWheel by appStateRepository.reverseTuningWheel.stateFlow.collectAsState()
     val controlDrawerSide by appStateRepository.controlDrawerSide.stateFlow.collectAsState()
     val showDebugInformation by appStateRepository.showDebugInformation.stateFlow.collectAsState()
     val loggingEnabled by appStateRepository.loggingEnabled.stateFlow.collectAsState()
@@ -249,6 +250,7 @@ fun AnalyzerTabsComposable(
                         fontSize = fontSize,
                         colorTheme = colorTheme,
                         longPressHelpEnabled = longPressHelpEnabled,
+                        reverseTuningWheel = reverseTuningWheel,
                         controlDrawerSide = controlDrawerSide,
                         rtlsdrAllowOutOfBoundFrequency = rtlsdrAllowOutOfBoundFrequency,
                         showDebugInformation = showDebugInformation,

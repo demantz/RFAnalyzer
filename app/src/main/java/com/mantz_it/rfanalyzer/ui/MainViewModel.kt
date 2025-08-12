@@ -358,7 +358,7 @@ class MainViewModel @Inject constructor(
             val absDelta = abs(delta)
             val factor = appStateRepository.viewportSampleRate.value / 1000f / minimumStepSize
             val amplification = factor * saturationFunction(x=absDelta-1, a=3f, k=5f)
-            val amplifiedDelta = amplification * delta
+            val amplifiedDelta = amplification * delta * (if(appStateRepository.reverseTuningWheel.value) -1 else 1)
             val finalDelta = if (amplifiedDelta > 0) amplifiedDelta.coerceAtLeast(1f) else amplifiedDelta.coerceAtMost( -1f )
             val newChannelFrequency = (appStateRepository.channelFrequency.value + finalDelta.toLong()*minimumStepSize)
             val stepAlignedNewChannelFrequency = newChannelFrequency / minimumStepSize * minimumStepSize
@@ -422,6 +422,7 @@ class MainViewModel @Inject constructor(
         onFontSizeChanged = appStateRepository.fontSize::set,
         onColorThemeChanged = appStateRepository.colorTheme::set,
         onLongPressHelpEnabledChanged = appStateRepository.longPressHelpEnabled::set,
+        onReverseTuningWheelChanged = appStateRepository.reverseTuningWheel::set,
         onControlDrawerSideChanged = appStateRepository.controlDrawerSide::set,
         onRtlsdrAllowOutOfBoundFrequencyChanged = appStateRepository.rtlsdrAllowOutOfBoundFrequency::set,
         onShowDebugInformationChanged = appStateRepository.showDebugInformation::set,
