@@ -480,7 +480,6 @@ class AnalyzerSurface(context: Context,
         private val fftGridBitmapState: MutableMap<String, Any> = HashMap() // Hashmap to track all relevant variables for the grid
                                                                             // (stores all variables which influence the grid at the time the bitmap was drawn)
         private var waterfallBitmap: Bitmap? = null
-        private var peaks: FloatArray? = null // peak hold values
         private var timeAverageSamples: FloatArray? = null // Used to calculate the average of multiple values in the past 'averagingLength' fft sample rows
         private var peaksYCoordinates: FloatArray? = null // peak hold y-coordinates
         private var colorBuffer: IntArray? = null // Preallocated color array
@@ -558,17 +557,17 @@ class AnalyzerSurface(context: Context,
                         // Update Peak Hold
                         if (fftPeakHold.value) {
                             // First verify that the array is initialized correctly:
-                            if (peaks == null || peaks!!.size != waterfallBuffer[0].size) {
-                                peaks = FloatArray(waterfallBuffer[0].size)
-                                for (i in peaks!!.indices) peaks!![i] = -999999f // == no peak
+                            if (fftProcessorData.peaks == null || fftProcessorData.peaks!!.size != waterfallBuffer[0].size) {
+                                fftProcessorData.peaks = FloatArray(waterfallBuffer[0].size)
+                                for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] = -999999f // == no peak
                             }
                             // Check if the frequency or sample rate of the incoming signals is different from the ones before:
                             if (fftProcessorData.frequencyOrSampleRateChanged)
-                                for (i in peaks!!.indices) peaks!![i] = -999999f // reset peaks. We could also shift and scale. But for now they are simply reset.
+                                for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] = -999999f // reset peaks. We could also shift and scale. But for now they are simply reset.
                             // Update the peaks:
-                            for (i in waterfallBuffer[readIndex].indices) peaks!![i] = max(peaks!![i], waterfallBuffer[readIndex][i])
+                            for (i in waterfallBuffer[readIndex].indices) fftProcessorData.peaks!![i] = max(fftProcessorData.peaks!![i], waterfallBuffer[readIndex][i])
                         } else {
-                            peaks = null
+                            fftProcessorData.peaks = null
                             peaksYCoordinates = null
                         }
 
@@ -576,6 +575,7 @@ class AnalyzerSurface(context: Context,
                         drawPreprocessing(
                             waterfallBuffer,
                             waterfallBufferDirtyMap,
+                            fftProcessorData.peaks,
                             frequency,
                             sampleRate,
                             readIndex,
@@ -601,6 +601,7 @@ class AnalyzerSurface(context: Context,
 
         private fun drawPreprocessing(waterfallBuffer: Array<FloatArray>,
                                       waterfallBufferDirtyMap: Array<Boolean>,
+                                      peaks: FloatArray?,
                                       frequency: Long,          // center frequency of the fft samples
                                       sampleRate: Long,         // sample rate of the fft samples
                                       currentRowIdx: Int,       // Index of the most recent row in waterfallBuffer
@@ -613,7 +614,6 @@ class AnalyzerSurface(context: Context,
             val timeAverageSamples = timeAverageSamples!!
             val waterfallColorMapArray = waterfallColorMapArray
             val colorMapSize = waterfallColorMapArray.size
-            val peaks = peaks
             val calcPeaks = peaks != null
             val fftPath = fftPath
             val peaksYCoordinates = peaksYCoordinates
@@ -702,7 +702,7 @@ class AnalyzerSurface(context: Context,
                         var j = (i * samplesPerPx).toInt()
                         while (j < (i + 1) * samplesPerPx) {
                             avg += fftRow[j + start]
-                            if (rowNumber == 0 && calcPeaks) peakAvg += peaks!![j + start]
+                            if (rowNumber == 0 && calcPeaks) peakAvg += peaks[j + start]
                             counter++
                             j++
                         }

@@ -454,10 +454,12 @@ public class RtlsdrSource implements IQSourceInterface {
 			if(!Thread.currentThread().getName().equals(receiverThread.threadName)) {
 				Log.d(LOGTAG, "close: joining receiver thread from Thread: " + Thread.currentThread().getName());
 				try {
-					receiverThread.join();  // TODO: Null Pointer Exception
+					receiverThread.join();
 					Log.d(LOGTAG, "close: receiver thread successfully joined");
 				} catch (InterruptedException e) {
-					Log.e(LOGTAG, "stopSampling: Interrupted while joining receiver thread: " + e.getMessage());
+					Log.w(LOGTAG, "stopSampling: Interrupted while joining receiver thread: " + e.getMessage());
+				} catch (NullPointerException e) {
+					Log.d(LOGTAG, "stopSampling: receiverThread is null while joining (i.e. already joined).");
 				}
 			}
 			receiverThread = null;

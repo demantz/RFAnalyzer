@@ -54,6 +54,8 @@ class FftProcessorData {
     var frequency: Long? = null
     @Volatile
     var sampleRate: Long? = null
+    @Volatile
+    var peaks: FloatArray? = null // peak hold values
 }
 
 

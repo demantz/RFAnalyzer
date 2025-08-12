@@ -96,8 +96,8 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
             }
 
             override fun onBillingServiceDisconnected() {
-                // TODO: Retry logic?
-                Log.w(TAG, "startBillingConnection: billing client connection disconnected! TODO: retry logic!")
+                // TODO: Maybe implement retry logic in the future..
+                Log.w(TAG, "startBillingConnection: billing client connection disconnected!")
             }
         })
     }
@@ -257,7 +257,7 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
     }
 
     private fun calculateRemainingDays(): Int {
-        val installTimestamp = getInstallTimestamp(context) // todo: this should be 'purchase time'
+        val installTimestamp = getInstallTimestamp(context)
         val installedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - installTimestamp).toInt()
         val trialPeriod= 7 // 7-day trial period
         return (trialPeriod - installedDays).coerceAtLeast(0)
