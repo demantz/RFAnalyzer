@@ -535,8 +535,13 @@ class AnalyzerSurface(context: Context,
 
                 if(timeAverageSamples == null || timeAverageSamples!!.size != width)
                     timeAverageSamples = FloatArray(width)
-                if(fftPeakHold.value && (peaksYCoordinates == null || peaksYCoordinates!!.size != width))
-                    peaksYCoordinates = FloatArray(width)
+
+                if(fftPeakHold.value) {
+                    if(peaksYCoordinates == null || peaksYCoordinates!!.size != width)
+                        peaksYCoordinates = FloatArray(width)
+                } else {
+                    peaksYCoordinates = null
+                }
 
                 var doDraw = false
                 try {
@@ -554,22 +559,6 @@ class AnalyzerSurface(context: Context,
                         sampleRate != null
                     ) {
                         doDraw = true
-                        // Update Peak Hold
-                        if (fftPeakHold.value) {
-                            // First verify that the array is initialized correctly:
-                            if (fftProcessorData.peaks == null || fftProcessorData.peaks!!.size != waterfallBuffer[0].size) {
-                                fftProcessorData.peaks = FloatArray(waterfallBuffer[0].size)
-                                for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] = -999999f // == no peak
-                            }
-                            // Check if the frequency or sample rate of the incoming signals is different from the ones before:
-                            if (fftProcessorData.frequencyOrSampleRateChanged)
-                                for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] = -999999f // reset peaks. We could also shift and scale. But for now they are simply reset.
-                            // Update the peaks:
-                            for (i in waterfallBuffer[readIndex].indices) fftProcessorData.peaks!![i] = max(fftProcessorData.peaks!![i], waterfallBuffer[readIndex][i])
-                        } else {
-                            fftProcessorData.peaks = null
-                            peaksYCoordinates = null
-                        }
 
                         // preprocessing of waterfall data:
                         drawPreprocessing(
@@ -614,9 +603,9 @@ class AnalyzerSurface(context: Context,
             val timeAverageSamples = timeAverageSamples!!
             val waterfallColorMapArray = waterfallColorMapArray
             val colorMapSize = waterfallColorMapArray.size
-            val calcPeaks = peaks != null
-            val fftPath = fftPath
             val peaksYCoordinates = peaksYCoordinates
+            val calcPeaks = peaks != null && peaksYCoordinates != null
+            val fftPath = fftPath
             val fftSize = waterfallBuffer[0].size
             val doAutoscale = doAutoscaleInNextDraw
 
@@ -707,7 +696,7 @@ class AnalyzerSurface(context: Context,
                             j++
                         }
                         avg /= counter
-                        if (rowNumber == 0 && calcPeaks) peaksYCoordinates!![i] = fftHeight - (peakAvg/counter - minDB) * dbWidth
+                        if (rowNumber == 0 && calcPeaks) peaksYCoordinates[i] = fftHeight - (peakAvg/counter - minDB) * dbWidth
 
                         // FFT Path:
                         if(rowNumber <= timeAveragingLength)
@@ -726,7 +715,7 @@ class AnalyzerSurface(context: Context,
                         colorBuffer[bufferIndex * width + i] = waterfallColorMapArray[if(waterfallColorMapIndex<0) 0 else if(waterfallColorMapIndex>=colorMapSize) colorMapSize-1 else waterfallColorMapIndex]
                     } else {
                         colorBuffer[bufferIndex * width + i] = black
-                        if(calcPeaks) peaksYCoordinates!![i] = -1f // outside of the frame
+                        if(calcPeaks) peaksYCoordinates[i] = -1f // outside of the frame
                     }
                 }
                 rowsProcessed += 1

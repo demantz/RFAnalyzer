@@ -99,6 +99,10 @@ class AppStateRepository @Inject constructor(
 
     // General App State
     val welcomeScreenFinished = Setting("welcomeScreenFinished", false, scope, dataStore)
+    val notificationPermissionAskedAtLeastOnce = Setting("notificationPermissionAskedAtLeastOnce", false, scope, dataStore)
+    val dontAskForNotificationPermission = Setting("dontAskForNotificationPermission", false, scope, dataStore)
+    val appVersion = MutableState("-")
+    val appBuildType = MutableState("-")
 
     // Source Tab
     val sourceType = Setting("sourceType", SourceType.HACKRF, scope, dataStore)

@@ -51,7 +51,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
@@ -914,6 +916,61 @@ fun <T> OutlinedListDropDown(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun OutlinedIntegerTextField(
+   label: String,
+   value: Long,
+   onValueChange: (Long) -> Unit,
+   enabled: Boolean = true,
+   modifier: Modifier = Modifier,
+   helpSubPath: String? = null,
+) {
+    var displayedValue by remember { mutableStateOf(value.toString()) }
+    var isError by remember { mutableStateOf(false) }
+
+    // Update displayedValue when the external value changes
+    LaunchedEffect(value) {
+        displayedValue = value.toString()
+        isError = false
+    }
+    OutlinedBox(
+        label = label,
+        helpSubPath = helpSubPath,
+        enabled = enabled,
+        modifier = modifier
+    ) {
+        TextField(
+            value = displayedValue,
+            onValueChange = {
+                displayedValue = it
+                val intValue = if(it.isEmpty()) 0 else it.toLongOrNull()
+                if(intValue != null) {
+                    isError = false
+                    onValueChange(intValue)
+                } else {
+                    isError = true
+                }
+            },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            enabled = enabled,
+            isError = isError,
+            colors = TextFieldDefaults.colors(
+                errorTextColor = MaterialTheme.colorScheme.error
+            ),
+            modifier = Modifier.fillMaxWidth().height(50.dp).offset(y=2.dp)
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused && isError) {
+                        displayedValue = value.toString() // Revert to last correct value on focus lost if error
+                        isError = false
+                    }
+                },
+        )
     }
 }
 

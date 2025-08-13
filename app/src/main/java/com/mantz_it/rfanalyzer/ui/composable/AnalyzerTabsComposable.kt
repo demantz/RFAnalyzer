@@ -70,6 +70,8 @@ fun AnalyzerTabsComposable(
 ) {
     var state by rememberSaveable { mutableStateOf(AnalyzerTabs.SOURCE) }
 
+    val appVersion by appStateRepository.appVersion.stateFlow.collectAsState()
+    val appBuildType by appStateRepository.appBuildType.stateFlow.collectAsState()
     val sourceType by appStateRepository.sourceType.stateFlow.collectAsState()
     val sourceName by appStateRepository.sourceName.stateFlow.collectAsState()
     val sourceMinimumFrequency by appStateRepository.sourceMinimumFrequency.stateFlow.collectAsState()
@@ -264,6 +266,8 @@ fun AnalyzerTabsComposable(
                         remainingTrialDays = remainingTrialDays,
                         isFullVersion = isFullVersion,
                         isPurchasePending = isPurchasePending,
+                        appVersion = appVersion,
+                        appBuildType = appBuildType,
                         aboutTabActions = aboutTabActions
                     )
             }

@@ -80,9 +80,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import kotlinx.coroutines.delay
+import android.provider.Settings
 
 /**
  * <h1>RF Analyzer - Main Activity</h1>
@@ -190,13 +189,17 @@ class MainActivity: ComponentActivity() {
 
         // Get version name:
         val versionName = try {
-            packageManager.getPackageInfo(packageName, 0).versionName;
+            packageManager.getPackageInfo(packageName, 0).versionName ?: "<unknown version>"
         } catch (e: PackageManager.NameNotFoundException) {
             Log.e(TAG, "onCreate: Cannot read version name: " + e.message);
             "<unknown version>"
         }
+        appStateRepository.appVersion.set(versionName)
+
+        // Get build type (debug/release)
         val buildType = BuildConfig.BUILD_TYPE
         Log.i(TAG, "This is RF Analyzer $versionName ($buildType) by Dennis Mantz.");
+        appStateRepository.appBuildType.set(buildType)
 
         // Device Info
         val deviceName = if (Build.MODEL.startsWith(Build.MANUFACTURER, ignoreCase = true)) {
@@ -216,6 +219,15 @@ class MainActivity: ComponentActivity() {
         }
 
         // Check and request POST_NOTIFICATIONS permission if needed
+        val requestPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
+                Log.d(TAG, "POST_NOTIFICATIONS permission granted.")
+            } else {
+                Log.w(TAG, "POST_NOTIFICATIONS permission denied.")
+            }
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Log.d(TAG, "onCreate: Check for permissions..")
             if (ContextCompat.checkSelfPermission(
@@ -223,7 +235,12 @@ class MainActivity: ComponentActivity() {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                requestNotificationPermission()
+                lifecycleScope.launch {
+                    delay(2000) // 2-second delay to make sure the AppStateRepository is initialized
+                    if (!appStateRepository.dontAskForNotificationPermission.value) {
+                        requestNotificationPermission(requestPermissionLauncher)
+                    }
+                }
             }
         }
 
@@ -343,7 +360,7 @@ class MainActivity: ComponentActivity() {
                                 composable(AppScreen.MainScreen.route) { MainScreen(analyzerSurface, mainViewModel, appStateRepository, billingRepository) }
                                 composable(AppScreen.RecordingScreen.route) { RecordingsScreen(navController, mainViewModel.recordings, appStateRepository.displayOnlyFavoriteRecordings.stateFlow, mainViewModel.recordingsScreenActions) }
                                 composable(AppScreen.LogFileScreen.route) { LogFileScreen(navController, mainViewModel.logContent) }
-                                composable(AppScreen.AboutScreen.route) { AboutScreen(versionName ?: "<unknown version>", navController) }
+                                composable(AppScreen.AboutScreen.route) { AboutScreen(versionName, navController) }
                                 composable(
                                     route = "${AppScreen.ManualScreen().route}{subUrl}",
                                     arguments = listOf(
@@ -482,18 +499,36 @@ class MainActivity: ComponentActivity() {
         }
     }
 
-    private fun requestNotificationPermission() {
+    private fun requestNotificationPermission(requestPermissionLauncher: ActivityResultLauncher<String>) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val requestPermissionLauncher = registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted ->
-                if (isGranted) {
-                    Log.d(TAG, "POST_NOTIFICATIONS permission granted.")
-                } else {
-                    Log.w(TAG, "POST_NOTIFICATIONS permission denied.")
+
+            val askedAlready = appStateRepository.notificationPermissionAskedAtLeastOnce.value
+            // Show a dialog that explains why we need the permission
+            AlertDialog.Builder(this)
+                .setTitle("Background Notification")
+                .setMessage("The app needs permission to display a notification while the analyzer service is running in the background.")
+                .setPositiveButton(
+                    if(askedAlready) "Go to Settings" else "OK"
+                ) { dialog, whichButton ->
+                    if(askedAlready) {
+                        // go to settings:
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        val uri = Uri.fromParts("package", this.packageName, null)
+                        intent.data = uri
+                        this.startActivity(intent)
+                    } else {
+                        // show permission dialog:
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        appStateRepository.notificationPermissionAskedAtLeastOnce.set(true)
+                    }
                 }
-            }
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                .setNegativeButton(
+                    "Don't ask again"
+                ) { dialog, whichButton ->
+                    appStateRepository.dontAskForNotificationPermission.set(true)
+                    appStateRepository.notificationPermissionAskedAtLeastOnce.set(true)
+                }
+                .show()
         }
     }
 

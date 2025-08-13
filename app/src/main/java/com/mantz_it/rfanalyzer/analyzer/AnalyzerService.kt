@@ -322,6 +322,7 @@ class AnalyzerService : Service() {
             returnQueue = scheduler!!.fftInputQueue,  // Reference to the buffer-pool-return queue
             fftProcessorData = appStateRepository.fftProcessorData,
             appStateRepository.waterfallSpeed.value,
+            fftPeakHold = appStateRepository.fftPeakHold.value,
             getChannelFrequencyRange = {
                 val schedulerHandle = scheduler
                 val demodulatorHandle = demodulator
@@ -565,6 +566,7 @@ class AnalyzerService : Service() {
         // view tab
         s.collectAppState(asr.fftSize) { scheduler?.fftSize = it }
         s.collectAppState(asr.waterfallSpeed) { fftProcessor?.waterfallSpeed = it }
+        s.collectAppState(asr.fftPeakHold) { fftProcessor?.fftPeakHold = it }
 
         // demodulation tab
         s.collectAppState(asr.demodulationMode) { applyNewDemodulationMode(it) }

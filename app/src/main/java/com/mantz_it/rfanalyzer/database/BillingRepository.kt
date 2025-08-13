@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import com.android.billingclient.api.AcknowledgePurchaseParams
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.PendingPurchasesParams
@@ -110,13 +111,29 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
         billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 Log.d(TAG, "queryPurchases: query successful.")
-                purchases.forEach { Log.d(TAG, "queryPurchases: purchase: ${it.packageName} (state=${it.purchaseState}). time=${it.purchaseTime} token=${it.purchaseToken} orderId=${it.orderId}") }
-                val hasPurchased = purchases.any { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                purchases.forEach { Log.d(TAG, "queryPurchases: purchase: ${it.packageName} (state=${it.purchaseState}). time=${it.purchaseTime} token=${it.purchaseToken} orderId=${it.orderId} acknowledged=${it.isAcknowledged}") }
+                val purchasedPurchase = purchases.find { it.purchaseState == Purchase.PurchaseState.PURCHASED }
                 val isPending = purchases.any { it.purchaseState == Purchase.PurchaseState.PENDING }
-                if (hasPurchased) {
+
+                if (purchasedPurchase != null) {
                     Log.d(TAG, "queryPurchases: set isFullVersion = true!")
                     appStateRepository.isFullVersion.set(true)
                     appStateRepository.isPurchasePending.set(false)
+
+                    if (!purchasedPurchase.isAcknowledged) {
+                        Log.i(TAG, "queryPurchases: Purchase is not acknowledged yet. Acknowledging the purchase..")
+                        billingClient.acknowledgePurchase(
+                            AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(purchasedPurchase.purchaseToken)
+                                .build()
+                        ) { result ->
+                            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                                Log.d(TAG, "queryPurchases: Purchase acknowledged successfully")
+                            } else {
+                                Log.e(TAG, "queryPurchases: Failed to acknowledge purchase: ${result.debugMessage}")
+                            }
+                        }
+                    }
                 } else if (isPending) {
                     Log.d(TAG, "queryPurchases: purchase is pending. set isPurchasePending = true!")
                     appStateRepository.isPurchasePending.set(true)
@@ -199,6 +216,21 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
                             Log.i(TAG, "onPurchasesUpdated: Purchase is in PURCHASED state.")
                             appStateRepository.isFullVersion.set(true)
                             appStateRepository.isPurchasePending.set(false)
+
+                            if (!purchase.isAcknowledged) {
+                                Log.i(TAG, "onPurchasesUpdated: Purchase is not acknowledged yet. Acknowledging the purchase..")
+                                billingClient.acknowledgePurchase(
+                                    AcknowledgePurchaseParams.newBuilder()
+                                        .setPurchaseToken(purchase.purchaseToken)
+                                        .build()
+                                ) { result ->
+                                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                                        Log.d(TAG, "Purchase acknowledged successfully")
+                                    } else {
+                                        Log.e(TAG, "Failed to acknowledge purchase: ${result.debugMessage}")
+                                    }
+                                }
+                            }
                         }
 
                         Purchase.PurchaseState.PENDING -> {

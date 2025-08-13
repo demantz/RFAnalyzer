@@ -14,8 +14,8 @@ android {
         applicationId = "com.mantz_it.rfanalyzer"
         minSdk = 28
         targetSdk = 36
-        versionCode = 20010  // 2.00.10
-        versionName = "2.00beta1"
+        versionCode = 20011  // 2.00.11
+        versionName = "2.00beta2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

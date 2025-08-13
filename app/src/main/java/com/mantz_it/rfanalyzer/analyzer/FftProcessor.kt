@@ -8,6 +8,8 @@ import com.mantz_it.rfanalyzer.ui.composable.FftWaterfallSpeed
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.indices
+import kotlin.math.max
 
 /**
  * <h1>RF Analyzer - Analyzer Processing Loop</h1>
@@ -65,6 +67,7 @@ class FftProcessor(
     private val returnQueue: ArrayBlockingQueue<SamplePacket>, // queue to return unused buffers
     private val fftProcessorData: FftProcessorData,
     var waterfallSpeed: FftWaterfallSpeed,
+    var fftPeakHold: Boolean,
     private val getChannelFrequencyRange: () -> Pair<Long, Long>?,
     private val onAverageSignalStrengthChanged: (Float) -> Unit,
 ) : Thread() {
@@ -222,6 +225,24 @@ class FftProcessor(
                 // update the read/write indices
                 fftProcessorData.readIndex = fftProcessorData.writeIndex
                 fftProcessorData.writeIndex = if(fftProcessorData.writeIndex==0) fftProcessorData.waterfallBuffer!!.size-1 else fftProcessorData.writeIndex-1
+
+                // Update Peak Hold
+                if(fftPeakHold) {
+                    // First verify that the array is initialized correctly:
+                    val arraySize = fftProcessorData.waterfallBuffer!![0].size
+                    if (fftProcessorData.peaks == null || fftProcessorData.peaks!!.size != arraySize) {
+                        fftProcessorData.peaks = FloatArray(arraySize)
+                        for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] = -999999f // == no peak
+                    }
+                    // Check if the frequency or sample rate of the incoming signals is different from the ones before:
+                    if (fftProcessorData.frequencyOrSampleRateChanged)
+                        for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] = -999999f // reset peaks. We could also shift and scale. But for now they are simply reset.
+                    // Update the peaks:
+                    for (i in fftProcessorData.waterfallBuffer!![fftProcessorData.readIndex].indices)
+                        fftProcessorData.peaks!![i] = max(fftProcessorData.peaks!![i], fftProcessorData.waterfallBuffer!![fftProcessorData.readIndex][i])
+                } else {
+                    fftProcessorData.peaks = null
+                }
             } catch (e: InterruptedException) {
                 Log.e(LOGTAG, "run: Interrupted while offering packet to magQueue . stop.")
                 this.stopLoop()

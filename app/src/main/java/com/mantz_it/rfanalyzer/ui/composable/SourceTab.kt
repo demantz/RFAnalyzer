@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -252,20 +251,12 @@ fun SourceTabComposable(
                         helpSubPath = "sdr-source.html#sample-rate_1"
                     )
                 }
-                OutlinedBox(
-                    label ="Frequency Converter Offset (Hz)",
+                OutlinedIntegerTextField(
+                    label = "Frequency Converter Offset (Hz)",
+                    value = hackrfConverterOffset,
+                    onValueChange = sourceTabActions.onHackrfConverterOffsetChanged,
                     helpSubPath = "sdr-source.html#frequency-converter-offset_1"
-                ) {
-                    TextField(
-                        value = hackrfConverterOffset.toString(),
-                        onValueChange = {
-                            val value = it.toLongOrNull()
-                            if(value != null) sourceTabActions.onHackrfConverterOffsetChanged(value)
-                            else if(it.isEmpty()) sourceTabActions.onHackrfConverterOffsetChanged(0)
-                        },
-                        modifier = Modifier.fillMaxWidth().height(50.dp).offset(y=2.dp)
-                    )
-                }
+                )
             }
             SourceType.RTLSDR -> {
                 FrequencyChooser(
@@ -386,36 +377,20 @@ fun SourceTabComposable(
                     }
                 }
                 Row {
-                    OutlinedBox(
-                        label ="Frequency Corr. (ppm)",
-                        modifier = Modifier.weight(1f).padding(end = 3.dp),
+                    OutlinedIntegerTextField(
+                        label = "Frequency Correction (ppm)",
+                        value = rtlsdrFrequencyCorrection.toLong(),
+                        onValueChange = { sourceTabActions.onRtlsdrFrequencyCorrectionChanged(it.toInt())},
+                        modifier = Modifier.weight(1f).padding(start = 3.dp),
                         helpSubPath = "sdr-source.html#frequency-correction"
-                    ) {
-                        TextField(
-                            value = rtlsdrFrequencyCorrection.toString(),
-                            onValueChange = {
-                                val value = it.toIntOrNull()
-                                if(value != null) sourceTabActions.onRtlsdrFrequencyCorrectionChanged(value)
-                                else if(it.isEmpty()) sourceTabActions.onRtlsdrFrequencyCorrectionChanged(0)
-                            },
-                            modifier = Modifier.height(50.dp).offset(y=2.dp)
-                        )
-                    }
-                    OutlinedBox(
-                        label ="Frequency Offset (Hz)",
+                    )
+                    OutlinedIntegerTextField(
+                        label = "Frequency Offset (Hz)",
+                        value = rtlsdrConverterOffset,
+                        onValueChange = sourceTabActions.onRtlsdrConverterOffsetChanged,
                         modifier = Modifier.weight(1f).padding(start = 3.dp),
                         helpSubPath = "sdr-source.html#frequency-converter-offset"
-                    ) {
-                        TextField(
-                            value = rtlsdrConverterOffset.toString(),
-                            onValueChange = {
-                                val value = it.toLongOrNull()
-                                if(value != null) sourceTabActions.onRtlsdrConverterOffsetChanged(value)
-                                else if(it.isEmpty()) sourceTabActions.onRtlsdrConverterOffsetChanged(0)
-                            },
-                            modifier = Modifier.height(50.dp).offset(y=2.dp)
-                        )
-                    }
+                    )
                 }
             }
             SourceType.FILESOURCE -> {
@@ -498,7 +473,7 @@ fun SourceTabComposable(
 fun SourceTabPreview() {
     CompositionLocalProvider(LocalShowHelp provides {}) {
         SourceTabComposable(
-            sourceType = SourceType.RTLSDR,
+            sourceType = SourceType.HACKRF,
             sourceName = "Test-Source",
             analyzerRunning = true,
             analyzerStartPending = false,

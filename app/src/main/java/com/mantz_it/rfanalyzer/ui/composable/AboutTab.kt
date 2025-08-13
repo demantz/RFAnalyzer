@@ -75,6 +75,8 @@ fun AboutTabComposable(
     remainingTrialDays: Int,
     isFullVersion: Boolean,
     isPurchasePending: Boolean,
+    appVersion: String,
+    appBuildType: String,
     aboutTabActions: AboutTabActions,
 ) {
     val context = LocalContext.current
@@ -182,6 +184,9 @@ fun AboutTabComposable(
                     .weight(1f)
             ) { Text("Tutorial") }
         }
+
+        Text("RF Analyzer - Version $appVersion ($appBuildType)",
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top=16.dp))
     }
 }
 
@@ -197,6 +202,8 @@ fun AboutTabPreview() {
                 remainingTrialDays = 3,
                 isFullVersion = false,
                 isPurchasePending = true,
+                appVersion = "2.0test1",
+                appBuildType = "debug",
                 aboutTabActions = AboutTabActions(
                     onAboutClicked = { },
                     onManualClicked = { },
