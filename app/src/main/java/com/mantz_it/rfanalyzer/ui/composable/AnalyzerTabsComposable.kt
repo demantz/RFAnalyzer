@@ -98,6 +98,7 @@ fun AnalyzerTabsComposable(
     val rtlsdrExternalServerPort by appStateRepository.rtlsdrExternalServerPort.stateFlow.collectAsState()
     val rtlsdrFrequencyCorrection by appStateRepository.rtlsdrFrequencyCorrection.stateFlow.collectAsState()
     val rtlsdrAllowOutOfBoundFrequency by appStateRepository.rtlsdrAllowOutOfBoundFrequency.stateFlow.collectAsState()
+    val rtlsdrEnableBiasT by appStateRepository.rtlsdrEnableBiasT.stateFlow.collectAsState()
     val filesourceFilename by appStateRepository.filesourceFilename.stateFlow.collectAsState()
     val filesourceFileFormat by appStateRepository.filesourceFileFormat.stateFlow.collectAsState()
     val filesourceRepeatEnabled by appStateRepository.filesourceRepeatEnabled.stateFlow.collectAsState()
@@ -191,6 +192,7 @@ fun AnalyzerTabsComposable(
                         rtlsdrFrequencyCorrection = rtlsdrFrequencyCorrection,
                         rtlsdrConverterOffset = rtlsdrConverterOffset,
                         rtlsdrAllowOutOfBoundFrequency = rtlsdrAllowOutOfBoundFrequency,
+                        rtlsdrEnableBiasT = rtlsdrEnableBiasT,
                         filesourceFilename = filesourceFilename,
                         filesourceFileFormat = filesourceFileFormat,
                         filesourceRepeatEnabled = filesourceRepeatEnabled,

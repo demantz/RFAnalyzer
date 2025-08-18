@@ -124,6 +124,18 @@ spectrum into a different frequency range.
     incoming at 139MHz (this is where the 14MHz band is found after up-
     converting it with the Ham-It-Up converter).
 
+### Bias Tee
+
+This option enables a 4.5V voltage on the antenna port or the RTL-SDR. This
+setting only has an effect for the RTL-SDR Blog v4 device. Other dongles
+do not have a Bias Tee feature.
+
+The Bias Tee voltage is useful for powering active antennas or external devices
+(e.g. a LNA) requiring a bias voltage.
+
+!!! warning 
+    Not all devices or antennas are compatible. Use caution to avoid damaging external equipment.
+
 ---
 
 ## HackRF Settings

@@ -643,7 +643,8 @@ class MainActivity: ComponentActivity() {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setClassName("marto.rtl_tcp_andro", "com.sdrtouch.rtlsdr.DeviceOpenActivity");
-                data = "iqsrc://-a 127.0.0.1 -p 1234 -n 1".toUri()
+                val enableBiasT = if(appStateRepository.rtlsdrEnableBiasT.value) "-T 1" else "-T 0"
+                data = "iqsrc://-a 127.0.0.1 -p 1234 -n 1 $enableBiasT".toUri()
             }
             startRtlsdrDriverLauncher.launch(intent)
             return true

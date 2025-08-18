@@ -225,6 +225,22 @@ Visual signature:
 - Sharp edge on the upper side
 - No carrier spike
 
+### CW - Continous Wave / Morse Code
+
+![CW Example](path/to/lsb-screenshot.png)
+
+Used for:
+
+- Ham radio
+
+Typical bandwidth: **~100 Hz**
+
+Visual signature:
+
+- Single sharp carrier wave which is switch on and off
+- Morse Code pattern is visible in waterfall (dashes and dots)
+
+
 ## Further Resources for Signal Identification
 
 If you're unsure about the type of signal you're observing, the following resources can assist you in identifying various RF signals, including analog audio:

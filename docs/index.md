@@ -41,6 +41,7 @@
 - Demodulation can run as **background service** without a foreground app
 - Significant performance improvements
 - Built-in context-aware help and a full offline in-app manual
+- Compatible with the RTL-SDR Blog v4
 
 ---
 

@@ -140,6 +140,7 @@ class AppStateRepository @Inject constructor(
     val rtlsdrExternalServerPort = Setting("rtlsdrExternalServerPort", 1234, scope, dataStore)
     val rtlsdrFrequencyCorrection = Setting("rtlsdrFrequencyCorrection", 0, scope, dataStore)
     val rtlsdrAllowOutOfBoundFrequency = Setting("rtlsdrAllowOutOfBoundFrequency", false, scope, dataStore)
+    val rtlsdrEnableBiasT = Setting("rtlsdrEnableBiasT", false, scope, dataStore)
     val filesourceUri = MutableState("")
     val filesourceFilename = MutableState("")
     val filesourceFileFormat = MutableState(FilesourceFileFormat.HACKRF)

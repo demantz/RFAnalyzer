@@ -582,6 +582,10 @@ class AnalyzerService : Service() {
             else if (LogcatLogger.isLogging)
                 LogcatLogger.stopLogging()
         }
-        s.collectAppState(asr.rtlsdrAllowOutOfBoundFrequency) { (source as? RtlsdrSource)?.isAllowOutOfBoundFrequency = it }
+        s.collectAppState(asr.rtlsdrAllowOutOfBoundFrequency) {
+            (source as? RtlsdrSource)?.isAllowOutOfBoundFrequency = it
+            appStateRepository.sourceMinimumFrequency.set(source?.minFrequency ?: 0)
+            appStateRepository.sourceMaximumFrequency.set(source?.maxFrequency ?: 0)
+        }
     }
 }

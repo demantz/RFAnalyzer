@@ -87,6 +87,7 @@ data class SourceTabActions(
     val onFilesourceFileFormatChanged: (fileFormat: FilesourceFileFormat) -> Unit,
     val onRtlsdrFrequencyCorrectionChanged: (Int) -> Unit,
     val onRtlsdrConverterOffsetChanged: (newFrequency: Long) -> Unit,
+    val onRtlsdrEnableBiasTChanged: (Boolean) -> Unit,
     val onOpenFileClicked: () -> Unit,
     val onViewRecordingsClicked: () -> Unit,
     val onFilesourceRepeatChanged: (Boolean) -> Unit
@@ -125,6 +126,7 @@ fun SourceTabComposable(
     rtlsdrFrequencyCorrection: Int,
     rtlsdrConverterOffset: Long,
     rtlsdrAllowOutOfBoundFrequency: Boolean,
+    rtlsdrEnableBiasT: Boolean,
     filesourceFilename: String,
     filesourceFileFormat: FilesourceFileFormat,
     filesourceRepeatEnabled: Boolean,
@@ -392,6 +394,14 @@ fun SourceTabComposable(
                         helpSubPath = "sdr-source.html#frequency-converter-offset"
                     )
                 }
+                OutlinedSwitch(
+                    label = "Enable Bias Tee (only Blog v4)",
+                    helpText = "Enables the 4.5V bias tee voltage on the antenna port of the RTL-SDR Blog v4",
+                    isChecked = rtlsdrEnableBiasT,
+                    onCheckedChange = sourceTabActions.onRtlsdrEnableBiasTChanged,
+                    enabled = !analyzerRunning,
+                    helpSubPath = "sdr-source.html#bias-tee"
+                )
             }
             SourceType.FILESOURCE -> {
                 Text("File: " + filesourceFilename.ifEmpty { "(no File selected)" }, fontSize = 12.sp, lineHeight = 13.sp)
@@ -506,6 +516,7 @@ fun SourceTabPreview() {
             rtlsdrExternalServerPort = 1234,
             rtlsdrFrequencyCorrection = 0,
             rtlsdrAllowOutOfBoundFrequency = false,
+            rtlsdrEnableBiasT = false,
             sourceTabActions = SourceTabActions(
                 onSourceTypeChanged = { },
                 onStartStopClicked = { },
@@ -529,7 +540,8 @@ fun SourceTabPreview() {
                 onRtlsdrExternalServerEnabledChanged = { },
                 onRtlsdrExternalServerIPChanged = { },
                 onRtlsdrExternalServerPortChanged = { },
-                onRtlsdrFrequencyCorrectionChanged = { }
+                onRtlsdrFrequencyCorrectionChanged = { },
+                onRtlsdrEnableBiasTChanged = { },
             ),
         )
     }

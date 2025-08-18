@@ -314,6 +314,7 @@ class MainViewModel @Inject constructor(
         onRtlsdrExternalServerPortChanged = appStateRepository.rtlsdrExternalServerPort::set,
         onRtlsdrConverterOffsetChanged = appStateRepository.rtlsdrConverterOffset::set,
         onRtlsdrFrequencyCorrectionChanged = appStateRepository.rtlsdrFrequencyCorrection::set,
+        onRtlsdrEnableBiasTChanged = appStateRepository.rtlsdrEnableBiasT::set,
         onOpenFileClicked = { sendActionToUi(UiAction.OnOpenIQFileClicked) },
         onViewRecordingsClicked = { navigate(AppScreen.RecordingScreen) },
         onFilesourceFileFormatChanged = appStateRepository.filesourceFileFormat::set,

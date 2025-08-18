@@ -153,7 +153,7 @@ fun SettingsTabComposable(
         )
         OutlinedSwitch(
             label = "Allow Out-of-Bound Frequency (RTL-SDR)",
-            helpText = "Allow all frequency values for RTL-SDR, if if not originally supported by the Tuner (advanced)",
+            helpText = "Allow all frequency values for RTL-SDR, even if not originally supported by the Tuner (Enable for RTL-SDR Blog v4!)",
             isChecked = rtlsdrAllowOutOfBoundFrequency,
             onCheckedChange = settingsTabActions.onRtlsdrAllowOutOfBoundFrequencyChanged,
             helpSubPath = "settings.html#allow-out-of-bound-frequency-rtl-sdr"

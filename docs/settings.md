@@ -77,6 +77,11 @@ allows you to disable these restrictions. That means any frequency can
 be entered. The result however, may be incorrect if the chip does not
 support the frequency.
 
+If you use a RTL-SDR Blog v4 dongle it is recommended to enable this setting.
+This will allow you to tune below the 24MHz which is usually the lowest
+frequency which the R828D tuner can tune. But the Blog v4 has an automatic
+upconverter build in which allows you to tune below this frequency.
+
 !!! warning 
     This is an expert setting that should only be enabled if you know what you are doing.
 
