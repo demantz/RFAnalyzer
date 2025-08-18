@@ -15,11 +15,21 @@
   </div>
 </div>
 
+## Quick Start Tutorial (YouTube)
+
+<div style="text-align: center;">
+  <a target="_blank" href="https://www.youtube.com/watch?v=sui54fqbImw">
+    <img src="./assets/RF Analyzer Quick Start Tutorial Thumbnail.png" style="max-width: 100%; height: auto; width: 400px; border: 2px solid #888; border-radius: 28px;" alt="YouTube Tutorial">
+  </a>
+</div>
+
 ## Features
 - Real-time FFT & waterfall spectrum visualization
 - Support for **HackRF, RTL-SDR, and IQ file playback**
-- Adjustable SDR settings (frequency, gain, sample rate, etc.)
 - Analog signal demodulation (CW, AM, nFM, wFM, LSB, USB)
+- Adjustable SDR settings (frequency, gain, sample rate, etc.)
+- Adjustable FFT settings (FFT size, averaging, peak hold, frame rate, etc.)
+- Raw IQ recording and playback
 
 <p float="left">
   <img src="./assets/rtlsdr_source_tab.png" width="45%" />

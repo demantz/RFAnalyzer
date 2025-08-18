@@ -1,6 +1,7 @@
 site_name: RF Analyzer 2.0 User Manual
 theme:
   name: material
+  logo: assets/logo.png
   features:
     - navigation.sections
     - navigation.instant

@@ -105,11 +105,10 @@ fun WelcomeScreen(onFinish: () -> Unit) {
             " - from amateur radio to broadcast signals and beyond." +
             "\n\nThe TRIAL VERSION allows you to test compatibility with your hardware and lets you try all features."
         ),
-        // TODO
-        //WelcomeScreenCard("How To Start",
-        //    description = "This tutorial is also available on YouTube. \n\nThe 3-minute video guides you through the first steps with RF Analyzer. \n\nOr simply tap 'Next' to continue with the in-app tutorial.",
-        //    image = R.drawable.youtube,
-        //    imageLink = "https://www.youtube.com/c/DennisMantz"),
+        WelcomeScreenCard("How To Start",
+            description = "This tutorial is also available on YouTube. \n\nThe 6-minute video guides you through the first steps with RF Analyzer. \n\nOr simply tap 'Next' to continue with the in-app tutorial.",
+            image = R.drawable.youtube_quick_start_tutorial,
+            imageLink = "https://www.youtube.com/watch?v=sui54fqbImw"),
         WelcomeScreenCard("Connect SDR","Plug your SDR dongle into the USB-OTG adapter and the USB-OTG adapter into your Android device.\n\nThe USB-OTG adapter sometimes comes with your phone or can be bought at very low cost. \nInstead of a USB-OTG adapter it is also possible to use a USB hub or docking station with USB-C connector.", image = R.drawable.tutorial_connect_sdr),
         WelcomeScreenCard("Select Source Type", "When you start the app, first select your SDR type in the Signal Source dropdown menu. \n\nThen press the PLAY button on the right.", image = R.drawable.tutorial_select_source),
         WelcomeScreenCard("RTL-SDR Driver", "To use RTL-SDR devices, an external driver app called \"RTL2832U\" must be installed first. If it's not found, RF Analyzer will prompt you to install it from the Google Play Store.\n\nOnce the driver is installed, return to RF Analyzer and press Play again.\n\nThis time, the driver should load and ask for permission to access the USB device.\n\nGrant permission - and the FFT plot should start displaying live spectrum data.", image = R.drawable.rtl2832u_driver_logo),

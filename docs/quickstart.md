@@ -1,6 +1,14 @@
 # Quick Start
 
-Follow these steps to get started quickly:
+The following YouTube video explains how to set up your SDR with RF Analyzer:
+
+<div style="text-align: center;">
+  <a target="_blank" href="https://www.youtube.com/watch?v=sui54fqbImw">
+    <img src="./assets/RF Analyzer Quick Start Tutorial Thumbnail.png" style="max-width: 100%; height: auto; width: 400px; border: 2px solid #888; border-radius: 28px;" alt="YouTube Tutorial">
+  </a>
+</div>
+
+Alternatively, follow these steps to get started quickly:
 
 1. **Install the app** from Google Play Store: 
    [RF Analyzer for Android](https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)

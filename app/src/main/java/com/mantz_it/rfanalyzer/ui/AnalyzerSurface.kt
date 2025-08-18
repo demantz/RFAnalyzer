@@ -385,6 +385,7 @@ class AnalyzerSurface(context: Context,
         // Instantiate the (scale-) gesture detectors:
         this.scaleGestureDetector = ScaleGestureDetector(context, scaleGestureListener)
         this.gestureDetector = GestureDetector(context, gestureListener)
+        this.gestureDetector.setIsLongpressEnabled(false)
 
         // react to changes of the view model:
         observeAppState()

@@ -23,6 +23,7 @@ Use the dropdown menu at the top right to select your desired demodulation mode.
 - **wFM** - Wide-band Frequency Modulation
 - **LSB** - Lower Side Band Modulation (Single Side Band - SSB)
 - **USB** - Upper Side Band Modulation (Single Side Band - SSB)
+- **CW** - Continous Wave (or more commonly: Morse Code)
 
 Each mode is used in different parts of the spectrum, and often the modulation
 type can be guessed by **frequency** (use a **band plan**) or **visual
@@ -114,7 +115,7 @@ broader overview of the band.
 
 ---
 
-# Choosing the Right Demodulation Mode
+## Choosing the Right Demodulation Mode
 
 Here are multiple ways to figure out which demodulation mode to use:
 
@@ -134,6 +135,7 @@ Here are multiple ways to figure out which demodulation mode to use:
 ![AM Example](path/to/am-screenshot.png)
 
 Used for:
+
 - Shortwave broadcasts
 - Aviation (airband)
 - Some CB radio
@@ -141,9 +143,9 @@ Used for:
 Typical bandwidth: **6-10 kHz**
 
 Visual signature:
+
 - Symmetrical peaks around a center frequency
 - Fixed bandwidth
-- Often looks like two "ears" in the waterfall
 
 
 ---
@@ -153,6 +155,7 @@ Visual signature:
 ![NFM Example](path/to/nfm-screenshot.png)
 
 Used for:
+
 - Ham radio voice (VHF/UHF)
 - Public safety and utility comms
 - Marine VHF
@@ -160,6 +163,7 @@ Used for:
 Typical bandwidth: **12.5-25 kHz**
 
 Visual signature:
+
 - Single peak with a flat top
 - Steady, narrow trace in the waterfall
 - Little or no visible sidebands
@@ -171,11 +175,13 @@ Visual signature:
 ![WFM Example](path/to/wfm-screenshot.png)
 
 Used for:
+
 - Commercial FM radio (88-108 MHz)
 
-Typical bandwidth: **150-200 kHz**
+Typical bandwidth: **100-200 kHz**
 
 Visual signature:
+
 - Broad, dense signal
 - Highly modulated (busy waterfall)
 - Often accompanied by strong stereo pilot tone (~19 kHz)
@@ -187,12 +193,15 @@ Visual signature:
 ![USB Example](path/to/usb-screenshot.png)
 
 Used for:
+
 - Ham radio SSB above 10 MHz
 - Voice on HF maritime and aeronautical bands
+- Audio (de-)modulation of digital modes such as FT8 or PSK31
 
 Typical bandwidth: **2.4-3 kHz**
 
 Visual signature:
+
 - Only the upper side of the carrier is visible
 - Sharp edge on the lower side
 - No center peak (carrier suppressed)
@@ -205,11 +214,13 @@ Visual signature:
 ![LSB Example](path/to/lsb-screenshot.png)
 
 Used for:
+
 - Ham radio SSB below 10 MHz
 
 Typical bandwidth: **2.4-3 kHz**
 
 Visual signature:
+
 - Only the lower side of the carrier is visible
 - Sharp edge on the upper side
 - No carrier spike

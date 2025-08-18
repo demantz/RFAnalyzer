@@ -161,7 +161,7 @@ fun AboutTabComposable(
         Row(modifier = Modifier.fillMaxWidth()) {
             Button(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, "https://www.youtube.com/c/DennisMantz".toUri())
+                    val intent = Intent(Intent.ACTION_VIEW, "https://www.youtube.com/watch?v=sui54fqbImw".toUri())
                     context.startActivity(intent)
                 },
                 shape = MaterialTheme.shapes.small,

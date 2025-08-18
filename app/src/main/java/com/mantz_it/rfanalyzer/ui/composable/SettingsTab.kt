@@ -138,7 +138,7 @@ fun SettingsTabComposable(
         )
         OutlinedSwitch(
             label = "Reverse Tuning Wheel",
-            helpText = "If enabled, the tuning wheel direction is reversed. This might feel more natural for some users.",
+            helpText = "If enabled, the tuning wheel direction is reversed. This might feel more natural for some users",
             isChecked = reverseTuningWheel,
             onCheckedChange = settingsTabActions.onReverseTuningWheelChanged,
             helpSubPath = "settings.html#reverse-tuning-wheel"
