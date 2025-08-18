@@ -132,7 +132,7 @@ Here are multiple ways to figure out which demodulation mode to use:
 
 ### AM - Amplitude Modulation
 
-![AM Example](path/to/am-screenshot.png)
+<img alt="AM Example" src="./assets/am.png" style="height: 500px" />
 
 Used for:
 
@@ -152,7 +152,7 @@ Visual signature:
 
 ### Narrow FM - NFM
 
-![NFM Example](path/to/nfm-screenshot.png)
+<img alt="NFM Example" src="./assets/fm_narrow.png" style="height: 500px" />
 
 Used for:
 
@@ -172,7 +172,7 @@ Visual signature:
 
 ### Wide FM - WFM
 
-![WFM Example](path/to/wfm-screenshot.png)
+<img alt="WFM Example" src="./assets/fm_wide.png" style="height: 500px" />
 
 Used for:
 
@@ -190,7 +190,7 @@ Visual signature:
 
 ### USB - Upper Sideband
 
-![USB Example](path/to/usb-screenshot.png)
+<img alt="USB Example" src="./assets/usb.png" style="height: 500px" />
 
 Used for:
 
@@ -211,7 +211,7 @@ Visual signature:
 
 ### LSB - Lower Sideband
 
-![LSB Example](path/to/lsb-screenshot.png)
+<img alt="LSB Example" src="./assets/lsb.png" style="height: 500px" />
 
 Used for:
 
@@ -227,7 +227,7 @@ Visual signature:
 
 ### CW - Continous Wave / Morse Code
 
-![CW Example](path/to/lsb-screenshot.png)
+<img alt="CW Example" src="./assets/morse.png" style="height: 500px" />
 
 Used for:
 
