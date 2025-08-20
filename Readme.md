@@ -39,6 +39,14 @@ phone both practical and fun.
 
 ## Manual
 
+**Video Tutorial:**
+
+<div style="text-align: center;">
+  <a target="_blank" href="https://www.youtube.com/watch?v=sui54fqbImw">
+    <img src="./docs/assets/RF Analyzer Quick Start Tutorial Thumbnail.png" style="max-width: 100%; height: auto; width: 400px; border: 2px solid #888; border-radius: 28px;" alt="YouTube Tutorial">
+  </a>
+</div>
+
 A full **user manual** is available in the `docs/` folder and online via MkDocs:
 
 [**Read the RF Analyzer Manual**](https://demantz.github.io/RFAnalyzer/)
@@ -85,6 +93,21 @@ to reach me:
 - Mastodon: [@dm4ntz@chaos.social](https://chaos.social/@dm4ntz)
 - Mail: rfanalyzerapp -at- gmail -dot- com
 
+## Acknowledgments
+
+I'd like to thank some people for their support and contributions
+during the development of RF Analyzer:
+
+- My partner **Anja**, who helped me a lot during the development of the new UI
+  (she's the reason this app finally has a clean UX and looks so polished!)
+- All **Testers on Reddit** who joined the beta test and reported issues
+- **Michael Ossmann** and the team around the HackRF which initially inspired
+  me to start this app years ago
+- **Martin Marinov**, the developer of the RTL-SDR Android driver
+- **Everyone who shared positive feedback** - your encouragement means a lot
+  and motivates me to keep improving the app!
+
+
 ## License
 
 This software is free software; you can redistribute it and/or
@@ -95,5 +118,18 @@ version 2 of the License, or (at your option) any later version.
 
 Principal Author: Dennis Mantz
 
+The following assets are NOT covered by the GPL and remain the exclusive
+property of the original author:
+
+- Application name
+- Logo and app icon
+- Any other branding elements (including but not limited to promotional images
+  and screenshots)
+
+You may not use the original name, logo, or other branding elements of this
+project in modified versions of the app without prior written permission from
+the copyright holder.
+
 For more license information see the about section inside the app or in the
 user manual.
+

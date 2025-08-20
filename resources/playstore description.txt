@@ -7,9 +7,9 @@ Material Design UI, a more powerful and intuitive interface, and improved
 performance across the board.
 
 - Support for demodulation while app is in the background
-- Reworked controls in a flexible control drawer
-- Improved demodulation and recording features
+- Improved stability, demodulation and recording features
 - Integrated user manual and contextual help
+- Added support for RTL-SDR Blog v4
 
 
 DESCRIPTION 
