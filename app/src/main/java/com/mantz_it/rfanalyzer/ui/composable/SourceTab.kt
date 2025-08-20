@@ -58,7 +58,7 @@ import com.mantz_it.rfanalyzer.R
 enum class SourceType(val displayName: String, val availableSampleRates: List<Long>) {
     HACKRF("HACKRF", listOf(4000000, 6000000, 8000000, 10000000, 12500000, 16000000, 20000000)),
     RTLSDR("RTLSDR", listOf(1000000, 2000000)),
-    FILESOURCE("File Source", emptyList());
+    FILESOURCE("File Source", listOf(0));
 }
 
 enum class FilesourceFileFormat(val displayName: String, val description: String, val bytesPerSample: Int) {
