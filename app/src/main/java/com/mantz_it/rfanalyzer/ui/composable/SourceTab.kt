@@ -348,7 +348,7 @@ fun SourceTabComposable(
                 }
                 OutlinedSwitch(
                     enabled = !analyzerRunning,
-                    label = "External Server",
+                    label = "External Server (rtl_tcp)",
                     helpText = "Connect to external RTL-SDR server instead of USB device",
                     isChecked = rtlsdrExternalServerEnabled,
                     onCheckedChange = sourceTabActions.onRtlsdrExternalServerEnabledChanged,

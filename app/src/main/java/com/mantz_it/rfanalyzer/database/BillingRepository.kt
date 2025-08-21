@@ -292,7 +292,10 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
         val installTimestamp = getInstallTimestamp(context)
         val installedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - installTimestamp).toInt()
         val trialPeriod= 7 // 7-day trial period
-        return (trialPeriod - installedDays).coerceAtLeast(0)
+        return if (installedDays > 60) // workaround for people who had the old app version installed already (prior to 2.0 launch)
+            trialPeriod                // these people just get 7 days and the usageTime is the limiting factor
+        else
+            (trialPeriod - installedDays).coerceAtLeast(0)
     }
 
     override fun isTrialPeriodExpired(): Boolean {
