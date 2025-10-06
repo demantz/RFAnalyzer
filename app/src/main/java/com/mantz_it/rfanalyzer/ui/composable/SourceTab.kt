@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -26,6 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mantz_it.rfanalyzer.R
+import com.mantz_it.rfanalyzer.source.AirspySource
+import com.mantz_it.rfanalyzer.source.HydraSdrRfPort
+import com.mantz_it.rfanalyzer.source.HydraSdrSource
 
 /**
  * <h1>RF Analyzer - Source Tab</h1>
@@ -55,15 +57,19 @@ import com.mantz_it.rfanalyzer.R
  */
 
 
-enum class SourceType(val displayName: String, val availableSampleRates: List<Long>) {
+enum class SourceType(val displayName: String, val defaultSupportedSampleRates: List<Long>) {
     HACKRF("HACKRF", listOf(4000000, 6000000, 8000000, 10000000, 12500000, 16000000, 20000000)),
-    RTLSDR("RTLSDR", listOf(1000000, 2000000)),
+    RTLSDR("RTLSDR", listOf(1000000, 2000000, 2500000)),
+    AIRSPY("AIRSPY", listOf(2400000, 2500000, 3000000, 5000000, 6000000, 10000000)),
+    HYDRASDR("HYDRASDR", listOf(2500000, 5000000, 10000000)),
     FILESOURCE("File Source", listOf(0));
 }
 
 enum class FilesourceFileFormat(val displayName: String, val description: String, val bytesPerSample: Int) {
     HACKRF("HACKRF", "8-bit signed IQ (HackRF)", 2),
-    RTLSDR("RTLSDR", "8-bit unsigned IQ (RTL-SDR)", 2)
+    RTLSDR("RTLSDR", "8-bit unsigned IQ (RTL-SDR)", 2),
+    AIRSPY("AIRSPY", "16-bit signed IQ (AIRSPY)", 4),
+    HYDRASDR("HYDRASDR", "16-bit signed IQ (HYDRASDR)", 4)
 }
 
 data class SourceTabActions(
@@ -88,6 +94,23 @@ data class SourceTabActions(
     val onRtlsdrFrequencyCorrectionChanged: (Int) -> Unit,
     val onRtlsdrConverterOffsetChanged: (newFrequency: Long) -> Unit,
     val onRtlsdrEnableBiasTChanged: (Boolean) -> Unit,
+    val onAirspyAdvancedGainEnabledChanged: (newGain: Boolean) -> Unit,
+    val onAirspyVgaGainChanged: (newGain: Int) -> Unit,
+    val onAirspyLnaGainChanged: (newGain: Int) -> Unit,
+    val onAirspyMixerGainChanged: (newGain: Int) -> Unit,
+    val onAirspyLinearityGainChanged: (newGain: Int) -> Unit,
+    val onAirspySensitivityGainChanged: (newGain: Int) -> Unit,
+    val onAirspyRfBiasEnabledChanged: (newBias: Boolean) -> Unit,
+    val onAirspyConverterOffsetChanged: (newFrequency: Long) -> Unit,
+    val onHydraSdrAdvancedGainEnabledChanged: (newGain: Boolean) -> Unit,
+    val onHydraSdrVgaGainChanged: (newGain: Int) -> Unit,
+    val onHydraSdrLnaGainChanged: (newGain: Int) -> Unit,
+    val onHydraSdrMixerGainChanged: (newGain: Int) -> Unit,
+    val onHydraSdrLinearityGainChanged: (newGain: Int) -> Unit,
+    val onHydraSdrSensitivityGainChanged: (newGain: Int) -> Unit,
+    val onHydraSdrRfBiasEnabledChanged: (newBias: Boolean) -> Unit,
+    val onHydraSdrRfPortChanged: (newPort: HydraSdrRfPort) -> Unit,
+    val onHydraSdrConverterOffsetChanged: (newFrequency: Long) -> Unit,
     val onOpenFileClicked: () -> Unit,
     val onViewRecordingsClicked: () -> Unit,
     val onFilesourceRepeatChanged: (Boolean) -> Unit
@@ -105,8 +128,7 @@ fun SourceTabComposable(
     automaticSampleRateAdjustment: Boolean,
     minimumFrequency: Long,
     maximumFrequency: Long,
-    minimumSampleRate: Long,
-    maximumSampleRate: Long,
+    supportedSampleRates: List<Long>,
     hackrfVgaGainSteps: List<Int>,
     hackrfVgaGainIndex: Int,
     hackrfLnaGainSteps: List<Int>,
@@ -127,6 +149,23 @@ fun SourceTabComposable(
     rtlsdrConverterOffset: Long,
     rtlsdrAllowOutOfBoundFrequency: Boolean,
     rtlsdrEnableBiasT: Boolean,
+    airspyAdvancedGainEnabled: Boolean,
+    airspyVgaGain: Int,
+    airspyLnaGain: Int,
+    airspyMixerGain: Int,
+    airspyLinearityGain: Int,
+    airspySensitivityGain: Int,
+    airspyRfBiasEnabled: Boolean,
+    airspyConverterOffset: Long,
+    hydraSdrAdvancedGainEnabled: Boolean,
+    hydraSdrVgaGain: Int,
+    hydraSdrLnaGain: Int,
+    hydraSdrMixerGain: Int,
+    hydraSdrLinearityGain: Int,
+    hydraSdrSensitivityGain: Int,
+    hydraSdrRfBiasEnabled: Boolean,
+    hydraSdrRfPort: HydraSdrRfPort,
+    hydraSdrConverterOffset: Long,
     filesourceFilename: String,
     filesourceFileFormat: FilesourceFileFormat,
     filesourceRepeatEnabled: Boolean,
@@ -180,7 +219,7 @@ fun SourceTabComposable(
                     minFrequency = minimumFrequency,
                     maxFrequency = if(maximumFrequency==0L) 10000000000L else maximumFrequency,
                     enabled = true,
-                    helpSubPath = "sdr-source.html#tune-frequency_1"
+                    helpSubPath = "sdr-source.html#tune-frequency"
                 )
                 Row(modifier = Modifier.fillMaxWidth()) {
                     OutlinedSteppedSlider(
@@ -240,24 +279,24 @@ fun SourceTabComposable(
                             .weight(1f)
                             .fillMaxHeight()
                             .padding(end = 3.dp),
-                        helpSubPath = "sdr-source.html#sample-rate_1"
+                        helpSubPath = "sdr-source.html#sample-rate"
                     )
                     OutlinedListDropDown(
                         label = "Sample Rate",
                         getDisplayName = { it.asStringWithUnit("Sps") },
                         onSelectionChanged = sourceTabActions.onSampleRateChanged,
-                        items = SourceType.HACKRF.availableSampleRates,
+                        items = SourceType.HACKRF.defaultSupportedSampleRates,
                         selectedItem = sampleRate,
                         modifier = Modifier.weight(1f).padding(start = 3.dp),
                         enabled = !automaticSampleRateAdjustment,
-                        helpSubPath = "sdr-source.html#sample-rate_1"
+                        helpSubPath = "sdr-source.html#sample-rate"
                     )
                 }
                 OutlinedIntegerTextField(
                     label = "Frequency Converter Offset (Hz)",
                     value = hackrfConverterOffset,
                     onValueChange = sourceTabActions.onHackrfConverterOffsetChanged,
-                    helpSubPath = "sdr-source.html#frequency-converter-offset_1"
+                    helpSubPath = "sdr-source.html#frequency-converter-offset"
                 )
             }
             SourceType.RTLSDR -> {
@@ -302,7 +341,8 @@ fun SourceTabComposable(
                             unit = "dB",
                             steps = rtlsdrGainSteps,
                             selectedStepIndex = rtlsdrGainIndex,
-                            helpSubPath = "sdr-source.html#gain",
+                            formatValue = { (it/10.0).toString() },  // step values are in 1/10 dB steps
+                            helpSubPath = "sdr-source.html#gain-controls",
                             onSelectedStepIndexChanged = sourceTabActions.onRtlsdrGainIndexChanged,
                             modifier = Modifier
                                 .weight(1f)
@@ -314,6 +354,7 @@ fun SourceTabComposable(
                                 unit = "dB",
                                 steps = rtlsdrIFGainSteps,
                                 selectedStepIndex = rtlsdrIFGainIndex,
+                                formatValue = { (it/10.0).toString() },
                                 onSelectedStepIndexChanged = sourceTabActions.onRtlsdrIFGainIndexChanged,
                                 helpSubPath = "sdr-source.html#if-gain",
                                 modifier = Modifier
@@ -339,7 +380,7 @@ fun SourceTabComposable(
                         label = "Sample Rate",
                         getDisplayName = { it.asStringWithUnit("Sps") },
                         onSelectionChanged = sourceTabActions.onSampleRateChanged,
-                        items = SourceType.RTLSDR.availableSampleRates,
+                        items = SourceType.RTLSDR.defaultSupportedSampleRates,
                         selectedItem = sampleRate,
                         helpSubPath = "sdr-source.html#sample-rate",
                         modifier = Modifier.weight(1f).padding(start = 3.dp),
@@ -395,12 +436,254 @@ fun SourceTabComposable(
                     )
                 }
                 OutlinedSwitch(
-                    label = "Enable Bias Tee (only Blog v4)",
+                    label = "Antenna Port Power (only Blog v4)",
                     helpText = "Enables the 4.5V bias tee voltage on the antenna port of the RTL-SDR Blog v4",
                     isChecked = rtlsdrEnableBiasT,
                     onCheckedChange = sourceTabActions.onRtlsdrEnableBiasTChanged,
                     enabled = !analyzerRunning,
-                    helpSubPath = "sdr-source.html#bias-tee"
+                    helpSubPath = "sdr-source.html#antenna-port-power"
+                )
+            }
+            SourceType.AIRSPY -> {
+                FrequencyChooser(
+                    label = "Tune-Frequency",
+                    unit = "Hz",
+                    currentFrequency = frequency,
+                    onFrequencyChanged = sourceTabActions.onFrequencyChanged,
+                    minFrequency = AirspySource.MIN_FREQUENCY,
+                    maxFrequency = AirspySource.MAX_FREQUENCY,
+                    helpSubPath = "sdr-source.html#tune-frequency"
+                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedSwitch(
+                        label = "Advanced Gain Control",
+                        helpText = "Set VGA, LNA and Mixer Gain directly",
+                        isChecked = airspyAdvancedGainEnabled,
+                        onCheckedChange = sourceTabActions.onAirspyAdvancedGainEnabledChanged,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(start = 3.dp),
+                        helpSubPath = "sdr-source.html#advanced-gain-control"
+                    )
+                    OutlinedSwitch(
+                        label = "Antenna Port Power",
+                        helpText = "Enables 4.5V bias power on the SDR's antenna port",
+                        isChecked = airspyRfBiasEnabled,
+                        onCheckedChange = sourceTabActions.onAirspyRfBiasEnabledChanged,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(start = 3.dp),
+                        helpSubPath = "sdr-source.html#antenna-port-power"
+                    )
+                }
+                if (airspyAdvancedGainEnabled) {
+                    OutlinedSlider(
+                        label = "VGA Gain",
+                        unit = "dB",
+                        value = airspyVgaGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onAirspyVgaGainChanged(it.toInt()) },
+                        minValue = AirspySource.MIN_VGA_GAIN.toFloat(),
+                        maxValue = AirspySource.MAX_VGA_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#vga-gain"
+                    )
+                    OutlinedSlider(
+                        label = "LNA Gain",
+                        unit = "dB",
+                        value = airspyLnaGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onAirspyLnaGainChanged(it.toInt()) },
+                        minValue = AirspySource.MIN_LNA_GAIN.toFloat(),
+                        maxValue = AirspySource.MAX_LNA_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#lna-gain"
+                    )
+                    OutlinedSlider(
+                        label = "Mixer Gain",
+                        unit = "dB",
+                        value = airspyMixerGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onAirspyMixerGainChanged(it.toInt()) },
+                        minValue = AirspySource.MIN_MIXER_GAIN.toFloat(),
+                        maxValue = AirspySource.MAX_MIXER_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#mixer-gain"
+                    )
+                } else {
+                    OutlinedSlider(
+                        label = "Linearity Gain",
+                        unit = "dB",
+                        value = airspyLinearityGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onAirspyLinearityGainChanged(it.toInt()) },
+                        minValue = AirspySource.MIN_LINEARITY_GAIN.toFloat(),
+                        maxValue = AirspySource.MAX_LINEARITY_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#advanced-gain-control"
+                    )
+                    OutlinedSlider(
+                        label = "Sensitivity Gain",
+                        unit = "dB",
+                        value = airspySensitivityGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onAirspySensitivityGainChanged(it.toInt()) },
+                        minValue = AirspySource.MIN_SENSITIVITY_GAIN.toFloat(),
+                        maxValue = AirspySource.MAX_SENSITIVITY_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#advanced-gain-control"
+                    )
+                }
+                Row {
+                    OutlinedSwitch(
+                        label = "Automatic Sample Rate",
+                        helpText = "Sample rate follows zoom level",
+                        isChecked = automaticSampleRateAdjustment,
+                        onCheckedChange = sourceTabActions.onAutomaticSampleRateAdjustmentChanged,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(end = 3.dp),
+                        helpSubPath = "sdr-source.html#sample-rate"
+                    )
+                    OutlinedListDropDown(
+                        label = "Sample Rate",
+                        getDisplayName = { it.asStringWithUnit("Sps") },
+                        onSelectionChanged = sourceTabActions.onSampleRateChanged,
+                        items = supportedSampleRates,
+                        selectedItem = sampleRate,
+                        modifier = Modifier.weight(1f).padding(start = 3.dp),
+                        enabled = !automaticSampleRateAdjustment,
+                        helpSubPath = "sdr-source.html#sample-rate"
+                    )
+                }
+                OutlinedIntegerTextField(
+                    label = "Frequency Converter Offset (Hz)",
+                    value = airspyConverterOffset,
+                    onValueChange = sourceTabActions.onAirspyConverterOffsetChanged,
+                    helpSubPath = "sdr-source.html#frequency-converter-offset"
+                )
+            }
+            SourceType.HYDRASDR -> {
+                FrequencyChooser(
+                    label = "Tune-Frequency",
+                    unit = "Hz",
+                    currentFrequency = frequency,
+                    onFrequencyChanged = sourceTabActions.onFrequencyChanged,
+                    minFrequency = HydraSdrSource.MIN_FREQUENCY,
+                    maxFrequency = HydraSdrSource.MAX_FREQUENCY,
+                    helpSubPath = "sdr-source.html#tune-frequency"
+                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedSwitch(
+                        label = "Advanced Gain Control",
+                        helpText = "Set VGA, LNA and Mixer Gain directly",
+                        isChecked = hydraSdrAdvancedGainEnabled,
+                        onCheckedChange = sourceTabActions.onHydraSdrAdvancedGainEnabledChanged,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(start = 3.dp),
+                        helpSubPath = "sdr-source.html#advanced-gain-control_1"
+                    )
+                    OutlinedSwitch(
+                        label = "Antenna Port Power",
+                        helpText = "Enables 4.5V bias power on the SDR's antenna port",
+                        isChecked = hydraSdrRfBiasEnabled,
+                        onCheckedChange = sourceTabActions.onHydraSdrRfBiasEnabledChanged,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(start = 3.dp),
+                        helpSubPath = "sdr-source.html#antenna-port-power"
+                    )
+                }
+                if (hydraSdrAdvancedGainEnabled) {
+                    OutlinedSlider(
+                        label = "VGA Gain",
+                        unit = "dB",
+                        value = hydraSdrVgaGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onHydraSdrVgaGainChanged(it.toInt()) },
+                        minValue = HydraSdrSource.MIN_VGA_GAIN.toFloat(),
+                        maxValue = HydraSdrSource.MAX_VGA_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#vga-gain"
+                    )
+                    OutlinedSlider(
+                        label = "LNA Gain",
+                        unit = "dB",
+                        value = hydraSdrLnaGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onHydraSdrLnaGainChanged(it.toInt()) },
+                        minValue = HydraSdrSource.MIN_LNA_GAIN.toFloat(),
+                        maxValue = HydraSdrSource.MAX_LNA_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#lna-gain"
+                    )
+                    OutlinedSlider(
+                        label = "Mixer Gain",
+                        unit = "dB",
+                        value = hydraSdrMixerGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onHydraSdrMixerGainChanged(it.toInt()) },
+                        minValue = HydraSdrSource.MIN_MIXER_GAIN.toFloat(),
+                        maxValue = HydraSdrSource.MAX_MIXER_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#mixer-gain"
+                    )
+                } else {
+                    OutlinedSlider(
+                        label = "Linearity Gain",
+                        unit = "dB",
+                        value = hydraSdrLinearityGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onHydraSdrLinearityGainChanged(it.toInt()) },
+                        minValue = HydraSdrSource.MIN_LINEARITY_GAIN.toFloat(),
+                        maxValue = HydraSdrSource.MAX_LINEARITY_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#advanced-gain-control_1"
+                    )
+                    OutlinedSlider(
+                        label = "Sensitivity Gain",
+                        unit = "dB",
+                        value = hydraSdrSensitivityGain.toFloat(),
+                        decimalPlaces = 0,
+                        onValueChanged = { sourceTabActions.onHydraSdrSensitivityGainChanged(it.toInt()) },
+                        minValue = HydraSdrSource.MIN_SENSITIVITY_GAIN.toFloat(),
+                        maxValue = HydraSdrSource.MAX_SENSITIVITY_GAIN.toFloat(),
+                        helpSubPath = "sdr-source.html#advanced-gain-control_1"
+                    )
+                }
+                OutlinedEnumDropDown(
+                    label = "RF Port",
+                    selectedEnum = hydraSdrRfPort,
+                    enumClass = HydraSdrRfPort::class,
+                    getDisplayName = { it.displayName },
+                    onSelectionChanged = sourceTabActions.onHydraSdrRfPortChanged,
+                    helpSubPath = "sdr-source.html#rf-port",
+                )
+                Row {
+                    OutlinedSwitch(
+                        label = "Automatic Sample Rate",
+                        helpText = "Sample rate follows zoom level",
+                        isChecked = automaticSampleRateAdjustment,
+                        onCheckedChange = sourceTabActions.onAutomaticSampleRateAdjustmentChanged,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(end = 3.dp),
+                        helpSubPath = "sdr-source.html#sample-rate"
+                    )
+                    OutlinedListDropDown(
+                        label = "Sample Rate",
+                        getDisplayName = { it.asStringWithUnit("Sps") },
+                        onSelectionChanged = sourceTabActions.onSampleRateChanged,
+                        items = supportedSampleRates,
+                        selectedItem = sampleRate,
+                        modifier = Modifier.weight(1f).padding(start = 3.dp),
+                        enabled = !automaticSampleRateAdjustment,
+                        helpSubPath = "sdr-source.html#sample-rate"
+                    )
+                }
+                OutlinedIntegerTextField(
+                    label = "Frequency Converter Offset (Hz)",
+                    value = hydraSdrConverterOffset,
+                    onValueChange = sourceTabActions.onHydraSdrConverterOffsetChanged,
+                    helpSubPath = "sdr-source.html#frequency-converter-offset"
                 )
             }
             SourceType.FILESOURCE -> {
@@ -483,7 +766,7 @@ fun SourceTabComposable(
 fun SourceTabPreview() {
     CompositionLocalProvider(LocalShowHelp provides {}) {
         SourceTabComposable(
-            sourceType = SourceType.HACKRF,
+            sourceType = SourceType.HYDRASDR,
             sourceName = "Test-Source",
             analyzerRunning = true,
             analyzerStartPending = false,
@@ -492,14 +775,13 @@ fun SourceTabPreview() {
             automaticSampleRateAdjustment = true,
             minimumFrequency = 100000,
             maximumFrequency = 1000000000,
-            minimumSampleRate = 1000000,
-            maximumSampleRate = 10000000,
+            supportedSampleRates = listOf(1000000),
             hackrfVgaGainSteps = listOf(0, 1, 2, 4, 8, 12, 26, 100),
             hackrfVgaGainIndex = 2,
             hackrfLnaGainSteps = listOf(0, 1, 2, 4, 8, 12, 26, 100),
             hackrfLnaGainIndex = 5,
             rtlsdrGainSteps = listOf(0, 1, 2, 4, 8, 12, 26, 100),
-            rtlsdrGainIndex = 0,
+            rtlsdrGainIndex = 3,
             rtlsdrIFGainSteps = listOf(0),
             rtlsdrIFGainIndex = 0,
             hackrfAmplifierEnabled = false,
@@ -517,6 +799,23 @@ fun SourceTabPreview() {
             rtlsdrFrequencyCorrection = 0,
             rtlsdrAllowOutOfBoundFrequency = false,
             rtlsdrEnableBiasT = false,
+            airspyAdvancedGainEnabled = false,
+            airspyVgaGain = 2,
+            airspyLnaGain = 12,
+            airspyMixerGain = 0,
+            airspyLinearityGain = 0,
+            airspySensitivityGain = 0,
+            airspyRfBiasEnabled = true,
+            airspyConverterOffset = 0L,
+            hydraSdrAdvancedGainEnabled = false,
+            hydraSdrVgaGain = 2,
+            hydraSdrLnaGain = 12,
+            hydraSdrMixerGain = 0,
+            hydraSdrLinearityGain = 0,
+            hydraSdrSensitivityGain = 0,
+            hydraSdrRfBiasEnabled = true,
+            hydraSdrRfPort = HydraSdrRfPort.RX0,
+            hydraSdrConverterOffset = 0L,
             sourceTabActions = SourceTabActions(
                 onSourceTypeChanged = { },
                 onStartStopClicked = { },
@@ -542,6 +841,23 @@ fun SourceTabPreview() {
                 onRtlsdrExternalServerPortChanged = { },
                 onRtlsdrFrequencyCorrectionChanged = { },
                 onRtlsdrEnableBiasTChanged = { },
+                onAirspyRfBiasEnabledChanged = { },
+                onAirspyAdvancedGainEnabledChanged = { },
+                onAirspyLnaGainChanged = { },
+                onAirspyVgaGainChanged = { },
+                onAirspyMixerGainChanged = { },
+                onAirspyLinearityGainChanged = { },
+                onAirspySensitivityGainChanged = { },
+                onAirspyConverterOffsetChanged = { },
+                onHydraSdrAdvancedGainEnabledChanged = { },
+                onHydraSdrRfBiasEnabledChanged = { },
+                onHydraSdrRfPortChanged = { },
+                onHydraSdrLnaGainChanged = { },
+                onHydraSdrVgaGainChanged = { },
+                onHydraSdrMixerGainChanged = { },
+                onHydraSdrLinearityGainChanged = { },
+                onHydraSdrSensitivityGainChanged = { },
+                onHydraSdrConverterOffsetChanged = { },
             ),
         )
     }

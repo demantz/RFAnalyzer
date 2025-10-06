@@ -167,15 +167,42 @@ class MainActivity: ComponentActivity() {
                     intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
                 }
                 device?.let {
-                    Log.d(TAG, "Device attached: ${it.deviceName} (vendor: ${device.vendorId}, product: ${device.productId})")
-                    if (device.getVendorId() == 7504) {
+                    Log.d(TAG, "Device attached: ${it.deviceName} (vendor: ${device.vendorId}, product: ${device.productId}, name: ${device.manufacturerName}|${device.productName})")
+                    if (device.vendorId == 0x1d50 && device.productId in listOf(0x604b, 0x6089, 0xcc15) ) {
                         Toast.makeText( this@MainActivity, "HackRF Device attached.", Toast.LENGTH_SHORT).show()
                         if (!appStateRepository.analyzerRunning.value)
                             appStateRepository.sourceType.set(SourceType.HACKRF)
                     } else if(Pair(it.vendorId, it.productId) in rtlsdrIds) {
-                        Toast.makeText( this@MainActivity, "RTL-SDR Device attached.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText( this@MainActivity, "RTL-SDR Device '${device.productName}' attached.", Toast.LENGTH_SHORT).show()
+                        if (device.vendorId == 0x0bda && device.productId == 0x2838 && device.productName == "Blog V4") {
+                            Log.i(TAG, "usbBroadcastReceiver:onReceive: RTL-SDR Blog V4 attached!")
+                            appStateRepository.rtlsdrBlogV4connected.set(true)
+                        }
                         if (!appStateRepository.analyzerRunning.value)
                             appStateRepository.sourceType.set(SourceType.RTLSDR)
+                    } else if (device.vendorId == 0x1d50 && device.productId == 0x60a1) {
+                        Toast.makeText( this@MainActivity, "Airspy Device attached.", Toast.LENGTH_SHORT).show()
+                        if (!appStateRepository.analyzerRunning.value)
+                            appStateRepository.sourceType.set(SourceType.AIRSPY)
+                    } else if (device.vendorId == 0x38af && device.productId == 0x0001) {
+                        Toast.makeText( this@MainActivity, "HydraSDR Device attached.", Toast.LENGTH_SHORT).show()
+                        if (!appStateRepository.analyzerRunning.value)
+                            appStateRepository.sourceType.set(SourceType.HYDRASDR)
+                    }
+                }
+            } else if(intent?.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
+                val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+                } else {
+                    // else branch necessary as long as minSdk is < 33 (tiramisu)
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+                }
+                device?.let {
+                    Log.d(TAG, "usbBroadcastReceiver:onReceive: Device detached (${device.vendorId}:${device.productId} - ${device.productName})")
+                    if (device.vendorId == 0x0bda && device.productId == 0x2838 && device.productName == "Blog V4") {
+                        Log.i(TAG, "usbBroadcastReceiver:onReceive: RTL-SDR Blog V4 detached!")
+                        appStateRepository.rtlsdrBlogV4connected.set(false)
                     }
                 }
             }
@@ -236,7 +263,7 @@ class MainActivity: ComponentActivity() {
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 lifecycleScope.launch {
-                    delay(2000) // 2-second delay to make sure the AppStateRepository is initialized
+                    appStateRepository.blockUntilAllSettingsLoaded()
                     if (!appStateRepository.dontAskForNotificationPermission.value) {
                         requestNotificationPermission(requestPermissionLauncher)
                     }
@@ -256,7 +283,7 @@ class MainActivity: ComponentActivity() {
         analyzerSurface = AnalyzerSurface(
             context = this,
             sourceName = appStateRepository.sourceName,
-            sourceOptimalSampleRates = appStateRepository.sourceOptimalSampleRates,
+            sourceOptimalSampleRates = appStateRepository.sourceSupportedSampleRates,
             sourceFrequency = appStateRepository.sourceFrequency,
             sourceSampleRate = appStateRepository.sourceSampleRate,
             sourceSignalStartFrequency = appStateRepository.sourceSignalStartFrequency,
@@ -572,6 +599,7 @@ class MainActivity: ComponentActivity() {
         // Register USB Broadcast Receiver
         val filter = IntentFilter()
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
         registerReceiver(usbBroadcastReceiver, filter)
     }
 

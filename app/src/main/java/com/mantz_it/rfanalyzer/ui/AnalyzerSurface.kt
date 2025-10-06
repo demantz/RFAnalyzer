@@ -25,17 +25,14 @@ import com.mantz_it.rfanalyzer.database.AppStateRepository
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_LOWER_BOUNDARY
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_UPPER_BOUNDARY
 import com.mantz_it.rfanalyzer.database.collectAppState
-import com.mantz_it.rfanalyzer.source.SamplePacket
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
 import com.mantz_it.rfanalyzer.ui.composable.FftColorMap
 import com.mantz_it.rfanalyzer.ui.composable.FftDrawingType
-import com.mantz_it.rfanalyzer.ui.composable.FftWaterfallSpeed
 import com.mantz_it.rfanalyzer.ui.composable.FontSize
 import com.mantz_it.rfanalyzer.ui.composable.asSizeInBytesToString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import java.util.concurrent.ArrayBlockingQueue
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -375,6 +372,7 @@ class AnalyzerSurface(context: Context,
                 Log.d(LOGTAG, "surfaceDestroyed")
                 if(drawingThread != null) {
                     drawingThread?.running = false
+                    drawingThread?.interrupt()
                     drawingThread?.join()
                     Log.d(LOGTAG, "surfaceDestroyed: drawingThread ${drawingThread?.name} joined.")
                     drawingThread = null
@@ -514,77 +512,85 @@ class AnalyzerSurface(context: Context,
             this.setName("Thread-DrawThread-" + System.currentTimeMillis())
             Log.i(LOGTAG, "DrawThread started. (Thread: " + this.name + ")")
 
-            // Draw watermark
-            drawWatermark()
+            try {
+                // Draw watermark
+                drawWatermark()
 
-            var frameRateTimestamp = System.currentTimeMillis()
-            var frameRateFrameCounter = 0
-            var frameRate = 0
+                var frameRateTimestamp = System.currentTimeMillis()
+                var frameRateFrameCounter = 0
+                var frameRate = 0
 
-            while (running) {
-                val startTimestamp = System.currentTimeMillis()
-                frameRateFrameCounter++
-                if(startTimestamp-frameRateTimestamp > 1000) { // only measure every second
-                    frameRate = (frameRateFrameCounter * 1000f / (startTimestamp-frameRateTimestamp)).toInt()
-                    frameRateFrameCounter = 0
-                    frameRateTimestamp = startTimestamp
-                }
-
-                // Local current state (better performance, and safer because width/height could change at any time)
-                val width = width
-                val fftHeight = fftHeight
-
-                if(timeAverageSamples == null || timeAverageSamples!!.size != width)
-                    timeAverageSamples = FloatArray(width)
-
-                if(fftPeakHold.value) {
-                    if(peaksYCoordinates == null || peaksYCoordinates!!.size != width)
-                        peaksYCoordinates = FloatArray(width)
-                } else {
-                    peaksYCoordinates = null
-                }
-
-                var doDraw = false
-                try {
-                    // Write Lock necessary because we write to dirty map!
-                    fftProcessorData.lock.writeLock().lock()
-
-                    val waterfallBuffer = fftProcessorData.waterfallBuffer
-                    val waterfallBufferDirtyMap = fftProcessorData.waterfallBufferDirtyMap
-                    val frequency = fftProcessorData.frequency
-                    val sampleRate = fftProcessorData.sampleRate
-                    val readIndex = fftProcessorData.readIndex
-                    if (waterfallBuffer != null &&
-                        waterfallBufferDirtyMap != null &&
-                        frequency != null &&
-                        sampleRate != null
-                    ) {
-                        doDraw = true
-
-                        // preprocessing of waterfall data:
-                        drawPreprocessing(
-                            waterfallBuffer,
-                            waterfallBufferDirtyMap,
-                            fftProcessorData.peaks,
-                            frequency,
-                            sampleRate,
-                            readIndex,
-                            width,
-                            fftHeight
-                        )
+                while (running) {
+                    val startTimestamp = System.currentTimeMillis()
+                    frameRateFrameCounter++
+                    if (startTimestamp - frameRateTimestamp > 1000) { // only measure every second
+                        frameRate =
+                            (frameRateFrameCounter * 1000f / (startTimestamp - frameRateTimestamp)).toInt()
+                        frameRateFrameCounter = 0
+                        frameRateTimestamp = startTimestamp
                     }
-                } finally {
-                    fftProcessorData.lock.writeLock().unlock()
-                }
-                if (doDraw)
-                    draw(frameRate)
 
-                // measure current frametime to derive how long we need to sleep to meet the user's preferred framerate
-                val frameDrawingTime = System.currentTimeMillis()-startTimestamp
-                val desiredFrameTimeMs = 1000/maxFrameRate.value
-                GlobalPerformanceData.updateLoad("Renderer", frameDrawingTime.toFloat()/desiredFrameTimeMs)
-                val sleepTime = desiredFrameTimeMs - frameDrawingTime
-                sleep(sleepTime.coerceAtLeast(0))
+                    // Local current state (better performance, and safer because width/height could change at any time)
+                    val width = width
+                    val fftHeight = fftHeight
+
+                    if (timeAverageSamples == null || timeAverageSamples!!.size != width)
+                        timeAverageSamples = FloatArray(width)
+
+                    if (fftPeakHold.value) {
+                        if (peaksYCoordinates == null || peaksYCoordinates!!.size != width)
+                            peaksYCoordinates = FloatArray(width)
+                    } else {
+                        peaksYCoordinates = null
+                    }
+
+                    var doDraw = false
+                    try {
+                        // Write Lock necessary because we write to dirty map!
+                        fftProcessorData.lock.writeLock().lock()
+
+                        val waterfallBuffer = fftProcessorData.waterfallBuffer
+                        val waterfallBufferDirtyMap = fftProcessorData.waterfallBufferDirtyMap
+                        val frequency = fftProcessorData.frequency
+                        val sampleRate = fftProcessorData.sampleRate
+                        val readIndex = fftProcessorData.readIndex
+                        if (waterfallBuffer != null &&
+                            waterfallBufferDirtyMap != null &&
+                            frequency != null &&
+                            sampleRate != null
+                        ) {
+                            doDraw = true
+
+                            // preprocessing of waterfall data:
+                            drawPreprocessing(
+                                waterfallBuffer,
+                                waterfallBufferDirtyMap,
+                                fftProcessorData.peaks,
+                                frequency,
+                                sampleRate,
+                                readIndex,
+                                width,
+                                fftHeight
+                            )
+                        }
+                    } finally {
+                        fftProcessorData.lock.writeLock().unlock()
+                    }
+                    if (doDraw)
+                        draw(frameRate)
+
+                    // measure current frametime to derive how long we need to sleep to meet the user's preferred framerate
+                    val frameDrawingTime = System.currentTimeMillis() - startTimestamp
+                    val desiredFrameTimeMs = 1000 / maxFrameRate.value
+                    GlobalPerformanceData.updateLoad(
+                        "Renderer",
+                        frameDrawingTime.toFloat() / desiredFrameTimeMs
+                    )
+                    val sleepTime = desiredFrameTimeMs - frameDrawingTime
+                    sleep(sleepTime.coerceAtLeast(0))
+                }
+            } catch (_: InterruptedException) {
+                Log.d(LOGTAG, "DrawThread interrupted.")
             }
             Log.i(LOGTAG, "DrawThread stopped. (Thread: " + this.name + ")")
         }
@@ -779,6 +785,7 @@ class AnalyzerSurface(context: Context,
             // Draw:
             var c: Canvas? = null
             try {
+                if (!running) return  // make sure not to try to lock the canvas if we should exit..
                 c = holder.lockHardwareCanvas()
                 synchronized(holder) {
                     if (c != null) {
@@ -994,10 +1001,12 @@ class AnalyzerSurface(context: Context,
                     topBottomArrowDrawable?.draw(c)
 
                     // draw channel width text below the squelch selector:
-                    var shownChannelWidth = 0
-                    if (showLowerBand) shownChannelWidth += channelWidth.value
-                    if (showUpperBand) shownChannelWidth += channelWidth.value
-                    textStr = String.format("%d kHz", shownChannelWidth / 1000)
+                    val channelWidthValue = channelWidth.value
+                    textStr = if (channelWidthValue >= 10000) {
+                        String.format("%d kHz", channelWidthValue / 1000)
+                    } else {
+                        String.format("%.1f kHz", channelWidthValue / 1000.0)
+                    }
                     textSmallPaint.getTextBounds(textStr, 0, textStr.length, bounds)
                     c.drawText(textStr, channelPosition - bounds.width() / 2f, squelchYPosition + bounds.height() * 1.1f, textSmallPaint)
                 }

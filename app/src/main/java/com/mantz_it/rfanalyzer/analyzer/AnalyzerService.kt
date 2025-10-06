@@ -34,9 +34,13 @@ import androidx.core.net.toUri
 import com.mantz_it.rfanalyzer.database.AppStateRepository
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
 import com.mantz_it.rfanalyzer.database.collectAppState
+import com.mantz_it.rfanalyzer.source.AirspySource
+import com.mantz_it.rfanalyzer.source.HydraSdrSource
 import com.mantz_it.rfanalyzer.ui.MainActivity
+import com.mantz_it.rfanalyzer.ui.composable.FilesourceFileFormat
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlin.math.abs
 
 /**
  * <h1>RF Analyzer - Analyzer Service</h1>
@@ -277,13 +281,22 @@ class AnalyzerService : Service() {
     private fun startScheduler(): Boolean {
         if(source == null) return false
 
+        // Ensure that source sample rate is supported:
+        val supportedSampleRates = source!!.supportedSampleRates
+        val currentSampleRate = source!!.sampleRate
+        if(!supportedSampleRates.contains(source!!.sampleRate)) {
+            val bestMatch = supportedSampleRates.minByOrNull { supportedSampleRate -> abs(supportedSampleRate - currentSampleRate) }
+            if(bestMatch == null || bestMatch == 0)
+                Log.w(TAG, "startScheduler: Source sample rate $currentSampleRate is not supported! (${supportedSampleRates})")
+            else
+                source!!.sampleRate = bestMatch
+        }
+
         // Source was successfully opened, let the UI know:
         appStateRepository.sourceName.set(source!!.name)
         appStateRepository.sourceMinimumFrequency.set(source!!.minFrequency)
         appStateRepository.sourceMaximumFrequency.set(source!!.maxFrequency)
-        appStateRepository.sourceMinimumSampleRate.set(source!!.minSampleRate.toLong())
-        appStateRepository.sourceMaximumSampleRate.set(source!!.maxSampleRate.toLong())
-        appStateRepository.sourceOptimalSampleRates.set(source!!.supportedSampleRates.map { it.toLong() })
+        appStateRepository.sourceSupportedSampleRates.set(supportedSampleRates.map { it.toLong() })
         appStateRepository.sourceFrequency.set(source!!.frequency)
         appStateRepository.sourceSampleRate.set(source!!.sampleRate.toLong())
         if (source is RtlsdrSource) {
@@ -380,16 +393,13 @@ class AnalyzerService : Service() {
 
         // (de-)activate demodulation in the scheduler and set the sample rate accordingly:
         if (newDemodulationMode == DemodulationMode.OFF) {
+            Log.d(TAG, "applyNewDemodulationMode: De-activating demodulation")
             scheduler!!.isDemodulationActivated = false
             demodulator!!.demodulationMode = DemodulationMode.OFF
             return true
         }
 
-        if(source!!.sampleRate % Demodulator.MIN_INPUT_RATE != 0) {
-            Log.i( TAG, "startScheduler: Source sample rate (${source!!.sampleRate} Sps) is not a multiple of Demodulator input rate (${Demodulator.MIN_INPUT_RATE})." )
-            Toast.makeText( this, "Sample rate not supported Demodulator (needs multiple of ${Demodulator.MIN_INPUT_RATE} Sps)", Toast.LENGTH_LONG ).show()
-            return false
-        }
+        Log.d(TAG, "applyNewDemodulationMode: Switching to demodulation mode ${newDemodulationMode.displayName}")
         demodulator!!.demodulationMode = newDemodulationMode
         scheduler!!.isDemodulationActivated = true
         demodulator!!.channelWidth = appStateRepository.channelWidth.value
@@ -434,7 +444,7 @@ class AnalyzerService : Service() {
                         "127.0.0.1",
                         1234
                     )
-                rtlsdrSource.setAllowOutOfBoundFrequency(appStateRepository.rtlsdrAllowOutOfBoundFrequency.value)
+                rtlsdrSource.setAllowOutOfBoundFrequency(appStateRepository.rtlsdrAllowOutOfBoundFrequency.value || appStateRepository.rtlsdrBlogV4connected.value)
                 rtlsdrSource.setFrequency(appStateRepository.sourceFrequency.value)
                 rtlsdrSource.setSampleRate(appStateRepository.sourceSampleRate.value.toInt())
 
@@ -452,6 +462,35 @@ class AnalyzerService : Service() {
                     rtlsdrSource.isManualGain = false
                 }
                 source = rtlsdrSource
+            }
+            SourceType.AIRSPY -> {
+                val airspySource = AirspySource()
+                airspySource.frequency = appStateRepository.sourceFrequency.value
+                airspySource.sampleRate = appStateRepository.sourceSampleRate.value.toInt()
+                airspySource.lnaGain = appStateRepository.airspyLnaGain.value
+                airspySource.vgaGain = appStateRepository.airspyVgaGain.value
+                airspySource.mixerGain = appStateRepository.airspyMixerGain.value
+                airspySource.linearityGain = appStateRepository.airspyLinearityGain.value
+                airspySource.sensitivityGain = appStateRepository.airspySensitivityGain.value
+                airspySource.advancedGainEnabled = appStateRepository.airspyAdvancedGainEnabled.value
+                airspySource.rfBias = appStateRepository.airspyRfBiasEnabled.value
+                airspySource.frequencyOffset = appStateRepository.airspyConverterOffset.value.toInt()
+                source = airspySource
+            }
+            SourceType.HYDRASDR -> {
+                val hydraSdrSource = HydraSdrSource()
+                hydraSdrSource.frequency = appStateRepository.sourceFrequency.value
+                hydraSdrSource.sampleRate = appStateRepository.sourceSampleRate.value.toInt()
+                hydraSdrSource.lnaGain = appStateRepository.hydraSdrLnaGain.value
+                hydraSdrSource.vgaGain = appStateRepository.hydraSdrVgaGain.value
+                hydraSdrSource.mixerGain = appStateRepository.hydraSdrMixerGain.value
+                hydraSdrSource.linearityGain = appStateRepository.hydraSdrLinearityGain.value
+                hydraSdrSource.sensitivityGain = appStateRepository.hydraSdrSensitivityGain.value
+                hydraSdrSource.advancedGainEnabled = appStateRepository.hydraSdrAdvancedGainEnabled.value
+                hydraSdrSource.rfBias = appStateRepository.hydraSdrRfBiasEnabled.value
+                hydraSdrSource.rfPort = appStateRepository.hydraSdrRfPort.value
+                hydraSdrSource.frequencyOffset = appStateRepository.hydraSdrConverterOffset.value.toInt()
+                source = hydraSdrSource
             }
         }
         return true
@@ -473,7 +512,12 @@ class AnalyzerService : Service() {
                     appStateRepository.sourceFrequency.value,
                     1024*256,
                     appStateRepository.filesourceRepeatEnabled.value,
-                    appStateRepository.filesourceFileFormat.value.ordinal
+                    when(appStateRepository.filesourceFileFormat.value) {
+                        FilesourceFileFormat.HACKRF -> FileIQSource.FILE_FORMAT_8BIT_SIGNED
+                        FilesourceFileFormat.RTLSDR -> FileIQSource.FILE_FORMAT_8BIT_UNSIGNED
+                        FilesourceFileFormat.AIRSPY -> FileIQSource.FILE_FORMAT_16BIT_SIGNED
+                        FilesourceFileFormat.HYDRASDR -> FileIQSource.FILE_FORMAT_16BIT_SIGNED
+                    }
                 )
                 return source?.open(this, iqSourceActions) == true
             } else {
@@ -492,6 +536,20 @@ class AnalyzerService : Service() {
                 return source?.open(this, iqSourceActions) == true
             else {
                 Log.e(TAG, "openSource: sourceType is RTLSDR_SOURCE, but source is null or of other type.")
+                return false
+            }
+
+            SourceType.AIRSPY -> if (source != null && source is AirspySource)
+                return source?.open(this, iqSourceActions) == true
+            else {
+                Log.e(TAG, "openSource: sourceType is AIRSPY, but source is null or of other type.")
+                return false
+            }
+
+            SourceType.HYDRASDR -> if (source != null && source is HydraSdrSource)
+                return source?.open(this, iqSourceActions) == true
+            else {
+                Log.e(TAG, "openSource: sourceType is HYDRASDR, but source is null or of other type.")
                 return false
             }
         }
@@ -560,6 +618,23 @@ class AnalyzerService : Service() {
         }
         s.collectAppState(asr.rtlsdrConverterOffset) { (source as? RtlsdrSource)?.frequencyOffset = it.toInt() }
         s.collectAppState(asr.rtlsdrFrequencyCorrection) { (source as? RtlsdrSource)?.frequencyCorrection = it }
+        s.collectAppState(asr.airspyAdvancedGainEnabled) { (source as? AirspySource)?.advancedGainEnabled = it }
+        s.collectAppState(asr.airspyVgaGain) { (source as? AirspySource)?.vgaGain = it }
+        s.collectAppState(asr.airspyLnaGain) { (source as? AirspySource)?.lnaGain = it }
+        s.collectAppState(asr.airspyMixerGain) { (source as? AirspySource)?.mixerGain = it }
+        s.collectAppState(asr.airspyLinearityGain) { (source as? AirspySource)?.linearityGain = it }
+        s.collectAppState(asr.airspySensitivityGain) { (source as? AirspySource)?.sensitivityGain = it }
+        s.collectAppState(asr.airspyRfBiasEnabled) { (source as? AirspySource)?.rfBias = it }
+        s.collectAppState(asr.airspyConverterOffset) { (source as? AirspySource)?.frequencyOffset = it.toInt() }
+        s.collectAppState(asr.hydraSdrAdvancedGainEnabled) { (source as? HydraSdrSource)?.advancedGainEnabled = it }
+        s.collectAppState(asr.hydraSdrVgaGain) { (source as? HydraSdrSource)?.vgaGain = it }
+        s.collectAppState(asr.hydraSdrLnaGain) { (source as? HydraSdrSource)?.lnaGain = it }
+        s.collectAppState(asr.hydraSdrMixerGain) { (source as? HydraSdrSource)?.mixerGain = it }
+        s.collectAppState(asr.hydraSdrLinearityGain) { (source as? HydraSdrSource)?.linearityGain = it }
+        s.collectAppState(asr.hydraSdrSensitivityGain) { (source as? HydraSdrSource)?.sensitivityGain = it }
+        s.collectAppState(asr.hydraSdrRfBiasEnabled) { (source as? HydraSdrSource)?.rfBias = it }
+        s.collectAppState(asr.hydraSdrRfPort) { (source as? HydraSdrSource)?.rfPort = it }
+        s.collectAppState(asr.hydraSdrConverterOffset) { (source as? HydraSdrSource)?.frequencyOffset = it.toInt() }
         s.collectAppState(asr.filesourceFileFormat) { (source as? FileIQSource)?.fileFormat = it.ordinal }
         s.collectAppState(asr.filesourceRepeatEnabled) { (source as? FileIQSource)?.isRepeat = it }
 
@@ -583,7 +658,12 @@ class AnalyzerService : Service() {
                 LogcatLogger.stopLogging()
         }
         s.collectAppState(asr.rtlsdrAllowOutOfBoundFrequency) {
-            (source as? RtlsdrSource)?.isAllowOutOfBoundFrequency = it
+            (source as? RtlsdrSource)?.isAllowOutOfBoundFrequency = it || appStateRepository.rtlsdrBlogV4connected.value
+            appStateRepository.sourceMinimumFrequency.set(source?.minFrequency ?: 0)
+            appStateRepository.sourceMaximumFrequency.set(source?.maxFrequency ?: 0)
+        }
+        s.collectAppState(asr.rtlsdrBlogV4connected) {
+            (source as? RtlsdrSource)?.isAllowOutOfBoundFrequency = it || appStateRepository.rtlsdrAllowOutOfBoundFrequency.value
             appStateRepository.sourceMinimumFrequency.set(source?.minFrequency ?: 0)
             appStateRepository.sourceMaximumFrequency.set(source?.maxFrequency ?: 0)
         }

@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.database
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.Preferences
@@ -10,7 +11,7 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.mantz_it.rfanalyzer.analyzer.FftProcessorData
 import com.mantz_it.rfanalyzer.source.HackrfSource
-import com.mantz_it.rfanalyzer.source.SamplePacket
+import com.mantz_it.rfanalyzer.source.HydraSdrRfPort
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
 import com.mantz_it.rfanalyzer.ui.composable.FftColorMap
 import com.mantz_it.rfanalyzer.ui.composable.FftDrawingType
@@ -34,12 +35,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,8 +86,6 @@ fun <T> CoroutineScope.collectAppState(
 class AppStateRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     // Constants
     companion object {
         const val VERTICAL_SCALE_LOWER_BOUNDARY = -100f // Smallest dB value the vertical scale can start
@@ -97,6 +95,35 @@ class AppStateRepository @Inject constructor(
         const val TRIAL_VERSTION_USAGE_TIME = 60*60  // 1 hour of usage time
     }
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Track DataStore loading:
+    private var settingsTotalCount = 0   // A counter which holds the total number of Settings in AppStateRepositary (incremented in each Setting constructor)
+    private var settingsLoadedCount = 0  // A counter which holds the number of Settings which have finished loading
+    var settingsLoaded = MutableState(false)  // State which indicates if all settings are loaded
+    private fun incrementSettingLoadedCounter() {
+        settingsLoadedCount++
+        if (settingsLoadedCount >= settingsTotalCount)
+            settingsLoaded.set(true)
+    }
+    suspend fun blockUntilAllSettingsLoaded() {
+        settingsLoaded.stateFlow.first { it }   // suspends until predicate is satisfied
+    }
+
+    // Perform actions which need to wait until all settings are loaded:
+    init {
+        Log.d("AppStateRepository", "Start loading settings...")
+        val startTime = System.nanoTime()
+        scope.launch {
+            blockUntilAllSettingsLoaded()
+            val endTime = System.nanoTime()
+            val duration = (endTime - startTime) / 1_000_000.0
+            Log.d("AppStateRepository", "Finished loading $settingsLoadedCount (of $settingsTotalCount) settings after ${duration}ms")
+
+            sourceSupportedSampleRates.set(sourceType.value.defaultSupportedSampleRates)
+        }
+    }
+
     // General App State
     val welcomeScreenFinished = Setting("welcomeScreenFinished", false, scope, dataStore)
     val notificationPermissionAskedAtLeastOnce = Setting("notificationPermissionAskedAtLeastOnce", false, scope, dataStore)
@@ -104,23 +131,24 @@ class AppStateRepository @Inject constructor(
     val appVersion = MutableState("-")
     val appBuildType = MutableState("-")
 
+    // A workaround for the RTL-SDR Blog V4: We track connected USB devices to allow lower frequencies (<24MHz) automatically
+    val rtlsdrBlogV4connected = MutableState(false)
+
     // Source Tab
     val sourceType = Setting("sourceType", SourceType.HACKRF, scope, dataStore)
     val sourceName = MutableState("")
     val sourceMinimumFrequency = MutableState(0L)
     val sourceMaximumFrequency = MutableState(20000000000L)
-    val sourceMinimumSampleRate = MutableState(0L)
-    val sourceMaximumSampleRate = MutableState(20000000L)  // (highest possible in current version; = hackrf)
-    val sourceOptimalSampleRates = MutableState(listOf(0L))
+    val sourceSupportedSampleRates = MutableState(listOf(0L))
     val sourceFrequencies = SourceType.entries.associateWith { type -> Setting("sourceFrequency_${type.name}", 97000000L, scope, dataStore) }
     val sourceFrequency = DerivedEnumState(sourceType, sourceFrequencies)
-    val sourceSampleRates = SourceType.entries.associateWith { type -> Setting("sourceSampleRate_${type.name}", 2000000L, scope, dataStore) }
+    val sourceSampleRates = SourceType.entries.associateWith { type -> Setting("sourceSampleRate_${type.name}", type.defaultSupportedSampleRates.first(), scope, dataStore) }
     val sourceSampleRate = DerivedEnumState(sourceType, sourceSampleRates)
     val sourceAutomaticSampleRateAdjustment = Setting("sourceAutomaticSampleRateAdjustment", true, scope, dataStore)
     val sourceSignalStartFrequency = DerivedState(sourceFrequency, sourceSampleRate) { sourceFrequency.value - sourceSampleRate.value/2 }
     val sourceSignalEndFrequency = DerivedState(sourceFrequency, sourceSampleRate) { sourceFrequency.value + sourceSampleRate.value/2 }
-    val sourceMinimumPossibleSignalFrequency = DerivedState(sourceMinimumFrequency, sourceMaximumSampleRate) { sourceMinimumFrequency.value - sourceMaximumSampleRate.value/2 }
-    val sourceMaximumPossibleSignalFrequency = DerivedState(sourceMaximumFrequency, sourceMaximumSampleRate) { sourceMaximumFrequency.value + sourceMaximumSampleRate.value/2 }
+    val sourceMinimumPossibleSignalFrequency = DerivedState(sourceMinimumFrequency, sourceSupportedSampleRates) { sourceMinimumFrequency.value - sourceSupportedSampleRates.value.last()/2 }
+    val sourceMaximumPossibleSignalFrequency = DerivedState(sourceMaximumFrequency, sourceSupportedSampleRates) { sourceMaximumFrequency.value + sourceSupportedSampleRates.value.last()/2 }
     val hackrfVgaGainSteps = (0..HackrfSource.MAX_VGA_RX_GAIN step HackrfSource.VGA_RX_GAIN_STEP_SIZE).toList()
     val hackrfVgaGainIndex = Setting("hackrfVgaRxGainIndex", 10, scope, dataStore)
     val hackrfLnaGainSteps = (0..HackrfSource.MAX_LNA_GAIN step HackrfSource.LNA_GAIN_STEP_SIZE).toList()
@@ -141,6 +169,23 @@ class AppStateRepository @Inject constructor(
     val rtlsdrFrequencyCorrection = Setting("rtlsdrFrequencyCorrection", 0, scope, dataStore)
     val rtlsdrAllowOutOfBoundFrequency = Setting("rtlsdrAllowOutOfBoundFrequency", false, scope, dataStore)
     val rtlsdrEnableBiasT = Setting("rtlsdrEnableBiasT", false, scope, dataStore)
+    val airspyAdvancedGainEnabled = Setting("airspyAdvancedGainEnabled", false, scope, dataStore)
+    val airspyVgaGain = Setting("airspyVgaGain", 10, scope, dataStore)
+    val airspyLnaGain = Setting("airspyLnaGain", 10, scope, dataStore)
+    val airspyMixerGain = Setting("airspyMixerGain", 10, scope, dataStore)
+    val airspyLinearityGain = Setting("airspyLinearityGain", 10, scope, dataStore)
+    val airspySensitivityGain = Setting("airspySensitivityGain", 10, scope, dataStore)
+    val airspyRfBiasEnabled = Setting("airspyRfBiasEnabled", false, scope, dataStore)
+    val airspyConverterOffset = Setting("airspyConvertOffset", 0L, scope, dataStore)
+    val hydraSdrAdvancedGainEnabled = Setting("hydraSdrAdvancedGainEnabled", false, scope, dataStore)
+    val hydraSdrVgaGain = Setting("hydraSdrVgaGain", 10, scope, dataStore)
+    val hydraSdrLnaGain = Setting("hydraSdrLnaGain", 10, scope, dataStore)
+    val hydraSdrMixerGain = Setting("hydraSdrMixerGain", 10, scope, dataStore)
+    val hydraSdrLinearityGain = Setting("hydraSdrLinearityGain", 10, scope, dataStore)
+    val hydraSdrSensitivityGain = Setting("hydraSdrSensitivityGain", 10, scope, dataStore)
+    val hydraSdrRfBiasEnabled = Setting("hydraSdrRfBiasEnabled", false, scope, dataStore)
+    val hydraSdrRfPort = Setting("hydraSdrRfPort", HydraSdrRfPort.RX0, scope, dataStore)
+    val hydraSdrConverterOffset = Setting("hydraSdrConvertOffset", 0L, scope, dataStore)
     val filesourceUri = MutableState("")
     val filesourceFilename = MutableState("")
     val filesourceFileFormat = MutableState(FilesourceFileFormat.HACKRF)
@@ -272,13 +317,14 @@ class AppStateRepository @Inject constructor(
     }
 
     // Wrapper class for persisted States (i.e. Settings)
-    class Setting<T>(
+    inner class Setting<T>(
         private val keyName: String,
         default: T,
         scope: CoroutineScope,
         dataStore: DataStore<Preferences>
     ) : MutableState<T>(default) {
         init {
+            settingsTotalCount++
             val key: Preferences.Key<T> = when (default) {
                 is Boolean -> booleanPreferencesKey(keyName)
                 is Int -> intPreferencesKey(keyName)
@@ -310,6 +356,8 @@ class AppStateRepository @Inject constructor(
 
                 if (saved != null) flow.value = saved
                 listeners.forEach { it(value) }
+
+                incrementSettingLoadedCounter()
 
                 // Persist changes (debounced)
                 flow

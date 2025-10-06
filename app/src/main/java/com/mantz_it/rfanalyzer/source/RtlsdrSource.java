@@ -82,7 +82,7 @@ public class RtlsdrSource implements IQSourceInterface {
 	private IQConverter iqConverter;
 	private static final String LOGTAG = "RtlsdrSource";
 	private static final int QUEUE_SIZE = 20;
-	public static final int[] OPTIMAL_SAMPLE_RATES = {1000000, 2000000};
+	public static final int[] OPTIMAL_SAMPLE_RATES = {1000000, 2000000, 2500000};
 	public static final long[] MIN_FREQUENCY = { 0,			// invalid
 												52000000l,	// E4000
 												22000000l,	// FC0012
@@ -189,9 +189,9 @@ public class RtlsdrSource implements IQSourceInterface {
 				try {
 					commandThread.join();
 					Log.d(LOGTAG, "close: command thread successfully joined");
-				} catch (InterruptedException e) {
+				} catch (InterruptedException | NullPointerException ignored) {
 				}
-			}
+            }
 			commandThread = null;
 		}
 
@@ -277,12 +277,10 @@ public class RtlsdrSource implements IQSourceInterface {
 			return MIN_FREQUENCY[tuner] + frequencyOffset;
 	}
 
-	@Override
 	public int getMaxSampleRate() {
 		return OPTIMAL_SAMPLE_RATES[OPTIMAL_SAMPLE_RATES.length - 1];
 	}
 
-	@Override
 	public int getMinSampleRate() {
 		return OPTIMAL_SAMPLE_RATES[0];
 	}

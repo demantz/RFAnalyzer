@@ -14,8 +14,8 @@ android {
         applicationId = "com.mantz_it.rfanalyzer"
         minSdk = 28
         targetSdk = 36
-        versionCode = 20014
-        versionName = "2.0.2"
+        versionCode = 20104
+        versionName = "2.1.0beta3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -81,6 +81,8 @@ dependencies {
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.localbroadcastmanager)
     implementation(project(":nativedsp"))
+    implementation(project(":libairspy"))
+    implementation(project(":libhydrasdr"))
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.room.runtime)

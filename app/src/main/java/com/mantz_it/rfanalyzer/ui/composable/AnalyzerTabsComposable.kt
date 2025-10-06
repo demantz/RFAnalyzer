@@ -76,8 +76,7 @@ fun AnalyzerTabsComposable(
     val sourceName by appStateRepository.sourceName.stateFlow.collectAsState()
     val sourceMinimumFrequency by appStateRepository.sourceMinimumFrequency.stateFlow.collectAsState()
     val sourceMaximumFrequency by appStateRepository.sourceMaximumFrequency.stateFlow.collectAsState()
-    val sourceMinimumSampleRate by appStateRepository.sourceMinimumSampleRate.stateFlow.collectAsState()
-    val sourceMaximumSampleRate by appStateRepository.sourceMaximumSampleRate.stateFlow.collectAsState()
+    val sourceSupportedSampleRates by appStateRepository.sourceSupportedSampleRates.stateFlow.collectAsState()
     val sourceFrequency by appStateRepository.sourceFrequency.stateFlow.collectAsState()
     val sourceSampleRate by appStateRepository.sourceSampleRate.stateFlow.collectAsState()
     val sourceAutomaticSampleRateAdjustment by appStateRepository.sourceAutomaticSampleRateAdjustment.stateFlow.collectAsState()
@@ -99,6 +98,23 @@ fun AnalyzerTabsComposable(
     val rtlsdrFrequencyCorrection by appStateRepository.rtlsdrFrequencyCorrection.stateFlow.collectAsState()
     val rtlsdrAllowOutOfBoundFrequency by appStateRepository.rtlsdrAllowOutOfBoundFrequency.stateFlow.collectAsState()
     val rtlsdrEnableBiasT by appStateRepository.rtlsdrEnableBiasT.stateFlow.collectAsState()
+    val airspyAdvancedGainEnabled by appStateRepository.airspyAdvancedGainEnabled.stateFlow.collectAsState()
+    val airspyVgaGain by appStateRepository.airspyVgaGain.stateFlow.collectAsState()
+    val airspyLnaGain by appStateRepository.airspyLnaGain.stateFlow.collectAsState()
+    val airspyMixerGain by appStateRepository.airspyMixerGain.stateFlow.collectAsState()
+    val airspyLinearityGain by appStateRepository.airspyLinearityGain.stateFlow.collectAsState()
+    val airspySensitivityGain by appStateRepository.airspySensitivityGain.stateFlow.collectAsState()
+    val airspyRfBiasEnabled by appStateRepository.airspyRfBiasEnabled.stateFlow.collectAsState()
+    val airspyConverterOffset by appStateRepository.airspyConverterOffset.stateFlow.collectAsState()
+    val hydraSdrAdvancedGainEnabled by appStateRepository.hydraSdrAdvancedGainEnabled.stateFlow.collectAsState()
+    val hydraSdrVgaGain by appStateRepository.hydraSdrVgaGain.stateFlow.collectAsState()
+    val hydraSdrLnaGain by appStateRepository.hydraSdrLnaGain.stateFlow.collectAsState()
+    val hydraSdrMixerGain by appStateRepository.hydraSdrMixerGain.stateFlow.collectAsState()
+    val hydraSdrLinearityGain by appStateRepository.hydraSdrLinearityGain.stateFlow.collectAsState()
+    val hydraSdrSensitivityGain by appStateRepository.hydraSdrSensitivityGain.stateFlow.collectAsState()
+    val hydraSdrRfBiasEnabled by appStateRepository.hydraSdrRfBiasEnabled.stateFlow.collectAsState()
+    val hydraSdrRfPort by appStateRepository.hydraSdrRfPort.stateFlow.collectAsState()
+    val hydraSdrConverterOffset by appStateRepository.hydraSdrConverterOffset.stateFlow.collectAsState()
     val filesourceFilename by appStateRepository.filesourceFilename.stateFlow.collectAsState()
     val filesourceFileFormat by appStateRepository.filesourceFileFormat.stateFlow.collectAsState()
     val filesourceRepeatEnabled by appStateRepository.filesourceRepeatEnabled.stateFlow.collectAsState()
@@ -171,8 +187,7 @@ fun AnalyzerTabsComposable(
                         automaticSampleRateAdjustment = sourceAutomaticSampleRateAdjustment,
                         minimumFrequency = sourceMinimumFrequency,
                         maximumFrequency = sourceMaximumFrequency,
-                        minimumSampleRate = sourceMinimumSampleRate,
-                        maximumSampleRate = sourceMaximumSampleRate,
+                        supportedSampleRates = sourceSupportedSampleRates,
                         hackrfVgaGainSteps = appStateRepository.hackrfVgaGainSteps,
                         hackrfVgaGainIndex = hackrfVgaGainIndex,
                         hackrfLnaGainSteps = appStateRepository.hackrfLnaGainSteps,
@@ -193,6 +208,23 @@ fun AnalyzerTabsComposable(
                         rtlsdrConverterOffset = rtlsdrConverterOffset,
                         rtlsdrAllowOutOfBoundFrequency = rtlsdrAllowOutOfBoundFrequency,
                         rtlsdrEnableBiasT = rtlsdrEnableBiasT,
+                        airspyAdvancedGainEnabled = airspyAdvancedGainEnabled,
+                        airspyVgaGain = airspyVgaGain,
+                        airspyLnaGain = airspyLnaGain,
+                        airspyMixerGain = airspyMixerGain,
+                        airspyLinearityGain = airspyLinearityGain,
+                        airspySensitivityGain = airspySensitivityGain,
+                        airspyRfBiasEnabled = airspyRfBiasEnabled,
+                        airspyConverterOffset = airspyConverterOffset,
+                        hydraSdrAdvancedGainEnabled = hydraSdrAdvancedGainEnabled,
+                        hydraSdrVgaGain = hydraSdrVgaGain,
+                        hydraSdrLnaGain = hydraSdrLnaGain,
+                        hydraSdrMixerGain = hydraSdrMixerGain,
+                        hydraSdrLinearityGain = hydraSdrLinearityGain,
+                        hydraSdrSensitivityGain = hydraSdrSensitivityGain,
+                        hydraSdrRfBiasEnabled = hydraSdrRfBiasEnabled,
+                        hydraSdrRfPort = hydraSdrRfPort,
+                        hydraSdrConverterOffset = hydraSdrConverterOffset,
                         filesourceFilename = filesourceFilename,
                         filesourceFileFormat = filesourceFileFormat,
                         filesourceRepeatEnabled = filesourceRepeatEnabled,

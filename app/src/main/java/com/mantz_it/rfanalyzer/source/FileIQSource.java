@@ -56,6 +56,7 @@ public class FileIQSource implements IQSourceInterface {
 	private static final String LOGTAG = "FileIQSource";
 	public static final int FILE_FORMAT_8BIT_SIGNED = 0;
 	public static final int FILE_FORMAT_8BIT_UNSIGNED = 1;
+	public static final int FILE_FORMAT_16BIT_SIGNED = 2;
 
 	public FileIQSource() {
 	}
@@ -76,6 +77,9 @@ public class FileIQSource implements IQSourceInterface {
 				break;
 			case FILE_FORMAT_8BIT_UNSIGNED:
 				iqConverter = new Unsigned8BitIQConverter();
+				break;
+			case FILE_FORMAT_16BIT_SIGNED:
+				iqConverter = new Signed16BitIQConverter();
 				break;
 			default:
 				Log.e(LOGTAG, "constructor: Invalid file format: " + fileFormat);
@@ -234,6 +238,9 @@ public class FileIQSource implements IQSourceInterface {
 			case FILE_FORMAT_8BIT_UNSIGNED:
 				newIqConverter = new Unsigned8BitIQConverter();
 				break;
+			case FILE_FORMAT_16BIT_SIGNED:
+				newIqConverter = new Signed16BitIQConverter();
+				break;
 			default:
 				Log.e(LOGTAG, "setFileFormat: Invalid file format: " + fileFormat);
 				break;
@@ -276,16 +283,6 @@ public class FileIQSource implements IQSourceInterface {
 	}
 
 	@Override
-	public int getMaxSampleRate() {
-		return sampleRate;
-	}
-
-	@Override
-	public int getMinSampleRate() {
-		return sampleRate;
-	}
-
-	@Override
 	public int getNextHigherOptimalSampleRate(int sampleRate) {
 		return this.sampleRate;
 	}
@@ -310,6 +307,8 @@ public class FileIQSource implements IQSourceInterface {
 			case FILE_FORMAT_8BIT_SIGNED:
 			case FILE_FORMAT_8BIT_UNSIGNED:
 				return 2;
+			case FILE_FORMAT_16BIT_SIGNED:
+				return 4;
 			default:
 				Log.e(LOGTAG, "getBytesPerSample: Invalid file format: " + fileFormat);
 				return 0;

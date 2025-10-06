@@ -1,5 +1,13 @@
 CHANGELOG - RF Analyzer
 
+version 2.1
+- Support for Airspy SDR
+- Support for HydraSDR RFOne SDR
+- Added Rational Resampler: Demodulation of arbitrary sample rates is now possible
+- Switched audio output sample rate from 31250 Hz to 48000 Hz
+- Automatically disable any Frequency restrictions when RTL-SDR Blog v4 is connected
+- Multiple Bug fixes for app crashes and freezes
+
 version 2.0
 - Complete rewrite of the app from scratch
 - New modern Material Design UI with improved usability

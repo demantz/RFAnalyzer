@@ -7,8 +7,6 @@ exported for analysis in other tools.
 
 ## Recording Tab
 
-![Recording Tab](todo)
-
 ### View Recordings
 
 Press the **View Recordings** button to open a list of all saved recordings (see [Recording List](#recording-list).

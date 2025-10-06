@@ -233,6 +233,6 @@ public class AudioSink extends Thread {
 				Log.e(LOGTAG, "applyAudioFilter: [audioFilter1] could not filter all samples from input packet.");
 			}
 		} else
-			Log.e(LOGTAG,"applyAudioFilter: incoming sample rate is not supported!");
+			Log.e(LOGTAG,"applyAudioFilter: incoming sample rate is not supported: " + input.getSampleRate());
 	}
 }

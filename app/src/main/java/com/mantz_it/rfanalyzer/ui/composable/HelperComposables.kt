@@ -316,9 +316,10 @@ fun FrequencyChooser(
                             displayedFrequency = TextFieldValue(text = newString, selection = TextRange(deletedIndex))
                         } else {
                             // A character was inserted
-                            val overwrittenIndex = newFilteredText.selection.start
+                            val overwrittenIndex = minOf(newFilteredText.selection.start, newFilteredText.text.length-1)
                             val newString = newFilteredText.text.removeRange(overwrittenIndex, overwrittenIndex+1)
-                            displayedFrequency = TextFieldValue(text = newString, selection = TextRange(overwrittenIndex))
+                            val newStringLimited = newString.substring(0, minOf(newString.length, digitCount))  // copy-pasting can add more than one char at once. then we need to limit the length to digitCount
+                            displayedFrequency = TextFieldValue(text = newStringLimited, selection = TextRange(overwrittenIndex))
                         }
                     } else {
                         displayedFrequency = newFilteredText  // only the cursor position has changed

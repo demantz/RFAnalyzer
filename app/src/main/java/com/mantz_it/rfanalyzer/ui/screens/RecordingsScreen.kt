@@ -133,6 +133,8 @@ fun RecordingCard(recording: Recording, recordingScreenActions: RecordingScreenA
                             when (recording.fileFormat) {
                                 FilesourceFileFormat.RTLSDR -> Color.Blue
                                 FilesourceFileFormat.HACKRF -> Color.Green
+                                FilesourceFileFormat.AIRSPY -> Color(alpha = 1f, red = 1f, green = 0.4f, blue = 0f) // orange
+                                FilesourceFileFormat.HYDRASDR -> Color(alpha = 1f, red = 1f, green = 0.4f, blue = 0f) // orange
                             },
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -305,7 +307,7 @@ fun RecScreenPreview() {
         frequency = 103323000,
         sampleRate = 2000000,
         date = 1534567890000,
-        fileFormat = FilesourceFileFormat.RTLSDR,
+        fileFormat = FilesourceFileFormat.HYDRASDR,
         sizeInBytes = 10 * 1024 * 1024,
         filePath = "abc://test",
         favorite = true

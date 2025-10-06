@@ -49,6 +49,7 @@ class Scheduler(var fftSize: Int, private val source: IQSourceInterface) : Threa
         // higher delays when switching frequencies.
         private const val FFT_QUEUE_SIZE = 2
         private const val DEMOD_QUEUE_SIZE = 20
+        private const val SQUELCH_DEBOUNCE_COUNT = 50  // number of loop iterations to wait before squelch goes from true to false
         private const val LOGTAG = "Scheduler"
     }
 
@@ -72,6 +73,7 @@ class Scheduler(var fftSize: Int, private val source: IQSourceInterface) : Threa
     private var onlyWhenSquelchIsSatisfied: Boolean = false                 // only write samples to file when squelch is satisfied
     private var onRecordingStopped: ((finalSize: Long) -> Unit)? = null     // callback when recording stops (with final file size in bytes)
     private var onFileSizeUpdate: ((currentFileSize: Long) -> Unit)? = null // periodical callback during recording to report file size (in bytes) to ui
+    private var squelchDebounceCounter: Int = 0                             // helper counter to debounce squelch changes
 
     init {
         // allocate the buffer packets.
@@ -142,9 +144,15 @@ class Scheduler(var fftSize: Int, private val source: IQSourceInterface) : Threa
             }
             val startTimestamp = System.nanoTime()
 
+            // Squelch debounce: When squelchSatisfied goes from true to false, wait SQUELCH_DEBOUNCE_COUNT loop iterations before actually stop demodulation/recording
+            if (squelchSatisfied)
+                squelchDebounceCounter = 0
+            else if (squelchDebounceCounter < SQUELCH_DEBOUNCE_COUNT)
+                squelchDebounceCounter++
+
             ///// Recording ////////////////////////////////////////////////////////////////////////
             if (bufferedOutputStream != null) {
-                if(squelchSatisfied || !onlyWhenSquelchIsSatisfied) {
+                if(squelchSatisfied || !onlyWhenSquelchIsSatisfied || squelchDebounceCounter < SQUELCH_DEBOUNCE_COUNT) {
                     try {
                         bufferedOutputStream!!.write(packet)
                         recordedFileSize += packet.size.toLong()
@@ -180,7 +188,7 @@ class Scheduler(var fftSize: Int, private val source: IQSourceInterface) : Threa
             }
 
             ///// Demodulation /////////////////////////////////////////////////////////////////////
-            if (isDemodulationActivated && squelchSatisfied) {
+            if (isDemodulationActivated && (squelchSatisfied || squelchDebounceCounter < SQUELCH_DEBOUNCE_COUNT)) {
                 // Get a buffer from the demodulator inputQueue
                 demodBuffer = demodInputQueue.poll()
                 if (demodBuffer != null) {

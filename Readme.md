@@ -31,6 +31,8 @@ phone both practical and fun.
 
 - HackRF (via [hackrf_android](https://github.com/demantz/hackrf_android))
 - RTL-SDR dongles (via [rtl-sdr driver](http://sdr.osmocom.org/trac/wiki/rtl-sdr))
+- Airspy (via [libairspy](https://github.com/airspy/airspyone_host/tree/master/libairspy))
+- HydraSDR (via [libhydrasdr](https://github.com/hydrasdr/rfone_host/tree/main/libhydrasdr))
 - File input (from previously recorded IQ files or external sources)
 
 > *Note*: Proper USB OTG support and a reliable cable/hub may be necessary for some setups.
@@ -81,6 +83,10 @@ RF Analyzer is a passion project developed in my spare time. A lot of
 effort has gone into making it useful, reliable, and fun to use. Supporting
 the app through the in-app purchase not only removes the trial limitations -
 it also helps me keep improving and maintaining the project. Thank you! 🙏
+
+You can also donate to support my work:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T11M88LK)
 
 ---
 

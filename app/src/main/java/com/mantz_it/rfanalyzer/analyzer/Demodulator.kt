@@ -8,7 +8,6 @@ import com.mantz_it.rfanalyzer.source.SamplePacket
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.math.atan2
-import kotlin.math.max
 
 /**
  * <h1>RF Analyzer - Demodulator</h1>
@@ -40,15 +39,13 @@ import kotlin.math.max
  */
 class Demodulator(
     inputQueue: ArrayBlockingQueue<SamplePacket>,   // Queue that delivers received baseband signals
-    outputQueue: ArrayBlockingQueue<SamplePacket>,  // Queue to return used buffers from the inputQueue
+    inputReturnQueue: ArrayBlockingQueue<SamplePacket>,  // Queue to return used buffers from the inputQueue
     packetSize: Int                                 // Size of the packets in the input queue
 ) : Thread() {
 
     companion object {
         private const val LOGTAG = "Demodulator"
-        private const val AUDIO_RATE = 31250    // Even though this is not a proper audio rate, the Android system can
-                                                // handle it properly and it is a integer fraction of the input rate (1MHz).
-                                                // The quadrature rate is the sample rate that is used for the demodulation:
+        private const val AUDIO_RATE = 48000
         private const val BAND_PASS_ATTENUATION = 40
 
         // The quadrature rate is the sample rate that is used for the demodulation and dependend on the mode:
@@ -97,13 +94,13 @@ class Demodulator(
          * @param demodulationMode    Demodulation Mode (DEMODULATION_OFF, *_AM, *_NFM, *_WFM, ...)
          */
         set(value) {
-            decimator.outputSampleRate = value.quadratureRate
+            resampler.outputSampleRate = value.quadratureRate
             field = value
             this.channelWidth = value.defaultChannelWidth
         }
 
-    // DECIMATION (input sample rate --> QUADRATURE_RATE)
-    private val decimator = Decimator(demodulationMode.quadratureRate, packetSize, inputQueue, outputQueue)
+    // RESAMPLING (input sample rate --> QUADRATURE_RATE)
+    private val resampler = Resampler(demodulationMode.quadratureRate, packetSize, inputQueue, inputReturnQueue)
 
     // AUDIO OUTPUT
     private var audioSink: AudioSink = AudioSink(packetSize, AUDIO_RATE) // Will do QUADRATURE_RATE --> AUDIO_RATE and audio output
@@ -138,11 +135,11 @@ class Demodulator(
         audioSink.start()
 
         // Start decimator thread:
-        decimator.start()
+        resampler.start()
 
         while (!stopRequested) {
             // Get downsampled packet from the decimator:
-            inputSamples = decimator.getDecimatedPacket(1000)
+            inputSamples = resampler.getResampledPacket(1000)
             val startTimestamp = System.nanoTime()
 
             // Verify the input sample packet is not null:
@@ -155,7 +152,7 @@ class Demodulator(
             applyUserFilter(inputSamples, quadratureSamples) // The result from filtering is stored in quadratureSamples
 
             // return input samples to the decimator block:
-            decimator.returnDecimatedPacket(inputSamples)
+            resampler.returnResampledPacket(inputSamples)
 
             val time1 = System.nanoTime() - startTimestamp
             val nsPerPacket = inputSamples.size() * 1_000_000_000f / inputSamples.sampleRate
@@ -169,6 +166,8 @@ class Demodulator(
                 Log.d(LOGTAG, "run: Audio buffer is null. skip this round...")
                 continue
             }
+
+            audioBuffer.setSize(0) // mark buffer as empty
 
             // demodulate (sample rate is demodulationMode.quadratureRate)
             when (demodulationMode) {
@@ -199,7 +198,7 @@ class Demodulator(
         audioSink.stopSink()
 
         // Stop the decimator thread:
-        decimator.stopDecimator()
+        resampler.stopResampler()
 
         this.stopRequested = true
         Log.i(LOGTAG, "Demodulator stopped. (Thread: " + this.name + ")")
@@ -256,6 +255,9 @@ class Demodulator(
         val imOut = output.im()
         val inputSize = input.size()
         val quadratureGain = demodulationMode.quadratureRate / (2 * Math.PI * maxDeviation).toFloat()
+
+        if (inputSize == 0)
+            return
 
         // Quadrature demodulation:
         reOut[0] = reIn[0] * carryOverSamplesRe + imIn[0] * carryOverSamplesIm

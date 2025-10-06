@@ -170,16 +170,6 @@ public class HackrfSource implements IQSourceInterface, HackrfCallbackInterface 
 	}
 
 	@Override
-	public int getMaxSampleRate() {
-		return MAX_SAMPLERATE;
-	}
-
-	@Override
-	public int getMinSampleRate() {
-		return MIN_SAMPLERATE;
-	}
-
-	@Override
 	public int getSampleRate() {
 		return sampleRate;
 	}

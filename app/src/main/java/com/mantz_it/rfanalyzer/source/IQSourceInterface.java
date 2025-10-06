@@ -92,16 +92,6 @@ public interface IQSourceInterface {
 	public long getMinFrequency();
 
 	/**
-	 * @return the maximum sample rate to which the source can be set
-	 */
-	public int getMaxSampleRate();
-
-	/**
-	 * @return the minimum sample rate to which the source can be set
-	 */
-	public int getMinSampleRate();
-
-	/**
 	 * @param sampleRate	initial sample rate for the lookup
 	 * @return next optimal sample rate that is higher than sampleRate
 	 */

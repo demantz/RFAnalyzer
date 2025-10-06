@@ -14,7 +14,9 @@ import com.mantz_it.rfanalyzer.database.Recording
 import com.mantz_it.rfanalyzer.database.RecordingDao
 import com.mantz_it.rfanalyzer.database.calculateFileName
 import com.mantz_it.rfanalyzer.database.collectAppState
+import com.mantz_it.rfanalyzer.source.AirspySource
 import com.mantz_it.rfanalyzer.source.HackrfSource
+import com.mantz_it.rfanalyzer.source.HydraSdrSource
 import com.mantz_it.rfanalyzer.ui.composable.AboutTabActions
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationTabActions
@@ -221,7 +223,7 @@ class MainViewModel @Inject constructor(
     // MainScreen ACTIONS ------------------------------------------------------------------------
     val sourceTabActions = SourceTabActions(
         onStartStopClicked = {
-            if(appStateRepository.analyzerRunning.value || appStateRepository.analyzerStartPending.value)
+            if (appStateRepository.analyzerRunning.value || appStateRepository.analyzerStartPending.value)
                 sendActionToUi(UiAction.OnStopClicked)
             else {
                 // Verify RTL SDR external IP/Hostname is valid:
@@ -231,7 +233,7 @@ class MainViewModel @Inject constructor(
                     val hostnameRegex = Regex("^(?=.{1,253}\$)([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}\$")
                     if (!(ipRegex.matches(value) || hostnameRegex.matches(value))) {
                         showSnackbar(SnackbarEvent(message = "Invalid IP or Hostname Value: $value"))
-                        Log.w(TAG, "sourceTabActions.onStartStopClicked: Invalid IP or Hostname: $value")
+                        Log.w(TAG,"sourceTabActions.onStartStopClicked: Invalid IP or Hostname: $value")
                         return@SourceTabActions
                     }
                 }
@@ -241,64 +243,80 @@ class MainViewModel @Inject constructor(
         },
         onSourceTypeChanged = { newSourceType ->
             appStateRepository.sourceType.set(newSourceType)
-            appStateRepository.sourceOptimalSampleRates.set(newSourceType.availableSampleRates)
-            when(newSourceType) {
+            appStateRepository.sourceSupportedSampleRates.set(newSourceType.defaultSupportedSampleRates)
+            when (newSourceType) {
                 SourceType.HACKRF -> {
                     appStateRepository.sourceMinimumFrequency.set(HackrfSource.MIN_FREQUENCY)
                     appStateRepository.sourceMaximumFrequency.set(HackrfSource.MAX_FREQUENCY)
-                    appStateRepository.sourceMinimumSampleRate.set(HackrfSource.MIN_SAMPLERATE.toLong())
-                    appStateRepository.sourceMaximumSampleRate.set(HackrfSource.MAX_SAMPLERATE.toLong())
                 }
+
                 SourceType.RTLSDR -> {
                     // We don't know the Tuner yet. So don't be restrictive:
                     appStateRepository.sourceMinimumFrequency.set(0)
                     appStateRepository.sourceMaximumFrequency.set(0)
                 }
+
+                SourceType.AIRSPY -> {
+                    appStateRepository.sourceMinimumFrequency.set(AirspySource.MIN_FREQUENCY)
+                    appStateRepository.sourceMaximumFrequency.set(AirspySource.MAX_FREQUENCY)
+                }
+
+                SourceType.HYDRASDR -> {
+                    appStateRepository.sourceMinimumFrequency.set(HydraSdrSource.MIN_FREQUENCY)
+                    appStateRepository.sourceMaximumFrequency.set(HydraSdrSource.MAX_FREQUENCY)
+                }
+
                 SourceType.FILESOURCE -> Unit // no need to set any values
             }
         },
-        onFrequencyChanged = { newFrequency -> if(newFrequency>=0) {
-            val updateFrequency: () -> Unit = {
-                appStateRepository.sourceFrequency.set(newFrequency)
-                // if channel is outside of the signal range, reset it to the center freq:
-                if(appStateRepository.channelFrequency.value !in appStateRepository.sourceSignalStartFrequency.value..appStateRepository.sourceSignalEndFrequency.value)
-                    appStateRepository.channelFrequency.set(newFrequency)
+        onFrequencyChanged = { newFrequency ->
+            if (newFrequency >= 0) {
+                val updateFrequency: () -> Unit = {
+                    appStateRepository.sourceFrequency.set(newFrequency)
+                    // if channel is outside of the signal range, reset it to the center freq:
+                    if (appStateRepository.channelFrequency.value !in appStateRepository.sourceSignalStartFrequency.value..appStateRepository.sourceSignalEndFrequency.value)
+                        appStateRepository.channelFrequency.set(newFrequency)
+                }
+                if (appStateRepository.recordingRunning.value)
+                    sendActionToUi(
+                        UiAction.ShowDialog(
+                        title = "Stop Recording?",
+                        msg = "The recording is still running? Stop recording to change frequency?",
+                        positiveButton = "Yes, stop recording!",
+                        negativeButton = "No",
+                        action = {
+                            appStateRepository.recordingRunning.set(false)
+                            updateFrequency()
+                        }
+                    ))
+                else
+                    updateFrequency()
             }
-            if(appStateRepository.recordingRunning.value)
-                sendActionToUi(UiAction.ShowDialog(
-                    title = "Stop Recording?",
-                    msg = "The recording is still running? Stop recording to change frequency?",
-                    positiveButton = "Yes, stop recording!",
-                    negativeButton = "No",
-                    action = {
-                        appStateRepository.recordingRunning.set(false)
-                        updateFrequency()
-                    }
-                ))
-            else
-                updateFrequency()
-        } },
-        onSampleRateChanged = { newSampleRate -> if(newSampleRate>=0) {
-            val updateSampleRate: () -> Unit = {
-                appStateRepository.sourceSampleRate.set(newSampleRate)
-                // if channel is outside of the signal range, reset it to the center freq:
-                if(appStateRepository.channelFrequency.value !in appStateRepository.sourceSignalStartFrequency.value..appStateRepository.sourceSignalEndFrequency.value)
-                    appStateRepository.channelFrequency.set(appStateRepository.sourceFrequency.value)
+        },
+        onSampleRateChanged = { newSampleRate ->
+            if (newSampleRate >= 0) {
+                val updateSampleRate: () -> Unit = {
+                    appStateRepository.sourceSampleRate.set(newSampleRate)
+                    // if channel is outside of the signal range, reset it to the center freq:
+                    if (appStateRepository.channelFrequency.value !in appStateRepository.sourceSignalStartFrequency.value..appStateRepository.sourceSignalEndFrequency.value)
+                        appStateRepository.channelFrequency.set(appStateRepository.sourceFrequency.value)
+                }
+                if (appStateRepository.recordingRunning.value)
+                    sendActionToUi(
+                        UiAction.ShowDialog(
+                        title = "Stop Recording?",
+                        msg = "The recording is still running? Stop recording to change sample rate?",
+                        positiveButton = "Yes, stop recording!",
+                        negativeButton = "No",
+                        action = {
+                            appStateRepository.recordingRunning.set(false)
+                            updateSampleRate()
+                        }
+                    ))
+                else
+                    updateSampleRate()
             }
-            if(appStateRepository.recordingRunning.value)
-                sendActionToUi(UiAction.ShowDialog(
-                    title = "Stop Recording?",
-                    msg = "The recording is still running? Stop recording to change sample rate?",
-                    positiveButton = "Yes, stop recording!",
-                    negativeButton = "No",
-                    action = {
-                        appStateRepository.recordingRunning.set(false)
-                        updateSampleRate()
-                    }
-                ))
-            else
-                updateSampleRate()
-        } },
+        },
         onAutomaticSampleRateAdjustmentChanged = appStateRepository.sourceAutomaticSampleRateAdjustment::set,
         onHackrfVgaGainIndexChanged = appStateRepository.hackrfVgaGainIndex::set,
         onHackrfLnaGainIndexChanged = appStateRepository.hackrfLnaGainIndex::set,
@@ -315,6 +333,23 @@ class MainViewModel @Inject constructor(
         onRtlsdrConverterOffsetChanged = appStateRepository.rtlsdrConverterOffset::set,
         onRtlsdrFrequencyCorrectionChanged = appStateRepository.rtlsdrFrequencyCorrection::set,
         onRtlsdrEnableBiasTChanged = appStateRepository.rtlsdrEnableBiasT::set,
+        onAirspyAdvancedGainEnabledChanged = appStateRepository.airspyAdvancedGainEnabled::set,
+        onAirspyVgaGainChanged = appStateRepository.airspyVgaGain::set,
+        onAirspyLnaGainChanged = appStateRepository.airspyLnaGain::set,
+        onAirspyMixerGainChanged = appStateRepository.airspyMixerGain::set,
+        onAirspyLinearityGainChanged = appStateRepository.airspyLinearityGain::set,
+        onAirspySensitivityGainChanged = appStateRepository.airspySensitivityGain::set,
+        onAirspyRfBiasEnabledChanged = appStateRepository.airspyRfBiasEnabled::set,
+        onAirspyConverterOffsetChanged = appStateRepository.airspyConverterOffset::set,
+        onHydraSdrAdvancedGainEnabledChanged = appStateRepository.hydraSdrAdvancedGainEnabled::set,
+        onHydraSdrVgaGainChanged = appStateRepository.hydraSdrVgaGain::set,
+        onHydraSdrLnaGainChanged = appStateRepository.hydraSdrLnaGain::set,
+        onHydraSdrMixerGainChanged = appStateRepository.hydraSdrMixerGain::set,
+        onHydraSdrLinearityGainChanged = appStateRepository.hydraSdrLinearityGain::set,
+        onHydraSdrSensitivityGainChanged = appStateRepository.hydraSdrSensitivityGain::set,
+        onHydraSdrRfBiasEnabledChanged = appStateRepository.hydraSdrRfBiasEnabled::set,
+        onHydraSdrRfPortChanged = appStateRepository.hydraSdrRfPort::set,
+        onHydraSdrConverterOffsetChanged = appStateRepository.hydraSdrConverterOffset::set,
         onOpenFileClicked = { sendActionToUi(UiAction.OnOpenIQFileClicked) },
         onViewRecordingsClicked = { navigate(AppScreen.RecordingScreen) },
         onFilesourceFileFormatChanged = appStateRepository.filesourceFileFormat::set,
@@ -460,7 +495,7 @@ class MainViewModel @Inject constructor(
 
             // Automatically re-adjust the sample rate of the source if we zoom too far out or in (only if not recording!)
             if (appStateRepository.sourceAutomaticSampleRateAdjustment.value && appStateRepository.analyzerRunning.value && !appStateRepository.recordingRunning.value) {
-                val optimalSampleRates = appStateRepository.sourceOptimalSampleRates.value
+                val optimalSampleRates = appStateRepository.sourceSupportedSampleRates.value
                 val bestSampleRate = optimalSampleRates.firstOrNull { it > appStateRepository.viewportSampleRate.value } ?: optimalSampleRates.last()
                 if(appStateRepository.sourceSampleRate.value != bestSampleRate) {
                     appStateRepository.sourceSampleRate.set(bestSampleRate)
@@ -551,7 +586,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.collectAppState(appStateRepository.appUsageTimeInSeconds) { usageTime ->
-            if (!appStateRepository.isFullVersion.value) {
+            if (appStateRepository.settingsLoaded.value && !appStateRepository.isFullVersion.value) {
                 if (usageTime % 30 == 0) {
                     Log.d(TAG, "init (collect appUsageTimeInSeconds): usageTime=$usageTime  (start query for purchases...)")
                     checkPurchases()
@@ -570,12 +605,14 @@ class MainViewModel @Inject constructor(
         }
 
         viewModelScope.collectAppState(appStateRepository.isFullVersion) { isFullVersion ->
-            if (isFullVersion) {
-                Log.d(TAG, "init (collect isFullVersion): isFullVersion -> TRUE!")
-                showSnackbar(SnackbarEvent("RF Analyzer FULL VERSION unlocked!"))
-            } else {
-                Log.d(TAG, "init (collect isFullVersion): isFullVersion -> FALSE!")
-                showSnackbar(SnackbarEvent("RF Analyzer Full Version refunded. App is now TRIAL VERSION."))
+            if(appStateRepository.settingsLoaded.value) {
+                if (isFullVersion) {
+                    Log.d(TAG, "init (collect isFullVersion): isFullVersion -> TRUE!")
+                    showSnackbar(SnackbarEvent("RF Analyzer FULL VERSION unlocked!"))
+                } else {
+                    Log.d(TAG, "init (collect isFullVersion): isFullVersion -> FALSE!")
+                    showSnackbar(SnackbarEvent("RF Analyzer Full Version refunded. App is now TRIAL VERSION."))
+                }
             }
         }
 
@@ -599,6 +636,8 @@ class MainViewModel @Inject constructor(
                             fileFormat = when(appStateRepository.sourceType.value) {
                                 SourceType.HACKRF -> FilesourceFileFormat.HACKRF
                                 SourceType.RTLSDR -> FilesourceFileFormat.RTLSDR
+                                SourceType.AIRSPY -> FilesourceFileFormat.AIRSPY
+                                SourceType.HYDRASDR -> FilesourceFileFormat.HYDRASDR
                                 SourceType.FILESOURCE -> appStateRepository.filesourceFileFormat.value
                             },
                             sizeInBytes = event.finalSize,
@@ -703,6 +742,12 @@ class MainViewModel @Inject constructor(
                 if (filename.matches(".*rtlsdr.*".toRegex()) || filename.matches(".*rtl-sdr.*".toRegex()) ||
                     filename.matches(".*RTLSDR.*".toRegex()) || filename.matches(".*RTL-SDR.*".toRegex())
                 ) fileFormat = FilesourceFileFormat.RTLSDR
+                if (filename.matches(".*airspy.*".toRegex()) || filename.matches(".*Airspy.*".toRegex()) ||
+                    filename.matches(".*AIRSPY.*".toRegex()) || filename.matches(".*AirSpy.*".toRegex())
+                ) fileFormat = FilesourceFileFormat.AIRSPY
+                if (filename.matches(".*hydrasdr.*".toRegex()) || filename.matches(".*HydraSDR.*".toRegex()) ||
+                    filename.matches(".*HYDRASDR.*".toRegex()) || filename.matches(".*HydraSdr.*".toRegex())
+                ) fileFormat = FilesourceFileFormat.HYDRASDR
 
                 // 2. Sampe Rate. Search for pattern XXXXXXXSps
                 if (filename.matches(".*(_|-|\\s)([0-9]+)(sps|Sps|SPS).*".toRegex())) sampleRate =

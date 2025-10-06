@@ -110,6 +110,8 @@ public class Unsigned8BitIQConverter extends IQConverter {
 		int startIndex = samplePacket.size();
 		if(startIndex >= capacity)
 			return 0; // SamplePacket is already full
+		if(cosineRealLookupTable.length == 0)
+			return 0; // Lookup Table is empty/invalid
 		if(cosineIndex >= cosineRealLookupTable.length)
 			cosineIndex = 0; // Potentially reset cosine index if table was altered and now is smaller
 		float[] re = samplePacket.re();

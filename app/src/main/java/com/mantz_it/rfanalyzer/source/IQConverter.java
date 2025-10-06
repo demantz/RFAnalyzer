@@ -57,7 +57,7 @@ public abstract class IQConverter {
 	public void setSampleRate(int sampleRate) {
 		if(this.sampleRate != sampleRate) {
 			this.sampleRate = sampleRate;
-			generateMixerLookupTable(cosineFrequency);
+			this.cosineFrequency = -1;  // invalidate cosineFrequency. This causes generateMixerLookupTable() to recalculate the lut on next iteration.
 		}
 	}
 

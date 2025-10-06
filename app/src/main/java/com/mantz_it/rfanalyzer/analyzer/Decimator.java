@@ -178,7 +178,7 @@ public class Decimator extends Thread {
 		if(inputFilter == null || inputFilter.getDecimation() != decimation) {
 			// We have to (re-)create the filter:
 			Log.d(LOGTAG, "downsampling: sample rates changed: input: " + input.getSampleRate() + " output: " + outputSampleRate);
-			this.inputFilter = FirFilter.createLowPass(decimation, 2/(float)decimation, input.getSampleRate(), outputSampleRate*0.75f, outputSampleRate*0.25f, 60);
+			this.inputFilter = FirFilter.createLowPass(decimation, 1, input.getSampleRate(), outputSampleRate*0.75f, outputSampleRate*0.25f, 60);
 			Log.d(LOGTAG, "downsampling: created new inputFilter with " + inputFilter.getNumberOfTaps()
 					+ " taps. Decimation=" + inputFilter.getDecimation() + " Cut-Off=" + inputFilter.getCutOffFrequency()
 					+ " transition=" + inputFilter.getTransitionWidth());
