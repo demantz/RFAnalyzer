@@ -16,8 +16,6 @@ phone both practical and fun.
 ## Features
 
 - Real-time **FFT and waterfall display** with scroll and pinch-to-zoom
-- Supports **HackRF**, **RTL-SDR**, and **File Source** (files with raw IQ
-  data)
 - Audio demodulation: **CW**, **AM**, **nFM**, **wFM**, **LSB**, **USB**
 - Record raw IQ data
 - Modern and dynamic UI with a bottom (or side) drawer for full control
@@ -87,6 +85,8 @@ it also helps me keep improving and maintaining the project. Thank you! 🙏
 You can also donate to support my work:
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T11M88LK)
+
+[![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/DM4NTZ/donate)
 
 ---
 

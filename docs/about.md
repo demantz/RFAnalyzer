@@ -2,14 +2,45 @@
 
 RF Analyzer is an open source spectrum analyzer that lets you use you
 SDR hardware together with an Android device. A detailed description
-can be found in the [manual](https://github.com/demantz/RFAnalyzer/blob/master/doc/rf_analyzer_manual.md)
+can be found in the [manual](https://demantz.github.io/RFAnalyzer/index.html)
 
 Changelog: [changelog.txt](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/changelog.txt)
 
+## About the author
+
+Hi! I’m DM4NTZ, a ham radio operator and open-source developer.
+
+I'm the creator and maintainer of RF Analyzer, an open-source software-defined
+radio (SDR) app for Android. The app lets you visualize and analyze RF signals
+in real time using SDR hardware such as RTL-SDR dongles.
+
+My goal is to make SDR technology more accessible, portable, and open for radio
+enthusiasts, experimenters, and learners.
+
+As a licensed amateur radio operator, I'm passionate about signal processing,
+wireless communication, and the broader SDR ecosystem. I also contribute to
+open-source projects, share knowledge with the ham radio community, and
+continuously improve my tools based on user feedback.
+
+If you like what I'm building or want to support the development of RF Analyzer
+and related open-source SDR tools, you can support me with one of the following
+options. Every contribution helps keep the project alive and open for everyone.
+
+- [Ko-fi](https://ko-fi.com/rfanalyzer)
+- [Liberapay](https://liberapay.com/DM4NTZ/donate)
+- [Paypal](https://paypal.me/dennismantz)
+
+How to reach me:
+
+- Amateur Radio Callsign: DM4NTZ
+- Mastodon: [@dm4ntz@chaos.social](https://chaos.social/@dm4ntz)
+- Mail: rfanalyzerapp -at- gmail -dot- com
+
 ## Get Beta Releases
 
-If you want to help the developer by testing beta releases you can
-join the beta program on Google Play:
+If you want to help me by testing beta releases you can join the beta program
+on Google Play:
+
 [https://play.google.com/apps/testing/com.mantz_it.rfanalyzer](https://play.google.com/apps/testing/com.mantz_it.rfanalyzer)
 
 ## Reporting Bugs
@@ -118,6 +149,62 @@ Redistribution and use in source and binary forms, with or without modification,
 	documentation and/or other materials provided with the distribution.
     Neither the name of Great Scott Gadgets nor the names of its contributors may be used to endorse or promote products derived from this software
 	without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### Airspy License
+
+RF Analyzer uses [libairspy](https://github.com/airspy/airspyone_host/tree/master/libairspy)
+
+```
+Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
+Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
+Copyright (c) 2013-2016, Benjamin Vernoux <bvernoux@airspy.com>
+Copyright (C) 2013-2016, Youssef Touil <youssef@airspy.com>
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the 
+    documentation and/or other materials provided with the distribution.
+    Neither the name of AirSpy nor the names of its contributors may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### HydraSDR License
+
+RF Analyzer uses [libhydrasdr](https://github.com/hydrasdr/rfone_host/tree/main/libhydrasdr)
+
+```
+Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
+Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
+Copyright (C) 2013-2016, Youssef Touil <youssef@airspy.com>
+Copyright (c) 2013-2025, Benjamin Vernoux <bvernoux@hydrasdr.com>
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the 
+documentation and/or other materials provided with the distribution.
+Neither the name of HydraSDR nor the names of its contributors may be used to endorse or promote products derived from this software
+without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
 THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.

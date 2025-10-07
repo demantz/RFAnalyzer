@@ -18,6 +18,8 @@ The dropdown menu in the Source Tab lets you choose between different signal sou
 
 - **RTL-SDR** - Receive live radio signals using an RTL-SDR USB dongle.
 - **HackRF** - Works similarly to RTL-SDR but supports wider bandwidths.
+- **Airspy** - A high quality SDR supporting 12bit resolution and up to 10MHz bandwidth.
+- **HydraSDR** - A high quality SDR supporting 12bit resolution and up to 10MHz bandwidth.
 - **File Source** - Replay a previously recorded IQ file.
 
 !!! note "Automatic Source Detection"

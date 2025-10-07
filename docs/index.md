@@ -25,7 +25,7 @@
 
 ## Features
 - Real-time FFT & waterfall spectrum visualization
-- Support for **HackRF, RTL-SDR, and IQ file playback**
+- Support for **HackRF, RTL-SDR, Airspy, HydraSDR and IQ file playback**
 - Analog signal demodulation (CW, AM, nFM, wFM, LSB, USB)
 - Adjustable SDR settings (frequency, gain, sample rate, etc.)
 - Adjustable FFT settings (FFT size, averaging, peak hold, frame rate, etc.)
