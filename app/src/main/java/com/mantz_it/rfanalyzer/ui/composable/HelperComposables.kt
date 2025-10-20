@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.ui.composable
 
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -7,7 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -25,23 +28,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
@@ -63,6 +71,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
@@ -70,8 +79,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -89,6 +100,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
+import com.mantz_it.rfanalyzer.R
 import com.mantz_it.rfanalyzer.ui.RFAnalyzerTheme
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
@@ -975,6 +990,167 @@ fun OutlinedIntegerTextField(
     }
 }
 
+@Preview
+@Composable
+fun donationDialogPreview() {
+    RFAnalyzerTheme {
+        FossDonationDialog(
+            usageTimeStr = "1 hour and 3 minutes",
+            dismissAction = {}
+        )
+    }
+}
+
+@Composable
+fun FossDonationOptionDialogContent(
+    usageTimeStr: String,
+    postDonationAction: () -> Unit,
+) {
+    val context = LocalContext.current
+    Column {
+        Text("You've used RF Analyzer for $usageTimeStr - thank you! Every minute of that has been powered by late nights, debugging, and a lot of care. \uD83D\uDC9B",
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+        )
+        Text("This app is open-source so anyone can explore SDR without barriers and let the community benefit from a Google-free, privacy-respecting version.",
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+        )
+        Text("If you enjoy using it, please support the project - your donation helps keeping it alive and accessible to everyone. \uD83D\uDE4F",
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+        )
+        Text("73, Dennis Mantz (DM4NTZ)",
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+        )
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 16.dp)) {
+            Button(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://ko-fi.com/rfanalyzer".toUri())
+                    context.startActivity(intent)
+                    postDonationAction()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF202020)),
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier
+                    .weight(1f)
+                    .requiredHeight(40.dp)
+                    .padding(horizontal = 2.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.kofi),
+                    contentDescription = "Ko-fi Logo",
+                    modifier = Modifier.size(70.dp)
+                )
+            }
+            Button(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://liberapay.com/DM4NTZ/donate".toUri())
+                    context.startActivity(intent)
+                    postDonationAction()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF6C915)),
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier
+                    .weight(1.3f)
+                    .requiredHeight(40.dp)
+                    .padding(horizontal = 2.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.liberapay),
+                    contentDescription = "Liberapay Logo",
+                    modifier = Modifier.size(85.dp)
+                )
+            }
+            Button(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://paypal.me/dennismantz".toUri())
+                    context.startActivity(intent)
+                    postDonationAction()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier
+                    .weight(1f)
+                    .requiredHeight(40.dp)
+                    .padding(horizontal = 2.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.paypal),
+                    contentDescription = "PayPal Logo",
+                    modifier = Modifier.size(78.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FossDonationDialog(
+    usageTimeStr: String,
+    dismissAction: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = dismissAction,
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        var donationButtonClicked by remember { mutableStateOf(false) }
+        Box(
+            modifier = Modifier
+                .padding(10.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .border(2.dp, MaterialTheme.colorScheme.tertiary, shape = MaterialTheme.shapes.medium) // Border
+        ) {
+            IconButton(
+                onClick = dismissAction,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(25.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f), shape = CircleShape)
+                    .clip(CircleShape)
+                    .align(Alignment.TopEnd)
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = "Close", modifier = Modifier.size(16.dp))
+            }
+            Column(modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)) {
+                Text(
+                    "Support RF Analyzer",
+                    fontSize = 22.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(all = 10.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+                FossDonationOptionDialogContent(
+                    usageTimeStr = usageTimeStr,
+                    postDonationAction = { donationButtonClicked = true }
+                )
+                if (donationButtonClicked) {
+                    Button(
+                        onClick = dismissAction,
+                        shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Thank you! \uD83D\uDC9B  (click to dismiss)")
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun letUserChooseDestinationFile(

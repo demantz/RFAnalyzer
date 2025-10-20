@@ -299,7 +299,7 @@ class Demodulator(
 
         // normalize values:
         val gain = 0.75f / lastMax
-        for (i in 0..<output.size()) reOut[i] = (reOut[i] - avg) * gain
+        for (i in 0..<input.size()) reOut[i] = (reOut[i] - avg) * gain
 
         output.setSize(input.size())
         output.sampleRate = demodulationMode.quadratureRate

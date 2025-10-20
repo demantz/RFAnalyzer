@@ -2,10 +2,12 @@ package com.mantz_it.rfanalyzer.ui
 
 import android.app.Activity
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.compose.material3.SnackbarResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mantz_it.rfanalyzer.BuildConfig
 import com.mantz_it.rfanalyzer.database.AppStateRepository
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.DEFAULT_VERTICAL_SCALE_MAX
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.DEFAULT_VERTICAL_SCALE_MIN
@@ -115,6 +117,7 @@ class MainViewModel @Inject constructor(
         data class OnShareRecordingClicked(val filename: String): UiAction()
         data class RenameFile(val file: File, val newName: String): UiAction()
         data class ShowDialog(val title: String, val msg: String, val positiveButton: String? = null, val negativeButton: String? = null, val action: (() -> Unit)? = null): UiAction()
+        data object ShowDonationDialog: UiAction()
         data object OnBuyFullVersionClicked: UiAction()
     }
     private fun sendActionToUi(uiAction: UiAction){ viewModelScope.launch { _uiActions.emit(uiAction) } }
@@ -192,24 +195,11 @@ class MainViewModel @Inject constructor(
         billingRepository.purchaseFullVersion(activity)
     }
     private var gracePeriodCountdown = GRACE_PERIOD_SECONDS
-    fun showTrialPeriodExpiredDialog() {
-        sendActionToUi(UiAction.ShowDialog(
-            title = "Trial Period Expired",
-            msg = "The 7-day trial period expired.\n" +
-                    "To continue using the app without interruption and support its further development, please consider purchasing the full version.",
-            positiveButton = "Buy full version",
-            negativeButton = "Cancel",
-            action = {
-                sendActionToUi(UiAction.OnBuyFullVersionClicked)
-            }
-        ))
-        Log.d(TAG, "showTrialPeriodExpiredDialog")
-    }
     fun showUsageTimeUsedUpDialog() {
         sendActionToUi(UiAction.ShowDialog(
             title = "End of Trial Version",
-            msg =   "The 60-minute operation time of the trial version is used up.\n" +
-                    "To continue using the app without interruption and support its further development, please consider purchasing the full version.",
+            msg = "The 60-minute operation time of the trial version is used up.\n" +
+                  "To continue using the app without interruption and support its further development, please consider purchasing the full version.",
             positiveButton = "Buy full version",
             negativeButton = "Cancel",
             action = {
@@ -223,9 +213,27 @@ class MainViewModel @Inject constructor(
     // MainScreen ACTIONS ------------------------------------------------------------------------
     val sourceTabActions = SourceTabActions(
         onStartStopClicked = {
-            if (appStateRepository.analyzerRunning.value || appStateRepository.analyzerStartPending.value)
+            if (appStateRepository.analyzerRunning.value || appStateRepository.analyzerStartPending.value) {
                 sendActionToUi(UiAction.OnStopClicked)
-            else {
+
+                // Show FOSS Donation Dialog (when the user presses Stop after a certain interval of app usage has passed):
+                if (BuildConfig.IS_FOSS) {
+                    val counter = appStateRepository.donationDialogCounter.value
+                    val currentIntervalInSeconds = when (counter) {
+                            0 -> 60 * 60          // 1 hour
+                            1 -> 60 * 60 * 5      // 5 hours
+                            2 -> 60 * 60 * 15     // 15 hours
+                            3 -> 60 * 60 * 30     // 30 hours
+                            else -> 60 * 60 * 50  // 50 hours
+                        }
+                    if (appStateRepository.appUsageTimeInSeconds.value > appStateRepository.timestampOfLastDonationDialog.value + currentIntervalInSeconds) {
+                        Log.i(TAG, "onStartStopClicked: Showing donation dialog (counter: $counter, interval: $currentIntervalInSeconds)")
+                        sendActionToUi(UiAction.ShowDonationDialog)
+                        appStateRepository.timestampOfLastDonationDialog.set(appStateRepository.appUsageTimeInSeconds.value)
+                        appStateRepository.donationDialogCounter.set(counter + 1)
+                    }
+                }
+            } else {
                 // Verify RTL SDR external IP/Hostname is valid:
                 if (appStateRepository.sourceType.value == SourceType.RTLSDR && appStateRepository.rtlsdrExternalServerEnabled.value) {
                     val value = appStateRepository.rtlsdrExternalServerIP.value
@@ -436,11 +444,7 @@ class MainViewModel @Inject constructor(
             if(appStateRepository.recordingRunning.value) {
                 sendActionToUi(UiAction.OnStopRecordingClicked)
             } else {
-                if(!appStateRepository.isFullVersion.value) {
-                    if (billingRepository.isTrialPeriodExpired()) {
-                        showTrialPeriodExpiredDialog()
-                        return@RecordingTabActions
-                    }
+                if(!appStateRepository.isFullVersion.value && !BuildConfig.IS_FOSS) {
                     if (appStateRepository.isAppUsageTimeUsedUp.value) {
                         showUsageTimeUsedUpDialog()
                         return@RecordingTabActions
@@ -586,19 +590,21 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.collectAppState(appStateRepository.appUsageTimeInSeconds) { usageTime ->
-            if (appStateRepository.settingsLoaded.value && !appStateRepository.isFullVersion.value) {
-                if (usageTime % 30 == 0) {
-                    Log.d(TAG, "init (collect appUsageTimeInSeconds): usageTime=$usageTime  (start query for purchases...)")
-                    checkPurchases()
-                }
-                if(appStateRepository.isAppUsageTimeUsedUp.value || billingRepository.isTrialPeriodExpired()) {
-                    if (gracePeriodCountdown != 0) {
-                        gracePeriodCountdown--
-                    } else {
-                        sendActionToUi(UiAction.OnStopClicked)
-                        gracePeriodCountdown = GRACE_PERIOD_SECONDS
-                        if (appStateRepository.isAppUsageTimeUsedUp.value) showUsageTimeUsedUpDialog()
-                        else showTrialPeriodExpiredDialog()
+            if (appStateRepository.settingsLoaded.value) {
+                if (!BuildConfig.IS_FOSS && !appStateRepository.isFullVersion.value) {
+                    // TRIAL
+                    if (usageTime % 30 == 0) {
+                        Log.d(TAG, "init (collect appUsageTimeInSeconds): usageTime=$usageTime  (start query for purchases...)")
+                        checkPurchases()
+                    }
+                    if (appStateRepository.isAppUsageTimeUsedUp.value) {
+                        if (gracePeriodCountdown != 0) {
+                            gracePeriodCountdown--
+                        } else {
+                            sendActionToUi(UiAction.OnStopClicked)
+                            gracePeriodCountdown = GRACE_PERIOD_SECONDS
+                            showUsageTimeUsedUpDialog()
+                        }
                     }
                 }
             }

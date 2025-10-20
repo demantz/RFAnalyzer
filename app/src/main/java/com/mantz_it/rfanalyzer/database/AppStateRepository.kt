@@ -258,7 +258,10 @@ class AppStateRepository @Inject constructor(
     val viewportVerticalScaleMax = Setting("viewportVerticalScaleMax", 0f, scope, dataStore)
     val viewportStartFrequency = DerivedState(viewportFrequency, viewportSampleRate) { viewportFrequency.value - viewportSampleRate.value/2 }
     val viewportEndFrequency = DerivedState(viewportFrequency, viewportSampleRate) { viewportFrequency.value + viewportSampleRate.value/2 }
-    val viewportZoom = DerivedState(sourceSampleRate, viewportSampleRate) { (1f - (viewportSampleRate.value.toFloat()/sourceSampleRate.value)).coerceIn(0f, 1f) }
+    val viewportZoom = DerivedState(sourceSampleRate, viewportSampleRate) {
+        val tmp = (1f - (viewportSampleRate.value.toFloat()/sourceSampleRate.value)).coerceIn(0f, 1f)
+        if (tmp.isNaN()) 0f else tmp
+    }
 
     // Analyzer State
     val analyzerRunning = MutableState(false)
@@ -276,6 +279,10 @@ class AppStateRepository @Inject constructor(
     val isFullVersion = Setting("isFullVersion", false, scope, dataStore)
     val isPurchasePending = Setting("isPurchasePending", false, scope, dataStore)
     val isAppUsageTimeUsedUp = DerivedState(appUsageTimeInSeconds) { appUsageTimeInSeconds.value > TRIAL_VERSTION_USAGE_TIME }
+
+    // Donation Dialog:
+    val timestampOfLastDonationDialog = Setting("timestampOfLastDonationDialog", 0, scope, dataStore)
+    val donationDialogCounter = Setting("donationDialogCounter", 0, scope, dataStore)
 
 
     // FFT Data
@@ -325,32 +332,57 @@ class AppStateRepository @Inject constructor(
     ) : MutableState<T>(default) {
         init {
             settingsTotalCount++
-            val key: Preferences.Key<T> = when (default) {
+            val key: Preferences.Key<T>? = when (default) {
                 is Boolean -> booleanPreferencesKey(keyName)
                 is Int -> intPreferencesKey(keyName)
                 is Long -> longPreferencesKey(keyName)
                 is Float -> floatPreferencesKey(keyName)
                 is String -> stringPreferencesKey(keyName)
-                is Enum<*> -> intPreferencesKey(keyName) // Enum stored as ordinal
-                is List<*> -> stringPreferencesKey(keyName) // Store lists as comma separated list (string)
+                is Enum<*> -> null
+                is List<*> -> null
                 else -> throw IllegalArgumentException("Unsupported setting type (setting: ${keyName}")
-            } as Preferences.Key<T>
+            } as Preferences.Key<T>?
 
             scope.launch {
                 // Load initial value
                 val saved = dataStore.data
                     .map { prefs -> when(default) {
-                        is Enum<*> -> {
+                        is Enum<*> -> {  // up until 2.1 this was stored as int (ordinal) but now we store the enum name (using a different key)
                             val enumClass = default!!::class.java
-                            val enumIndex = prefs[key as Preferences.Key<Int>] ?: default.ordinal
-                            enumClass.enumConstants[enumIndex.coerceAtMost(enumClass.enumConstants.size - 1)]
+                            // If we find the string type key take it, otherwise try using the legacy int key:
+                            val stringKey = stringPreferencesKey(keyName + "Enum")  // name new key with 'Enum' suffix
+                            val legacyIntKey = intPreferencesKey(keyName)
+                            val prefsString = prefs[stringKey]
+                            val prefsInt = prefs[legacyIntKey]
+                            val enumValue = when {
+                                prefsString != null -> enumClass.enumConstants.firstOrNull { it.name == prefsString }
+                                prefsInt != null -> enumClass.enumConstants.getOrNull(prefsInt)
+                                else -> default
+                            } ?: default
+
+                            // If we loaded from legacy int, immediately migrate to new key
+                            if (prefsString == null && prefsInt != null) {
+                                scope.launch {
+                                    dataStore.edit { editPrefs ->
+                                        editPrefs[stringKey] = enumValue.name
+                                        editPrefs.remove(legacyIntKey)  // cleanup
+                                    }
+                                }
+                            }
+
+                            enumValue
                         }
                         is List<*> -> {
-                            val stringValue = prefs[key as Preferences.Key<String>]
+                            // Store lists as comma separated list (string)
+                            val stringKey = stringPreferencesKey(keyName)
+                            val stringValue = prefs[stringKey]
                             val list = stringValue?.split(",")?.mapNotNull { it.toIntOrNull() } ?: default
                             list as T
                         }
-                        else -> prefs[key] ?: default
+                        else -> {
+                            if (key == null) throw IllegalArgumentException("Unsupported setting type (setting: ${keyName}")
+                            else prefs[key] ?: default
+                        }
                     }}
                     .firstOrNull()
 
@@ -367,9 +399,9 @@ class AppStateRepository @Inject constructor(
                     .collectLatest { newValue ->
                         dataStore.edit { prefs ->
                             when (newValue) {
-                                is Enum<*> -> prefs[key as Preferences.Key<Int>] = newValue.ordinal
-                                is List<*> -> prefs[key as Preferences.Key<String>] = newValue.joinToString(",")
-                                else -> prefs[key] = newValue
+                                is Enum<*> -> prefs[stringPreferencesKey(keyName + "Enum")] = newValue.name
+                                is List<*> -> prefs[stringPreferencesKey(keyName)] = newValue.joinToString(",")
+                                else -> key?.let { prefs[it] = newValue }
                             }
                         }
                     }

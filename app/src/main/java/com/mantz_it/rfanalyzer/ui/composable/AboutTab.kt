@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import com.mantz_it.rfanalyzer.BuildConfig
 import com.mantz_it.rfanalyzer.R
 import com.mantz_it.rfanalyzer.ui.RFAnalyzerTheme
 
@@ -68,11 +69,21 @@ data class AboutTabActions(
     val onBuyFullVersionClicked: () -> Unit
 )
 
+fun getUsageTimeStr(appUsageTime: Int): String {
+    val hours = appUsageTime / 60 / 60
+    val minutes = appUsageTime % (60*60) / 60
+    val seconds = appUsageTime % 60
+    val hoursStr = if (hours > 0) "$hours hour${if(hours != 1) "s" else ""}" else ""
+    val minutesStr = "$minutes minute${if(minutes != 1) "s" else ""}"
+    val secondsStr = if (hours == 0) "$seconds second${if(seconds != 1) "s" else ""}" else ""
+    val usageTimeStr = if(hours > 0) "$hoursStr and $minutesStr" else "$minutesStr and $secondsStr"
+    return usageTimeStr
+}
+
 @Composable
 fun AboutTabComposable(
     appUsageTime: Int,
     isAppUsageTimeUsedUp: Boolean,
-    remainingTrialDays: Int,
     isFullVersion: Boolean,
     isPurchasePending: Boolean,
     appVersion: String,
@@ -89,55 +100,75 @@ fun AboutTabComposable(
                 .padding(vertical = 10.dp)
                 .border(2.dp, MaterialTheme.colorScheme.tertiary, shape = MaterialTheme.shapes.medium) // Border
         ) {
-            if (isFullVersion) {
-                Column {
-                    Text(
-                        "License: Full Version",
-                        fontSize = 22.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .padding(all = 10.dp)
-                            .align(Alignment.CenterHorizontally)
-                    )
-                    Text("Thank you for contributing to the development of this app :)",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(start = 32.dp, end = 32.dp, bottom = 10.dp))
-                }
-            } else {
+            val usageTimeStr = getUsageTimeStr(appUsageTime)
+
+            if (BuildConfig.IS_FOSS) {
                 Text(
-                    "License: Trial Version",
+                    "Open-Source Version (FOSS)",
                     fontSize = 22.sp,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                        .padding(all = 6.dp)
+                        .padding(all = 10.dp)
                         .align(Alignment.CenterHorizontally)
                 )
-                Column(modifier = Modifier.padding(start = 10.dp)) {
-                    Text("This is a trial version of the app, created to let you explore and enjoy all its features before deciding to purchase the full version.\n" +
-                            "You can use the app for up to 7 days after installation, with a total of 60 minutes of actual operating time.")
-                    Text("- Time used: ${(appUsageTime/60)} minutes and ${appUsageTime%60} seconds",
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isAppUsageTimeUsedUp) Color.Red else Color.Green,
-                        modifier = Modifier.padding(top = 6.dp))
-                    Text("- Days remaining: ${remainingTrialDays}",
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (remainingTrialDays <= 0) Color.Red else Color.Green,
-                        modifier = Modifier.padding(bottom = 6.dp))
-                    Text("Once either limit is reached, you’ll be invited to unlock the full version with a one-time in-app purchase.\n" +
-                            "Thanks for trying the app! 73 DM4NTZ")
-                }
-                Button(
-                    onClick = aboutTabActions.onBuyFullVersionClicked,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 8.dp).fillMaxWidth()
+                FossDonationOptionDialogContent(
+                    usageTimeStr = usageTimeStr,
+                    postDonationAction = { }, // TODO: show thank you dialog?
                 )
-                {
-                    if (isPurchasePending) {
-                        Text("Purchase pending..", modifier = Modifier.padding(end = 10.dp))
-                        CircularProgressIndicator(color = Color.White)
-                    } else {
-                        Text("Unlock Full Version", modifier = Modifier.padding(end = 10.dp))
-                        Icon(Icons.Default.ShoppingCart, "Unlock Full Version")
+            } else {
+                if (isFullVersion) {
+                    Column {
+                        Text(
+                            "License: Full Version",
+                            fontSize = 22.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .padding(all = 10.dp)
+                                .align(Alignment.CenterHorizontally)
+                        )
+                        Text(
+                            "Thank you for contributing to the development of this app :)",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(start = 32.dp, end = 32.dp, bottom = 10.dp)
+                        )
+                    }
+                } else {
+                    Text(
+                        "License: Trial Version",
+                        fontSize = 22.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(all = 6.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+                    Column(modifier = Modifier.padding(start = 10.dp)) {
+                        Text(
+                            "This is a trial version of the app, created to let you explore and enjoy all its features before deciding to purchase the full version.\n" +
+                                    "You can use the app for up to a total of 60 minutes of actual operating time."
+                        )
+                        Text(
+                            "Time used: $usageTimeStr",
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isAppUsageTimeUsedUp) Color.Red else Color.Green,
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        )
+                        Text(
+                            "Once the limit is reached, you’ll be invited to unlock the full version with a one-time in-app purchase.\n" +
+                                    "Thanks for trying the app! 73 DM4NTZ"
+                        )
+                    }
+                    Button(
+                        onClick = aboutTabActions.onBuyFullVersionClicked,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 8.dp).fillMaxWidth()
+                    ) {
+                        if (isPurchasePending) {
+                            Text("Purchase pending..", modifier = Modifier.padding(end = 10.dp))
+                            CircularProgressIndicator(color = Color.White)
+                        } else {
+                            Text("Unlock Full Version", modifier = Modifier.padding(end = 10.dp))
+                            Icon(Icons.Default.ShoppingCart, "Unlock Full Version")
+                        }
                     }
                 }
             }
@@ -197,9 +228,8 @@ fun AboutTabPreview() {
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         RFAnalyzerTheme {
             AboutTabComposable(
-                appUsageTime = 130,
+                appUsageTime = 60*60+60*3,
                 isAppUsageTimeUsedUp = false,
-                remainingTrialDays = 3,
                 isFullVersion = false,
                 isPurchasePending = true,
                 appVersion = "2.0test1",

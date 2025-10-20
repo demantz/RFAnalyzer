@@ -88,6 +88,10 @@ You can also donate to support my work:
 
 [![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/DM4NTZ/donate)
 
+Paypal: https://paypal.me/dennismantz
+
+Bitcoin: bc1qnzuvkpxd08grw505aurw45y7rty60554kd2ja2
+
 ---
 
 ## About the Author

@@ -14,10 +14,29 @@ android {
         applicationId = "com.mantz_it.rfanalyzer"
         minSdk = 28
         targetSdk = 36
-        versionCode = 20106
-        versionName = "2.1.0"
+        versionCode = 20107
+        versionName = "2.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "distribution"
+
+    productFlavors {
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("boolean", "IS_FOSS", "false")
+            resValue("string", "flavor_name", "Google Play")
+            resValue("string", "app_name", "RF Analyzer")
+        }
+        create("foss") {
+            dimension = "distribution"
+            applicationIdSuffix = ".foss"
+            versionNameSuffix = "-foss"
+            buildConfigField("boolean", "IS_FOSS", "true")
+            resValue("string", "flavor_name", "FOSS")
+            resValue("string", "app_name", "RF Analyzer (FOSS)")
+        }
     }
 
     buildTypes {
@@ -98,7 +117,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.security.crypto)
-    implementation(libs.billing)
     implementation(libs.dagger.hilt)
     ksp(libs.dagger.hilt.compiler)
+
+    // Flavor-specific dependencies:
+    add("playImplementation", libs.billing)  // "play" is the flavor
 }

@@ -82,7 +82,8 @@ object AppModule {
     @Singleton
     fun provideBillingRepository(@ApplicationContext context: Context, appStateRepository: AppStateRepository): BillingRepositoryInterface {
         val buildType = BuildConfig.BUILD_TYPE
-        return if (buildType == "debug")
+        val isFoss = BuildConfig.IS_FOSS
+        return if (isFoss || buildType == "debug")
             MockedBillingRepository(context, appStateRepository)
         else
             BillingRepository(context, appStateRepository)

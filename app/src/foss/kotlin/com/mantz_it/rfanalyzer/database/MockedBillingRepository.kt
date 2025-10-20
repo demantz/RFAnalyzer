@@ -43,18 +43,6 @@ import kotlinx.coroutines.launch
 
 class MockedBillingRepository(val context: Context, val appStateRepository: AppStateRepository) : BillingRepositoryInterface {
 
-    private val _remainingTrialPeriodDays = MutableStateFlow(calculateRemainingDays())
-    override val remainingTrialPeriodDays: StateFlow<Int> = _remainingTrialPeriodDays.asStateFlow()
-
-    init {
-        CoroutineScope(Dispatchers.Default).launch {
-            while (isActive) {
-                _remainingTrialPeriodDays.value = calculateRemainingDays()
-                delay(TimeUnit.HOURS.toMillis(1)) // update every hour
-            }
-        }
-    }
-
     override fun queryPurchases() {
         // do nothing in mock
     }
@@ -62,27 +50,5 @@ class MockedBillingRepository(val context: Context, val appStateRepository: AppS
     override fun purchaseFullVersion(activity: Activity) {
         //Log.d("MockedBillingRepository", "purchaseFullVersion: DISABLED")
         appStateRepository.isFullVersion.set(true)
-    }
-
-    private fun calculateRemainingDays(): Int {
-        val installTimestamp = getInstallTimestamp(context) // todo: this should be 'purchase time'
-        val currentTime = System.currentTimeMillis()
-        val installedDays = TimeUnit.MILLISECONDS.toDays(currentTime - installTimestamp).toInt()
-        val trialPeriod= 7 // 7-day trial period
-        Log.d("MockedBillingRepository", "Install: $installTimestamp ; Now: $currentTime  ;  Diff: ${currentTime-installTimestamp}  ; InstalledDays: $installedDays")
-        return (trialPeriod - installedDays).coerceAtLeast(0)
-    }
-
-    override fun isTrialPeriodExpired(): Boolean {
-        return remainingTrialPeriodDays.value <= 0
-    }
-
-    private fun getInstallTimestamp(context: Context): Long {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.firstInstallTime // Returns install time in milliseconds
-        } catch (e: PackageManager.NameNotFoundException) {
-            0L
-        }
     }
 }

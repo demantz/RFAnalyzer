@@ -21,6 +21,7 @@ import android.view.ScaleGestureDetector
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.core.content.ContextCompat
+import com.mantz_it.rfanalyzer.BuildConfig
 import com.mantz_it.rfanalyzer.database.AppStateRepository
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_LOWER_BOUNDARY
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_UPPER_BOUNDARY
@@ -696,7 +697,7 @@ class AnalyzerSurface(context: Context,
                         peakAvg = 0f
                         counter = 0
                         var j = (i * samplesPerPx).toInt()
-                        while (j < (i + 1) * samplesPerPx) {
+                        while (j < (i + 1) * samplesPerPx && (j+start)<fftSize) {
                             avg += fftRow[j + start]
                             if (rowNumber == 0 && calcPeaks) peakAvg += peaks[j + start]
                             counter++
@@ -1206,7 +1207,11 @@ class AnalyzerSurface(context: Context,
         fun drawWatermark() {
             var c: Canvas? = null
             val bitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.rfanalyzer2)
-            var text = if(isFullVersion.value) "FULL VERSION" else "TRIAL VERSION"
+            var text = if(BuildConfig.IS_FOSS) {
+                "FOSS VERSION"
+            } else {
+                if(isFullVersion.value) "FULL VERSION" else "TRIAL VERSION"
+            }
             val paint = Paint()
             val textPaint = Paint()
             textPaint.color = Color.DKGRAY

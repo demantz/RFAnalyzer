@@ -54,8 +54,6 @@ import java.util.concurrent.TimeUnit
 interface BillingRepositoryInterface {
     fun queryPurchases()
     fun purchaseFullVersion(activity: Activity)
-    fun isTrialPeriodExpired(): Boolean
-    val remainingTrialPeriodDays: StateFlow<Int>
 }
 
 class BillingRepository(val context: Context, val appStateRepository: AppStateRepository) : PurchasesUpdatedListener, BillingRepositoryInterface {
@@ -63,9 +61,6 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
     companion object {
         private const val TAG = "BillingRepository"
     }
-
-    private val _remainingTrialPeriodDays = MutableStateFlow(calculateRemainingDays())
-    override val remainingTrialPeriodDays: StateFlow<Int> = _remainingTrialPeriodDays.asStateFlow()
 
     private val billingClient = BillingClient.newBuilder(context)
         .setListener(this)
@@ -75,13 +70,6 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
 
     init {
         startBillingConnection()
-
-        CoroutineScope(Dispatchers.Default).launch {
-            while (isActive) {
-                _remainingTrialPeriodDays.value = calculateRemainingDays()
-                delay(TimeUnit.HOURS.toMillis(1)) // update every hour
-            }
-        }
     }
 
     private fun startBillingConnection() {
@@ -277,28 +265,5 @@ class BillingRepository(val context: Context, val appStateRepository: AppStateRe
                 Log.e(TAG, "onPurchasesUpdated: Unhandled billing response code: ${billingResult.responseCode}")
             }
         }
-    }
-
-    private fun getInstallTimestamp(context: Context): Long {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.firstInstallTime // Returns install time in milliseconds
-        } catch (e: PackageManager.NameNotFoundException) {
-            0L
-        }
-    }
-
-    private fun calculateRemainingDays(): Int {
-        val installTimestamp = getInstallTimestamp(context)
-        val installedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - installTimestamp).toInt()
-        val trialPeriod= 7 // 7-day trial period
-        return if (installedDays > 120) // workaround for people who had the old app version installed already (prior to 2.0 launch)
-            trialPeriod                 // these people just get 7 days and the usageTime is the limiting factor
-        else
-            (trialPeriod - installedDays).coerceAtLeast(0)
-    }
-
-    override fun isTrialPeriodExpired(): Boolean {
-        return remainingTrialPeriodDays.value <= 0
     }
 }

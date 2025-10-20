@@ -161,8 +161,6 @@ fun AnalyzerTabsComposable(
     val isFullVersion by appStateRepository.isFullVersion.stateFlow.collectAsState()
     val isPurchasePending by appStateRepository.isPurchasePending.stateFlow.collectAsState()
 
-    val remainingTrialDays by billingRepository.remainingTrialPeriodDays.collectAsState()
-
     val totalRecordingSizeInBytes by mainViewModel.totalRecordingSizeInBytes.collectAsState()
 
     Column {
@@ -297,7 +295,6 @@ fun AnalyzerTabsComposable(
                     -> AboutTabComposable(
                         appUsageTime = appUsageTimeInSeconds,
                         isAppUsageTimeUsedUp = isAppUsageTimeUsedUp,
-                        remainingTrialDays = remainingTrialDays,
                         isFullVersion = isFullVersion,
                         isPurchasePending = isPurchasePending,
                         appVersion = appVersion,

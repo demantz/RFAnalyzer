@@ -82,6 +82,9 @@ import javax.inject.Inject
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import android.provider.Settings
+import androidx.compose.runtime.mutableStateOf
+import com.mantz_it.rfanalyzer.ui.composable.FossDonationDialog
+import com.mantz_it.rfanalyzer.ui.composable.getUsageTimeStr
 
 /**
  * <h1>RF Analyzer - Main Activity</h1>
@@ -236,9 +239,6 @@ class MainActivity: ComponentActivity() {
         }
         Log.i(TAG, "onCreate: Android Device Info: $deviceName, Android version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
 
-        // Purchase Status
-        Log.i(TAG, "onCreate: remainingTrialDays=${billingRepository.remainingTrialPeriodDays.value}")
-
         // create directory for recordings if it does not exist:
         val recordingsDir = File(filesDir, RECORDINGS_DIRECTORY)
         if (!recordingsDir.exists()) {
@@ -323,6 +323,7 @@ class MainActivity: ComponentActivity() {
 
 
         // Setup the composable UI with NavController
+        val showDonationDialog = mutableStateOf(false)
         setContent {
             val colorTheme by appStateRepository.colorTheme.stateFlow.collectAsState()
             RFAnalyzerTheme(colorTheme = colorTheme) {
@@ -409,6 +410,11 @@ class MainActivity: ComponentActivity() {
                                 ) {
                                     CircularProgressIndicator(color = Color.White)
                                 }
+                            } else if (showDonationDialog.value) {
+                                FossDonationDialog(
+                                    usageTimeStr = getUsageTimeStr(appStateRepository.appUsageTimeInSeconds.value),
+                                    dismissAction = { showDonationDialog.value = false }
+                                )
                             }
                         }
                     }
@@ -434,6 +440,7 @@ class MainActivity: ComponentActivity() {
                             dialog.dismiss()
                         }
                         .show()
+                    is UiAction.ShowDonationDialog -> showDonationDialog.value = true
                     is UiAction.OnShowLogFileClicked -> {
                         Log.i(TAG,"opening LogFileScreen")
                         mainViewModel.navigate(AppScreen.LogFileScreen)
@@ -636,7 +643,7 @@ class MainActivity: ComponentActivity() {
     }
 
     private fun onStopClickedAction() {
-        Log.d(TAG, "onStopPressedAction: Stopping Service..")
+        Log.d(TAG, "onStopClickedAction: Stopping Service..")
         if(isBound) {
             analyzerService?.stopAnalyzer()
         } else {
