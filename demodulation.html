@@ -1,0 +1,1123 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="fft.html">
+      
+      
+        <link rel="next" href="recording.html">
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Signal Demodulation - RF Analyzer 2.0 User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.84d31ad4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#demodulation-tab" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer 2.0 User Manual" class="md-header__button md-logo" aria-label="RF Analyzer 2.0 User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer 2.0 User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Signal Demodulation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer 2.0 User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer 2.0 User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer 2.0 User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation & Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Interface
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SDR Source
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FFT & Waterfall Display
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Signal Demodulation
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="demodulation.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Signal Demodulation
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#demodulation-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demodulation Mode
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audio-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audio Controls
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#channel-frequency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Channel Frequency
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zoom-and-bandwidth" class="md-nav__link">
+    <span class="md-ellipsis">
+      Zoom and Bandwidth
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#squelch-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Squelch Control
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-channel-centered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keep Channel Centered
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-right-demodulation-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choosing the Right Demodulation Mode
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demodulation-mode-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demodulation Mode Characteristics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Demodulation Mode Characteristics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#am-amplitude-modulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      AM - Amplitude Modulation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#narrow-fm-nfm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Narrow FM - NFM
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wide-fm-wfm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wide FM - WFM
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usb-upper-sideband" class="md-nav__link">
+    <span class="md-ellipsis">
+      USB - Upper Sideband
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lsb-lower-sideband" class="md-nav__link">
+    <span class="md-ellipsis">
+      LSB - Lower Sideband
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cw-continous-wave-morse-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      CW - Continous Wave / Morse Code
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-resources-for-signal-identification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Further Resources for Signal Identification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wrapping-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrapping Up
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Recording & Playback
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    App Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Additional Information
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting & FAQs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#demodulation-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demodulation Mode
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audio-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audio Controls
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#channel-frequency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Channel Frequency
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zoom-and-bandwidth" class="md-nav__link">
+    <span class="md-ellipsis">
+      Zoom and Bandwidth
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#squelch-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Squelch Control
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-channel-centered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keep Channel Centered
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-right-demodulation-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choosing the Right Demodulation Mode
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demodulation-mode-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demodulation Mode Characteristics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Demodulation Mode Characteristics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#am-amplitude-modulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      AM - Amplitude Modulation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#narrow-fm-nfm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Narrow FM - NFM
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wide-fm-wfm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wide FM - WFM
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usb-upper-sideband" class="md-nav__link">
+    <span class="md-ellipsis">
+      USB - Upper Sideband
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lsb-lower-sideband" class="md-nav__link">
+    <span class="md-ellipsis">
+      LSB - Lower Sideband
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cw-continous-wave-morse-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      CW - Continous Wave / Morse Code
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-resources-for-signal-identification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Further Resources for Signal Identification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wrapping-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrapping Up
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="demodulation-tab">Demodulation Tab</h1>
+<p>Once you're receiving signals with your SDR or replaying an IQ file, the
+<strong>Demodulation Tab</strong> allows you to actually listen to and fine-tune a specific
+signal. This is where you select the demodulation mode (like AM or FM), adjust
+demodulation parameters and the audio level.</p>
+<hr />
+<h2 id="demodulation-mode">Demodulation Mode</h2>
+<p>Picking the correct <strong>demodulation mode</strong> is absolutely essential. If you're
+not using the right mode for a given signal, the result will be distorted audio
+— or just static. The demodulator is responsible for decoding how the original
+audio or data is embedded in the radio signal, and using the wrong one is like
+trying to play a vinyl record with a laser pointer — you won’t get music, just
+noise.</p>
+<p>Use the dropdown menu at the top right to select your desired demodulation mode. The app supports:</p>
+<ul>
+<li><strong>AM</strong> - Amplitude Modulation</li>
+<li><strong>nFM</strong> - Narrow-band Frequency Modulation</li>
+<li><strong>wFM</strong> - Wide-band Frequency Modulation</li>
+<li><strong>LSB</strong> - Lower Side Band Modulation (Single Side Band - SSB)</li>
+<li><strong>USB</strong> - Upper Side Band Modulation (Single Side Band - SSB)</li>
+<li><strong>CW</strong> - Continous Wave (or more commonly: Morse Code)</li>
+</ul>
+<p>Each mode is used in different parts of the spectrum, and often the modulation
+type can be guessed by <strong>frequency</strong> (use a <strong>band plan</strong>) or <strong>visual
+signature</strong> in the FFT/waterfall. See section <a href="#choosing-the-right-demodulation-mode">Choosing the Right Demodulation
+Mode</a> for more information.</p>
+<hr />
+<h2 id="audio-controls">Audio Controls</h2>
+<ul>
+<li><strong>Speaker Icon</strong> - Tap to mute or unmute the audio output.</li>
+<li><strong>Volume Percentage</strong> - Tap the number to bring up a volume slider</li>
+</ul>
+<hr />
+<h2 id="channel-frequency">Channel Frequency</h2>
+<p>The <strong>channel frequency</strong> determines at which frequency the demodulator operates.
+This is different from the source frequency which selects the center of the
+captured spectrum. The channel frequency may be choosen anywhere inside the
+received signal spectrum which is centered around the signal frequency (plus/
+minus half of the sample rate in Hz)</p>
+<p>There are several ways to set the <strong>channel frequency</strong>:</p>
+<ol>
+<li><strong>Typing</strong> directly into the frequency textbox. The textbox is set to insert
+   mode which means it is possible to just <em>type over</em> the current value.
+   Pressing enter on the keyboard or the <strong>Apply</strong> button sets the new frequency.</li>
+<li><strong>Using the tuning wheel</strong> below the textbox - swipe or fling the wheel left
+   or right. The step size is determined by the current demoulation mode. (Note:
+   the direction of the wheel can be reversed via the <a href="settings.html#reverse-tuning-wheel">Reverse Tuning Wheel</a>
+   setting if desired.)</li>
+<li><strong>Dragging the channel selector</strong> at the orange drag button in the FFT view.</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Quick Tuning</p>
+<p>The tuning wheel is great for small frequency changes. For larger jumps,
+it's faster to type the frequency or drag the selector in the FFT plot. It
+is possible to type a frequency which lays outside of the currently
+received spectrum. RF Analyzer then automatically retunes the SDR if
+possible.</p>
+</div>
+<hr />
+<h2 id="zoom-and-bandwidth">Zoom and Bandwidth</h2>
+<ul>
+<li><strong>Zoom</strong> - Adjust how wide or narrow the FFT/waterfall viewport appears
+  relative to the bandwidth of the source spectrum. With the slider all the way
+  to the left, the entire spectrum which is received from the SDR is visible.
+  Sliding to the right will zoom in around the channel frequency.</li>
+<li><strong>Channel Bandwidth (Hz)</strong> - Defines how much of the signal bandwidth around
+  the channel frequency should be demodulated. This affects both audio clarity
+  and how much noise or neighboring signals are picked up. The bandwidth can
+  also be changed by sliding the grey drag handle in the FFT view.</li>
+</ul>
+<hr />
+<h2 id="squelch-control">Squelch Control</h2>
+<p>The <strong>Squelch</strong> sets a minimum signal strength (threshold) required for
+audio to be heard. This helps cut out background noise when no active signal
+is present. By default, the squelch setting is disabled, which means that
+audio demodulation is always active independend from the signal strength.
+Once enabled, the squelch indicator apears in the channel selector of the
+FFT plot.</p>
+<p>The squelch can also be changed by sliding the green/red drag
+handle on the squelch indicator in the FFT view up or down. The indicator
+turns green if the current signal strengh (inside the channel bandwidth) is
+above the squelch threshold (demodulation active). Otherwise the indicator
+turns red and demodulation stops.</p>
+<p>The squelch can also be used to automatically start and stop the recorder (see
+<a href="recording.html#recording-options">Recording Options</a>).</p>
+<hr />
+<h2 id="keep-channel-centered">Keep Channel Centered</h2>
+<p>At the bottom of the tab, you'll find a toggle switch labeled <strong>"Keep Channel Centered"</strong>.</p>
+<ul>
+<li><strong>Enabled</strong> - The FFT display will automatically move to keep the channel
+  selector centered when tuning to a new frequency.</li>
+<li><strong>Disabled</strong> - The FFT view remains stationary; only the channel indicator
+  moves. If the indicator scrolls out of view, the display will then follow.</li>
+</ul>
+<p>This gives you flexibility in how you want to interact with the spectrum
+display - either keeping the selected signal in the spotlight, or keeping a
+broader overview of the band.</p>
+<hr />
+<h2 id="choosing-the-right-demodulation-mode">Choosing the Right Demodulation Mode</h2>
+<p>Here are multiple ways to figure out which demodulation mode to use:</p>
+<ol>
+<li><strong>By frequency range (check band plans)</strong><br />
+   Many radio services operate on fixed frequency bands and are known to use specific modulation types. Amateur radio, airband, FM radio, etc. all have well-defined standards.
+   Amateur radio bands and other services often have published band plans. These are useful for identifying what mode to expect at a given frequency.<ul>
+<li><a href="https://www.iaru-r2.org/en/reference/band-plans/">IARU Band Plans (Amateuer Radio)</a></li>
+<li><a href="https://www.fcc.gov/engineering-technology/policy-and-rules-division/general/radio-spectrum-allocation">US FCC Frequency Allocations</a></li>
+</ul>
+</li>
+<li><strong>Look at the FFT and waterfall display</strong><br />
+   Different modes have distinctive shapes and behavior in the spectrum display. See the examples in the below for visual cues.</li>
+</ol>
+<h2 id="demodulation-mode-characteristics">Demodulation Mode Characteristics</h2>
+<h3 id="am-amplitude-modulation">AM - Amplitude Modulation</h3>
+<p><img alt="AM Example" src="./assets/am.png" style="height: 500px" /></p>
+<p>Used for:</p>
+<ul>
+<li>Shortwave broadcasts</li>
+<li>Aviation (airband)</li>
+<li>Some CB radio</li>
+</ul>
+<p>Typical bandwidth: <strong>6-10 kHz</strong></p>
+<p>Visual signature:</p>
+<ul>
+<li>Symmetrical peaks around a center frequency</li>
+<li>Fixed bandwidth</li>
+</ul>
+<hr />
+<h3 id="narrow-fm-nfm">Narrow FM - NFM</h3>
+<p><img alt="NFM Example" src="./assets/fm_narrow.png" style="height: 500px" /></p>
+<p>Used for:</p>
+<ul>
+<li>Ham radio voice (VHF/UHF)</li>
+<li>Public safety and utility comms</li>
+<li>Marine VHF</li>
+</ul>
+<p>Typical bandwidth: <strong>12.5-25 kHz</strong></p>
+<p>Visual signature:</p>
+<ul>
+<li>Single peak with a flat top</li>
+<li>Steady, narrow trace in the waterfall</li>
+<li>Little or no visible sidebands</li>
+</ul>
+<hr />
+<h3 id="wide-fm-wfm">Wide FM - WFM</h3>
+<p><img alt="WFM Example" src="./assets/fm_wide.png" style="height: 500px" /></p>
+<p>Used for:</p>
+<ul>
+<li>Commercial FM radio (88-108 MHz)</li>
+</ul>
+<p>Typical bandwidth: <strong>100-200 kHz</strong></p>
+<p>Visual signature:</p>
+<ul>
+<li>Broad, dense signal</li>
+<li>Highly modulated (busy waterfall)</li>
+<li>Often accompanied by strong stereo pilot tone (~19 kHz)</li>
+</ul>
+<hr />
+<h3 id="usb-upper-sideband">USB - Upper Sideband</h3>
+<p><img alt="USB Example" src="./assets/usb.png" style="height: 500px" /></p>
+<p>Used for:</p>
+<ul>
+<li>Ham radio SSB above 10 MHz</li>
+<li>Voice on HF maritime and aeronautical bands</li>
+<li>Audio (de-)modulation of digital modes such as FT8 or PSK31</li>
+</ul>
+<p>Typical bandwidth: <strong>2.4-3 kHz</strong></p>
+<p>Visual signature:</p>
+<ul>
+<li>Only the upper side of the carrier is visible</li>
+<li>Sharp edge on the lower side</li>
+<li>No center peak (carrier suppressed)</li>
+</ul>
+<hr />
+<h3 id="lsb-lower-sideband">LSB - Lower Sideband</h3>
+<p><img alt="LSB Example" src="./assets/lsb.png" style="height: 500px" /></p>
+<p>Used for:</p>
+<ul>
+<li>Ham radio SSB below 10 MHz</li>
+</ul>
+<p>Typical bandwidth: <strong>2.4-3 kHz</strong></p>
+<p>Visual signature:</p>
+<ul>
+<li>Only the lower side of the carrier is visible</li>
+<li>Sharp edge on the upper side</li>
+<li>No carrier spike</li>
+</ul>
+<h3 id="cw-continous-wave-morse-code">CW - Continous Wave / Morse Code</h3>
+<p><img alt="CW Example" src="./assets/morse.png" style="height: 500px" /></p>
+<p>Used for:</p>
+<ul>
+<li>Ham radio</li>
+</ul>
+<p>Typical bandwidth: <strong>~100 Hz</strong></p>
+<p>Visual signature:</p>
+<ul>
+<li>Single sharp carrier wave which is switch on and off</li>
+<li>Morse Code pattern is visible in waterfall (dashes and dots)</li>
+</ul>
+<h2 id="further-resources-for-signal-identification">Further Resources for Signal Identification</h2>
+<p>If you're unsure about the type of signal you're observing, the following resources can assist you in identifying various RF signals, including analog audio:</p>
+<ul>
+<li>
+<p><strong>Signal Identification Wiki</strong>
+  A comprehensive community-driven guide featuring audio samples and waterfall images for a wide range of signals: 
+  <a href="https://www.sigidwiki.com/wiki/Signal_Identification_Guide">sigidwiki.com</a></p>
+</li>
+<li>
+<p><strong>HFUnderground Signal Identification</strong><br />
+  Focused on HF and MW bands, this wiki includes detailed entries with mode, frequency, bandwidth, and visual characteristics: 
+  <a href="https://www.hfunderground.com/wiki/index.php/Signal_Identification">hfunderground.com</a></p>
+</li>
+<li>
+<p><strong>Tektronix eGuide to RF Signals</strong><br />
+  Offers insights into interpreting spectrograms and understanding signal behavior over time: 
+  <a href="https://www.tek.com/en/documents/how-guide/eguide-rf-signals">Tektronix eGuide to RF Signals</a></p>
+</li>
+<li>
+<p><strong>Understanding the RF Spectrum - Visual Guide</strong><br />
+  A YouTube video that provides a visual walkthrough of the RF spectrum and common signal types.
+  <a href="https://www.youtube.com/watch?v=heCwyGVAYV0">Watch on YouTube</a></p>
+</li>
+</ul>
+<hr />
+<h2 id="wrapping-up">Wrapping Up</h2>
+<p>Now you are able to demodulate audio signals. Developing a good intuition of
+recognizing signal modulation settings by analyzing the FFT and waterfall comes
+naturally with time! A good way to practice is to record a brief period of IQ
+samples on an Amateur Radio band and replay it in a loop. Then it is easy to
+experiment with the various demodulation settings. Head over to the
+<a href="recording.html">Recording</a> section!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

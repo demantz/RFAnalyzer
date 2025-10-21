@@ -1,0 +1,844 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="quickstart.html">
+      
+      
+        <link rel="next" href="ui-overview.html">
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Installation & Setup - RF Analyzer 2.0 User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.84d31ad4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#installation-setup" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer 2.0 User Manual" class="md-header__button md-logo" aria-label="RF Analyzer 2.0 User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer 2.0 User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Installation & Setup
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer 2.0 User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer 2.0 User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer 2.0 User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Installation & Setup
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="setup.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation & Setup
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing the App
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installing-the-sdr-driver-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing the SDR driver (app)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connecting-sdr-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connecting SDR Hardware
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connecting SDR Hardware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hackrf-rtl-sdr-via-usb" class="md-nav__link">
+    <span class="md-ellipsis">
+      HackRF &amp; RTL-SDR via USB
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rtl-sdr-via-tcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      RTL-SDR via TCP
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesource-playback-recordings-and-iq-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filesource (Playback recordings and IQ files)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-the-analyzer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start the Analyzer
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Interface
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SDR Source
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FFT & Waterfall Display
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Signal Demodulation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Recording & Playback
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    App Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Additional Information
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting & FAQs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing the App
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installing-the-sdr-driver-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing the SDR driver (app)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connecting-sdr-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connecting SDR Hardware
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connecting SDR Hardware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hackrf-rtl-sdr-via-usb" class="md-nav__link">
+    <span class="md-ellipsis">
+      HackRF &amp; RTL-SDR via USB
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rtl-sdr-via-tcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      RTL-SDR via TCP
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesource-playback-recordings-and-iq-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filesource (Playback recordings and IQ files)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-the-analyzer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start the Analyzer
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="installation-setup">Installation &amp; Setup</h1>
+<p>This sections explains how to install the RF Analyzer app and connect a source
+for RF signals. Details about the configuration of the SDR can be found in the
+section <a href="sdr-source.html">SDR Source</a>.</p>
+<h2 id="installation">Installation</h2>
+<h3 id="installing-the-app">Installing the App</h3>
+<p>The app can be downloaded via the Google Play Store. Use the following link:</p>
+<p><a href="https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer">https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer</a></p>
+<p><a href="https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer"><p align="center"><img src="./assets/google_play_badge.png" alt="RF Analyzer on Google Play" width="200px"></p></a></p>
+<p>You can try all features for free with a 7-day trial and up to 60 minutes of
+analyzer usage.</p>
+<p>If you like it, a one-time in-app purchase unlocks the full version - no
+subscriptions, no accounts, no ads.</p>
+<p>This app is a hobby project, built with passion and countless hours of work.
+Supporting the app helps me continue developing and improving it. Thank you! 🙏</p>
+<h3 id="installing-the-sdr-driver-app">Installing the SDR driver (app)</h3>
+<div class="admonition note">
+<p class="admonition-title">This is only necessary for the RTL-SDR</p>
+<p>RF Analyzer uses the free <a href="https://play.google.com/store/apps/details?id=marto.rtl_tcp_andro">RTL-SDR driver app</a>
+for Android to interface with the RTL-SDR device.</p>
+</div>
+<p>The driver can be installed via Google Play like any other app. After the
+installation, nothing more has to be done. It is not necessary to start the
+driver app manually. RF Analyzer will run the driver app in the background as
+soon as the sampling is started.</p>
+<p>The driver is not needed for the HackRF because RF Analyzer uses a build-in driver.</p>
+<h2 id="connecting-sdr-hardware">Connecting SDR Hardware</h2>
+<h3 id="hackrf-rtl-sdr-via-usb">HackRF &amp; RTL-SDR via USB</h3>
+<p>The HackRF and RTL-SDR devices are connected via USB to your Android device
+using a <a href="https://en.wikipedia.org/wiki/USB_On-The-Go">USB OTG adapter</a>. You
+might have received such an adapter with your phone as it is usually used to
+transfer data from you old phone to the new one.</p>
+<p><img alt="" src="assets/tutorial_connect_sdr.png" /></p>
+<p>When connecting the SDR, the RTL-SDR driver app immediatly shows a dialog
+requesting permissions to the device.</p>
+<div class="admonition note">
+<p class="admonition-title">The permission request of the RTL-SDR driver also appears when connecting a HackRF. It can be accepted or dismissed. RF Analyzer will show its own permission dialog when starting the SDR</p>
+</div>
+<p>RF Analyzer will automatically select RTL-SDR or HackRF as source type when
+a respective device is plugged in and the app is currently open.</p>
+<h3 id="rtl-sdr-via-tcp">RTL-SDR via TCP</h3>
+<p>The RTL-SDR can be setup on a computer and accessed/operated via the network.
+On you host computer, execute <code>rtl_tcp</code> to start a SDR server. The following
+command line starts the server on TCP port 4242 assuming the IP address of your
+host is 192.168.0.42:</p>
+<div class="highlight"><pre><span></span><code>rtl_tcp<span class="w"> </span>-a<span class="w"> </span><span class="m">192</span>.168.0.42<span class="w"> </span>-p<span class="w"> </span><span class="m">4242</span>
+</code></pre></div>
+<p>Select <strong>RTL-SDR</strong> in the source tab dropdown menu in the RF Analyzer app.
+Before starting the analyzer, scroll down and enable <strong>External Server</strong>.
+Enter the IP address and port:</p>
+<p>Afterwards, start the analyzer by pressing the <strong>Play</strong> Button.</p>
+<div class="admonition warning">
+<p class="admonition-title">Firewall might block access to the server</p>
+<p>If your host computer is behind a firewall or has a local firewall
+installed, RF Analyzer might not be able to connect to the port. In this
+case, add an exception to the firewall to allow incoming traffic to the
+port specified in <code>rtl_tcp</code>.</p>
+</div>
+<h3 id="filesource-playback-recordings-and-iq-files">Filesource (Playback recordings and IQ files)</h3>
+<p>RF Analyzer can playback files that contain captured RF samples in the format
+of either RTL-SDR (<code>rtl_sdr</code>) or HackRF (<code>hackrf_transfer -r</code>):</p>
+<ul>
+<li>RTL-SDR: interleaved, 8-bit, <strong>unsigned</strong> IQ samples</li>
+<li>HackRF: interleaved, 8-bit, <strong>signed</strong> IQ samples</li>
+</ul>
+<p>In both cases, the in-phase component (<strong>I</strong>) is first, followed by the quadrature component (<strong>Q</strong>).</p>
+<p>Select <strong>Filesource</strong> in the source tab of RF Analyzer. Either choose <strong>Open
+File</strong> to open a file from storage or <strong>Recordings</strong> to playback a
+previously recorded caputure.</p>
+<p>When selecting a file from storage it is important that the frequency, sample
+rate and file format (HackRF vs. RTL-SDR) are correctly specified after the
+file is opened. If these values are wrong, the file will not play correctly.
+RF Analyzer tries to automatically detect these settings from the imported
+file name, however, it is not guaranteed that this succeeds. Double check the
+values if the data is not correctly played.</p>
+<hr />
+<h2 id="start-the-analyzer">Start the Analyzer</h2>
+<p>The <a href="quickstart.html">Quickstart</a> section briefly explains all necessary steps
+receive signals with the app. Detailed information about all UI elements can be
+found in the section <a href="ui-overview.html">User Interface</a> and the following
+sections (<a href="sdr-source.html">SDR Source</a>, <a href="fft.html">FFT &amp; Waterfall Display</a>,
+<a href="demodulation.html">Demodulation</a>, <a href="recording.html">Recording</a> and
+<a href="settings.html">Settings</a>).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
