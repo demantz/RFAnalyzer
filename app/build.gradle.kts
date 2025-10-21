@@ -31,7 +31,6 @@ android {
         }
         create("foss") {
             dimension = "distribution"
-            applicationIdSuffix = ".foss"
             versionNameSuffix = "-foss"
             buildConfigField("boolean", "IS_FOSS", "true")
             resValue("string", "flavor_name", "FOSS")
