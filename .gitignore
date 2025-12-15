@@ -1,27 +1,14 @@
-# Java class files
-*.class
-
-# generated files
-bin/
-gen/
-.cxx/
-
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Android Studio
-.idea
-.gradle
-.kotlin
-build/
-app/release/
-app/play/release/
-app/foss/release/
-
-# mkdocs generated files
-build_site/
-app/src/main/assets/docs
-
-# Vim and ctags
-tags
-*.swp
+Exclude all
+adt$*
+asf$*
+apple$*
+mit$*
+rules
+!
+*
+*$goo.gl
+null
+*$m4$*
+pay
+root-only
+!/.gitignore
