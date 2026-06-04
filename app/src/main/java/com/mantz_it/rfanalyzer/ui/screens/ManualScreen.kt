@@ -1,6 +1,8 @@
 package com.mantz_it.rfanalyzer.ui.screens
 
 import android.content.Intent
+import android.content.ActivityNotFoundException
+import android.widget.Toast
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -103,7 +105,11 @@ fun ManualScreen(navController: NavController, subUrl: String = "index.html") {
                                 true
                             } else {
                                 // Open external links in system browser
-                                context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                } catch (e: ActivityNotFoundException) {
+                                    Toast.makeText(context, "No app found to open this link", Toast.LENGTH_SHORT).show()
+                                }
                                 true
                             }
                         }
