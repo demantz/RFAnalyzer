@@ -5,6 +5,7 @@
 bin/
 gen/
 .cxx/
+__pycache__/
 
 # Local configuration file (sdk path, etc)
 local.properties
