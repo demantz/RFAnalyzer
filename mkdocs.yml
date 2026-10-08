@@ -19,6 +19,7 @@ nav:
   - SDR Source: sdr-source.md
   - FFT & Waterfall Display: fft.md
   - Signal Demodulation: demodulation.md
+  - Packet Decoding: decoding.md
   - Recording & Playback: recording.md
   - Bookmarks: bookmarks.md
   - App Settings: settings.md

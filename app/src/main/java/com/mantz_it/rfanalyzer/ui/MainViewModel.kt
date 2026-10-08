@@ -26,6 +26,7 @@ import com.mantz_it.rfanalyzer.source.HackrfSource
 import com.mantz_it.rfanalyzer.source.HydraSdrSource
 import com.mantz_it.rfanalyzer.ui.composable.AboutTabActions
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
+import com.mantz_it.rfanalyzer.ui.composable.DecoderTabActions
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationTabActions
 import com.mantz_it.rfanalyzer.ui.composable.DisplayTabActions
 import com.mantz_it.rfanalyzer.ui.composable.FilesourceFileFormat
@@ -142,6 +143,9 @@ class MainViewModel @Inject constructor(
         data object OnDeleteLogFileClicked: UiAction()
         data object OnStartRecordingClicked: UiAction()
         data object OnStopRecordingClicked: UiAction()
+        data object OnShowDecodedLogClicked: UiAction()
+        data class OnSaveDecodedLogClicked(val destUri: Uri): UiAction()
+        data object OnShareDecodedLogClicked: UiAction()
         data class OnDeleteRecordingClicked(val filePath: String): UiAction()
         data object OnDeleteAllRecordingsClicked: UiAction()
         data class WriteInternalFileToFile(val filename: String, val destUri: Uri): UiAction()
@@ -699,6 +703,21 @@ class MainViewModel @Inject constructor(
         onAddBandBookmarkClicked = { showEditBandBookmarkSheet(null) },
         onTuneToStation = { tuneToStation(it) },
         onViewBand = { moveViewportToBand(it) },
+    )
+
+    val decoderTabActions = DecoderTabActions(
+        onEnabledChanged = appStateRepository.decoderEnabled::set,
+        onTargetSampleRateChanged = { appStateRepository.decoderTargetSampleRate.set(it) },
+        onChannelizedChanged = appStateRepository.decoderChannelized::set,
+        onConversionModeChanged = appStateRepository.decoderConversionMode::set,
+        onAutoLevelChanged = appStateRepository.decoderAutoLevel::set,
+        onMinSnrChanged = { appStateRepository.decoderMinSnr.set(it) },
+        onReportMetaChanged = appStateRepository.decoderReportMeta::set,
+        onLogToFileChanged = appStateRepository.decoderLogToFile::set,
+        onShowLogClicked = { sendActionToUi(UiAction.OnShowDecodedLogClicked) },
+        onSaveLogToFileClicked = { destUri -> sendActionToUi(UiAction.OnSaveDecodedLogClicked(destUri)) },
+        onShareLogClicked = { sendActionToUi(UiAction.OnShareDecodedLogClicked) },
+        onFlexDecodersChanged = { specs -> appStateRepository.decoderFlexDecoders.set(specs) },
     )
 
     val recordingTabActions = RecordingTabActions(

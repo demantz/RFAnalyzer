@@ -11,6 +11,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import com.mantz_it.rfanalyzer.BuildConfig
+import com.mantz_it.rfanalyzer.decoder.FlexDecoder
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
@@ -39,6 +40,8 @@ data class FullExportFile(
     val bookmarkLists: List<BookmarkList> = emptyList(),
     val stations: List<Station> = emptyList(),
     val bands: List<Band> = emptyList(),
+    /** User-defined rtl_433 flex decoders (unknown protocol decoders). */
+    val flexDecoders: List<FlexDecoder> = emptyList(),
 ) {
     @Serializable
     data class ExportMetadata(
@@ -72,7 +75,8 @@ data class ParsedImport(
     val detectedFormat: ImportFormat,
     val data: ParsedData,
     val fullBackup: Boolean = false,  // indicates that the parsed data is a full backup of the bookmark db
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val flexDecoders: List<FlexDecoder> = emptyList(),  // custom decoders carried by the file
 ) {
     // Convenience properties for easier access in the UI
     val bookmarkLists: List<BookmarkList> get() = data.first
@@ -86,7 +90,8 @@ data class ParsedImport(
 @Singleton
 class StationImporterExporter @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val stationRepository: StationRepository
+    private val stationRepository: StationRepository,
+    private val appStateRepository: AppStateRepository
 ) {
     companion object {
         private const val TAG = "StationImporterExporter"
@@ -99,7 +104,13 @@ class StationImporterExporter @Inject constructor(
         val cats = stationRepository.getAllBookmarkLists().first()
         val stations = stationRepository.getStationsBySource(SourceProvider.BOOKMARK).first()
         val bands = stationRepository.getAllBands().first()
-        val export = FullExportFile(metadata = FullExportFile.ExportMetadata(fullBackup = true),bookmarkLists = cats, stations = stations, bands = bands)
+        val export = FullExportFile(
+            metadata = FullExportFile.ExportMetadata(fullBackup = true),
+            bookmarkLists = cats,
+            stations = stations,
+            bands = bands,
+            flexDecoders = currentFlexDecoders(),
+        )
         val exportContent = json.encodeToString(export)
         return withContext(Dispatchers.IO) {
             saveFile(outUri, exportContent.toByteArray())
@@ -109,7 +120,12 @@ class StationImporterExporter @Inject constructor(
     // Export selected stations bands and bookmarkLists
     suspend fun export(outUri: Uri, bookmarkLists: List<BookmarkList>, stations: List<Station>, bands: List<Band>): Boolean {
         Log.d(TAG, "export: Exporting ${stations.size} stations, ${bands.size} bands, and ${bookmarkLists.size} to $outUri")
-        val export = FullExportFile(bookmarkLists = bookmarkLists, stations = stations, bands = bands)
+        val export = FullExportFile(
+            bookmarkLists = bookmarkLists,
+            stations = stations,
+            bands = bands,
+            flexDecoders = currentFlexDecoders(),
+        )
         val exportContent = json.encodeToString(export)
         return withContext(Dispatchers.IO) {
             saveFile(outUri, exportContent.toByteArray())
@@ -253,7 +269,30 @@ class StationImporterExporter @Inject constructor(
             }
         }
 
-        return processParsedData(parsedImport, option, targetStationBookmarkList?.id, targetBandBookmarkList?.id, prefix)
+        val result = processParsedData(parsedImport, option, targetStationBookmarkList?.id, targetBandBookmarkList?.id, prefix)
+        if (result.first) applyImportedFlexDecoders(parsedImport.flexDecoders)
+        return result
+    }
+
+    private fun currentFlexDecoders(): List<FlexDecoder> =
+        appStateRepository.decoderFlexDecoders.value.map { FlexDecoder.fromSpec(it) }
+
+    /** Merges flex decoders carried by an import file into the current list. */
+    private fun applyImportedFlexDecoders(decoders: List<FlexDecoder>) {
+        if (decoders.isEmpty()) return
+        val existing = appStateRepository.decoderFlexDecoders.value.toMutableList()
+        var added = 0
+        decoders.forEach { decoder ->
+            val spec = decoder.toSpec()
+            if (spec.isNotBlank() && spec !in existing) {
+                existing.add(spec)
+                added++
+            }
+        }
+        if (added > 0) {
+            appStateRepository.decoderFlexDecoders.set(existing)
+            Log.i(TAG, "applyImportedFlexDecoders: imported $added flex decoder(s)")
+        }
     }
 
     suspend fun importAndRestore(uri: Uri): Pair<Boolean, String> {
@@ -369,7 +408,10 @@ class StationImporterExporter @Inject constructor(
             }
             val file = json.decodeFromString<FullExportFile>(content)
             val data = ParsedData(file.bookmarkLists, file.stations, file.bands)
-            ParsedImport(ParseStatus.SUCCESS, ImportFormat.INTERNAL_JSON, data, file.metadata.fullBackup)
+            ParsedImport(
+                ParseStatus.SUCCESS, ImportFormat.INTERNAL_JSON, data, file.metadata.fullBackup,
+                flexDecoders = file.flexDecoders,
+            )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse as internal JSON", e)
             ParsedImport(ParseStatus.PARSE_ERROR, ImportFormat.INTERNAL_JSON, ParsedData(emptyList(), emptyList(), emptyList()), errorMessage = "File is not a valid internal JSON backup.")

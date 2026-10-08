@@ -17,6 +17,8 @@ phone both practical and fun.
 
 - Real-time **FFT and waterfall display** with scroll and pinch-to-zoom
 - Audio demodulation: **CW**, **AM**, **nFM**, **wFM**, **LSB**, **USB**
+- Optional **rtl_433 based packet decoding** of 433/315/868 MHz sensors, with
+  live field display and JSONL logging
 - Record raw IQ data
 - Comprehensive Bookmark Manager for Stations (Frequencies) and Bands
 - Download and Synchronize EiBi Shortwave Radio Database, POTA & SOTA Spots
@@ -118,6 +120,8 @@ during the development of RF Analyzer:
 - **Michael Ossmann** and the team around the HackRF which initially inspired
   me to start this app years ago
 - **Martin Marinov**, the developer of the RTL-SDR Android driver
+- The **rtl_433** project and its contributors, whose decoder powers the
+  optional packet decoding feature
 - **Everyone who shared positive feedback** - your encouragement means a lot
   and motivates me to keep improving the app!
 

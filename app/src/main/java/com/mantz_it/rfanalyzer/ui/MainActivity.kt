@@ -554,6 +554,21 @@ class MainActivity: ComponentActivity() {
                     }
                     is UiAction.OnSaveLogToFileClicked -> saveFileToUserDirectory(action.destUri, File(filesDir, LogcatLogger.logfileName))
                     is UiAction.OnShareLogFileClicked -> shareFile(File(filesDir, LogcatLogger.logfileName), "text/plain", "Share log file via")
+                    is UiAction.OnShowDecodedLogClicked -> {
+                        val path = appStateRepository.decoderLogFilePath.value
+                        if (path.isNotEmpty()) {
+                            mainViewModel.navigate(AppScreen.LogFileScreen)
+                            mainViewModel.loadLogs(File(path))
+                        }
+                    }
+                    is UiAction.OnSaveDecodedLogClicked -> {
+                        val path = appStateRepository.decoderLogFilePath.value
+                        if (path.isNotEmpty()) saveFileToUserDirectory(action.destUri, File(path))
+                    }
+                    is UiAction.OnShareDecodedLogClicked -> {
+                        val path = appStateRepository.decoderLogFilePath.value
+                        if (path.isNotEmpty()) shareFile(File(path), "application/json", "Share decoded events via")
+                    }
                     is UiAction.OnStartRecordingClicked -> if(isBound) analyzerService?.startRecording()
                     is UiAction.OnStopRecordingClicked -> if(isBound) analyzerService?.stopRecording()
                     is UiAction.OnDeleteRecordingClicked -> {

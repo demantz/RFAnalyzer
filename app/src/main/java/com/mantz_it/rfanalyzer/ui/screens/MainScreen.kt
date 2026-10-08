@@ -48,6 +48,7 @@ import com.mantz_it.rfanalyzer.ui.composable.BookmarkFavoriteDialog
 import com.mantz_it.rfanalyzer.ui.composable.ControlDrawerSide
 import com.mantz_it.rfanalyzer.ui.composable.CopyOrMoveSheet
 import com.mantz_it.rfanalyzer.ui.composable.CustomSideDrawerOverlay
+import com.mantz_it.rfanalyzer.ui.composable.DecoderStatusBadge
 import com.mantz_it.rfanalyzer.ui.composable.DrawerSide
 import com.mantz_it.rfanalyzer.ui.composable.EditBandBookmarkSheet
 import com.mantz_it.rfanalyzer.ui.composable.EditBookmarkListSheet
@@ -91,6 +92,10 @@ fun MainScreen(analyzerSurface: AnalyzerSurface, viewModel: MainViewModel, appSt
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val controlDrawerSide by appStateRepository.controlDrawerSide.stateFlow.collectAsState()
+    val decoderEnabled by appStateRepository.decoderEnabled.stateFlow.collectAsState()
+    val decoderRunning by appStateRepository.decoderRunning.stateFlow.collectAsState()
+    val decoderLastModel by appStateRepository.decoderLastModel.stateFlow.collectAsState()
+    val decoderLastEventTimestamp by appStateRepository.decoderLastEventTimestamp.stateFlow.collectAsState()
     val selectedStations by viewModel.selectedStations.collectAsState()
     val expandedStationId by viewModel.expandedStationId.collectAsState()
 
@@ -128,6 +133,15 @@ fun MainScreen(analyzerSurface: AnalyzerSurface, viewModel: MainViewModel, appSt
                         modifier = Modifier
                             .fillMaxSize()
                     )
+                    DecoderStatusBadge(
+                        enabled = decoderEnabled,
+                        running = decoderRunning,
+                        lastModel = decoderLastModel,
+                        lastEventTimestamp = decoderLastEventTimestamp,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(12.dp)
+                    )
                 }
             },
             drawerContent = { AnalyzerTabsComposable(
@@ -136,6 +150,7 @@ fun MainScreen(analyzerSurface: AnalyzerSurface, viewModel: MainViewModel, appSt
                 sourceTabActions = viewModel.sourceTabActions,
                 displayTabActions = viewModel.displayTabActions,
                 demodulationTabActions = viewModel.demodulationTabActions,
+                decoderTabActions = viewModel.decoderTabActions,
                 recordingTabActions = viewModel.recordingTabActions,
                 settingsTabActions = viewModel.settingsTabActions,
                 aboutTabActions = viewModel.aboutTabActions,

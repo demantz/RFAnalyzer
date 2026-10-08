@@ -58,6 +58,10 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
     var channelFrequency: Long = 0 // Shift frequency to this value when passing packets to demodulator
     var isDemodulationActivated: Boolean = false // Indicates if samples should be forwarded to the demodulator queues or not.
     var squelchSatisfied: Boolean = false // indicates whether the current signal is strong enough to cross the squelch threshold
+    // Optional tap for the decoder. Receives the same interleaved IQ buffer that is used for the
+    // FFT. The callee must copy it because the buffer is reused on the next iteration.
+    @Volatile
+    var decoderSampleSink: ((FloatArray) -> Unit)? = null
 
     private val interleavedFftBuffer = FloatArray(source.packetSize / source.bytesPerSample * 2)
 
@@ -199,6 +203,10 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
             ///// FFT //////////////////////////////////////////////////////////////////////////////
             source.fillPacketIntoInterleavedBuffer(packet, interleavedFftBuffer)
             putNewFftSamples(interleavedFftBuffer)
+
+            ///// Decoder //////////////////////////////////////////////////////////////////////////
+            // Best-effort tap: the sink copies the buffer and may drop it if the decoder is busy.
+            decoderSampleSink?.invoke(interleavedFftBuffer)
 
             // Return the packet back to the source buffer pool:
             source.returnPacket(packet)

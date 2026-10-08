@@ -34,6 +34,7 @@ import androidx.core.net.toUri
 import com.mantz_it.rfanalyzer.database.AppStateRepository
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
 import com.mantz_it.rfanalyzer.database.collectAppState
+import com.mantz_it.rfanalyzer.decoder.Rtl433Decoder
 import com.mantz_it.rfanalyzer.source.AirspyHfSource
 import com.mantz_it.rfanalyzer.source.AirspySource
 import com.mantz_it.rfanalyzer.source.HydraSdrSource
@@ -84,6 +85,7 @@ class AnalyzerService : Service() {
         private set
     var fftProcessor: FftProcessor? = null
         private set
+    private var decoder: Rtl433Decoder? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): AnalyzerService = this@AnalyzerService
@@ -238,6 +240,9 @@ class AnalyzerService : Service() {
             Log.e(TAG, "stopAnalyzer: Error while stopping Scheduler.")
         }
 
+        // The scheduler is stopped, so no more samples are handed over: stop the decoder.
+        stopDecoder()
+
         // Wait for the demodulator to stop
         //try {
         //    demodulator?.join()
@@ -332,6 +337,10 @@ class AnalyzerService : Service() {
         // Create a new instance of Scheduler
         scheduler = Scheduler(source!!, fftProcessor!!::putNewFftSamples)
 
+        // Start the optional rtl_433 based decoder and tap the IQ stream:
+        if (appStateRepository.decoderEnabled.value)
+            startDecoder()
+
         // Start the demodulator thread:
         demodulator = Demodulator(
             scheduler!!.demodOutputQueue,
@@ -409,6 +418,69 @@ class AnalyzerService : Service() {
             else
                 appStateRepository.channelFrequency.value
         return true
+    }
+
+    /**
+     * Creates and starts the rtl_433 based decoder (if the analyzer is running)
+     * and connects it to the Scheduler's IQ tap.
+     */
+    private fun startDecoder() {
+        if (decoder != null || source == null || scheduler == null)
+            return
+        val decoderInstance = Rtl433Decoder(appStateRepository, filesDir)
+        if (!decoderInstance.start(source!!.packetSize / source!!.bytesPerSample))
+            return
+        decoderInstance.configure(
+            appStateRepository.sourceSampleRate.value.toInt(),
+            appStateRepository.sourceFrequency.value,
+            appStateRepository.decoderTargetSampleRate.value
+        )
+        decoder = decoderInstance
+        applyDecoderChannel()
+        appStateRepository.decoderEventCount.set(0)
+        appStateRepository.decodedEvents.set(emptyList())
+        scheduler?.decoderSampleSink = decoderInstance::onSamples
+        Log.i(TAG, "startDecoder: decoder started")
+    }
+
+    /** Disconnects and stops the decoder. */
+    private fun stopDecoder() {
+        scheduler?.decoderSampleSink = null
+        decoder?.stop()
+        decoder = null
+    }
+
+    /**
+     * Applies the current decoder configuration to a running decoder.
+     */
+    private fun reconfigureDecoder() {
+        decoder?.configure(
+            appStateRepository.sourceSampleRate.value.toInt(),
+            appStateRepository.sourceFrequency.value,
+            appStateRepository.decoderTargetSampleRate.value
+        )
+        applyDecoderChannel()
+    }
+
+    /**
+     * Applies the optional channel filter. It uses the demodulation channel
+     * (frequency and width), so tune the demodulation channel to the signal and
+     * pick a mode/width that matches it (e.g. AM at 20 kHz for these OOK remotes).
+     */
+    private fun applyDecoderChannel() {
+        val decoderInstance = decoder ?: return
+        if (!appStateRepository.decoderChannelized.value) {
+            decoderInstance.setChannel(0, 0)
+            return
+        }
+        val sourceRate = appStateRepository.sourceSampleRate.value
+        val center = appStateRepository.sourceFrequency.value
+        var offset = appStateRepository.channelFrequency.value - center
+        // If the demod channel is outside the captured band, just filter around
+        // the SDR center instead of shifting by a nonsensical amount.
+        if (sourceRate > 0 && kotlin.math.abs(offset) > sourceRate / 2)
+            offset = 0
+        decoderInstance.setChannel(offset.toInt(), appStateRepository.channelWidth.value)
     }
 
     /**
@@ -619,10 +691,12 @@ class AnalyzerService : Service() {
         s.collectAppState(asr.sourceFrequency) {
             source?.frequency = it
             fftProcessor?.frequency = it
+            decoder?.setCenterFrequency(it)
         }
         s.collectAppState(asr.sourceSampleRate) {
             source?.sampleRate = it.toInt()
             fftProcessor?.sampleRate = it
+            reconfigureDecoder()
         }
         s.collectAppState(asr.hackrfVgaGainIndex) { (source as? HackrfSource)?.vgaGain = asr.hackrfVgaGainSteps[it] }
         s.collectAppState(asr.hackrfLnaGainIndex) { (source as? HackrfSource)?.lnaGain = asr.hackrfLnaGainSteps[it] }
@@ -700,6 +774,34 @@ class AnalyzerService : Service() {
         }
         s.collectAppState(asr.squelchSatisfied) { scheduler?.squelchSatisfied = it }
         s.collectAppState(asr.effectiveAudioVolumeLevel) { demodulator?.audioVolumeLevel = it }
+
+        // decoder tab
+        s.collectAppState(asr.decoderEnabled) {
+            if (it) {
+                if (appStateRepository.analyzerRunning.value)
+                    startDecoder()
+            } else {
+                stopDecoder()
+            }
+        }
+        s.collectAppState(asr.decoderTargetSampleRate) { reconfigureDecoder() }
+        s.collectAppState(asr.decoderChannelized) { applyDecoderChannel() }
+        s.collectAppState(asr.channelFrequency) { applyDecoderChannel() }
+        s.collectAppState(asr.channelWidth) { applyDecoderChannel() }
+        s.collectAppState(asr.decoderConversionMode) { decoder?.applyOptions() }
+        s.collectAppState(asr.decoderAutoLevel) { decoder?.applyOptions() }
+        s.collectAppState(asr.decoderMinSnr) { decoder?.applyOptions() }
+        s.collectAppState(asr.decoderReportMeta) { decoder?.applyOptions() }
+        s.collectAppState(asr.decoderLogToFile) { decoder?.setLogToFile(it) }
+        // Flex decoders are registered when the native decoder is created and
+        // cannot be removed individually, so recreate it to apply list changes.
+        s.collectAppState(asr.decoderFlexDecoders) {
+            if (decoder != null) {
+                stopDecoder()
+                if (asr.decoderEnabled.value && source != null && scheduler != null)
+                    startDecoder()
+            }
+        }
 
         // settings tab
         s.collectAppState(asr.loggingEnabled) {

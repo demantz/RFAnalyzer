@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mantz_it.rfanalyzer.database.AppStateRepository
+import com.mantz_it.rfanalyzer.decoder.FlexDecoder
 import com.mantz_it.rfanalyzer.ui.MainViewModel
 
 /**
@@ -48,6 +49,7 @@ import com.mantz_it.rfanalyzer.ui.MainViewModel
 enum class AnalyzerTabs(val displayName: String) {
     SOURCE("Source"),
     DEMODULATION("Demodulation"),
+    DECODER("Decoder"),
     RECORDING("Recording"),
     DISPLAY("Display"),
     SETTINGS("Settings"),
@@ -62,6 +64,7 @@ fun AnalyzerTabsComposable(
     sourceTabActions: SourceTabActions,
     displayTabActions: DisplayTabActions,
     demodulationTabActions: DemodulationTabActions,
+    decoderTabActions: DecoderTabActions,
     recordingTabActions: RecordingTabActions,
     settingsTabActions: SettingsTabActions,
     aboutTabActions: AboutTabActions,
@@ -143,6 +146,19 @@ fun AnalyzerTabsComposable(
     val keepChannelCentered by appStateRepository.keepChannelCentered.stateFlow.collectAsState()
     val stationFavorites by mainViewModel.stationFavorites.collectAsState()
     val bandFavorites by mainViewModel.bandFavorites.collectAsState()
+    val decoderEnabled by appStateRepository.decoderEnabled.stateFlow.collectAsState()
+    val decoderRunning by appStateRepository.decoderRunning.stateFlow.collectAsState()
+    val decoderTargetSampleRate by appStateRepository.decoderTargetSampleRate.stateFlow.collectAsState()
+    val decoderChannelized by appStateRepository.decoderChannelized.stateFlow.collectAsState()
+    val decoderConversionMode by appStateRepository.decoderConversionMode.stateFlow.collectAsState()
+    val decoderAutoLevel by appStateRepository.decoderAutoLevel.stateFlow.collectAsState()
+    val decoderMinSnr by appStateRepository.decoderMinSnr.stateFlow.collectAsState()
+    val decoderReportMeta by appStateRepository.decoderReportMeta.stateFlow.collectAsState()
+    val decoderLogToFile by appStateRepository.decoderLogToFile.stateFlow.collectAsState()
+    val decoderLogFilePath by appStateRepository.decoderLogFilePath.stateFlow.collectAsState()
+    val decoderEventCount by appStateRepository.decoderEventCount.stateFlow.collectAsState()
+    val decodedEvents by appStateRepository.decodedEvents.stateFlow.collectAsState()
+    val decoderFlexDecoders by appStateRepository.decoderFlexDecoders.stateFlow.collectAsState()
     val recordingRunning by appStateRepository.recordingRunning.stateFlow.collectAsState()
     val recordingName by appStateRepository.recordingName.stateFlow.collectAsState()
     val recordOnlyWhenSquelchIsSatisfied by appStateRepository.recordOnlyWhenSquelchIsSatisfied.stateFlow.collectAsState()
@@ -275,6 +291,24 @@ fun AnalyzerTabsComposable(
                         stationFavorites = stationFavorites,
                         bandFavorites = bandFavorites,
                         demodulationTabActions = demodulationTabActions
+                    )
+                AnalyzerTabs.DECODER
+                    -> DecoderTabComposable(
+                        decoderEnabled = decoderEnabled,
+                        decoderRunning = decoderRunning,
+                        analyzerRunning = analyzerRunning,
+                        targetSampleRate = decoderTargetSampleRate,
+                        channelized = decoderChannelized,
+                        conversionMode = decoderConversionMode,
+                        autoLevel = decoderAutoLevel,
+                        minSnr = decoderMinSnr,
+                        reportMeta = decoderReportMeta,
+                        logToFile = decoderLogToFile,
+                        logFilePath = decoderLogFilePath,
+                        eventCount = decoderEventCount,
+                        events = decodedEvents,
+                        flexDecoders = decoderFlexDecoders.map { FlexDecoder.fromSpec(it) },
+                        decoderTabActions = decoderTabActions
                     )
                 AnalyzerTabs.RECORDING
                     -> RecordingTabComposable(

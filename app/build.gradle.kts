@@ -113,6 +113,7 @@ dependencies {
     implementation(project(":libairspy"))
     implementation(project(":libairspyhf"))
     implementation(project(":libhydrasdr"))
+    implementation(project(":librtl433"))
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.room.runtime)

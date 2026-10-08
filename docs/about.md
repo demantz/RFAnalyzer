@@ -129,6 +129,24 @@ SOFTWARE.
 ```
 
 
+### rtl_433 License
+
+Optional packet decoding is provided by
+[rtl_433](https://github.com/merbanan/rtl_433), which is licensed under the
+GNU General Public License version 2 or later. The corresponding source code is
+included in the `librtl433/src/main/cpp/rtl_433` submodule. rtl_433 is driven in
+"push" mode and does not access the SDR directly.
+
+```
+Copyright (C) 2019 Christian W. Zuckschwerdt <zany@triq.net>
+and the rtl_433 contributors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+```
+
 ### HackRF License
 
 RFAnalyzer uses [libhackrf](https://github.com/greatscottgadgets/hackrf/tree/master/host/libhackrf)

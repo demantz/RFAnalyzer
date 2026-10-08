@@ -10,8 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.mantz_it.rfanalyzer.analyzer.FftProcessorData
+import com.mantz_it.rfanalyzer.decoder.DecodedEvent
 import com.mantz_it.rfanalyzer.source.HackrfSource
 import com.mantz_it.rfanalyzer.source.HydraSdrRfPort
+import com.mantz_it.rfanalyzer.ui.composable.DecoderConversionMode
 import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
 import com.mantz_it.rfanalyzer.ui.composable.FftColorMap
 import com.mantz_it.rfanalyzer.ui.composable.FftDrawingType
@@ -228,6 +230,24 @@ class AppStateRepository @Inject constructor(
     val recordingstopAfterUnit = Setting("recordingStopAfterUnit", StopAfterUnit.NEVER, scope, dataStore)
     val recordingCurrentFileSize = MutableState(0L)
     val recordingStartedTimestamp = MutableState(0L)
+
+    // Decoder Tab (rtl_433 based decoding)
+    val decoderEnabled = Setting("decoderEnabled", false, scope, dataStore)
+    val decoderTargetSampleRate = Setting("decoderTargetSampleRate", 250000, scope, dataStore)
+    val decoderChannelized = Setting("decoderChannelized", false, scope, dataStore)
+    val decoderConversionMode = Setting("decoderConversionMode", DecoderConversionMode.NATIVE, scope, dataStore)
+    val decoderAutoLevel = Setting("decoderAutoLevel", true, scope, dataStore)
+    val decoderMinSnr = Setting("decoderMinSnr", 9f, scope, dataStore)
+    val decoderReportMeta = Setting("decoderReportMeta", true, scope, dataStore)
+    val decoderLogToFile = Setting("decoderLogToFile", true, scope, dataStore)
+    // User-defined rtl_433 "flex" (-X) decoder specs; see decoder/FlexDecoder.kt
+    val decoderFlexDecoders = Setting("decoderFlexDecoders", emptyList<String>(), scope, dataStore)
+    val decoderRunning = MutableState(false)
+    val decoderEventCount = MutableState(0)
+    val decoderLastModel = MutableState("")
+    val decoderLastEventTimestamp = MutableState(0L)
+    val decoderLogFilePath = MutableState("")
+    val decodedEvents = MutableState<List<DecodedEvent>>(emptyList())
 
     // Settings Tab
     val screenOrientation = Setting("screenOrientation", ScreenOrientation.AUTO, scope, dataStore)

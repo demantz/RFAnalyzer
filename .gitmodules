@@ -1,0 +1,3 @@
+[submodule "librtl433/src/main/cpp/rtl_433"]
+	path = librtl433/src/main/cpp/rtl_433
+	url = https://github.com/merbanan/rtl_433.git
