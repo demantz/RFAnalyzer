@@ -51,6 +51,57 @@ a new feature please use the GitHub page of the project:
 
 Alternatively you could write me an email to **rfanalyzerapp -at- gmail.com**
 
+## Privacy Policy
+
+*Last updated: November 11, 2026*
+
+This policy covers the apps RF Analyzer and RF Analyzer Digital Extension by Dennis Mantz
+(DM4NTZ). Contact: rfanalyzerapp -at- gmail.com
+
+Neither app has user accounts, advertising, analytics or a crash-reporting service, and neither
+sends data to the developer. Google Play may give the developer anonymous crash and performance
+statistics, depending on your device settings. If you write to the developer, your message is
+used only to answer it.
+
+### RF Analyzer
+
+- **Data on your device:** settings, bookmarks, station lists, recordings and the packets decoded
+  in the Digital tab stay on your device. If backups are enabled, Android may include settings
+  and bookmarks in your device backup in your Google account; decoded packets are excluded from
+  cloud backups. Recordings and exports leave the device only where you share or save them.
+- **Location:** RF Analyzer estimates your country on the device (mobile network, SIM, time zone,
+  language) to choose band plans and station lists. Optionally you can enter a grid locator or
+  allow access to the device location, for the map, distances and nearby stations. Your location
+  is not sent anywhere; it is stored with your captures only if you turn that on.
+- **Internet connections:** RF Analyzer connects only to the servers below. Each of them sees
+  your IP address and what is requested, under its own privacy policy:
+    - SDR servers you connect to (rtl_tcp, KiwiSDR - KiwiSDR operators can see the frequency you
+      listen to) and the public KiwiSDR list (kiwisdr.com)
+    - map tiles from OpenFreeMap (openfreemap.org) for the area you view
+    - station lists: the digital station list (demantz.github.io, GitHub Pages; updated
+      automatically) and, if you enable them, EiBi (afu-base.de), POTA (pota.app) and SOTA
+      (sota.org.uk)
+    - time servers (time.android.com, pool.ntp.org) for FT8's clock correction
+  your IP address and what is requested, under its own privacy policy:
+    - SDR servers you connect to (rtl_tcp, KiwiSDR - KiwiSDR operators can see the frequency you
+      listen to) and the public KiwiSDR list (kiwisdr.com)
+    - map tiles from OpenFreeMap (openfreemap.org) for the area you view
+    - station lists: the digital station list (demantz.github.io, GitHub Pages; updated
+      automatically) and, if you enable them, EiBi (afu-base.de), POTA (pota.app) and SOTA
+      (sota.org.uk)
+    - time servers (time.android.com, pool.ntp.org) for FT8's clock correction
+    - links you tap (e.g. QRZ.com, aprs.fi, FlightAware) open in your browser
+- **Purchases** (Google Play version): processed by Google Play under Google's privacy policy;
+  the developer receives only the order information Google Play provides, no payment details.
+
+### RF Analyzer Digital Extension
+
+The extension (com.mantz_it.rfanalyzer_digital) decodes digital radio modes for RF Analyzer on
+the same device. It has no internet access (it doesn't request Android's INTERNET permission).
+It processes the radio samples RF Analyzer passes to it in memory only and returns the decoded
+results to RF Analyzer, which stores and shows them as described above. The only thing the
+extension stores itself is whether you have seen its tutorial.
+
 ## License
 
 [GPL version 2 or higher](http://www.gnu.org/licenses/gpl.html)
