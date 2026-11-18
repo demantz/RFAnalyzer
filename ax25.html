@@ -1,0 +1,1288 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>AX.25 / Packet Radio - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ax25-packet-radio" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AX.25 / Packet Radio
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-packet-radio-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Packet Radio Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How Packet Radio Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-travels-on-top" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What travels on top
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#speeds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Speeds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-listen-on-shortwave" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to Listen on Shortwave
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controls-in-the-demodulation-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controls in the Demodulation Tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In the Digital Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aprs-stations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        APRS stations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packet-stations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packet stations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frames_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-and-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips and Limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="ax25-packet-radio">AX.25 / Packet Radio</h1>
+<p>AX.25 is the protocol of amateur <strong>packet radio</strong>: short data frames with the
+callsigns of sender and receiver in front. Most of what you hear today is
+<strong>APRS</strong> - position reports, weather stations, short messages - but on the
+shortwave bands packet radio is also used the classic way: mailboxes (<strong>BBS</strong>),
+<strong>nodes</strong> that relay connections across a network, and stations connecting to
+them to read and send messages.</p>
+<p>RF Analyzer decodes AX.25 at the three usual speeds and shows every frame it
+receives, the APRS stations (also on the map) and the other packet stations -
+BBSes, nodes, users - with what they announce. It only receives; it does not
+transmit. AX.25 is part of the <a href="digital-extension.html">Digital Extension</a>,
+which must be installed.</p>
+<hr />
+<h2 id="how-packet-radio-works">How Packet Radio Works</h2>
+<h3 id="frames">Frames</h3>
+<p>Everything travels in <strong>frames</strong>: the destination, the sender and up to eight
+<strong>digipeaters</strong> (stations that repeat the frame; a <code>*</code> marks one that already
+did), then a control field that says what kind of frame it is, and the
+information. A checksum at the end protects the frame - RF Analyzer shows only
+frames whose checksum is correct.</p>
+<p>There are two kinds of traffic:</p>
+<ul>
+<li><strong>Unconnected</strong> frames (<code>UI</code>) are sent to everyone: APRS reports, beacons, a
+  mailbox announcing who has mail, a BBS listing its new bulletins.</li>
+<li><strong>Connected</strong> sessions are a conversation between two stations: a connect
+  request (<code>SABM</code>), the answer (<code>UA</code>), numbered information frames (<code>I</code>) that
+  the other side acknowledges (<code>RR</code>), and finally a disconnect (<code>DISC</code>). This is
+  how a user reads mail from a BBS or how BBSes forward messages to each other.</li>
+</ul>
+<h3 id="what-travels-on-top">What travels on top</h3>
+<table>
+<thead>
+<tr>
+<th>Traffic</th>
+<th>What you see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APRS</td>
+<td>position, symbol, course/speed, weather, status, messages - see the Map tab</td>
+</tr>
+<tr>
+<td>Mailbox beacon ("Mail for: …")</td>
+<td>the callsigns that have mail waiting at that BBS</td>
+</tr>
+<tr>
+<td>FBB bulletin list</td>
+<td>the BBS's new messages and bulletins: number, sender, addressee, date, title</td>
+</tr>
+<tr>
+<td>Node and BBS beacons</td>
+<td>the station's description (often a BPQ32 node: "Packet Switch", node/BBS/chat SSIDs)</td>
+</tr>
+<tr>
+<td>NET/ROM routing broadcasts</td>
+<td>the node's alias and the routes it offers</td>
+</tr>
+<tr>
+<td>Connected sessions</td>
+<td>the frame types; the text of a session where it is readable</td>
+</tr>
+</tbody>
+</table>
+<p>Binary transfers (compressed BBS forwarding, file transfers) are shown as a hex
+dump only.</p>
+<h3 id="speeds">Speeds</h3>
+<table>
+<thead>
+<tr>
+<th>Speed</th>
+<th>Where</th>
+<th>Modulation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1200 Bd</strong></td>
+<td>VHF/UHF (APRS 144.800 MHz in Europe, 144.390 MHz in North America, the ISS on 145.825 MHz)</td>
+<td>tones of 1200/2200 Hz in an FM channel</td>
+</tr>
+<tr>
+<td><strong>300 Bd</strong></td>
+<td>shortwave</td>
+<td>tones 200 Hz apart, sent as SSB (upper or lower sideband)</td>
+</tr>
+<tr>
+<td><strong>9600 Bd</strong></td>
+<td>VHF/UHF, rare</td>
+<td>G3RUH, directly frequency modulated</td>
+</tr>
+</tbody>
+</table>
+<p>Pick the speed with the <strong>Baud Rate</strong> slider of the AX.25 mode (see
+<a href="#controls-in-the-demodulation-tab">Controls in the Demodulation Tab</a>).</p>
+<hr />
+<h2 id="where-to-listen-on-shortwave">Where to Listen on Shortwave</h2>
+<p>These are the frequencies where packet radio was heard while the receiver was
+developed (October 2026). The <strong>channel</strong> is the centre of the signal - see the
+next section.</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Use</th>
+<th>Heard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>10.1493 MHz</strong> (30 m)</td>
+<td>HF APRS, worldwide (dial 10.1476 MHz USB)</td>
+<td>Europe on a Sunday afternoon: a French HF/VHF gateway every few minutes, Italian stations; nothing after dark</td>
+</tr>
+<tr>
+<td><strong>14.1033 MHz</strong> (20 m)</td>
+<td><strong>Net105</strong>, the North American packet network (dial 14.105 MHz LSB)</td>
+<td>all the time in the US afternoon/evening: mailbox beacons, BBS bulletin lists, node beacons, connection attempts</td>
+</tr>
+<tr>
+<td><strong>7.1001 / 7.1022 MHz</strong> (40 m)</td>
+<td>US packet nodes and BBSes</td>
+<td>in the US evening: node and BBS beacons, a weather report, mailbox beacons</td>
+</tr>
+</tbody>
+</table>
+<p>Public KiwiSDR receivers near the activity work well, e.g. one in the eastern US
+for Net105 and 40 m. Packet on shortwave is slow (300 Bd) and usually weak:
+expect a frame every few minutes on a quiet channel.</p>
+<h2 id="getting-started">Getting Started</h2>
+<p>The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, tap <strong>›</strong> next to
+<strong>AX.25</strong> and pick a station: the APRS frequency of your region (<strong>144.800 MHz</strong>
+in Europe, <strong>144.390 MHz</strong> in the Americas), the <strong>ISS</strong> (the APRS digipeater on
+the International Space Station, when it passes over you), <strong>HF APRS 30m</strong> or
+<strong>Net105</strong> (HF packet). Set up your source first in the Source tab.</p>
+<hr />
+<h2 id="controls-in-the-demodulation-tab">Controls in the Demodulation Tab</h2>
+<ul>
+<li><strong>Channel Frequency</strong>: on VHF/UHF the APRS frequency itself (144.800 MHz).
+  On shortwave the centre of the signal, see <a href="#tuning">Tuning</a> below.</li>
+<li><strong>Baud Rate</strong>: <strong>300 (HF)</strong> for packet on shortwave, <strong>1200 (VHF)</strong> for APRS
+  and most VHF/UHF packet, <strong>9600 (G3RUH)</strong> for the rare fast VHF/UHF packet.
+  Changing it also sets the channel width that fits.</li>
+<li>There is no squelch in the digital modes: the decoder finds the
+  transmissions by itself. The channel width follows the baud rate; you can
+  still drag the channel's edge in the FFT plot.</li>
+</ul>
+<h2 id="tuning">Tuning</h2>
+<p>On shortwave, tune the <strong>channel to the centre of the signal</strong> - between its
+two tones - not to the dial frequency packet stations quote. For the usual
+tones of 1600/1800 Hz the centre is <strong>1700 Hz above</strong> a USB dial frequency and
+<strong>1700 Hz below</strong> an LSB one (10.1476 MHz USB → 10.1493 MHz; 14.105 MHz LSB →
+14.1033 MHz). The AX.25 presets offer HF APRS and Net105 ready
+tuned.</p>
+<p>You do not need to be exact: the receiver finds a station up to about <strong>150 Hz</strong>
+off the channel, and every station gets its own frequency and speed estimate -
+real transmitters are often tens of Hz off and their speed a little off 300 Bd.
+Some web receivers show frequencies slightly off (the German KiwiSDR used during
+development reads 300 Hz high at 10 MHz); tune to where you see the signal.</p>
+<p>On VHF, tune the channel to the frequency itself (144.800 MHz).</p>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The decoded frames show up in the <a href="digital-tab.html">Digital tab</a>. That page
+explains the controls all modes share; here is what AX.25's sections, rows and
+cards mean.</p>
+<p align="center"><img src="./assets/digital/anatomy.png" alt="The AX.25 Overview: the ticker, the APRS and Packet tabs and the APRS stations" width="460px"></p>
+
+<p>While AX.25 is received, the <strong>ticker</strong> shows the newest frame: the sender
+with its APRS symbol, what kind of report it is (Position, Message, Status,
+Object, …) and the digipeaters it came through, and below it the report in
+words. Its label shows the speed (1200 Bd). Tap it for a list of the session's
+last frames.</p>
+<h3 id="aprs-stations">APRS stations</h3>
+<p>The <strong>APRS</strong> section lists every station and object that sent APRS. Each
+callsign with its SSID (the number after the dash: <code>KC6JTN-9</code> is often a car,
+<code>-10</code> an iGate) is its own row. A row shows the station's symbol and its latest
+report in words: its comment or status text, or what its symbol means ("Car")
+with its course, speed and altitude ("312° 39 kn · 613 m"). A message reads
+"→ K6XTY: text", a report an iGate relayed for another station "Relayed for
+KG6OWS-7: …". "no position" means it never sent one.</p>
+<p>The summary says how many stations sent a position and how many were heard in
+this session. Sort by <strong>Last heard</strong>, <strong>Packets</strong>, <strong>First heard</strong> or <strong>Name</strong>.</p>
+<p>APRS <strong>objects</strong> - an event, a repeater, a weather alert placed on the map by a
+station - get their own row under their name; the station that reported it is
+shown in its facts.</p>
+<p>Tap a station to open it:</p>
+<p align="center"><img src="./assets/ax25/aprs_row_open.png" alt="The digipeater W6SCE-10 opened: position, altitude, symbol, Details, Map and aprs.fi, its latest frames" width="460px"></p>
+
+<ul>
+<li><strong>Position</strong> with its Maidenhead locator, <strong>Altitude</strong>, <strong>Speed</strong>,
+  <strong>Course</strong>, <strong>Symbol</strong>; for Mic-E (the compact format of many radios) its
+  <strong>Status</strong> (En Route, In Service, Off Duty, Emergency, …) and the <strong>Radio</strong>
+  that sent it,</li>
+<li><strong>Heard</strong>: how many frames and since when. Every copy a digipeater repeats
+  counts, so a station heard through two digipeaters counts twice per report.</li>
+<li><strong>aprs.fi</strong> shows the station's track and history on aprs.fi, <strong>QRZ.com</strong>
+  looks up the callsign (without SSID), <strong>Map</strong> shows it on the map.</li>
+<li>Below, its latest frames, including messages other stations sent to it
+  ("← DL1ABC: text").</li>
+</ul>
+<h3 id="packet-stations">Packet stations</h3>
+<p align="center"><img src="./assets/ax25/packet_section.png" alt="The Packet section during a Net105 recording: a BBS with its latest bulletin, below it stations heard before this session" width="460px"></p>
+
+<p>The <strong>Packet</strong> section lists every other station: mailboxes (BBS), nodes and
+their users. A row shows what the station announces or does:</p>
+<ul>
+<li>"Mail for KB5YZB K5DAT": a mailbox beacon, the callsigns that have mail
+  waiting at this BBS ("No mail waiting" when it lists nobody),</li>
+<li>"HP2DFA → EQUAK: EARTHQUAKE ALERT…": the newest entry of the BBS's bulletin
+  list (sender → addressee: title),</li>
+<li>"Node SOLBPQ · 12 routes": a node's routing broadcast (NET/ROM),</li>
+<li>its beacon text,</li>
+<li>"Connected with KB9KC-7": it was part of a connection,</li>
+<li>"Called by KE0GB": a station that others tried to connect to, but that wasn't
+  heard itself. Its frame count is 0.</li>
+</ul>
+<p><strong>Role</strong> (in the opened row on a phone) is <strong>BBS</strong> or <strong>Node</strong> when its beacons
+say so. The summary counts the BBSes and nodes. Opened, a station lists its
+mail, bulletins, routes, the stations it talked to and its latest frames in both
+directions, so a connection reads as its sequence of frames.</p>
+<h3 id="frames_1">Frames</h3>
+<p align="center"><img src="./assets/ax25/raw.png" alt="APRS frames in the Raw view" width="460px"></p>
+
+<p>The <strong>Raw</strong> view shows every frame as a card: the sender with its symbol, the
+digipeaters it came through ("via N6EX-1*, WIDE2-1" - a <code>*</code> marks a
+digipeater that has already repeated it), the time and the report in words.
+Frames that aren't APRS carry a tag:</p>
+<p align="center"><img src="./assets/ax25/packet_frames.png" alt="Packet frames: two connect requests, a mailbox beacon and a bulletin list" width="460px"></p>
+
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Frame</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mail</strong></td>
+<td>Mailbox beacon: who has mail waiting</td>
+</tr>
+<tr>
+<td><strong>Bulletins</strong></td>
+<td>A BBS's list of new messages and bulletins</td>
+</tr>
+<tr>
+<td><strong>NET/ROM</strong></td>
+<td>A node's routing broadcast: its alias and the routes it offers</td>
+</tr>
+<tr>
+<td><strong>Text</strong></td>
+<td>A beacon or other readable text</td>
+</tr>
+<tr>
+<td><strong>Connect</strong>, <strong>Acknowledge</strong>, <strong>Disconnect</strong>, <strong>Refused</strong></td>
+<td>Setting up and ending a connection (SABM, UA, DISC, DM)</td>
+</tr>
+<tr>
+<td><strong>Connected</strong></td>
+<td>Text sent within a connection</td>
+</tr>
+<tr>
+<td><strong>I</strong>, <strong>RR</strong>, <strong>RNR</strong>, <strong>REJ</strong>, <strong>UI</strong>, …</td>
+<td>Frames without readable content (binary data, acknowledgements); the AX.25 frame type</td>
+</tr>
+</tbody>
+</table>
+<p>Tap a card for all fields:</p>
+<p align="center"><img src="./assets/ax25/aprs_card.png" alt="An APRS position report opened: position, altitude, symbol, station, software, path and the radio line" width="460px"></p>
+
+<ul>
+<li><strong>Position</strong>, <strong>Course</strong>, <strong>Speed</strong>, <strong>Altitude</strong>, <strong>Symbol</strong>: as sent.</li>
+<li><strong>Station</strong>: the station's power, antenna height and gain ("36 W, 2560 ft,
+  6 dB, omni"), if it sends them (PHG).</li>
+<li><strong>Messaging</strong>: the station can receive APRS messages.</li>
+<li><strong>Sent</strong>: the time stamp the station put into its report, as sent (<code>092345z</code>
+  = day 9, 23:45 UTC).</li>
+<li><strong>Software</strong>: the AX.25 destination of an APRS frame, which names the
+  software or device that sent it (<code>APDR16</code> is APRSdroid, <code>APN382</code> the firmware
+  of a Kantronics TNC).</li>
+<li>For messages <strong>To</strong> and <strong>Message ID</strong>; for telemetry the sequence number and
+  the raw values; for relayed (third-party) frames the <strong>Originator</strong>.</li>
+<li><strong>Path</strong>: all digipeaters, as in the header.</li>
+</ul>
+<p align="center"><img src="./assets/ax25/fbb_card.png" alt="A BBS bulletin list opened: bulletin number, title, sender, addressee, size and date" width="460px"></p>
+
+<p>For other frames the fields show the content (bulletin entries with number,
+title, type, sender → addressee, size and date; the routes of a NET/ROM
+broadcast with their quality from 0 to 255), <strong>Frame</strong> (what it does) and
+<strong>To</strong>.</p>
+<p>The grey <strong>radio line</strong> shows the frame type with its sequence numbers ("I S2 R5"
+= information frame number 2, acknowledging everything up to number 4; "P"/"F"
+= poll/final), command or response, the protocol identifier (PID F0: plain
+data, CF: NET/ROM), the frame size, the speed and the frequency.</p>
+<h3 id="map">Map</h3>
+<p>The <strong>Map</strong> shows the APRS stations and objects with a position, with their
+APRS symbols, turned in their direction of travel. Tap one for its latest report
+and recent frames; <strong>Follow</strong> (in <strong>⋯</strong>) keeps the map on a moving station.</p>
+<p align="center"><img src="./assets/ax25/aprs_map_popup.png" alt="The map popup of a van: position, altitude, symbol, Mic-E status and recent frames" width="300px"></p>
+
+<hr />
+<h2 id="tips-and-limits">Tips and Limits</h2>
+<ul>
+<li>The 300 Bd receiver decodes signals well below what you can make out in the
+  waterfall, but every frame needs every bit right: a frame that fades for a
+  moment is lost. Long frames (connected sessions, up to 9 seconds) are lost
+  more often than short beacons.</li>
+<li>A frame whose checksum failed by a few bits is repaired when the repair
+  leads to a valid frame with valid callsigns; such frames are rare and look
+  like any other.</li>
+<li>Frames are shown about one to two seconds after they end on shortwave.</li>
+<li>APRS is recognised only in unconnected frames whose information starts like
+  APRS. A beacon in free text ("Greetings from …") is listed under the Packet
+  section, not as an APRS station.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

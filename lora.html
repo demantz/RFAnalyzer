@@ -1,0 +1,1415 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>LoRa - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lora" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              LoRa
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-lora-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How LoRa Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How LoRa Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chirps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chirps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spreading-factor-and-bandwidth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spreading factor and bandwidth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-networks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The networks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-to-find-lora" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to find LoRa
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controls-in-the-demodulation-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controls in the Demodulation Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Controls in the Demodulation Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#meshcore-hashtag-channels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MeshCore Hashtag Channels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-rf-analyzer-decodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What RF Analyzer Decodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In the Digital Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sections-and-the-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sections and the ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#meshcore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MeshCore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#meshtastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Meshtastic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#meshcom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MeshCom
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lorawan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LoRaWAN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lora-aprs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LoRa-APRS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="lora">LoRa</h1>
+<p>LoRa is a radio modulation for long range at very low power. Small battery
+devices use it to send a few bytes over several kilometres, and several popular
+networks are built on it: the <strong>MeshCore</strong> and <strong>Meshtastic</strong> mesh messengers,
+<strong>LoRaWAN</strong> (the Internet of Things network behind countless sensors, meters
+and trackers), and for radio amateurs <strong>MeshCom</strong> (a mesh for text and
+positions) and <strong>LoRa-APRS</strong> (position reports).</p>
+<p>RF Analyzer receives LoRa, decodes every frame in the channel and shows what
+the five networks send: mesh nodes with their names, positions, battery and
+sensor readings, text messages on public channels, the routes messages take
+through the mesh, and LoRaWAN devices. It only receives; it does not transmit.</p>
+<p>All you need is an SDR that covers the band in use (868 MHz in Europe,
+915 MHz in the Americas, 433 MHz for MeshCom and LoRa-APRS) and a suitable
+antenna. LoRa is part of the <a href="digital-extension.html">Digital Extension</a>, which
+must be installed.</p>
+<hr />
+<h2 id="how-lora-works">How LoRa Works</h2>
+<h3 id="chirps">Chirps</h3>
+<p>A LoRa signal is made of <strong>chirps</strong>: tones that sweep across the whole channel
+from the lowest to the highest frequency. Each symbol is a chirp that starts at
+a different frequency, and where it starts carries the data. In the waterfall a
+LoRa frame looks like a block filling the channel's width, made of diagonal
+lines (see the screenshot under <a href="#controls-in-the-demodulation-tab">Controls</a>).</p>
+<p>Every frame starts with a <strong>preamble</strong> of identical chirps, so that receivers
+can find it, followed by the <strong>sync word</strong>, which tells the networks apart:
+0x12 for MeshCore and LoRa-APRS, 0x2B for Meshtastic, 0x34 for LoRaWAN.</p>
+<h3 id="spreading-factor-and-bandwidth">Spreading factor and bandwidth</h3>
+<p>Two settings define a LoRa channel:</p>
+<ul>
+<li>The <strong>bandwidth</strong>: how wide the chirps sweep, usually 125 kHz (LoRaWAN,
+  LoRa-APRS), 250 kHz (Meshtastic's default) or 62.5 kHz (MeshCore in Europe).</li>
+<li>The <strong>spreading factor</strong> (SF7 to SF12): how long each chirp is. Each step
+  doubles the duration, which makes the signal about 2.5 dB more robust but
+  halves the data rate.</li>
+</ul>
+<p>This is what makes LoRa reach so far: frames can be decoded well <strong>below the
+noise</strong>, down to about -10 dB signal-to-noise ratio at SF7 and -20 dB at SF12.
+A frame also carries a <strong>coding rate</strong> (error correction, 4/5 to 4/8) and
+usually a <strong>checksum</strong> (CRC) over its content.</p>
+<h3 id="the-networks">The networks</h3>
+<table>
+<thead>
+<tr>
+<th>Network</th>
+<th>What it is</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Meshtastic</strong></td>
+<td>Off-grid text messenger; every node relays messages for the others</td>
+<td>Messages on the public default channel can be read; others are encrypted</td>
+</tr>
+<tr>
+<td><strong>MeshCore</strong></td>
+<td>Mesh messenger with fixed repeaters and room servers</td>
+<td>Node announcements (adverts), public and hashtag channel messages</td>
+</tr>
+<tr>
+<td><strong>LoRaWAN</strong></td>
+<td>IoT network: sensors and meters talk to gateways of a network operator</td>
+<td>Device address, frame counter and a few control fields; the data itself is encrypted</td>
+</tr>
+<tr>
+<td><strong>MeshCom</strong></td>
+<td>Amateur radio mesh: text messages and positions, relayed by every node, with gateways to the internet</td>
+<td>Everything: amateur radio may not encrypt</td>
+</tr>
+<tr>
+<td><strong>LoRa-APRS</strong></td>
+<td>Amateur radio position reports, like APRS on 2 m</td>
+<td>Callsign, position, comment</td>
+</tr>
+</tbody>
+</table>
+<h3 id="where-to-find-lora">Where to find LoRa</h3>
+<p>Common channels in Europe (the presets for Europe tune to these):</p>
+<table>
+<thead>
+<tr>
+<th>Network</th>
+<th>Frequency</th>
+<th>Bandwidth</th>
+<th>Spreading factor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Meshtastic (LongFast)</td>
+<td>869.525 MHz</td>
+<td>250 kHz</td>
+<td>SF11</td>
+</tr>
+<tr>
+<td>MeshCore (EU/UK Narrow)</td>
+<td>869.618 MHz</td>
+<td>62.5 kHz</td>
+<td>SF8</td>
+</tr>
+<tr>
+<td>LoRaWAN uplinks (devices)</td>
+<td>868.1, 868.3, 868.5 MHz</td>
+<td>125 kHz</td>
+<td>SF7–SF12</td>
+</tr>
+<tr>
+<td>LoRaWAN downlinks (gateways)</td>
+<td>869.525 MHz</td>
+<td>125 kHz</td>
+<td>SF12 (often SF9)</td>
+</tr>
+<tr>
+<td>MeshCom</td>
+<td>433.175 MHz</td>
+<td>250 kHz</td>
+<td>SF11</td>
+</tr>
+<tr>
+<td>LoRa-APRS</td>
+<td>433.775 MHz</td>
+<td>125 kHz</td>
+<td>SF12</td>
+</tr>
+</tbody>
+</table>
+<p>In the Americas, Meshtastic's default channel is at 906.875 MHz (250 kHz).
+Activity depends a lot on where you are: mesh networks are busiest in and
+around cities.</p>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<p>The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, tap <strong>›</strong> next to <strong>LoRa</strong>
+and pick a network. RF Analyzer selects the LoRa mode, tunes to the channel,
+sets its bandwidth and starts the analyzer; the Overview shows the section of
+the first frame received. Select
+and set up your source first in the Source tab.</p>
+<p align="center"><img src="./assets/lora/quickstart.png" alt="LoRa networks in the presets for Germany" width="300px"></p>
+
+<p>You can also set it up by hand: select <strong>LoRa</strong> as the demodulation mode in the
+Demodulation tab, set the channel frequency and the channel bandwidth of the
+network you want to receive.</p>
+<p>Frames appear as soon as they are received. Mesh nodes announce themselves
+every few hours, but most networks carry some traffic every minute.</p>
+<hr />
+<h2 id="controls-in-the-demodulation-tab">Controls in the Demodulation Tab</h2>
+<p align="center"><img src="./assets/lora/demodulation_tab.jpg" alt="Demodulation tab in LoRa mode, with a MeshCore frame in the waterfall" width="400px"></p>
+
+<ul>
+<li><strong>Channel Frequency</strong>: the centre frequency of the LoRa channel. The channel
+  is the grey area in the spectrum.</li>
+<li><strong>Channel Bandwidth</strong>: must match the network's bandwidth (see
+  <a href="#where-to-find-lora">Where to find LoRa</a>): frames of another bandwidth are
+  not decoded.</li>
+<li><strong>Spreading Factor</strong>: <strong>Auto</strong> (the default) searches SF7 to SF12 at once.
+  Select one or more spreading factors instead to search only those - SF5 and
+  SF6 are searched only when selected. Fewer spreading factors need less CPU;
+  frames with other spreading factors are missed.</li>
+<li><strong>Chirp Direction</strong>: <strong>Auto</strong> (the default) receives both directions.
+  <strong>Normal</strong> receives what devices send (MeshCore, Meshtastic, LoRa-APRS,
+  LoRaWAN uplinks), <strong>Inverted</strong> what LoRaWAN gateways send (downlinks). One
+  direction needs less CPU.</li>
+<li><strong>Edit MeshCore Hashtag Channels</strong>: MeshCore's hashtag channels (<code>#ping</code>,
+  <code>#test</code>, …) derive their key from the channel name, so anyone who knows the
+  name can read them. Add the names of the channels used in your area to read
+  their messages (see below).</li>
+</ul>
+<p>All three sync words are searched. Leave the spreading factor and chirp
+direction on Auto unless you know what you are looking for, or your phone is
+too slow for Auto (see <a href="troubleshooting.html#processing-overload">Troubleshooting</a>).</p>
+<h3 id="meshcore-hashtag-channels">MeshCore Hashtag Channels</h3>
+<p><strong>Edit MeshCore Hashtag Channels</strong> opens the list of hashtag channels
+RF Analyzer tries in addition to its built-in ones:</p>
+<ul>
+<li>Type a channel name (with or without <code>#</code>) and tap <strong>Add</strong>.</li>
+<li><strong>Paste from clipboard</strong> adds several names at once (one per line, or
+  separated by commas); <strong>Copy to clipboard</strong> copies your list, for example to
+  share it with a friend.</li>
+<li>The trash icon removes a channel, <strong>Delete all</strong> empties the list.</li>
+</ul>
+<p>The <strong>Public</strong> channel and a set of common hashtag channels (<code>#test</code>, <code>#ping</code>,
+<code>#echo</code>, <code>#mesh</code>, <code>#meshcore</code>, <code>#hamradio</code>, <code>#weather</code>, <code>#emergency</code>, <code>#news</code>
+and a few more) are always active and not listed. RF Analyzer also tries a
+built-in dictionary of about 2000 channel names used in Europe and North
+America; a match counts only if the message decrypts to readable text.</p>
+<p>When you add a channel, RF Analyzer decrypts the stored messages of that
+channel too, so messages received before you added it appear as well.</p>
+<hr />
+<h2 id="what-rf-analyzer-decodes">What RF Analyzer Decodes</h2>
+<ul>
+<li><strong>Meshtastic</strong>: text messages, positions, node information (name, hardware,
+  role), telemetry (battery, voltage, channel utilisation, temperature,
+  humidity, pressure, air quality, power, the node's own network statistics),
+  neighbour lists with signal strengths, traceroutes (the route a message took
+  and the SNR of every hop), acknowledgements and waypoints. Readable are the
+  default channel of every preset and channels with the simple keys; private
+  channels and direct messages stay encrypted.</li>
+<li><strong>MeshCore</strong>: node adverts with name, type (chat node, repeater, room server,
+  sensor) and position, each checked by its digital signature; messages on the
+  Public channel and the hashtag channels you added; traces with the SNR of
+  every hop; node discovery. Private messages, logins and requests are
+  encrypted - RF Analyzer shows who they are addressed to (as a short hash) and
+  their size.</li>
+<li><strong>LoRaWAN</strong>: message type, device address and network operator, frame
+  counter, port, control commands, join requests with the device's EUI and its
+  manufacturer. The application data is encrypted.</li>
+<li><strong>MeshCom</strong>: text messages to everyone, to a group or to a callsign, and
+  their acknowledgements; position beacons with APRS symbol, comment, battery,
+  altitude and the readings of weather sensors; the HEY beacons in which every
+  node and gateway announces itself, with the signal reports of the relays;
+  neighbour reports; the MeshCom server's time beacon. Every frame shows the
+  route it took (the callsigns of the relays).</li>
+<li><strong>LoRa-APRS</strong>: callsign, path, position, symbol and comment.</li>
+</ul>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The decoded frames show up in the <a href="digital-tab.html">Digital tab</a>. That page
+explains the controls all modes share; here is what LoRa's sections, rows and
+cards mean.</p>
+<h3 id="sections-and-the-ticker">Sections and the ticker</h3>
+<p align="center"><img src="./assets/lora/overview.png" alt="Meshtastic nodes in the Overview, the ticker above them showing the newest frame" width="460px"></p>
+
+<p>The <strong>Overview</strong> has one section per network, selected with the tabs in the
+header line: <strong>MeshCore</strong> nodes, <strong>Meshtastic</strong> nodes, <strong>MeshCom</strong> stations,
+<strong>LoRaWAN</strong> devices and <strong>LoRa-APRS</strong> stations. A dot marks a section that has received something since
+you last looked at it. After a start, the Overview switches to the section of
+the first frame received.</p>
+<p>While LoRa is received, the <strong>ticker</strong> above the sections shows the newest
+frame of any network: who sent it, the network, the message type, how many
+hops it took, its signal-to-noise ratio and its content. Its label shows the
+spreading factor of that frame. Tap the ticker to see a list of the session's
+last frames.</p>
+<p>Each row shows the node's name (or address), what it sent last and when. Sort
+the rows by <strong>Last heard</strong>, <strong>Frames</strong> (how many frames it sent), <strong>Signal
+(SNR)</strong> (of its last frame) or <strong>Name</strong>.</p>
+<p><strong>Only intact frames count towards a node.</strong> A frame with a CRC error is shown
+in the Raw view, but doesn't create or change a node: a damaged address would
+otherwise show up as a node that doesn't exist. Frames without checksum
+(LoRaWAN downlinks) count when the receiver is sure about every bit. MeshCore
+checks its frames itself: an advert counts only with a valid digital signature,
+a channel message with a valid authentication code, and MeshCom by the checksum
+every frame carries.</p>
+<h3 id="meshcore">MeshCore</h3>
+<ul>
+<li><strong>Rows</strong> are nodes, identified by their public key and shown with the name
+  from their advert and an icon for their type: person (chat node), router
+  (repeater), globe (room server), sensor. A row with a speech bubble is a
+  <strong>group sender</strong>: someone heard only through channel messages, known by the
+  name they put in their messages. That name can't be verified, so a group
+  sender is listed separately from a node of the same name.</li>
+<li>The row says what the node sent last: "Repeater advert", or a channel message
+  as "#test: Hello".</li>
+<li>The summary counts repeaters, room servers and nodes with a position.</li>
+<li>Opened: the node's <strong>Kind</strong>, <strong>Position</strong> (from its advert), the <strong>Channel</strong>
+  of a group sender, <strong>Signal</strong> (SNR of its last frame), <strong>Modulation</strong> and its
+  <strong>Public key</strong>.</li>
+</ul>
+<p align="center"><img src="./assets/lora/meshcore_open.png" alt="A MeshCore group sender opened: a bot's answer on the #ping channel, the kind, channel, signal and modulation, and its messages" width="460px"></p>
+
+<h3 id="meshtastic">Meshtastic</h3>
+<ul>
+<li><strong>Rows</strong> are nodes, identified by their node number (<code>!1c4977b0</code>) and shown
+  with their long name once they sent their node information.</li>
+<li>The row says what the node sent last: a text message, its position, its node
+  information ("Node info · HELTEC V3"), "Telemetry · battery 87 %", or
+  "Encrypted (no key for this channel)" for a private channel.</li>
+<li>The summary counts the nodes with a position.</li>
+<li>Opened: <strong>Node</strong> number, <strong>Short name</strong>, <strong>Hardware</strong>, <strong>Role</strong> (Client,
+  Router, Tracker, Sensor, …), <strong>Position</strong>, <strong>Battery</strong> (101 % means it runs on
+  external power) and voltage, <strong>Uptime</strong>, <strong>Environment</strong> (temperature,
+  humidity, pressure from its sensors), <strong>Neighbours</strong> (the nodes it hears
+  directly, with their SNR) and whether it is <strong>Licensed</strong> (a radio amateur
+  running without encryption).</li>
+</ul>
+<h3 id="meshcom">MeshCom</h3>
+<ul>
+<li><strong>Rows</strong> are stations, identified by their callsign, with the APRS symbol of
+  their position beacon.</li>
+<li>The row says what the station sent last: a text ("group 262 · Hello"), its
+  position with comment, battery and altitude, "HEY · hears 4 stations", or
+  "Server time beacon".</li>
+<li>A frame relayed by other stations counts for its sender, and also for the
+  relay it was heard from: its signal (SNR) is the relay's, so a station's
+  <strong>Signal</strong> comes only from frames it sent or relayed itself. Opened, a relay
+  lists the frames it relayed.</li>
+<li>The summary counts the stations with a position and the gateways.</li>
+<li>Opened: <strong>Position</strong>, <strong>Name</strong> and <strong>Comment</strong> from its beacon, <strong>Battery</strong>,
+  <strong>Altitude</strong>, the weather readings (<strong>Temperature</strong>, <strong>Humidity</strong>,
+  <strong>Pressure</strong>, …), <strong>Neighbours</strong> (how many stations it hears directly),
+  <strong>Groups</strong> it is in, whether it is a <strong>Gateway</strong> (connected to the MeshCom
+  server on the internet), its <strong>Hardware</strong> and <strong>Firmware</strong>, how many frames
+  it <strong>Relayed</strong>, <strong>Signal</strong> and <strong>Modulation</strong>.</li>
+<li>A frame opened shows its <strong>Path</strong> (from the sender over every relay), the
+  <strong>Message ID</strong> (the same in every relayed copy), the hops left, its flags
+  and the sender's hardware and firmware.</li>
+</ul>
+<h3 id="lorawan">LoRaWAN</h3>
+<ul>
+<li><strong>Rows</strong> are devices, identified by their device address (DevAddr, 8 hex
+  digits), which the network assigns when the device joins. A device heard only
+  while joining is listed by the end of its device EUI ("EUI …4A30F1C2"); after
+  joining it gets a new address and a new row.</li>
+<li>The row shows the type of its last frame and its port ("Uplink · FPort 2");
+  <strong>FCnt</strong> is its frame counter, which counts up with every frame it sends, and
+  <strong>SNR</strong> how well the device is heard.</li>
+<li>Opened: the <strong>Network</strong> operator (from the device address), the <strong>DevEUI</strong>
+  and <strong>JoinEUI</strong> of a join request with the manufacturer where known, and the
+  last <strong>Downlink</strong> the network sent to the device (its type, port, the
+  network's own frame counter and how well the gateway is heard) - kept apart
+  from the device's frames, so the two counters don't mix.</li>
+<li>LoRaWAN encrypts the content: RF Analyzer shows who sends and when, not what.</li>
+</ul>
+<h3 id="lora-aprs">LoRa-APRS</h3>
+<p>Works like APRS on 2 m: rows are stations with their APRS symbol, position and
+comment; see <a href="ax25.html#in-the-digital-tab">AX.25 / APRS</a> for what the fields
+mean.</p>
+<h3 id="frames">Frames</h3>
+<p align="center"><img src="./assets/lora/raw.png" alt="Meshtastic frames in the Raw view: telemetry, node info, and two frames with a CRC error" width="460px"></p>
+
+<p>The <strong>Raw</strong> view shows every frame as a card: the sender, the message type (and
+the addressee of a direct message), the network as a tag, the time, and the
+content. Two red words warn you:</p>
+<ul>
+<li><strong>CRC error</strong>: the checksum doesn't match, some bytes are wrong. Don't trust
+  the content.</li>
+<li><strong>Unreliable</strong>: sent without checksum and received too weakly to be sure.</li>
+<li><strong>Bad signature</strong> (MeshCore adverts): the digital signature is wrong.</li>
+</ul>
+<p>Encrypted content is shown in grey ("44 bytes, encrypted (no key for this
+channel)"). Tap a card for all decoded fields:</p>
+<p align="center"><img src="./assets/lora/frame.png" alt="A Meshtastic node info frame opened: From, To, hops, last relay, key, names, hardware, preset and the radio line" width="460px"></p>
+
+<ul>
+<li><strong>Meshtastic</strong>: <strong>From</strong>, <strong>To</strong> (Broadcast or a node), <strong>Hops</strong> ("5 of 7":
+  hops taken of the limit it was sent with), <strong>Last relay</strong> (the last byte of
+  the node that relayed it last), <strong>Key</strong> (the default key or a simple key
+  decrypted it), then the content: text, position, node info, every telemetry
+  reading, neighbours, the route of a traceroute. <strong>Preset</strong> is the Meshtastic
+  modem preset that fits the frame's modulation (a guess from the modulation).</li>
+<li><strong>MeshCore</strong>: for a channel message the sender, the <strong>Channel</strong> and when it
+  was <strong>Sent</strong> by the sender's clock; for an advert the name, type, position,
+  time and whether its <strong>Signature</strong> is valid. <strong>Route</strong> shows how the frame
+  travels (flood or direct) and the repeaters it passed, each as a short hash
+  of its key. Encrypted direct messages show only the short hashes of sender
+  and addressee.</li>
+<li><strong>LoRaWAN</strong>: message type, network, device and join EUIs, flags, every MAC
+  command (control commands between device and network) and the <strong>Data rate</strong>
+  (EU868 table).</li>
+</ul>
+<p>The grey <strong>radio line</strong> describes the reception: spreading factor (SF),
+bandwidth (BW), coding rate (CR), the <strong>SNR</strong> in the LoRa bandwidth, the
+transmitter's frequency error, the number of preamble chirps received (a hint
+at the network: MeshCore sends 32, Meshtastic 16, LoRaWAN 8), <strong>IQ inverted</strong>
+for downlinks, the checksum state
+("no CRC, reliability 0.999" for frames sent without one) and the channel
+frequency.</p>
+<h3 id="map">Map</h3>
+<p>The <strong>Map</strong> shows every node and station with a known position: Meshtastic
+nodes that sent their position, MeshCore nodes whose advert includes one, and
+LoRa-APRS stations. Tap a marker to see its details and recent frames. LoRaWAN
+devices don't transmit a position.</p>
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<p><strong>Nothing is decoded</strong></p>
+<ul>
+<li>Check the waterfall for LoRa frames in the channel (blocks filling the grey
+  area). Frames can be decoded even when they are hard to see.</li>
+<li>Check the channel bandwidth: it must match the network's.</li>
+<li>Use a good antenna for the band, outdoors or near a window if you can. Most
+  LoRa traffic is weak and short, so give it a few minutes.</li>
+</ul>
+<p><strong>Many frames with CRC error</strong></p>
+<p>These frames are just at the edge of reception. A better antenna, a filter or
+an amplifier for the band helps.</p>
+<p><strong>The processing overload indicator appears</strong></p>
+<p>LoRa decoding needs more computing power the wider the bandwidth is. At
+500 kHz an older phone may not keep up; at the usual 62.5 to 250 kHz all
+current phones do.</p>
+<p><strong>MeshCore or Meshtastic messages stay encrypted</strong></p>
+<p>They are on a private channel or addressed to a single node. Only public
+channels, MeshCore hashtag channels whose name you added, and Meshtastic
+channels with a default or simple key can be read.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

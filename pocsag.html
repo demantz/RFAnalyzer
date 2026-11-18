@@ -1,0 +1,1132 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>POCSAG - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pocsag" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              POCSAG
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-pocsag-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How POCSAG Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How POCSAG Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#on-the-air" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On the air
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capcodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capcodes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-to-find-pocsag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to find POCSAG
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controls-in-the-demodulation-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controls in the Demodulation Tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In the Digital Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-reading-is-chosen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the reading is chosen
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="pocsag">POCSAG</h1>
+<p>POCSAG is the protocol of <strong>pagers</strong>: small receivers that beep and show a short
+message. Mobile phones replaced them for most people, but paging is still used
+where a message has to reach many receivers reliably and at once: fire brigades
+and rescue services, hospitals, industrial sites, and commercial paging
+networks. Radio amateurs run their own paging network, <strong>DAPNET</strong>, which sends
+news, weather, satellite passes and messages between hams.</p>
+<p>RF Analyzer decodes POCSAG at all three speeds and shows the pages per
+receiver address. It only receives. All you need is a receiver for the
+VHF/UHF frequencies in use - an RTL-SDR with a simple antenna works. POCSAG is
+part of the <a href="digital-extension.html">Digital Extension</a>, which must be
+installed.</p>
+<div class="admonition warning">
+<p class="admonition-title">Not every page is meant for you</p>
+<p>In many countries it is not allowed to listen to, store or pass on
+messages that are not meant for the general public, such as the pagers of
+emergency services. Check your local regulations. Amateur paging (DAPNET)
+is meant to be received by everyone.</p>
+</div>
+<hr />
+<h2 id="how-pocsag-works">How POCSAG Works</h2>
+<h3 id="on-the-air">On the air</h3>
+<p>A paging transmitter sends a strong FM signal that jumps between two
+frequencies, 4.5 kHz above and below the channel (frequency shift keying), at
+<strong>512</strong>, <strong>1200</strong> or <strong>2400</strong> bit/s. A transmission starts with a long preamble
+(so pagers can wake up), followed by batches of codewords, each protected by an
+error-correcting code: RF Analyzer corrects up to two wrong bits per codeword.
+In the waterfall, a POCSAG transmission is a block a few kHz wide that lasts
+from a fraction of a second to several seconds.</p>
+<h3 id="capcodes">Capcodes</h3>
+<p>Every pager listens for its <strong>capcode</strong> (also called RIC, receiver identity
+code): a number up to 2 097 151. A pager can have several capcodes - one for its
+owner, others for the groups it belongs to - so one page can reach thousands of
+pagers at once. Each page also carries a <strong>function</strong> (0 to 3, often called A
+to D), which the pager uses to pick a ring tone or a meaning.</p>
+<h3 id="message-types">Message types</h3>
+<ul>
+<li><strong>Alphanumeric</strong>: text (7-bit ASCII), up to a few hundred characters.</li>
+<li><strong>Numeric</strong>: digits and a few signs (space, <code>.</code>, <code>-</code>, <code>U</code>, <code>[</code>, <code>]</code>), used by
+  simple pagers and for call-back numbers.</li>
+<li><strong>Tone only</strong>: no message at all, just the beep.</li>
+</ul>
+<p>The protocol doesn't say which type a page is - the pager knows it from its
+programming. RF Analyzer therefore decodes every page both ways and picks the
+reading that fits (see <a href="#how-the-reading-is-chosen">How the reading is chosen</a>).</p>
+<h3 id="where-to-find-pocsag">Where to find POCSAG</h3>
+<table>
+<thead>
+<tr>
+<th>Network</th>
+<th>Frequency</th>
+<th>Speed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DAPNET (amateur radio)</td>
+<td>439.9875 MHz</td>
+<td>1200 bit/s</td>
+</tr>
+<tr>
+<td>Skyper</td>
+<td>465.970 MHz</td>
+<td>1200 bit/s</td>
+</tr>
+<tr>
+<td>Cityruf / e*Message</td>
+<td>466.075 MHz</td>
+<td>1200 bit/s</td>
+</tr>
+</tbody>
+</table>
+<p>These are the frequencies in Germany (the presets for Germany tune to them). Other
+countries use other frequencies; look for strong FM bursts between 140 and
+470 MHz.</p>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<p>The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, tap <strong>›</strong> next to
+<strong>POCSAG</strong> and pick a network. RF Analyzer tunes to its frequency, sets the
+speed to 1200 bit/s and starts the analyzer. Set up your source first in the
+Source tab.</p>
+<p>You can also set it up by hand: select <strong>POCSAG</strong> as the demodulation mode in
+the Demodulation tab and put the channel frequency on the paging channel.
+Paging networks send in bursts, often only every minute or two, so give it some
+time.</p>
+<hr />
+<h2 id="controls-in-the-demodulation-tab">Controls in the Demodulation Tab</h2>
+<ul>
+<li><strong>Channel Frequency</strong>: the paging channel.</li>
+<li><strong>Baud Rate</strong>: <strong>Auto</strong> decodes 512, 1200 and 2400 bit/s at the same time,
+  so you don't need to know the speed. A fixed rate needs a little less
+  processing power. 2400 bit/s also widens the channel to 25 kHz.</li>
+<li>There is no squelch in the digital modes: the decoder finds the
+  transmissions by itself. The channel width follows the baud rate; you can
+  still drag the channel's edge in the FFT plot.</li>
+</ul>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The pages show up in the <a href="digital-tab.html">Digital tab</a>. That page explains the
+controls all modes share; here is what POCSAG's rows and cards mean.</p>
+<h3 id="overview">Overview</h3>
+<p align="center"><img src="./assets/pocsag/ticker.png" alt="The POCSAG ticker: capcode 1091, alphanumeric, three more pages waiting" width="460px"></p>
+
+<p>While POCSAG is received, the <strong>ticker</strong> shows the newest page: the capcode, how
+it was read (Alpha, Numeric, …) and its text. When several pages arrive at once,
+each is shown for a few seconds (short ones for one second), and the ticker
+says how many are still waiting ("+3 waiting"). Tap the ticker to see a list of
+the session's last pages.</p>
+<p>The <strong>Overview</strong> lists one row per capcode, with the text of its last page.
+Sort by <strong>Last heard</strong>, <strong>Pages</strong> (how many it received) or <strong>Capcode</strong>.</p>
+<p align="center"><img src="./assets/pocsag/row_open.png" alt="Capcode 4520 opened: last page Skyper, function 3, heard twice, and its pages" width="460px"></p>
+
+<p>Tap a capcode to see how its last page was read and with which function, how
+often and since when it was paged, and its pages. <strong>⋯</strong> copies the capcode or
+shares the pages as JSON.</p>
+<h3 id="pages">Pages</h3>
+<p align="center"><img src="./assets/pocsag/raw.png" alt="DAPNET pages in the Raw view: Skyper and alphanumeric pages" width="460px"></p>
+
+<p>The <strong>Raw</strong> view shows every page as a card: the capcode, how it was read, the
+time and the text. Tap a card to see more:</p>
+<p align="center"><img src="./assets/pocsag/card.png" alt="A Skyper page opened: the text, the same page read as numeric and as sent, and the radio line" width="460px"></p>
+
+<ul>
+<li><strong>As numeric</strong> / <strong>As alpha</strong>: the same page read the other way, in case
+  RF Analyzer picked the wrong reading.</li>
+<li><strong>As sent</strong>: for a Skyper page, the text before the Skyper shift was undone.</li>
+<li>The grey line: the <strong>function</strong>, the length of the message in bits, the
+  speed and the frequency.</li>
+<li><strong>Raw · 200 bits</strong>: the message bits as received, in hex.</li>
+<li><strong>Copy text</strong> copies the page text.</li>
+</ul>
+<h3 id="how-the-reading-is-chosen">How the reading is chosen</h3>
+<table>
+<thead>
+<tr>
+<th>Reading</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tone only</strong></td>
+<td>The page has no message bits at all</td>
+</tr>
+<tr>
+<td><strong>Skyper</strong></td>
+<td>The text is shifted the way the Skyper network sends its news (each character one code higher). RF Analyzer undoes the shift and shows the topic tag, for example <code>[PARA]</code>, in front</td>
+</tr>
+<tr>
+<td><strong>Alpha</strong></td>
+<td>The text reads as text, whatever the function says</td>
+</tr>
+<tr>
+<td><strong>Numeric</strong></td>
+<td>Function 0 (commonly numeric) and the page doesn't read as text</td>
+</tr>
+<tr>
+<td><strong>Empty</strong></td>
+<td>Neither reading gives anything</td>
+</tr>
+</tbody>
+</table>
+<p>Very short pages can't be told apart reliably; then the function decides. If a
+page looks like garbage, open it: the other reading is often the right one.
+Characters that can't be shown appear as <code>·</code>.</p>
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<ul>
+<li><strong>Nothing decoded</strong>: check that you see the bursts in the waterfall when a
+  page is sent, and that the channel frequency is within a few kHz of them.
+  Paging networks can be quiet for minutes.</li>
+<li><strong>Missing or garbled characters</strong>: a weak or fading signal. Up to two wrong
+  bits per codeword are corrected; the characters of a codeword with more errors
+  are shown as �, and the rest of the page stays readable (the page's details
+  say how many codewords were damaged). Many errors in a row end the page early.</li>
+<li><strong>The same page several times</strong>: networks repeat pages, and several
+  transmitters send the same page one after another (simulcast). Each copy is
+  shown.</li>
+<li><strong>Overload warning</strong>: Auto decodes three speeds at once; set the speed of
+  your network instead.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

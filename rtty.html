@@ -1,0 +1,1089 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>RTTY - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rtty" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              RTTY
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-rtty-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How RTTY Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How RTTY Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-tones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two tones
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#characters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Characters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polarity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-to-find-rtty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to find RTTY
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controls-in-the-demodulation-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controls in the Demodulation Tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="rtty">RTTY</h1>
+<p>RTTY (radioteletype) is one of the oldest digital modes still on the air: the
+teleprinter signal of the 20th century, sent over radio. Radio amateurs use it
+for contacts and in popular contests, and some utility stations still broadcast
+with it, most prominently the <strong>German weather service (DWD)</strong>, which sends
+weather reports for shipping around the clock.</p>
+<p>RF Analyzer decodes RTTY and shows the received text as it comes in. By default
+it detects everything about the signal by itself - speed, shift, polarity and
+the exact frequency - so you only need to tune near a signal. It only receives;
+it does not transmit.</p>
+<p>All you need is a receiver for the frequencies in use: shortwave (1.8 to 30 MHz)
+for most RTTY, longwave for DWD's 147.3 kHz transmitter. An SDR that covers them
+or one of the many public KiwiSDR web receivers works (see
+<a href="sdr-source.html#kiwisdr-specific-settings">KiwiSDR</a>). RTTY is part of the
+<a href="digital-extension.html">Digital Extension</a>, which must be installed.</p>
+<hr />
+<h2 id="how-rtty-works">How RTTY Works</h2>
+<h3 id="two-tones">Two tones</h3>
+<p>An RTTY transmitter sends one of two tones at any moment: <strong>mark</strong> or <strong>space</strong>.
+Every bit of a character is one of them. The distance between the two tones is
+the <strong>shift</strong>; in the waterfall an RTTY signal looks like two parallel lines
+(see the screenshot under <a href="#in-the-digital-tab">In the Digital Tab</a>).</p>
+<p>The tones change at a fixed rate, the <strong>baud rate</strong>: 45.45 baud (amateur radio)
+means each bit lasts 22 ms. Common combinations:</p>
+<table>
+<thead>
+<tr>
+<th>Who</th>
+<th>Baud rate</th>
+<th>Shift</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Radio amateurs</td>
+<td>45.45</td>
+<td>170 Hz</td>
+</tr>
+<tr>
+<td>DWD weather (shortwave)</td>
+<td>50</td>
+<td>450 Hz</td>
+</tr>
+<tr>
+<td>DWD weather (147.3 kHz)</td>
+<td>50</td>
+<td>85 Hz</td>
+</tr>
+<tr>
+<td>Other utility stations</td>
+<td>50, 75, 100</td>
+<td>425, 450, 850 Hz</td>
+</tr>
+</tbody>
+</table>
+<h3 id="characters">Characters</h3>
+<p>Each character is a 5-bit code (the Baudot or ITA2 alphabet) between a start
+bit and a stop bit, so a receiver can find where a character begins. Five bits
+are only enough for 32 codes, so the alphabet has two halves: <strong>letters</strong> and
+<strong>figures</strong> (digits and punctuation). Special codes switch between them, and
+the receiver stays in the current half until the next switch. If a switch code
+is lost to noise, the following characters come out in the wrong half - "599"
+appears as "TOO". This is normal for RTTY and fixes itself at the next switch.</p>
+<p>Transmitters also disagree on what a space does: amateur software assumes that
+the receiver returns to letters after every space ("unshift on space"), the DWD
+does not. RF Analyzer recognizes the convention from the switch codes the
+transmitter sends.</p>
+<h3 id="polarity">Polarity</h3>
+<p>Whether mark is the higher or the lower of the two tones is a convention.
+Radio amateurs send mark on the higher frequency, many utility stations,
+including the DWD, on the lower one. A receiver with the wrong polarity prints
+only garbage.</p>
+<h3 id="where-to-find-rtty">Where to find RTTY</h3>
+<ul>
+<li><strong>DWD weather</strong>: 147.3 kHz, 4583 kHz, 7646 kHz and 10100.8 kHz, day and
+  night. Between reports the stations send a fixed loop ("RYRYRY…", "CQ CQ CQ DE
+  DDK2 DDH7 DDK9", the list of frequencies), so there is always something to
+  receive.</li>
+<li><strong>Amateur radio</strong>: around 14.080–14.100 MHz (20 m), 7.040–7.050 MHz (40 m)
+  and 3.580–3.600 MHz (80 m). On contest weekends these segments are full of RTTY
+  signals.</li>
+</ul>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<p>The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, tap <strong>Start</strong> next to
+<strong>RTTY</strong> and pick one of the DWD frequencies or the 20 m amateur segment. Set up
+your source first (for example a KiwiSDR) in the Source tab. The DWD targets
+set the DWD's known settings (50 baud, 450 Hz shift - 85 Hz on 147.3 kHz -
+reversed polarity), the 20 m target sets everything to Auto.</p>
+<p>You can also set it up by hand: select <strong>RTTY</strong> as the demodulation mode in the
+Demodulation tab and put the channel frequency on the signal, between its two
+tones. The text appears a few seconds after the signal starts, while RF Analyzer
+works out the settings - including the beginning, which it fills in once it
+knows them.</p>
+<hr />
+<h2 id="controls-in-the-demodulation-tab">Controls in the Demodulation Tab</h2>
+<p align="center"><img src="./assets/rtty/rtty_controls.png" alt="RTTY settings in the Demodulation tab: baud rate, frequency shift and polarity, all on Auto" width="400px"></p>
+
+<ul>
+<li><strong>Channel Frequency</strong>: the middle between the two tones. It doesn't have to be
+  exact: RF Analyzer finds the tones within <strong>±400 Hz</strong> of it and follows them
+  if the signal drifts. This also covers the frequency error of most receivers.</li>
+<li><strong>Baud Rate</strong>: <strong>Auto</strong> (default) tries 45.45, 50, 75 and 100 baud and keeps
+  the one that fits the signal. Choose a fixed value if you know it - the text
+  then starts a little sooner, and other rates (for example 110 baud) need it.</li>
+<li><strong>Frequency Shift</strong>: <strong>Auto</strong> (default) measures the distance between the two
+  tones. A fixed shift also sets the channel width to it, so you can check by eye
+  that the gray channel area matches the signal.</li>
+<li><strong>Polarity</strong>: <strong>Auto</strong> (default) decides which tone is mark. <strong>Normal</strong> (mark
+  is the higher frequency) is the amateur convention, <strong>Reversed</strong> the one of
+  the DWD and many other utility stations.</li>
+<li><strong>Audio Volume</strong>: you can listen to the signal like a USB receiver and hear
+  the two tones. Decoding doesn't need audio.</li>
+</ul>
+<p>RF Analyzer suppresses text when there is no RTTY signal, so tuning across an
+empty band or listening to a noisy pause between two transmissions doesn't
+fill the screen with random characters.</p>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The received text shows up in the <a href="digital-tab.html">Digital tab</a>. That page
+explains the controls all modes share; here is what is special about RTTY.</p>
+<p align="center"><img src="./assets/rtty/rtty_live.jpg" alt="DWD weather broadcast on 4583 kHz: the two tones in the spectrum, the detected settings in the top right corner, the text being received in the ticker and an earlier part as a row" width="400px"></p>
+
+<p>While RTTY is received, the <strong>ticker</strong> above the list shows the text as it
+comes in, the newest line at the bottom. Its first line says how long the
+transmission has been running and how many characters it has so far; its label
+shows the settings in use (in Auto mode the detected ones), for example
+<code>RTTY · 4.583 MHz · 50 Bd / 450 Hz</code>. Tap the ticker to open it to about half
+the drawer and read more of the text.</p>
+<p>When the signal has been silent for a few seconds (or the settings change), the
+<strong>transmission</strong> ends and becomes a row of the Overview: its start time, the
+callsigns RF Analyzer recognized ("DL2OCE → KO4IEG", see <a href="psk31.html#in-the-digital-tab">PSK31</a>)
+and the beginning of the text, with ⏎ marking line breaks. Transmissions shorter
+than five characters are dropped as noise.</p>
+<p>Stations like the DWD send for hours without a pause. RF Analyzer splits such
+<strong>long transmissions</strong> into parts: after a minute or 1 500 characters, a part
+ends at the next line break (at the latest after three minutes or 4 000
+characters). The ticker shows the part number ("part 2"); each part becomes its
+own row.</p>
+<p>Tap a row to open it:</p>
+<p align="center"><img src="./assets/rtty/rtty_opened.png" alt="A part of a DWD weather report opened: the whole text, its length and the settings it was decoded with" width="460px"></p>
+
+<ul>
+<li>the whole <strong>text</strong>, in the teleprinter's fixed-width font,</li>
+<li><strong>From</strong> and <strong>To</strong> with the country flag, when callsigns were recognized,</li>
+<li><strong>Length</strong>: characters, duration and part number,</li>
+<li>the grey line: mode, baud rate, shift, polarity (normal or reversed) and
+  frequency,</li>
+<li>buttons to look up the callsign (<strong>QRZ.com</strong>), to <strong>Copy text</strong> and in <strong>⋯</strong>
+  more (PSKReporter, copying a callsign, sharing as JSON).</li>
+</ul>
+<p>Sort the rows by <strong>Start time</strong>, <strong>Duration</strong> or <strong>Length</strong>. The summary
+counts the characters of all listed transmissions. The Overview lists the
+newest 500 transmissions; the search finds older ones too.</p>
+<p>In the top right corner of the spectrum, the diagnostics show the number of
+characters received, the settings in use (for example <code>50 Bd 450 Hz rev</code>) and
+how far the tones are from the channel frequency (<code>+9.4 Hz</code>). The scatter plot
+below shows one dot per received bit: two tight clouds left and right mean a
+clean signal; under noise or fading they spread and move toward the middle.</p>
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<ul>
+<li><strong>No text at all</strong>: check that the two tones are inside ±400 Hz of the channel
+  frequency, and that the signal really is RTTY (in the waterfall: two parallel
+  lines, tones switching rapidly). With fixed settings, try Auto.</li>
+<li><strong>Only garbage</strong>: the polarity or the baud rate is wrong - set them to Auto,
+  or try the other polarity.</li>
+<li><strong>Digits where letters should be, or the other way round</strong>: a lost letters/
+  figures switch (see <a href="#characters">Characters</a>); it fixes itself at the next
+  switch.</li>
+<li><strong>Weak signals</strong>: RF Analyzer decodes RTTY down to about -8 dB signal-to-noise
+  ratio (in 2.5 kHz). Below that, characters drop out; the text stays readable
+  longer than you might expect, because missing letters are easy to fill in.</li>
+<li><strong>Fading</strong>: shortwave signals often fade in and out. RF Analyzer weighs each
+  tone by its current strength, so a signal whose two tones fade differently
+  (selective fading) still decodes.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

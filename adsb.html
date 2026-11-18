@@ -1,0 +1,1077 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>ADS-B - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ads-b" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADS-B
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-ads-b-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How ADS-B Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How ADS-B Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#altitude-speed-and-squawk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Altitude, speed and squawk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In the Digital Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#messages_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="ads-b">ADS-B</h1>
+<p><strong>ADS-B</strong> (Automatic Dependent Surveillance–Broadcast) is how aircraft tell
+everyone around them where they are: about twice a second, an airliner
+broadcasts its position, altitude, speed and callsign on <strong>1090 MHz</strong>. Air
+traffic control, other aircraft and flight-tracking websites receive these
+broadcasts - and so can you, with an SDR and a small antenna.</p>
+<p>RF Analyzer decodes ADS-B and shows the aircraft in a table and on the map, with
+their altitude, speed, heading and squawk code. It only receives. Most
+commercial aircraft and many smaller ones send ADS-B; you can typically receive
+aircraft up to 100-250 km away, depending on your antenna and their altitude.
+ADS-B is part of the <a href="digital-extension.html">Digital Extension</a>, which must be
+installed.</p>
+<hr />
+<h2 id="how-ads-b-works">How ADS-B Works</h2>
+<h3 id="messages">Messages</h3>
+<p>Every aircraft has a unique 24-bit <strong>ICAO address</strong>, written as six hex
+digits (<code>3C6444</code>). Its transponder sends short pulse messages of 56 or 112 bits
+at 1 Mbit/s. The long ones (<em>extended squitter</em>) carry ADS-B information, each
+message one kind:</p>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Identification</strong></td>
+<td>Callsign (the flight number, e.g. <code>DLH4AB</code>) and aircraft category (light, heavy, helicopter, glider, …)</td>
+</tr>
+<tr>
+<td><strong>Position</strong></td>
+<td>Altitude and an encoded position. A position needs two messages (an "even" and an "odd" one, at most 10 s apart) to be decoded without knowing where you are.</td>
+</tr>
+<tr>
+<td><strong>Velocity</strong></td>
+<td>Speed, heading and vertical rate (climbing or descending, in ft/min)</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Squawk code and emergency state</td>
+</tr>
+<tr>
+<td><strong>Target state</strong></td>
+<td>What the autopilot is set to: target altitude, heading, pressure setting</td>
+</tr>
+<tr>
+<td><strong>Operation status</strong></td>
+<td>ADS-B version and accuracy of the position</td>
+</tr>
+<tr>
+<td><strong>All-call reply</strong></td>
+<td>Only the ICAO address and transponder capability: sent by every Mode S transponder, also by aircraft without ADS-B</td>
+</tr>
+</tbody>
+</table>
+<p>Every message has a 24-bit checksum, so damaged messages are recognized (one or
+two wrong bits are repaired).</p>
+<h3 id="altitude-speed-and-squawk">Altitude, speed and squawk</h3>
+<ul>
+<li><strong>Altitude</strong> is shown as a flight level (<code>FL316</code> = 31 600 ft above the
+  standard pressure level) or, below 1000 ft, in feet.</li>
+<li><strong>Speed</strong> in knots (1 kn = 1.852 km/h), <strong>heading</strong> in degrees (0° = north,
+  90° = east).</li>
+<li>The <strong>squawk</strong> is the four-digit code air traffic control assigned. Three
+  codes are emergencies: <strong>7500</strong> (unlawful interference), <strong>7600</strong> (radio
+  failure) and <strong>7700</strong> (general emergency). RF Analyzer shows them in red.</li>
+</ul>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<p>ADS-B needs a source that can receive 1090 MHz at a sample rate of at least
+2 Msps (an RTL-SDR, HackRF, Airspy or HydraSDR; not the shortwave-only
+receivers). The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, then <strong>Start</strong> next to
+<strong>ADS-B</strong>. RF Analyzer tunes to 1090 MHz, raises the sample rate to 2.4 Msps
+or more if needed (so 1090 MHz stays clear of the receiver's DC spike) and
+starts the analyzer. Recordings made at 2 Msps work too.</p>
+<p>You can also set it up by hand: select <strong>ADS-B</strong> as the demodulation mode in the
+Demodulation tab and set the channel frequency to 1090 MHz. There are no other
+settings.</p>
+<p>An antenna for 1090 MHz helps a lot: a simple quarter-wave whip (6.9 cm) placed
+high and outdoors, or at least at a window facing the sky, receives much more
+than a telescopic antenna indoors.</p>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The aircraft show up in the <a href="digital-tab.html">Digital tab</a>. That page explains
+the controls all modes share; here is what ADS-B's rows and cards mean. ADS-B
+has no ticker: aircraft are heard several times a second, the rows are the news.</p>
+<h3 id="overview">Overview</h3>
+<p align="center"><img src="./assets/adsb/overview.png" alt="Aircraft in the ADS-B Overview: callsign, altitude and speed" width="460px"></p>
+
+<p>The <strong>Overview</strong> lists every aircraft, one row per ICAO address: its callsign
+(or its address until it sent one) with a small aircraft symbol coloured by
+altitude and the flag of its country, its altitude (<strong>Alt</strong>) and <strong>Speed</strong>, and
+on wider screens its <strong>Track</strong> (heading). The row text only shows what is unusual: an emergency, a
+squawk of 7500/7600/7700, or "On the ground". While ADS-B is received, aircraft
+not heard in this session are faded; otherwise, those not heard for five
+minutes.</p>
+<p>Sort by <strong>Last heard</strong>, <strong>Altitude</strong>, <strong>Frames</strong> (how many messages were
+received from it) or <strong>Callsign / ICAO</strong>. The summary says how many aircraft
+have a position and, while ADS-B is received, how many messages per second
+arrive ("85 msg/s") - a quick measure of how well the antenna does.</p>
+<p>Tap an aircraft to open it:</p>
+<p align="center"><img src="./assets/adsb/row_open.png" alt="An aircraft opened: its facts, the Details, Map and FlightAware buttons, and its message types" width="460px"></p>
+
+<ul>
+<li><strong>ICAO</strong> address, <strong>Country</strong>, <strong>Callsign</strong>, <strong>Category</strong> (size or type,
+  from its identification), <strong>Position</strong>, <strong>Vertical rate</strong>, <strong>Squawk</strong> and
+  <strong>Data quality</strong> (ADS-B version and how accurate its position is: NACp, SIL),</li>
+<li><strong>FlightAware</strong> opens the aircraft on flightaware.com (where it is going,
+  its type and registration); <strong>Map</strong> shows it on the map,</li>
+<li>instead of a message list, one line per <strong>message type</strong> with the newest
+  content and how many of that type are among its last 200 messages. Tap a type
+  to see its messages.</li>
+</ul>
+<p><strong>⋯</strong> also has <strong>Copy summary</strong>, a short text with everything known about the
+aircraft.</p>
+<p>The <strong>country</strong> is the state of registry, read from the address: ICAO gives
+every state its own block of addresses (Annex 10, Volume III, Table 9-1). It is
+known without any database or internet connection, also for an aircraft that
+never sends a callsign. Some addresses tell no country: ICAO's own temporary
+blocks, and the anonymous, TIS-B and ADS-R addresses of DF 18 messages (the row
+then shows no flag, the opened aircraft says so).</p>
+<h3 id="messages_1">Messages</h3>
+<p align="center"><img src="./assets/adsb/raw.png" alt="ADS-B messages in the Raw view" width="460px"></p>
+
+<p>The <strong>Raw</strong> view shows every message as a card: the callsign (for
+identification messages) or ICAO address, the message type in words, the time
+and the content ("FL316 · 9632 m", "425 kt · 191° · −1472 ft/min"). An
+emergency is shown in red. Tap a card for all fields; the grey line shows the
+message format (DF17 = ADS-B, DF18 = ADS-B from a device without transponder or
+relayed by a ground station, DF11 = all-call reply), the ICAO address and the size.</p>
+<p>ADS-B produces many messages: RF Analyzer keeps the newest 100 000 (20 to 30
+minutes near a busy airport). The aircraft stay in the Overview.</p>
+<h3 id="map">Map</h3>
+<p align="center"><img src="./assets/adsb/map.jpg" alt="Aircraft on the map, coloured by altitude, with the altitude key" width="460px"></p>
+
+<p>The <strong>Map</strong> shows the aircraft heard in the last 15 minutes, turned in their
+direction of flight, sized by their category and coloured by their altitude:
+orange near the ground, through yellow, green, cyan and blue to magenta at
+40 000 ft and above. Grey ones are on the ground. Tap the map to see the colour
+key. Aircraft not heard for five minutes fade. Tap an aircraft for its details
+and <strong>FlightAware</strong>; <strong>Paths</strong> shows where they flew while you watched.</p>
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<ul>
+<li><strong>Aircraft without a position</strong>: the position needs an even and an odd
+  position message within 10 seconds. Weak aircraft at the edge of reception
+  often don't get there. Aircraft that only answer radar (Mode S without ADS-B)
+  appear with their ICAO address and "All-call reply" only.</li>
+<li><strong>Aircraft without a callsign</strong>: the identification is sent only every few
+  seconds; it comes with time.</li>
+<li><strong>Few aircraft</strong>: use an antenna made for 1090 MHz and put it high. A cheap
+  LNA (amplifier) or an RTL-SDR with a 1090 MHz filter helps in cities with
+  strong mobile phone signals.</li>
+<li><strong>Processing overload</strong>: ADS-B needs a sample rate of 2 Msps or more and is
+  one of the more demanding modes. Lower the FFT size and frame rate in the
+  <a href="fft.html">Display tab</a> if the overload notice appears.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

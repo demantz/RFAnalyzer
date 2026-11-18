@@ -1,0 +1,1397 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>The Digital Tab - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-digital-tab" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              The Digital Tab
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a Mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sorting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sorting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#this-session-and-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        This Session and Before
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opening-a-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opening a Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#details-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Details Page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#raw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-and-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search and Filter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sharing-and-exporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sharing and Exporting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deleting-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-much-is-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Much Is Stored
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replaying-recordings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replaying Recordings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processing-overload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing Overload
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="the-digital-tab">The Digital Tab</h1>
+<p>Everything the <a href="digital-extension.html">Digital Extension</a> decodes shows up in
+the <strong>Digital</strong> tab of the control drawer. It shows one mode at a time, in three
+views:</p>
+<ul>
+<li><strong>Overview</strong>: one row per station, aircraft, pager, vehicle or node: what it
+  sent last and when. Open a row for everything known about it and its
+  messages.</li>
+<li><strong>Raw</strong>: every single packet as it was received, newest first.</li>
+<li><strong>Map</strong>: everything that reported a position.</li>
+</ul>
+<p>All decoded data is stored on the phone. The tab works the same whether the mode
+is being received right now or you are looking at what was received yesterday.
+This page explains the controls that all modes share. What a mode's rows, cards
+and fields mean is explained on the mode's own page (⋮ → <strong>Help</strong> opens it).</p>
+<p align="center"><img src="./assets/digital/anatomy.png" alt="The Digital tab's Overview while AX.25 is received, with numbered parts" width="460px"></p>
+
+<ol>
+<li><strong>Mode button</strong>: which mode is shown. Tap it to show another mode or to start
+   one, see <a href="#choosing-a-mode">Choosing a Mode</a>.</li>
+<li><strong>View switch</strong>: Overview, Raw and Map.</li>
+<li><strong>Search and filter</strong>, see <a href="#search-and-filter">Search and Filter</a>.</li>
+<li><strong>⋮ menu</strong>: sort order and map options of the current view, <strong>Share…</strong>,
+   <strong>Delete…</strong> and <strong>Help</strong>.</li>
+<li><strong>Ticker</strong>: what is being received right now, see <a href="#the-ticker">The Ticker</a>.</li>
+<li><strong>Section tabs</strong> of a mode with several kinds of objects (here APRS stations
+   and other packet stations), each with its number of rows. A dot marks a tab
+   whose objects were heard since you last looked at it.</li>
+<li><strong>Summary</strong>: a few figures about the list, here how many stations sent a
+   position and how many were heard in this session.</li>
+<li><strong>Sort control</strong>: what the last column shows and the list is sorted by.</li>
+<li><strong>Rows</strong>, see <a href="#overview">Overview</a>.</li>
+</ol>
+<p>Pull the drawer up to see more rows; the ticker then gets more lines too.</p>
+<hr />
+<h2 id="choosing-a-mode">Choosing a Mode</h2>
+<p>The <strong>mode button</strong> names the mode whose data is shown. Its look tells you
+whether that mode is being received:</p>
+<p align="center"><img src="./assets/digital/header_live.png" alt="Header with a filled mode button: R09 is being received" width="460px"></p>
+<p align="center"><img src="./assets/digital/header_stored.png" alt="Header with an outlined mode button and a clock icon: stored R09 data" width="460px"></p>
+
+<ul>
+<li><strong>Filled</strong>: this mode is being received. New packets appear as they come in.</li>
+<li><strong>Outlined with a clock icon</strong>: you are looking at stored data. Nothing new
+  arrives, either because the analyzer is stopped or because another mode is
+  being received.</li>
+</ul>
+<p>Tap the button to open the list of digital modes:</p>
+<p align="center"><img src="./assets/digital/mode_sheet.png" alt="The list of digital modes with stored data per mode and the station each one starts" width="380px"></p>
+
+<p>Each mode shows its name, what it is used for and how much of it is stored
+("61 telegrams stored · last 8 min ago"). The mode shown at the moment has a
+check mark. There are three things to do with a mode:</p>
+<ul>
+<li><strong>Tap the mode</strong> to look at its stored data. This changes nothing about what
+  is being received: you can browse yesterday's APRS stations while FT8 keeps
+  decoding. A mode with nothing stored is greyed out.</li>
+<li><strong>Tap Start</strong> to receive the mode on the station you started it with last
+  (shown below the mode: "Start: FT8 20m · 14.074 MHz"). A mode you haven't
+  started yet opens its stations instead.</li>
+<li><strong>Tap ›</strong> to choose a station:</li>
+</ul>
+<p align="center"><img src="./assets/digital/mode_sheet_stations.png" alt="LoRa's stations: the presets for Germany with their frequencies, Change, and All LoRa bookmarks" width="380px"></p>
+
+<p>The stations are the presets of the <a href="bookmarks.html#digital-stations">Digital Stations</a>
+list for your country or region (see <a href="settings.html#location">Location</a>) and
+your favorite bookmarks of the mode; with your position set, the nearest come
+first (R09 cities, for example). <strong>Change</strong> opens the location. <strong>All …
+bookmarks</strong> opens the Bookmark Manager with every bookmark of the mode - to have
+one of them here, mark it as favorite.</p>
+<p>Starting a station selects the mode, tunes the channel, sets the channel width
+and the station's settings (for example the baud rate), raises the sample rate
+if the mode needs more, retunes the source if the station isn't received yet,
+and starts the analyzer. The view only moves if the station isn't visible in
+it. The tab switches to the mode; for a mode with several sections (LoRa's
+networks, AX.25's APRS and packet stations) the Overview shows the section of
+the first packet received.</p>
+<p>The mode being received says <strong>Receiving on</strong> and its frequency, and offers
+<strong>Stop</strong> instead of Start:</p>
+<p align="center"><img src="./assets/digital/mode_sheet_live.png" alt="The FT8 row while FT8 is received: Receiving on 14.074 MHz, with a Stop button" width="380px"></p>
+
+<p>Good to know:</p>
+<ul>
+<li>Set up your source first (Source tab). With a <strong>recording</strong> as the source,
+  Start can't retune: it only moves the channel within the recorded band, and
+  tells you if the recording doesn't cover the target ("The file (144366 -
+  144414 kHz) doesn't cover APRS 144.800 MHz"). Then set the mode up by hand in
+  the Demodulation tab.</li>
+<li>While a recording is running, a station outside the recorded band (or, for a
+  baseband recording, another channel) asks to stop the recording first.</li>
+<li>The tab follows the Demodulation tab: when you select another digital mode
+  there, the Digital tab shows it. Selecting an analog mode leaves the tab on the
+  last digital mode.</li>
+<li>The <strong>?</strong> at the top of the list opens this section of the manual.</li>
+</ul>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>The Overview lists the <strong>objects</strong> a mode tracks: one row per station, aircraft,
+capcode, vehicle or mesh node, built from all packets received from it. RTTY and
+PSK31 are the exception: each row is one received transmission.</p>
+<p>A row shows, from left to right:</p>
+<ul>
+<li>the <strong>identity</strong>: callsign, name, address or capcode, with a symbol where the
+  mode has one (APRS symbol, country flag, aircraft type),</li>
+<li>what the object <strong>sent last</strong>, in words. Text that doesn't fit continues on a
+  second line,</li>
+<li>short <strong>value columns</strong> where the mode has them (for example R09's Kurs and
+  Meldepunkt, ADS-B's altitude and speed). Columns that don't fit on a narrow
+  screen are listed in the opened row instead,</li>
+<li>the <strong>last column</strong>: how long ago it was heard ("8 s", "5 min", "3 h", "11 d"),
+  or the value the list is sorted by.</li>
+</ul>
+<p>A row <strong>flashes</strong> when its object is heard again (not for RDS and ADS-B, which
+are heard several times a second). While the list is sorted by last heard and
+you are at the top, new arrivals come in at the top and the list follows them.
+When you have scrolled down or opened a row, the list stays where it is; the
+<strong>^</strong> button takes you back to the top.</p>
+<p>The header line above the rows gives the number of rows ("70 Calls"; while a
+filter is set "12 of 67 Calls") and a short <strong>summary</strong>, for example how many
+stations sent a position, the continents of FT8 stations or the number of
+repeaters. Each mode's page explains its figures. Modes with
+<a href="#sections">sections</a> show the number of rows on each section's tab instead.</p>
+<h3 id="sections">Sections</h3>
+<p>AX.25 and LoRa list more than one kind of object, each in its own <strong>section</strong>:
+AX.25 has <strong>APRS</strong> and <strong>Packet</strong>, LoRa has <strong>MeshCore</strong>, <strong>Meshtastic</strong>,
+<strong>MeshCom</strong>, <strong>LoRaWAN</strong> and <strong>LoRa-APRS</strong>. The section tabs in the header line show how many
+rows each section has; a <strong>dot</strong> marks a section that has heard something since
+you last selected it. The tabs scroll sideways if they don't fit. The ticker
+above them shows everything the mode receives, whatever section is selected.</p>
+<h3 id="sorting">Sorting</h3>
+<p align="center"><img src="./assets/digital/sort_menu.png" alt="The sort menu of the FT8 Overview: Last heard, Signal (SNR), Messages, First heard, Callsign" width="460px"></p>
+
+<p>Tap the <strong>sort control</strong> at the right of the header line to pick the order. The
+options depend on the mode; all have <strong>Last heard</strong> (the default, newest first)
+and a name or number order. The last column of each row shows the value the
+list is sorted by, so "SNR" puts the signal strength there. Sorted by name, the
+column keeps showing the age. Pick the selected option again to reverse the
+order; the arrow next to it shows the direction.</p>
+<h3 id="this-session-and-before">This Session and Before</h3>
+<p>While the shown mode is being received, the Overview separates what was heard
+in this <strong>session</strong> (since the analyzer was started) from what was heard
+before:</p>
+<p align="center"><img src="./assets/digital/before_this_session.png" alt="The AX.25 Packet section: one station heard now, the stations of an earlier session faded below the divider Before this session" width="460px"></p>
+
+<p>Rows not heard in this session are drawn faded below the divider
+<strong>Before this session</strong>. When you look at stored data, nothing is faded, except
+ADS-B aircraft that haven't been heard for five minutes.</p>
+<h3 id="opening-a-row">Opening a Row</h3>
+<p>Tap a row to open it:</p>
+<p align="center"><img src="./assets/ax25/aprs_row_open.png" alt="An APRS station opened: its position, altitude and symbol, the Details, Map and aprs.fi buttons, and its latest frames" width="460px"></p>
+
+<ul>
+<li><strong>Facts</strong>: what the row has no room for, as one running text: position,
+  type, signal, first heard and so on. "Heard 3 × · first 01:49:04" is how many
+  packets were received from it and when the first one arrived.</li>
+<li><strong>Buttons</strong>: <strong>Details</strong> (see below), <strong>Map</strong> for an object with a position,
+  and lookups such as <strong>aprs.fi</strong>, <strong>QRZ.com</strong>, <strong>PSKReporter</strong> or
+  <strong>FlightAware</strong>. Lookups open the website in your browser.</li>
+<li><strong>⋯</strong>: more actions, for example copying the callsign, sharing the object as
+  JSON or opening its position in your maps app.</li>
+</ul>
+<p align="center"><img src="./assets/digital/more_menu.png" alt="The more menu of an APRS station" width="200px"></p>
+
+<ul>
+<li>The <strong>latest messages</strong> of the object, newest first. Tap one to open its card
+  right there (see <a href="#raw">Raw</a> for what a card shows). While a card is open,
+  the list holds still; "2 new messages - tap to show" brings in what arrived
+  meanwhile. "+12 older - all on the details page" leads to the details page.</li>
+</ul>
+<p>Tap the row again to close it. A <strong>long press</strong> on a row opens the same actions
+as a menu, without opening the row.</p>
+<h3 id="details-page">Details Page</h3>
+<p><strong>Details</strong> shows the object on a page of its own, with all its facts, all its
+actions and its stored messages: the newest 200, and "Show 200 more" at the end
+reads further back, as far as the object's messages are stored. The back arrow
+or your phone's back gesture returns to the list where you left it.</p>
+<p align="center"><img src="./assets/digital/details_page.png" alt="The details page of an R09 vehicle" width="460px"></p>
+
+<h3 id="the-ticker">The Ticker</h3>
+<p>While the shown mode is being received, the <strong>ticker</strong> above the list shows the
+newest packet: who sent it and what it says. Its border label names the mode,
+the frequency and, where it varies, the speed ("AX.25 · 144.390 MHz · 1200 Bd").
+The border flashes when a new packet arrives, and the age counts up. Until the
+first packet of a session it says "Listening on 144.390 MHz…".</p>
+<p>The ticker has one line at the drawer's normal height and up to three when you
+pull the drawer up. Where there is more to read, a <strong>chevron</strong> in its border
+shows that it opens: tap it to see</p>
+<ul>
+<li>the text being received, at more length: RTTY and PSK31,</li>
+<li>a log of the session's last packets, newest on top: AX.25, LoRa and POCSAG.</li>
+</ul>
+<p>FT8 and ADS-B have no ticker: their rows are the news. The ticker is not
+affected by the search and filter.</p>
+<hr />
+<h2 id="raw">Raw</h2>
+<p>The Raw view shows every stored packet of the mode as a <strong>card</strong>, newest first
+(⋮ → <strong>Oldest First</strong> reverses the order).</p>
+<p align="center"><img src="./assets/ax25/raw.png" alt="AX.25 frames in the Raw view" width="460px"></p>
+
+<p>A closed card has one header line and the content:</p>
+<ul>
+<li>the <strong>identity</strong> of the sender, with its symbol,</li>
+<li>a small <strong>subtitle</strong>: the kind of packet, the channel, the path it took,</li>
+<li>a <strong>tag</strong> where the type is part of the message (for example an R09 report
+  type or an FT8 contest message),</li>
+<li>a <strong>warning</strong> in red when something is wrong, such as <strong>CRC error</strong> (the
+  packet arrived damaged) or <strong>Emergency</strong>. Nothing is shown when everything is
+  fine,</li>
+<li>the <strong>time</strong>: "20:13:39" today, "06.11. 20:13" on an earlier day,</li>
+<li>below it the <strong>content</strong> in words, up to three lines.</li>
+</ul>
+<p>Tap a card to open it:</p>
+<p align="center"><img src="./assets/ax25/aprs_card.png" alt="An APRS frame card opened" width="460px"></p>
+
+<ul>
+<li>The time becomes the full date and time, to the millisecond.</li>
+<li>The <strong>fields</strong> list everything the packet says, including what the header line
+  had to shorten.</li>
+<li>The small grey <strong>radio line</strong> below them describes the reception: for example
+  the frame type, the speed, the signal-to-noise ratio, how far the signal was
+  off the channel, and the frequency.</li>
+<li><strong>Raw · 100 bytes</strong> opens the packet's bytes as a hex dump, for those who want
+  to check the decoding.</li>
+<li>The <strong>buttons</strong>: <strong>Map</strong>, lookups, <strong>Copy text</strong>, <strong>Share as JSON</strong>, and in
+  <strong>⋯</strong> <strong>Copy as JSON</strong> and more. A long press on a card opens the same actions.</li>
+</ul>
+<p>While you read further down, new packets don't move the list: a button counts
+them ("5 new") and takes you back to the top.</p>
+<hr />
+<h2 id="map">Map</h2>
+<p>The Map shows everything of the shown mode that reported a position: APRS and
+LoRa-APRS stations, FT8 stations (at the centre of their grid square), MeshCore
+and Meshtastic nodes, MeshCom stations, and aircraft. Pagers, R09 vehicles, RDS stations,
+LoRaWAN devices and packet BBSes and nodes send no position.</p>
+<p align="center"><img src="./assets/digital/map_controls.jpg" alt="APRS stations in California on the map, with the map controls shown" width="460px"></p>
+
+<ul>
+<li>The first time you open a mode's map, it zooms to what was heard recently
+  (in this session while the mode is received, else within a day of the newest).
+  Without any positions, it shows your area from <a href="settings.html#location">Settings → Location</a>:
+  your grid locator's square (drawn on the map as your home), your device's
+  location, or your country. After that it stays where you put it, also when
+  new positions arrive. Each mode keeps its own map position while the app runs.</li>
+<li><strong>Tap a marker</strong> to see the object's latest data, its recent packets and its
+  actions. Tap the card to close it. For APRS stations, <strong>Follow</strong> (in <strong>⋯</strong>)
+  keeps the map on the moving station until you move the map yourself.</li>
+<li><strong>Tap an empty spot</strong> to show the map controls for a few seconds:
+  <strong>Fit</strong> zooms to the recent markers (to your area if there are none),
+  <strong>Paths</strong> shows the tracks of moving objects, <strong>All modes</strong> shows the objects
+  of every mode at once. The button at the bottom right moves the map to where
+  the phone is right now, to about 2 km; it needs the location permission. For ADS-B, a colour
+  key of the altitudes appears too. The same options are in the ⋮ menu.</li>
+<li>A faded marker was not heard in this session (or, for aircraft, not in the
+  last five minutes).</li>
+<li><strong>Map</strong> in an opened row, on a card or in a popup switches to the map and
+  follows that object.</li>
+<li>Paths are drawn from the positions received while the app runs; they are not
+  stored.</li>
+</ul>
+<p>Map data: © OpenFreeMap, © OpenMapTiles, data © OpenStreetMap contributors. The
+map tiles are loaded from the internet.</p>
+<hr />
+<h2 id="search-and-filter">Search and Filter</h2>
+<p>Tap the <strong>magnifying glass</strong> to show the filter row. A dot on it means a filter
+is set, also when the row is hidden. The filter applies to all three views, so
+the Map shows exactly what the Overview lists.</p>
+<p align="center"><img src="./assets/digital/search.png" alt="The filter row with the search KE6: two APRS stations match" width="460px"></p>
+
+<ul>
+<li><strong>Search</strong>: type part of a callsign, name, address or text. It matches
+  anything the decoded data contains, not case-sensitive. The Overview lists the
+  objects that match; the Raw view lists the packets that match, plus all
+  packets of the matching objects (so searching for an aircraft's callsign
+  also finds its position frames, which don't contain the callsign).</li>
+<li><strong>Time</strong>: <strong>Last hour</strong>, <strong>Last 24h</strong>, <strong>Last 7d</strong> or <strong>All time</strong>, or a
+  custom range with <strong>From</strong> and <strong>To</strong> (date and time). An object is listed
+  if it was heard at least once in the range.</li>
+</ul>
+<p align="center"><img src="./assets/digital/time_sheet.png" alt="The time range sheet" width="380px"></p>
+
+<ul>
+<li><strong>Frequency</strong>: a start and end frequency. Useful when you received the same
+  mode on several channels, for example FT8 on several bands.</li>
+<li><strong>✕</strong> clears all filters (the shown mode and the sort order stay).</li>
+</ul>
+<p>While a filter is set, the header line says how many rows match ("12 of 67
+Calls"; the section tabs of AX.25 and LoRa count only the matching rows) and an
+empty list says so ("No calls match the filter.").</p>
+<hr />
+<h2 id="sharing-and-exporting">Sharing and Exporting</h2>
+<p>Every packet, object and list can be shared as <strong>JSON</strong>, a text format that
+spreadsheets, scripts and other programs can read:</p>
+<ul>
+<li><strong>A packet</strong> (its card): <strong>Copy text</strong> copies the content as you see it,
+  <strong>Share as JSON</strong> and <strong>Copy as JSON</strong> the packet with all its fields.</li>
+<li><strong>An object</strong> (its row, details page or map popup): <strong>Share … as JSON</strong> shares
+  what is known about it, <strong>Share messages as JSON</strong> all its stored packets,
+  <strong>Copy as JSON</strong> copies the object.</li>
+<li><strong>Many packets</strong>: ⋮ → <strong>Share…</strong> shares the packets that match the filter
+  (a search: just the search results),
+  all packets of the shown mode, or every stored packet, as one JSON file. Pick
+  the app to send it to (mail, cloud storage, a messenger, ...).</li>
+</ul>
+<p>Each packet in the JSON has the mode, the time (in UTC, ISO 8601), the
+frequency, the object it belongs to, the received bytes as hex (<code>raw</code>), the
+reception details (<code>phy</code>) and the decoded content (<code>data</code>).</p>
+<hr />
+<h2 id="deleting-data">Deleting Data</h2>
+<p>⋮ → <strong>Delete…</strong> clears <strong>everything recorded for the shown mode</strong>, or
+<strong>everything, all modes</strong>: the packets and the objects built from them. This
+can't be undone.</p>
+<h2 id="how-much-is-stored">How Much Is Stored</h2>
+<p>Packets are stored without a time limit, but for the modes with many packets the
+oldest are removed when a mode reaches its limit:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Packets kept</th>
+<th>About</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RDS</td>
+<td>20 000</td>
+<td>30 minutes of one station</td>
+</tr>
+<tr>
+<td>ADS-B</td>
+<td>100 000</td>
+<td>20 to 30 minutes near a busy airport</td>
+</tr>
+<tr>
+<td>FT8</td>
+<td>200 000</td>
+<td>a day of continuous decoding on a busy band</td>
+</tr>
+<tr>
+<td>AX.25, LoRa</td>
+<td>100 000 each</td>
+<td>days to weeks</td>
+</tr>
+<tr>
+<td>RTTY, PSK31, R09, POCSAG</td>
+<td>all</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The objects (stations, aircraft, ...) stay when their old packets are removed,
+with their counts and last known state.</p>
+<hr />
+<h2 id="replaying-recordings">Replaying Recordings</h2>
+<p>Recordings are decoded like live signals (see
+<a href="digital-extension.html#recordings">Recordings</a>). How the tab treats their time
+depends on the mode:</p>
+<ul>
+<li><strong>FT8 and LoRa</strong> packets carry the time of the recording. While a recording
+  plays, the tab counts in the recording's time: ages, the session, the ticker
+  and the order of the Raw list follow the playback as if it were received
+  now. Afterwards the packets keep their original date.</li>
+<li><strong>All other modes</strong> stamp a packet with the time it was decoded, also when it
+  comes from a recording.</li>
+</ul>
+<hr />
+<h2 id="processing-overload">Processing Overload</h2>
+<p>If the phone can't keep up with the signal, the tab shows a notice over its
+content:</p>
+<p align="center"><img src="./assets/digital/overload_notice.png" alt="The notice Processing overload: Samples are dropped - packets may be missed" width="460px"></p>
+
+<p><strong>?</strong> explains what helps (see
+<a href="troubleshooting.html#processing-overload">Processing Overload</a>). The second
+button minimizes the notice to a red <strong>!</strong> next to the search button; tap it to
+see the notice again. It disappears half a minute after the overload ends.</p>
+<p align="center"><img src="./assets/digital/header_overload.png" alt="The header with the minimized overload notice, a red exclamation mark" width="460px"></p>
+
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<p><strong>Nothing appears</strong></p>
+<ul>
+<li>Look for a notice below the header: it says when the extension is missing,
+  needs an update or doesn't respond (see
+  <a href="digital-extension.html#when-digital-modes-cant-be-received">When Digital Modes Can't Be Received</a>).</li>
+<li>Check that the mode button is filled: only then is the shown mode being
+  received. If it's outlined, tap it and <strong>Start</strong> the mode.</li>
+<li>The ticker says "Listening on …" until the first packet arrives. Look at the
+  waterfall: is there a signal in the channel? See the mode's page for typical
+  frequencies and what its signals look like.</li>
+<li>Check that no filter is set (a dot on the magnifying glass).</li>
+</ul>
+<p><strong>A mode in the list is greyed out</strong>: nothing of it is stored yet. You can still
+start it.</p>
+<p><strong>Old data is mixed with new data</strong>: while the mode is received, everything
+heard before this session is faded below <strong>Before this session</strong>. To see one
+period only, use the <strong>Time</strong> filter; to start over, ⋮ → <strong>Delete…</strong>.</p>
+<p><strong>The list doesn't move although packets arrive</strong>: it follows new arrivals only
+when it is sorted by <strong>Last heard</strong>, scrolled to the top and no row is open.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

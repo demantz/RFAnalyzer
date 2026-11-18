@@ -1,0 +1,1050 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>RDS (Broadcast FM) - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rds-broadcast-fm" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              RDS (Broadcast FM)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-rds-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How RDS Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In the Digital Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-station" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A station
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#traffic-messages-tmc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traffic messages (TMC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="rds-broadcast-fm">RDS (Broadcast FM)</h1>
+<p><strong>RDS</strong> (Radio Data System) is the data signal FM broadcast stations send along
+with their programme: the station name your car radio shows, the radio text
+with the song and artist, the programme type, the time, the other frequencies
+of the same programme - and in many countries <strong>TMC</strong>, coded traffic messages
+for navigation systems.</p>
+<p>RF Analyzer decodes RDS while you listen to a station in the <strong>FM (wide)</strong> mode,
+lists the stations it heard and what they sent, and decodes the traffic
+messages. It only receives. Any SDR that covers 87.5-108 MHz works. RDS is
+part of the <a href="digital-extension.html">Digital Extension</a>, which must be
+installed.</p>
+<hr />
+<h2 id="how-rds-works">How RDS Works</h2>
+<p>An FM station sends RDS as a quiet data signal at 57 kHz in its FM multiplex,
+above the stereo signal - at 1187.5 bit/s, about 11 <strong>groups</strong> per second. Each
+group is 104 bits: four blocks, each with its own error check. The first block
+of every group is the station's <strong>PI code</strong> (programme identification), four
+hex digits like <code>D3A1</code>: the same programme has the same PI code on all its
+frequencies. The second block says which <strong>group type</strong> it is; each type
+carries one kind of information:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0A</strong>, <strong>0B</strong></td>
+<td>Station name (PS, 8 characters, sent in four parts), traffic flags (TP/TA), music/speech; 0A also the alternative frequencies (AF)</td>
+</tr>
+<tr>
+<td><strong>2A</strong>, <strong>2B</strong></td>
+<td>Radio text (up to 64 characters), sent in parts</td>
+</tr>
+<tr>
+<td><strong>3A</strong></td>
+<td>Announces which group carries an application, for example traffic messages (TMC) in 8A</td>
+</tr>
+<tr>
+<td><strong>4A</strong></td>
+<td>Date and time, about once a minute</td>
+</tr>
+<tr>
+<td><strong>8A</strong></td>
+<td>TMC traffic messages</td>
+</tr>
+<tr>
+<td><strong>14A</strong></td>
+<td>Other networks (EON): name, programme type, traffic flags and frequencies of other programmes of the same broadcaster</td>
+</tr>
+<tr>
+<td>others</td>
+<td>Programme item numbers, radio paging, RadioText+ (song title and artist as separate fields), programme type names, ... - counted, but not decoded</td>
+</tr>
+</tbody>
+</table>
+<p>Programme types (PTY) are numbers with names: 10 is "Pop Music" in Europe. The
+US (RBDS) uses another list; <strong>RDS Programme Types</strong> in the Demodulation tab
+picks the list of your country automatically (see
+<a href="settings.html#location">Location</a>), or set it there by hand.</p>
+<p><strong>TP</strong> (traffic programme) means the station broadcasts traffic announcements;
+<strong>TA</strong> (traffic announcement) is set while one is on air.</p>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<p>The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, then <strong>Start</strong> next to
+<strong>RDS</strong>. RF Analyzer selects <strong>FM (wide)</strong> with <strong>Stereo &amp; RDS</strong> switched on and
+tunes to the FM band (staying on your station if you are already listening to
+one).</p>
+<p>By hand: select <strong>FM (wide)</strong> in the Demodulation tab, switch on
+<strong>Stereo &amp; RDS</strong> and tune to a station (see
+<a href="demodulation.html#stereo-rds">Stereo &amp; RDS</a>). RDS needs a reasonably strong
+signal; the station name usually appears within a few seconds.</p>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The decoded data shows up in the <a href="digital-tab.html">Digital tab</a> under the mode
+<strong>RDS</strong>. That page explains the controls all modes share; here is what RDS's
+rows and cards mean.</p>
+<h3 id="overview">Overview</h3>
+<p align="center"><img src="./assets/rds/overview.png" alt="The RDS Overview: the ticker with SWR1 RLP's radio text, the station being received on top, five stations known from its announcements" width="460px"></p>
+
+<p>While RDS is received, the <strong>ticker</strong> shows the station you are listening to:
+its name, PI code, programme type, the traffic flags, and its radio text.</p>
+<p>The <strong>Overview</strong> lists every station, one row per PI code: its name, its radio
+text and its frequency (<strong>MHz</strong>). The station being received is pinned on top
+with a light background. Stations that your station announces as <strong>other
+networks</strong> (EON) are listed too, with the first frequency announced for them;
+the summary counts them ("5 known from other stations"). Sort by <strong>Last heard</strong>,
+<strong>Groups</strong> (how many groups were received from it), <strong>Name</strong> or <strong>Frequency</strong>.</p>
+<h3 id="a-station">A station</h3>
+<p align="center"><img src="./assets/rds/row_open.png" alt="SWR1 RLP opened: programme, traffic, content and clock, the Details and Tune buttons, and the sections Traffic messages, Other networks and Groups" width="460px"></p>
+
+<p>Tap a station to open it:</p>
+<ul>
+<li><strong>Programme</strong>: the programme type; <strong>Traffic</strong>: whether it is a traffic
+  programme and whether an announcement is on now; <strong>Content</strong>: music or
+  speech; <strong>Clock</strong>: the station's date and local time, with its offset from
+  UTC.</li>
+<li><strong>Tune</strong> switches the receiver to the station's frequency.</li>
+<li><strong>Traffic messages</strong>: the TMC messages the station currently broadcasts (see
+  below).</li>
+<li><strong>Other networks</strong>: the other programmes it announces, each with its
+  frequencies; tap a frequency to tune to it.</li>
+<li><strong>Groups</strong>: how many groups of each type were received, with what the newest
+  one said. Tap a type to see that group.</li>
+</ul>
+<p><strong>Details</strong> shows everything on one page: PI code, all alternative frequencies
+(<strong>Other frequencies</strong>), the <strong>Data applications</strong> the station announces
+(RadioText+, RDS-TMC, …) and its <strong>TMC</strong> service: the provider, the location
+table, the service ID and the other stations that carry the same service.</p>
+<p align="center"><img src="./assets/rds/details.png" alt="The details page of SWR1 RLP" width="460px"></p>
+
+<h3 id="traffic-messages-tmc">Traffic messages (TMC)</h3>
+<p align="center"><img src="./assets/rds/traffic.png" alt="Traffic messages of SWR1 RLP, one opened: object on the road, danger, urgent, for one hour" width="460px"></p>
+
+<p>Each line is one message: the event in words ("exit slip road closed", "18
+broken down vehicle(s). Danger") and the <strong>location</strong> code it applies to. Tap a
+message for its details: the urgency (urgent messages in orange, extremely
+urgent in red), how many further locations it covers (<strong>+1</strong>), the direction,
+how long it is expected to last, and further hints like a diversion or a speed
+limit.</p>
+<p>The locations are numbers in the national location table of your country (the
+navigation system translates them into road and junction); RF Analyzer shows
+the numbers. A message stays in the list while the station repeats it, and
+disappears when it expires or isn't repeated for half an hour.</p>
+<h3 id="groups">Groups</h3>
+<p align="center"><img src="./assets/rds/raw.png" alt="RDS groups in the Raw view: station name, other networks, radio text, TMC and application announcements" width="460px"></p>
+
+<p>The <strong>Raw</strong> view shows every group as a card: its type and what it said ("0A
+Traffic programme · Music · Name SWR1 RLP"). There are about 11 per second, so
+RF Analyzer keeps only the newest 20 000 (about half an hour of one station).
+While RDS is received, the list moves constantly; scroll down a little first,
+then it holds still and you can open a card. An opened card shows each decoded
+field and, under <strong>Blocks</strong>, the four blocks as hex and bits.</p>
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<ul>
+<li><strong>No RDS</strong>: check that <strong>Stereo &amp; RDS</strong> is on, and that the station is strong
+  (the stereo pilot and RDS need more signal than mono audio). Not every station
+  sends RDS.</li>
+<li><strong>The station name changes all the time</strong>: some stations scroll text through
+  the 8-character name field. RF Analyzer shows what was received last.</li>
+<li><strong>Radio text with gaps</strong>: the text is sent in parts; missing parts are filled
+  in as they arrive.</li>
+<li><strong>Wrong programme type names</strong>: check your <a href="settings.html#location">Location</a>,
+  or set <strong>RDS Programme Types</strong> in the Demodulation tab by hand. The stored
+  stations are renamed too.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

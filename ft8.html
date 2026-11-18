@@ -1,0 +1,1388 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>FT8 - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ft8" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              FT8
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sdr-source.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-ft8-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How FT8 Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How FT8 Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#everyone-transmits-at-the-same-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Everyone transmits at the same time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#small-messages-strong-error-correction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Small messages, strong error correction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-typical-contact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A typical contact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-to-find-ft8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to find FT8
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controls-in-the-demodulation-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controls in the Demodulation Tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-timing-indicator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Timing Indicator
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Timing Indicator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-digital-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the Digital Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In the Digital Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="ft8">FT8</h1>
+<p>FT8 is the most widely used digital mode in amateur radio. Radio amateurs use it
+to make contacts over long distances with modest equipment: a few watts and a
+simple wire antenna can reach other continents, because FT8 signals can still be
+decoded far below the level where you could hear them. At almost any time of the
+day, some shortwave band is busy with FT8 stations from all over the world.</p>
+<p>That makes FT8 a great way to explore radio propagation with RF Analyzer: within
+a minute you see which stations you receive, where they are, and how strong they
+come in. RF Analyzer only receives and decodes FT8; it does not transmit.</p>
+<p>All you need is a receiver for the HF bands (1.8 to 30 MHz): an SDR that covers
+them, or one of the many public KiwiSDR web receivers, which needs no hardware at
+all (see <a href="sdr-source.html#kiwisdr-specific-settings">KiwiSDR</a>). FT8 is part of
+the <a href="digital-extension.html">Digital Extension</a>, which must be installed.</p>
+<hr />
+<h2 id="how-ft8-works">How FT8 Works</h2>
+<h3 id="everyone-transmits-at-the-same-time">Everyone transmits at the same time</h3>
+<p>FT8 runs on a strict schedule: time is divided into <strong>15-second periods</strong>,
+starting at :00, :15, :30 and :45 of every minute (UTC). Every station starts
+its transmission 0.5 seconds into a period and is done after 12.6 seconds. The
+rest of the period leaves time to decode and decide on the reply. Stations take
+turns: one transmits in the "even" periods, its partner in the "odd" ones.</p>
+<p>Because everyone transmits at the same time, dozens of stations share one 3 kHz
+wide channel, side by side in frequency. In the waterfall, each transmission is
+a short vertical trace about 50 Hz wide, and all of them start and stop together
+(see the screenshot under <a href="#controls-in-the-demodulation-tab">Controls</a>).</p>
+<h3 id="small-messages-strong-error-correction">Small messages, strong error correction</h3>
+<p>An FT8 signal switches between 8 tones, 6.25 Hz apart. Each transmission carries
+only 77 bits: just enough for two callsigns and a short piece of information,
+such as a grid square or a signal report. To this, the sender adds a checksum
+and plenty of redundancy for error correction. Three fixed tone patterns (at the
+beginning, middle and end) let the receiver find each signal in time and
+frequency. This is what makes FT8 so robust: RF Analyzer decodes signals down to
+about <strong>-20 dB</strong> signal-to-noise ratio, far below what you can hear.</p>
+<h3 id="a-typical-contact">A typical contact</h3>
+<p>A complete contact takes six periods, about one and a half minutes. On the air,
+the called station comes first and the sender second. RF Analyzer shows each
+message as <strong>From → To</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Message on the air</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CQ K1ABC FN42</code></td>
+<td>K1ABC calls "CQ" (anybody?) from grid square FN42</td>
+</tr>
+<tr>
+<td><code>K1ABC DL9XYZ JO62</code></td>
+<td>DL9XYZ answers and sends its own grid square</td>
+</tr>
+<tr>
+<td><code>DL9XYZ K1ABC -15</code></td>
+<td>K1ABC receives DL9XYZ with -15 dB (the signal report)</td>
+</tr>
+<tr>
+<td><code>K1ABC DL9XYZ R-12</code></td>
+<td>DL9XYZ confirms ("R" for roger) and reports -12 dB</td>
+</tr>
+<tr>
+<td><code>DL9XYZ K1ABC RR73</code></td>
+<td>K1ABC confirms and says goodbye ("73" means "best regards")</td>
+</tr>
+<tr>
+<td><code>K1ABC DL9XYZ 73</code></td>
+<td>DL9XYZ says goodbye, the contact is complete</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Grid squares</strong> (Maidenhead locators such as <code>JO62</code>) describe a station's
+location to about 1° of latitude and 2° of longitude. That's roughly 100 × 150 km.</p>
+<h3 id="where-to-find-ft8">Where to find FT8</h3>
+<p>FT8 uses fixed frequencies on every band. Each one is the "dial frequency" of a
+receiver in USB mode; the signals sit between 100 Hz and 3 kHz above it.</p>
+<table>
+<thead>
+<tr>
+<th>Band</th>
+<th>Frequency</th>
+<th></th>
+<th>Band</th>
+<th>Frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>160 m</td>
+<td>1.840 MHz</td>
+<td></td>
+<td>17 m</td>
+<td>18.100 MHz</td>
+</tr>
+<tr>
+<td>80 m</td>
+<td>3.573 MHz</td>
+<td></td>
+<td>15 m</td>
+<td>21.074 MHz</td>
+</tr>
+<tr>
+<td>60 m</td>
+<td>5.357 MHz</td>
+<td></td>
+<td>12 m</td>
+<td>24.915 MHz</td>
+</tr>
+<tr>
+<td>40 m</td>
+<td>7.074 MHz</td>
+<td></td>
+<td>10 m</td>
+<td>28.074 MHz</td>
+</tr>
+<tr>
+<td>30 m</td>
+<td>10.136 MHz</td>
+<td></td>
+<td>6 m</td>
+<td>50.313 MHz</td>
+</tr>
+<tr>
+<td>20 m</td>
+<td>14.074 MHz</td>
+<td></td>
+<td>2 m</td>
+<td>144.174 MHz</td>
+</tr>
+</tbody>
+</table>
+<p><strong>20 m</strong> and <strong>40 m</strong> are the busiest bands. As a rule of thumb, the higher bands
+(20 m and up) are open during the day and the lower ones (40 m and down) at night.</p>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<p>The quickest way to start is the mode button in the header of the
+<a href="digital-tab.html#choosing-a-mode">Digital tab</a>: tap it, tap <strong>›</strong> next to <strong>FT8</strong> and
+pick a band (later, <strong>Start</strong> starts the band you used last). RF Analyzer tunes
+to the band's FT8 frequency, selects the FT8 mode and starts the analyzer. Don't forget to select and set up your source
+first (for example a KiwiSDR) in the Source tab.</p>
+<p align="center"><img src="./assets/ft8/quickstart.png" alt="FT8 bands in the presets" width="300px"></p>
+
+<p>You can also set it up by hand: select <strong>FT8</strong> as the demodulation mode in the
+Demodulation tab and set the channel frequency to the band's FT8 frequency.</p>
+<p>Messages appear once per period, a second or two after the period ends. With
+the default timing (Automatic), the first period can be lost while RF Analyzer
+finds the timing, so give it up to half a minute.</p>
+<hr />
+<h2 id="controls-in-the-demodulation-tab">Controls in the Demodulation Tab</h2>
+<p align="center"><img src="./assets/ft8/demodulation_tab.jpg" alt="Demodulation tab in FT8 mode, with the timing indicator in the top right corner" width="400px"></p>
+
+<ul>
+<li><strong>Channel Frequency</strong>: the FT8 frequency of the band (the dial frequency).
+  The channel is the grey area in the spectrum, 3 kHz wide, starting at this
+  frequency. Everything in it is decoded at once, so you don't tune to individual
+  stations.</li>
+<li><strong>Zoom</strong> and <strong>Tune Step</strong> work as in the other modes (see
+  <a href="demodulation.html#channel-frequency">Demodulation Tab</a>).</li>
+<li><strong>Audio Volume</strong>: you can listen to the channel like a USB receiver and hear
+  the FT8 tones. Decoding doesn't need audio.</li>
+<li><strong>FT8 Timing</strong>: how RF Analyzer finds the start of the periods, see
+  <a href="#timing">Timing</a> below.</li>
+</ul>
+<hr />
+<h2 id="timing">Timing</h2>
+<p>The decoder needs to know where the 15-second periods start in the received
+signal. It looks for transmissions starting up to 2.5 seconds early or late. If
+the timing is off by more, nothing is decoded, and even a smaller error costs
+weak signals. Three things can throw the timing off:</p>
+<ul>
+<li><strong>The phone's clock</strong>: Android lets the clock drift by up to 2 seconds
+  before it corrects it.</li>
+<li><strong>The receive chain</strong>: samples from a web receiver arrive later than they
+  were received.</li>
+<li><strong>Recordings</strong>: the start time of a recording is often not known exactly.</li>
+</ul>
+<p>You choose how RF Analyzer handles this with <strong>FT8 Timing</strong> in the Demodulation
+tab:</p>
+<p align="center"><img src="./assets/ft8/timing_controls.png" alt="The three FT8 timing modes" width="400px"></p>
+
+<ul>
+<li><strong>Automatic</strong> (recommended, the default): RF Analyzer finds the periods from
+  the signals themselves. It watches where in the 15-second cycle transmissions
+  start and aligns the periods to that. This needs no decoded message, so it
+  works with any clock error, also for recordings whose start time is unknown.
+  Once messages are decoded, it fine-tunes the timing from them and then follows
+  slow drifts. It usually locks within one or two periods. If nothing has been
+  decoded for two minutes (for example after you changed the band), it starts
+  searching again.</li>
+<li><strong>Internet time</strong>: uses the time stamps of the received samples as they are.
+  For an SDR connected to the phone, that is the phone's clock: RF Analyzer
+  corrects it with an internet time server (time.android.com or time.google.com) as
+  soon as you select this mode. The line below the buttons shows the correction;
+  the button on the right repeats the sync. KiwiSDR receivers with GPS stamp
+  their samples with the exact GPS time. Recordings carry the time stamps they
+  were recorded with. Choose this mode if you want the timing to be independent
+  of the signals: then the DT values show the real clock errors of the
+  transmitting stations.</li>
+<li><strong>Manual</strong>: a fixed correction you set with the slider (-7500 to +7500 ms).
+  Use it if you know the error of your time source. The
+  <a href="#the-timing-indicator">timing indicator</a> shows the right setting.</li>
+</ul>
+<hr />
+<h2 id="the-timing-indicator">The Timing Indicator</h2>
+<p>While FT8 is running, the top right corner of the spectrum shows the timing
+indicator. It shows where in the 15-second cycle transmissions start, and
+whether that fits the timing in use:</p>
+<p align="center"><img src="./assets/ft8/timing_indicator.png" alt="The FT8 timing indicator, with numbered parts" width="430px"></p>
+
+<ol>
+<li><strong>Timing mode and correction</strong>: <em>Auto: searching</em> while Automatic is still
+   looking for the periods, <em>Auto: locked</em> once decoded messages confirm them,
+   or <em>Internet time</em> / <em>Manual</em>. The number is the correction in use.</li>
+<li><strong>Now</strong> (yellow line): where in the cycle the newest received samples are.
+   It sweeps from left to right once every 15 seconds.</li>
+<li><strong>Red bars</strong>: transmissions that start outside the search band. They
+   cannot be decoded.</li>
+<li><strong>Nominal start</strong> (centre line): 0.5 seconds after the period boundary,
+   where the transmissions should start. The box shows one full 15-second cycle,
+   centred on this line.</li>
+<li><strong>Search band</strong> (grey): the start times the decoder searches, 2.5 seconds
+   before and after the nominal start.</li>
+<li><strong>Transmission starts</strong> (green bars): how many transmissions start at each
+   point of the cycle, averaged over the last periods. The taller, the more
+   stations.</li>
+<li><strong>DT of the recent decodes</strong>: the median and, in brackets, the range of
+   most of them. DT is how much later (or earlier, if negative) than the nominal
+   start a transmission began.</li>
+</ol>
+<p><strong>With correct timing, the bars form one green peak on the centre line</strong>, and DT
+is close to zero. Most stations transmit within a few tenths of a second of the
+nominal start, so the peak is narrow.</p>
+<h3 id="examples">Examples</h3>
+<p align="center"><img src="./assets/ft8/timing_searching.png" alt="Auto: searching, the peak 2 s right of the centre line"></p>
+
+<p><strong>Automatic, just started.</strong> This is a recording made with a phone clock that
+was 2 seconds fast. The transmissions start 2 seconds late, at the edge of the
+search band. Only some of them can be decoded, and their DT is +2.07 s.</p>
+<p align="center"><img src="./assets/ft8/timing_locked.png" alt="Auto: locked, the peak on the centre line"></p>
+
+<p><strong>One period later</strong>, Automatic has found the error and corrects it by -1.97 s.
+The peak sits on the centre line and DT is +0.10 s.</p>
+<p align="center"><img src="./assets/ft8/timing_manual_off.png" alt="Manual with a wrong offset: the red peak is outside the band"></p>
+
+<p><strong>Manual with a wrong setting</strong> (+4.35 s): the peak is outside the search band
+and red, so nothing is decoded. For a while, the DT line still shows the last
+decodes, recalculated for the new setting: +6.42 s.</p>
+<p align="center"><img src="./assets/ft8/timing_manual_good.png" alt="Manual set correctly: the peak on the centre line"></p>
+
+<p><strong>Manual, set correctly</strong> (-1.94 s): the peak is back on the centre line.</p>
+<div class="admonition tip">
+<p class="admonition-title">Setting Manual timing</p>
+<p>Move the slider until the green peak sits on the centre line. The DT line
+tells you how far to go: if it shows +2.1 s, lower the setting by about
+2100 ms. The peak moves right away; the DT values follow with the next
+decoded period.</p>
+</div>
+<hr />
+<h2 id="in-the-digital-tab">In the Digital Tab</h2>
+<p>The decoded messages show up in the <a href="digital-tab.html">Digital tab</a>. That page
+explains the controls all modes share; here is what FT8's rows and cards mean.
+FT8 has no ticker: a new period's messages arrive all at once, a second or two
+after the period ends, and the rows they update flash.</p>
+<h3 id="overview">Overview</h3>
+<p align="center"><img src="./assets/ft8/overview.png" alt="FT8 Overview: 95 calls, the continents and the best SNR in the header, one row per station with its flag, callsign and last message" width="460px"></p>
+
+<p>The <strong>Overview</strong> lists every station heard transmitting ("Calls"), the most
+recently heard first. Each row shows the country flag (from the callsign
+prefix), the callsign, its last message without its own callsign - "→ CQ KN87"
+is a CQ call from grid square KN87, "→ G0MSE JN84" an answer to G0MSE - and the
+time since it was last heard. Callsigns in the message are highlighted.</p>
+<p>The header line counts the stations and how many come from each continent (EU,
+NA, SA, AS, AF, OC; stations whose prefix RF Analyzer doesn't know are not
+counted), followed by the best SNR heard (in this session while FT8 is
+received). Sort the list by <strong>Last heard</strong>, <strong>Signal (SNR)</strong> (the last SNR,
+strongest first), <strong>Messages</strong> (how many messages it sent), <strong>First heard</strong> or
+<strong>Callsign</strong>.</p>
+<p>A station only gets a row for messages it sent. A station that is only called by
+others has none, nor do free-text and telemetry messages, which carry no
+sender.</p>
+<p align="center"><img src="./assets/ft8/station.png" alt="A station opened: country, grid square, SNR, Δt, last called station, frequency and how often it was heard, the buttons Details, Map and QRZ.com, and its latest messages" width="460px"></p>
+
+<p>Tap a station to open it:</p>
+<ul>
+<li><strong>Country</strong> (with continent) and <strong>Grid</strong>, the grid square it sent last,</li>
+<li><strong>SNR</strong>: the last and the best signal-to-noise ratio,</li>
+<li><strong>Δt</strong>: how many seconds after the nominal start its last transmission began
+  (see <a href="#the-timing-indicator">The Timing Indicator</a>),</li>
+<li><strong>Last called</strong>: the station it called last,</li>
+<li><strong>Frequency</strong>: where in the band it transmits (dial frequency plus its audio
+  offset),</li>
+<li><strong>Heard</strong>: how many messages it sent and when it was first heard.</li>
+</ul>
+<p>The buttons: <strong>Details</strong>, <strong>Map</strong> (for a station that sent a grid square) and
+<strong>QRZ.com</strong>; <strong>⋯</strong> has <strong>PSKReporter</strong> (where else the station is received),
+the QRZ.com page of the station it called, copying the callsign and sharing as
+JSON. The list below shows its latest messages in <strong>both directions</strong> - the
+ones it sent and the ones addressed to it - with their SNR. Tap one to open it.</p>
+<h3 id="raw">Raw</h3>
+<p align="center"><img src="./assets/ft8/raw.png" alt="FT8 messages in the Raw view" width="460px"></p>
+
+<p>The <strong>Raw</strong> view shows every decoded message as a one-line card, newest first:</p>
+<ul>
+<li>the message, as <strong>From → To</strong> and its content,</li>
+<li>a tag for the less common message types (see below),</li>
+<li>the <strong>SNR</strong>: the signal-to-noise ratio in dB, measured in a 2.5 kHz bandwidth
+  like in WSJT-X. Green from 0 dB, amber from -10 dB, red below.</li>
+<li>the <strong>Δt</strong> (DT in WSJT-X): how many seconds after the nominal start the
+  transmission began. Green within ±0.5 s, amber within ±1.5 s, red beyond.</li>
+<li>the time the transmission started.</li>
+</ul>
+<p align="center"><img src="./assets/ft8/card.png" alt="An FT8 message opened: From and To with their countries, the exchange R-19, the frequency" width="460px"></p>
+
+<p>Tap a card to see both stations with their countries, the <strong>Exchange</strong> (the
+report or grid square), the grid square's position, the message <strong>Type</strong>, the
+frequency and the received bits (<strong>Raw · 77 + 14 bits</strong>: the message and its
+checksum). <strong>QRZ.com</strong> and <strong>PSKReporter</strong> look up the sender; <strong>⋯</strong> has the
+same for the other station.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>(no tag)</em></td>
+<td>Standard message: two callsigns plus a grid square, a report, <code>RRR</code>, <code>RR73</code> or <code>73</code>; also messages with a non-standard callsign (e.g. a special event station)</td>
+</tr>
+<tr>
+<td><strong>EU VHF</strong></td>
+<td>Like a standard message, with portable (<code>/P</code>) callsigns</td>
+</tr>
+<tr>
+<td><strong>Free text</strong></td>
+<td>Free text, up to 13 characters</td>
+</tr>
+<tr>
+<td><strong>DXpedition</strong></td>
+<td>DXpedition mode: one rare station working several stations at once</td>
+</tr>
+<tr>
+<td><strong>RTTY contest</strong>, <strong>Field Day</strong>, <strong>Contest</strong></td>
+<td>Contest exchanges: ARRL RTTY Roundup, ARRL Field Day, EU VHF contests</td>
+</tr>
+<tr>
+<td><strong>Telemetry</strong></td>
+<td>Up to 71 bits of data, shown as hex</td>
+</tr>
+<tr>
+<td><strong>Unknown type</strong></td>
+<td>A message type RF Analyzer doesn't know</td>
+</tr>
+</tbody>
+</table>
+<p>The "To" can also be a general call: <code>CQ</code>, <code>CQ DX</code> (only distant stations
+please), <code>CQ POTA</code>, <code>CQ NA</code> and so on, or <code>QRZ</code> (who called me?).</p>
+<p>Some messages carry a callsign only as a short hash code, typically
+callsigns with prefixes or suffixes like <code>PJ4/K1ABC</code>. RF Analyzer shows these in
+angle brackets (<code>&lt;PJ4/K1ABC&gt;</code>) once it has heard the callsign in full, and as
+<code>&lt;...&gt;</code> before that.</p>
+<h3 id="map">Map</h3>
+<p>The <strong>Map</strong> shows every station that sent a grid square, at the centre of its
+grid square, so the position is only accurate to about 100 km. Tap a station to
+see its details and its recent messages with their SNR:</p>
+<p align="center"><img src="./assets/ft8/map_popup.png" alt="The map popup of GJ0KYZ in Jersey: country, grid, SNR, Δt, last called, frequency and recent messages" width="300px"></p>
+
+<hr />
+<h2 id="tips-troubleshooting">Tips &amp; Troubleshooting</h2>
+<p><strong>Nothing is decoded</strong></p>
+<ul>
+<li>Check the waterfall: are there FT8 traces in the channel (the grey area)? If
+  not, the band may be closed. Try another band (see
+  <a href="#where-to-find-ft8">Where to find FT8</a>).</li>
+<li>Check that the channel frequency is the FT8 frequency of the band and that
+  the channel covers the traces.</li>
+<li>Look at the <a href="#the-timing-indicator">timing indicator</a>: a red peak outside the
+  grey band means the timing is off. Select <strong>Automatic</strong>.</li>
+<li>If the indicator shows no peak at all, the receiver gets no usable FT8
+  signals: check the antenna, the gain and the source.</li>
+</ul>
+<p><strong>Fewer messages than expected</strong></p>
+<ul>
+<li>A peak away from the centre line costs weak signals: with Internet time or
+  Manual, check the timing. Automatic corrects this by itself.</li>
+<li>If the overload notice appears, the phone can't keep up; see
+  <a href="troubleshooting.html#processing-overload">Processing Overload</a>. Decoding a
+  period takes a modern phone one to two seconds.</li>
+</ul>
+<p><strong>Playing back recordings</strong></p>
+<ul>
+<li>Use <strong>Automatic</strong>. It works with any recording, whatever its time stamps.</li>
+<li>The messages of a recording carry the time they were originally received.
+  While the recording plays, the Digital tab counts in the recording's time:
+  ages, <strong>Before this session</strong> and the order of the Raw list follow the
+  playback, as if it were received now. The time column shows the recording's
+  date ("03.08. 12:00").</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2262 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="ui-overview.html">
+      
+      
+        <link rel="next" href="fft.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>SDR Source - RF Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#source-tab" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-header__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RF Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SDR Source
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RF Analyzer User Manual" class="md-nav__button md-logo" aria-label="RF Analyzer User Manual" data-md-component="logo">
+      
+  <img src="assets/logo.png" alt="logo">
+
+    </a>
+    RF Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="setup.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ui-overview.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="sdr-source.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDR Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#selecting-a-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting a Source
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Selecting a Source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#startstop-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start/Stop Button
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-source-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Source Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Source Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tune-frequency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune Frequency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gain-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Controls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gain Controls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lna-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LNA Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vga-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VGA Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixer-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixer Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IF Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#antenna-port-power" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Antenna Port Power
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frequency-converter-offset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frequency Converter Offset
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rtl-sdr-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RTL-SDR Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RTL-SDR Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gain-controls_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Controls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gain Controls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hardware-agc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware AGC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-rtl-sdr-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External RTL-SDR Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frequency-correction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frequency Correction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-sampling-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct Sampling Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hackrf-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HackRF Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HackRF Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#amplifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amplifier
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#airspy-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airspy Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Airspy Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gain-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#airspy-hf-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airspy HF Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Airspy HF Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automatic-gain-control-agc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic Gain Control (AGC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lna-preamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LNA Preamp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attenuation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attenuation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hydrasdr-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HydraSDR Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HydraSDR Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gain-mode_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rf-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RF Port
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kiwisdr-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KiwiSDR Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KiwiSDR Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-port-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host / Port / Password
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secure-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secure Connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choose-from-public-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose from Public List
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-rate-and-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Rate and Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-source-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Source Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Source Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selecting-a-source-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting a Source File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tune-frequency_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune Frequency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-rate_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeat
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wrapping-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wrapping Up
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fft.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFT & Waterfall Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demodulation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signal Demodulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="recording.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording & Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bookmarks.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bookmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="advanced.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Legal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Legal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/privacy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/terms-de.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nutzungsbedingungen (DE)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="legal/imprint.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imprint / Impressum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#selecting-a-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting a Source
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Selecting a Source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#startstop-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start/Stop Button
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-source-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Source Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Source Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tune-frequency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune Frequency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gain-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Controls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gain Controls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lna-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LNA Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vga-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VGA Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixer-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixer Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IF Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#antenna-port-power" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Antenna Port Power
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frequency-converter-offset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frequency Converter Offset
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rtl-sdr-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RTL-SDR Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RTL-SDR Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gain-controls_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Controls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gain Controls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hardware-agc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware AGC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-rtl-sdr-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External RTL-SDR Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frequency-correction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frequency Correction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-sampling-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct Sampling Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hackrf-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HackRF Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HackRF Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#amplifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amplifier
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#airspy-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airspy Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Airspy Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gain-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#airspy-hf-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airspy HF Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Airspy HF Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automatic-gain-control-agc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic Gain Control (AGC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lna-preamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LNA Preamp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attenuation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attenuation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hydrasdr-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HydraSDR Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HydraSDR Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gain-mode_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gain Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rf-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RF Port
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kiwisdr-specific-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KiwiSDR Specific Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KiwiSDR Specific Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-port-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host / Port / Password
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secure-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secure Connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choose-from-public-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose from Public List
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-rate-and-gain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Rate and Gain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-source-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Source Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Source Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selecting-a-source-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting a Source File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tune-frequency_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune Frequency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-rate_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeat
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wrapping-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wrapping Up
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="source-tab">Source Tab</h1>
+<p>The <strong>Source Tab</strong> is where you choose and configure the signal input. Before
+you can analyze signals, you need to select a <strong>source type</strong> and start the
+analyzer.</p>
+<div class="admonition tip">
+<p class="admonition-title">Starting the Analyzer</p>
+<p>The <strong>Start Button</strong> (▶️) is located to the right of the <strong>source
+type dropdown menu</strong>.  After selecting a source, tap this button to start
+sampling and display the FFT and waterfall plot.</p>
+</div>
+<p>Most settings can be changed <strong>while the analyzer is running</strong>, but there are
+some exceptions, especially for file playback.</p>
+<h2 id="selecting-a-source">Selecting a Source</h2>
+<p>The <strong>Signal Source</strong> dropdown in the Source Tab lets you choose between different signal sources:</p>
+<ul>
+<li><strong>RTLSDR</strong> - Receive live radio signals using an RTL-SDR USB dongle, or an
+  rtl_tcp server in the network.</li>
+<li><strong>HACKRF</strong> - Works similarly to RTL-SDR but supports wider bandwidths.</li>
+<li><strong>AIRSPY</strong> - A high quality SDR supporting 12bit resolution and up to 10MHz bandwidth.</li>
+<li><strong>AIRSPYHF</strong> - The Airspy HF+: HF and VHF (0.5 - 260 MHz) at up to 768 kSps.</li>
+<li><strong>HYDRASDR</strong> - A high quality SDR supporting 12bit resolution and up to 10MHz bandwidth.</li>
+<li><strong>KiwiSDR (web)</strong> - Connect to a remote KiwiSDR receiver over the network instead of using local hardware.</li>
+<li><strong>File Source</strong> - Replay a previously recorded IQ file.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Automatic Source Detection</p>
+<p>When you plug in an SDR (RTL-SDR, HackRF, Airspy, Airspy HF+ or HydraSDR)
+while the app is in the foreground - or plugged it in while the app was in
+the background - the correct source type is set automatically.</p>
+</div>
+<h3 id="startstop-button">Start/Stop Button</h3>
+<p>The <strong>play button</strong> in the upper right starts and stops the signal analyzer.
+When started, the app begins receiving and displaying IQ samples from the
+source. Once started, the analyzer keeps running when the app is moved into
+the background, as long as it demodulates or records (otherwise it stops after a
+few seconds). A notification icon is displayed in the status bar. Tap the
+notification to bring the RF Analyzer app back into the foreground or use the
+<strong>Stop</strong> button in the notification to stop and terminate the app.</p>
+<p>Swiping RF Analyzer away from the recent apps closes it and stops the analyzer -
+except while a recording runs: the recording goes on, and a notice says so and
+offers <strong>Stop recording</strong>.</p>
+<hr />
+<p>Each source type changes the available settings. Let’s go over them one by one.
+We start with some settings that are common to most of the source types:</p>
+<h2 id="common-source-settings">Common Source Settings</h2>
+<h3 id="tune-frequency">Tune Frequency</h3>
+<p>This field sets the center frequency (in Hz) to which the SDR device should tune.
+You can input the frequency manually. The app does also automatically adjust
+the tune frequency when the <a href="demodulation.html#channel-frequency">Channel Frequency</a>
+is set to a value outside of the current signal range. Scrolling outside of
+the current signal also causes an automatic retune of the device.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The app limits the frequency values to the range of the connected SDR. The
+RTL-SDR is not limited (0 Hz to 3 GHz), because dongles differ so much; if
+the tuner chip can't receive the chosen frequency (e.g. below 24 MHz without
+a Blog V4's upconverter or direct sampling), RF Analyzer says so once.</p>
+</div>
+<h3 id="sample-rate">Sample Rate</h3>
+<p>When <strong>Automatic Sample Rate</strong> is disabled, the dropdown lets you choose the
+fixed sample rate manually.</p>
+<p>By default, <strong>Automatic Sample Rate</strong> is enabled. The sample rate automatically
+follows the zoom level of the spectrum display. This provides an intuitive way
+to adjust bandwidth without needing to manage sampling directly. However, the
+adjusting of the sample rate does affect the signal which is received from the
+source which might be undesirable.</p>
+<h3 id="gain-controls">Gain Controls</h3>
+<p>Depending on the specific SDR device there are multiple gain controls
+available. These sliders allow you to optimize the signal level by adjusting
+different gain stages.</p>
+<p>Note that excessive gain may cause distortion or clipping in case of very
+strong signals.</p>
+<h4 id="lna-gain">LNA Gain</h4>
+<p>Adjusts the <strong>Low Noise Amplifier</strong> gain at the RF stage. Sometimes this
+is also just referred to as 'Gain'.</p>
+<h4 id="vga-gain">VGA Gain</h4>
+<p>Controls the <strong>Variable Gain Amplifier</strong> (VGA). Useful for fine-tuning the
+baseband signal level before digitization.</p>
+<h4 id="mixer-gain">Mixer Gain</h4>
+<p>Adjusts the <strong>Mixer</strong> gain at the conversion stage from radio frequency (RF) to
+intermediate frequency (IF).</p>
+<h4 id="if-gain">IF Gain</h4>
+<p>Only available with an <a href="#external-rtl-sdr-server">External RTL-SDR Server</a>
+whose dongle has an E4000 tuner chip; the built-in driver has no separate IF
+gain. It allows the fine-tuning of the intermediate frequency (IF) gain.</p>
+<h3 id="antenna-port-power">Antenna Port Power</h3>
+<p>This is sometimes referred to as <strong>Bias Voltage</strong>, <strong>Bias Tee</strong> or <strong>RF Bias</strong>.
+It enables a <strong>power supply</strong> on the antenna port of the SDR. This is useful
+for powering active antennas or external devices requiring a bias voltage.</p>
+<ul>
+<li>HackRF: 3.3V (max 50mA)</li>
+<li>RTL-SDR with a bias tee (e.g. Blog V3/V4): 4.5V (max 50mA) - not with an
+  <a href="#external-rtl-sdr-server">External RTL-SDR Server</a>, whose protocol can't switch it</li>
+<li>Airspy: 4.5V (max 25mA)</li>
+<li>HydraSDR: 4.5V (max 25mA)</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Not all devices or antennas are compatible. Use caution to avoid damaging external equipment.</p>
+</div>
+<h3 id="frequency-converter-offset">Frequency Converter Offset</h3>
+<p>If you are using an <strong>upconverter</strong> or other frequency-shifting hardware, enter
+the offset (in Hz) here. This value (which can be negative) is added to the
+tuned frequency to display the actual RF frequency.</p>
+<p>This feature helps when using hardware like an up-/downconverter that shifts the
+spectrum into a different frequency range.</p>
+<div class="admonition tip">
+<p class="admonition-title">Example: Ham-It-Up</p>
+<p>For the Ham-It-Up converter the frequency offset setting should
+be set to -125000000Hz. That means that the app will display the incoming
+signals as if they were 125MHz lower than they actually are. Now
+when tuning the app to 14MHz you see the signals that are actually
+incoming at 139MHz (this is where the 14MHz band is found after up-
+converting it with the Ham-It-Up converter).</p>
+</div>
+<h2 id="rtl-sdr-specific-settings">RTL-SDR Specific Settings</h2>
+<p>All of the following options can be adjusted while the Analyzer is already
+running.</p>
+<h3 id="gain-controls_1">Gain Controls</h3>
+<h4 id="hardware-agc">Hardware AGC</h4>
+<p>Activate the RTL-SDR's built-in automatic gain control. This is not usually
+recommended as it will add too much noise to the signal.</p>
+<h4 id="manual-gain">Manual Gain</h4>
+<p>Enable this switch to set the <strong>Gain</strong> manually (and the <strong>IF Gain</strong> with an
+rtl_tcp server that offers it), otherwise the RTL-SDR sets it automatically.
+Refer to the <a href="#gain-controls">Gain Controls</a> section for more information about
+the specific gain stages.</p>
+<h3 id="external-rtl-sdr-server">External RTL-SDR Server</h3>
+<p>Connect to an RTL-SDR network server instead of a local USB device. This must
+be done before starting the analyzer. Input the IP and TCP port of the
+<code>rtl_tcp</code> server and start the analyzer to connect. Make sure the Server is
+not blocking the connection with a firewall.</p>
+<p>On Android 17 and newer, a server in your local network (for example
+<code>192.168.1.20</code> or <code>raspberrypi.local</code>) needs RF Analyzer's <strong>local network
+access</strong>: RF Analyzer asks for it when you start the analyzer. Android lists it
+under <strong>Nearby devices</strong>. If you denied it, allow it in the app's settings
+(Permissions → Nearby devices) - without it the connection times out. Servers
+on the internet don't need it.</p>
+<p>The samples arrive over the network in bursts (<code>rtl_tcp</code> sends a quarter
+megabyte at a time - half a second at 250 kSps), so the audio plays a little
+behind the spectrum: RF Analyzer keeps enough audio in reserve to bridge the gaps
+between bursts. If the audio breaks up, it enlarges the reserve (up to one second);
+it starts small again with the next start of the analyzer. The same applies to a
+KiwiSDR.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Streaming IQ samples from a remote RTL-SDR onto your phone does consume
+a very high amount of data volume (~4MB/s)! It is highly recommended to do
+that only over a WiFi connection and not over a paid data plan.</p>
+</div>
+<h3 id="frequency-correction">Frequency Correction</h3>
+<p>This setting is passed to the RTL-SDR driver and allows to compensate for small
+frequency offsets due to hardware imperfections. The value has the unit PPM
+(parts-per-million) and can also be negative.</p>
+<h3 id="direct-sampling-mode">Direct Sampling Mode</h3>
+<div class="admonition warning">
+<p class="admonition-title">Experimental Feature</p>
+<p>This feature is experimental. Use at own risk.</p>
+</div>
+<p>Direct Sampling Mode can be used to extend the tunable range for the RTL-SDR device
+and receive shortwave signals (0 - 28.8MHz).</p>
+<p>However it needs a hardware modification of the RTL-SDR. Some RTL-SDR devices
+already have the modification built in (e.g. the RTL-SDR Blog V3 or the NooElec
+V5). Choose <strong>I-Branch</strong> or <strong>Q-Branch</strong> depending on the modification (the
+RTL-SDR Blog V3 uses <strong>Q-Branch</strong>); <strong>Off</strong> uses the tuner. For more information
+visit the following link: <a href="https://www.rtl-sdr.com/rtl-sdr-direct-sampling-mode/">Direct Sampling Mode
+(rtl-sdr.com)</a></p>
+<hr />
+<h2 id="hackrf-specific-settings">HackRF Specific Settings</h2>
+<p>When <strong>HACKRF</strong> is selected as the signal source, a range of hardware-specific
+settings becomes available.</p>
+<p>The HackRF has two gain stages (LNA and VGA) which are explained in the <a href="#gain-controls">Gain
+Controls</a> section. Additionally, it features an amplifier:</p>
+<h3 id="amplifier">Amplifier</h3>
+<p>This switch enables or disables the 11dB <strong>internal RF amplifier</strong> in the HackRF.
+This is an additional gain stage and may be helpful when receiving very weak
+signals, though it can introduce distortion if overused.</p>
+<hr />
+<h2 id="airspy-specific-settings">Airspy Specific Settings</h2>
+<p>When <strong>AIRSPY</strong> is selected as the signal source, a range of hardware-specific
+settings becomes available.</p>
+<h3 id="gain-mode">Gain Mode</h3>
+<p>The Airspy has three gain stages one after the other: the <strong>LNA</strong> (low noise
+amplifier), the <strong>Mixer</strong> and - after the tuner's channel filter - the <strong>VGA</strong>
+(see the <a href="#gain-controls">Gain Controls</a> section above). The <strong>Gain Mode</strong>
+decides how they are set:</p>
+<ul>
+<li><strong>Linearity</strong> and <strong>Sensitivity</strong> are presets: a single gain value (0 - 21)
+  sets all three stages at once, following one of two tables. They are
+  alternatives, not two gains that add up - only the selected one is applied.</li>
+<li><strong>Manual</strong> sets LNA, Mixer and VGA gain individually.</li>
+</ul>
+<p>The buttons at the top of the <strong>Gain</strong> box select the mode; below them is the
+slider of the selected preset, or in Manual one slider per stage.</p>
+<p><strong>Which preset?</strong> The two presets differ in <em>where</em> the gain is applied:</p>
+<ul>
+<li><strong>Sensitivity</strong> puts the gain into the first stages (LNA and Mixer) early.
+  Amplifying a signal as early as possible keeps the receiver's own noise
+  lowest, so the weakest signals come out best. But every strong signal the
+  antenna picks up is amplified early as well, before the channel filter can
+  remove it - with strong signals around, the first stages overload sooner.</li>
+<li><strong>Linearity</strong> keeps LNA and Mixer lower and makes up the gain with the VGA,
+  behind the channel filter. Strong signals outside the shown band are then
+  already attenuated when most of the gain is applied, at the cost of a little
+  more receiver noise.</li>
+</ul>
+<p>Choose <strong>Linearity</strong> when there are strong signals around: in cities, with
+outdoor or roof antennas, close to FM, TV or paging transmitters, and at wide
+sample rates - or whenever raising the gain makes the noise floor jump or
+"ghost" signals appear. It is the safer default. Choose <strong>Sensitivity</strong> for
+weak signals in a quiet environment (rural locations, small indoor antennas,
+satellites, narrow sample rates).</p>
+<p><strong>Setting the gain:</strong> raise it until the noise floor starts to rise along
+with it, and stop there - more gain does not make signals stand out more after
+that point. If the noise floor rises much faster than the signals, or wide
+humps and copies of strong signals appear, the receiver is overloaded: lower
+the gain or switch to Linearity. Values around 14 to 17 are a good start.</p>
+<hr />
+<h2 id="airspy-hf-specific-settings">Airspy HF Specific Settings</h2>
+<p>When <strong>AIRSPYHF</strong> is selected as the signal source, a range of
+hardware-specific settings becomes available.</p>
+<h3 id="automatic-gain-control-agc">Automatic Gain Control (AGC)</h3>
+<p>This setting can enable the built-in AGC of the Airspy HF+. If enabled, the
+<strong>AGC Threshold</strong> can be set to either <code>Low</code> or <code>High</code> with a slider.</p>
+<h3 id="lna-preamp">LNA Preamp</h3>
+<p>The Airspy HF+ includes a Low Noise Amplifier (LNA) which can be enabled with
+this setting. It increases the input signal level by 6dB.</p>
+<h3 id="attenuation">Attenuation</h3>
+<p>If the <a href="#automatic-gain-control-agc">AGC setting</a> is turned off, an attenuation
+level can be chosen instead. The input signal is attenuated by a chosen factor
+(0 - 48dB). This is useful if strong nearby signals overload the SDR.</p>
+<hr />
+<h2 id="hydrasdr-specific-settings">HydraSDR Specific Settings</h2>
+<p>When <strong>HYDRASDR</strong> is selected as the signal source, a range of hardware-specific
+settings becomes available.</p>
+<h3 id="gain-mode_1">Gain Mode</h3>
+<p>The HydraSDR has the same three gain stages (LNA, Mixer, VGA) and the same
+<strong>Gain Modes</strong> as the Airspy: the presets <strong>Linearity</strong> and <strong>Sensitivity</strong>
+(one value sets all three stages) or <strong>Manual</strong> (each stage individually). See
+the Airspy's <a href="#gain-mode">Gain Mode</a> section for how the presets differ and
+when to choose which.</p>
+<h3 id="rf-port">RF Port</h3>
+<p>The HydraSDR has 3 ports from which RF signals can be captured:</p>
+<ul>
+<li><code>AIR_IN</code> (also called <code>ANT</code> or <code>RX0</code>): Default antenna port</li>
+<li><code>CABLE1</code> (also called <code>RX1</code>): First internal port </li>
+<li><code>CABLE2</code> (also called <code>RX2</code>): Second internal port </li>
+</ul>
+<hr />
+<h2 id="kiwisdr-specific-settings">KiwiSDR Specific Settings</h2>
+<p>When <strong>KiwiSDR</strong> is selected as the signal source, RF Analyzer connects to a
+remote <a href="http://kiwisdr.com/">KiwiSDR</a> receiver over the network instead of
+using local USB hardware.</p>
+<h3 id="host-port-password">Host / Port / Password</h3>
+<p>Enter the <strong>DNS Name or IP Address</strong> and <strong>Port</strong> (default <code>8073</code>) of the
+KiwiSDR receiver. Most public KiwiSDR receivers are open and do not require
+a <strong>Password</strong> - leave it blank unless the receiver operator has given you
+one. The Password field is only editable when <strong>Secure Connection</strong> (below)
+is enabled, since it would otherwise be transmitted unencrypted. This must
+be configured before starting the analyzer.</p>
+<p>A KiwiSDR in your own local network needs RF Analyzer's local network access on
+Android 17 and newer, as described for the
+<a href="#external-rtl-sdr-server">External RTL-SDR Server</a>.</p>
+<h3 id="secure-connection">Secure Connection</h3>
+<p>Most public KiwiSDR receivers only support plain (unencrypted) connections.
+If your receiver is known to support a secure connection (<code>wss://</code>, e.g.
+behind a TLS-terminating reverse proxy), enable <strong>Secure Connection</strong>.
+Otherwise, be aware that all data is sent unencrypted over the network -
+this is why password authentication is disabled unless this is turned on.</p>
+<h3 id="choose-from-public-list">Choose from Public List</h3>
+<p><strong>Choose from Public List</strong> opens the receivers listed on
+<a href="http://kiwisdr.com/public/">kiwisdr.com/public</a>: a <strong>List</strong> (searchable by
+name, location and host, with the number of users, the HF signal-to-noise
+ratio and an OFFLINE badge) and a <strong>Map</strong> of the receivers around you. Tapping
+a receiver (on the map: <strong>Select this Receiver</strong>) fills in host and port -
+for a plain connection without a password - and starts the analyzer. The list
+is kept for an hour; <strong>Refresh</strong> loads it again.</p>
+<h3 id="sample-rate-and-gain">Sample Rate and Gain</h3>
+<p>A KiwiSDR covers HF (0 to 30 MHz, or what the receiver reports) and sends only
+a narrow slice of it: 12 kSps, about 10 kHz of usable spectrum (wideband
+receivers about 20 kSps). The receiver decides the rate; RF Analyzer takes it
+over when connected. Scroll or tune to move the slice. The receiver's own AGC
+sets the level, so there are no gain controls.</p>
+<p>If the connection fails, the message says why: the receiver has no free
+channel slots (try another one), authentication failed, the server is down or
+closed the connection, or it sent no IQ stream within 15 seconds.</p>
+<div class="admonition warning">
+<p class="admonition-title">Be a good guest</p>
+<p>Most KiwiSDR receivers only support 4-8 simultaneous listeners. Please
+be considerate of other users: don't leave the analyzer running idle
+against a public receiver, and disconnect (stop the analyzer) when
+you're done.</p>
+</div>
+<hr />
+<h2 id="file-source-settings">File Source Settings</h2>
+<p>If you select <strong>File Source</strong>, you can load and replay an IQ recording. This is
+useful for analyzing captured signals at a later time. IQ recordings can be
+created via the PC software tools <code>rtl_sdr</code> and <code>hackrf_transfer</code>. RF Analyzer
+can also record IQ files directly (see <a href="recording.html">Recordings</a>).</p>
+<p>Once playback has started, the <strong>tune frequency, sample rate, and file format</strong>
+<strong>cannot be changed</strong>. Unlike live SDR sources, an IQ file has fixed
+characteristics and cannot be "retuned". If these values are incorrect the
+recording will not be correctly replayed.</p>
+<h3 id="selecting-a-source-file">Selecting a Source File</h3>
+<p>The <strong>Open File</strong> button opens a file chooser to choose an IQ file from the
+phone's storage. These files contain raw IQ data and no information about
+the file format, frequency and sample rate. Therefore, these values need
+to be specified after selecting the file.</p>
+<div class="admonition note">
+<p class="admonition-title">Auto-Detection</p>
+<p>When you open a file, RF Analyzer fills in frequency, sample rate and file
+format from its <strong>file name</strong> where it can, e.g. <code>hackrf_123000kHz_2Msps.iq</code>:
+the parts in any order, each after <code>_</code>, <code>-</code> or a space, with the units MHz,
+kHz or Hz and MSps, kSps or Sps. The extension <code>.cu8</code>, <code>.cs8</code>, <code>.cs16</code> or
+<code>.cf32</code> sets the format; a device name in the file name (e.g. <code>HACKRF</code>) wins
+over it. A name that starts with date and time (<code>20261113-012148_…</code>, as RF
+Analyzer names its recordings) also tells when the recording was made.</p>
+</div>
+<p>The <strong>View Recordings</strong> button lets you browse saved recordings within the app.
+By tapping on a recording and pressing the play button, the recording file
+is automatically loaded into the File Source and started. File format, frequency
+and sample rate do not need to be entered manually.</p>
+<h3 id="tune-frequency_1">Tune Frequency</h3>
+<p>This value sets the center frequency at which the recording was done.</p>
+<p>Note that this frequency value is not important for the display and
+demodulation of the signals. It is only used to display the frequency grid. If
+unknown, you may set the frequency to 0Hz which is similar to enabling the
+<a href="fft.html#relative-frequency">Relative Frequency</a> setting.</p>
+<h3 id="sample-rate_1">Sample Rate</h3>
+<p>This value specifies the sample rate at which the file should be replayed.</p>
+<h3 id="file-format">File Format</h3>
+<p>The SDR devices use different file formats:</p>
+<ul>
+<li>RTLSDR: interleaved, 8-bit, <strong>unsigned</strong> IQ samples</li>
+<li>HackRF: interleaved, 8-bit, <strong>signed</strong> IQ samples</li>
+<li>AIRSPY: interleaved, 16-bit, <strong>signed</strong> IQ samples</li>
+<li>AIRSPYHF: interleaved, 32-bit <strong>float</strong> IQ samples (also RF Analyzer's baseband
+  recordings and the <code>.cf32</code> files of other tools)</li>
+<li>HYDRASDR: interleaved, 16-bit, <strong>signed</strong> IQ samples</li>
+</ul>
+<p>In all cases, the in-phase component (<strong>I</strong>) is first, followed by the
+quadrature component (<strong>Q</strong>).</p>
+<h3 id="repeat">Repeat</h3>
+<p>If this setting is enabled, the file will start playing again from the
+beginning once the end of the file is reached. It will loop forever until
+the Analyzer is manually stopped by the user.</p>
+<hr />
+<h2 id="wrapping-up">Wrapping Up</h2>
+<p>Now that you understand the <strong>Source Tab</strong> and the FFT is running, you are ready to
+start exploring signals! Next, we will dive deeper into <a href="fft.html">FFT &amp; Spectrum
+Analysis</a> and discuss how to interpret and optimize the FFT
+display.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.instant", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
