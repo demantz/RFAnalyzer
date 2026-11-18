@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Cleartext for any host: most KiwiSDR receivers and their public list (kiwisdr.com/public)
+         are plain http/ws only, and the receivers are user-chosen hosts. -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

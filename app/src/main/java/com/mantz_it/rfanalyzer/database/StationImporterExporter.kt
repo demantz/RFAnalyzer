@@ -11,11 +11,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import com.mantz_it.rfanalyzer.BuildConfig
-import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
+import com.mantz_it.rfanalyzer.ui.tabs.DemodulationMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.collections.toString
@@ -24,11 +25,10 @@ import kotlin.collections.toString
  * <h1>RF Analyzer - StationImporterExporter</h1>
  *
  * Module:      StationImporterExporter.kt
- * Description: Helper class for importing and exporting bookmarks.
- *              Supports import from RF Analyzer json, SDR# xml, SDR++ json and legacy RF Analyzer 1.13 sqlite
+ * Description: Helper class for importing and exporting bookmarks. Supports import from RF Analyzer
+ *              json, SDR# xml, SDR++ json and legacy RF Analyzer 1.13 sqlite
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -57,6 +57,49 @@ enum class ImportOption(val label: String, val description: String) {
     IMPORT_AS_IS("Import as is", "Import as is, merging lists without any modifications."),
     IMPORT_INTO_SINGLE("Import into single list", "Import stations/bands into a single new list and discard imported lists."),
     IMPORT_WITH_PREFIX("Import with prefix", "Import stations/bands into a new lists by prefixing the imported lists with a tag.")
+}
+
+// One entry per bundled JSON list that can be imported from the "Import Default Lists" dialog.
+enum class DefaultImportSet(
+    val title: String,
+    val description: String,
+    val bookmarkListType: BookmarkListType,
+    val bookmarkListColor: Int
+) {
+    AMATEUR_BANDS(
+        title = "Amateur Radio Band Plan",
+        description = "IARU band plan for the selected region.",
+        bookmarkListType = BookmarkListType.BAND,
+        bookmarkListColor = 0xFF26A69A.toInt() // teal
+    ) {
+        override fun assetFileName(region: Int) = "BandPlans/iaru${region}_bandplan.json"
+        override fun bookmarkListName(region: Int) = "Amateur Radio Bands"
+        override fun bookmarkListNotes(region: Int) = "Band Plans from the IARU (Region $region)"
+    },
+    LICENSE_FREE_BANDS(
+        title = "License-Free Bands",
+        description = "CB, PMR446/FRS/MURS, GMRS and similar license-free allocations for the selected region.",
+        bookmarkListType = BookmarkListType.BAND,
+        bookmarkListColor = 0xFF7CB342.toInt() // light green
+    ) {
+        override fun assetFileName(region: Int) = "BandPlans/license_free_r${region}_bandplan.json"
+        override fun bookmarkListName(region: Int) = "License-Free Bands"
+        override fun bookmarkListNotes(region: Int) = "License-free band allocations for Region $region"
+    },
+    ISM_MARITIME_AIR(
+        title = "ISM, Maritime and Air Band Plan",
+        description = "Global ISM, maritime and aviation band allocations.",
+        bookmarkListType = BookmarkListType.BAND,
+        bookmarkListColor = 0xFFAF4706.toInt() // orange
+    ) {
+        override fun assetFileName(region: Int) = "BandPlans/ISM_maritime_air.json"
+        override fun bookmarkListName(region: Int) = "ISM, Maritime, Air Bands"
+        override fun bookmarkListNotes(region: Int) = "Global band allocations such as ISM, Maritime and Air Bands."
+    };
+
+    abstract fun assetFileName(region: Int): String
+    abstract fun bookmarkListName(region: Int): String
+    abstract fun bookmarkListNotes(region: Int): String
 }
 
 enum class ParseStatus {
@@ -106,84 +149,52 @@ class StationImporterExporter @Inject constructor(
         }
     }
 
+    // Builds the JSON export content without writing it anywhere - used both by export() below
+    // (which writes it to a destination Uri) and by the "Share" export flow (ExportSheet), which
+    // writes it to a temp file instead.
+    fun buildExportJson(bookmarkLists: List<BookmarkList>, stations: List<Station>, bands: List<Band>): String {
+        val export = FullExportFile(bookmarkLists = bookmarkLists, stations = stations, bands = bands)
+        return json.encodeToString(export)
+    }
+
     // Export selected stations bands and bookmarkLists
     suspend fun export(outUri: Uri, bookmarkLists: List<BookmarkList>, stations: List<Station>, bands: List<Band>): Boolean {
         Log.d(TAG, "export: Exporting ${stations.size} stations, ${bands.size} bands, and ${bookmarkLists.size} to $outUri")
-        val export = FullExportFile(bookmarkLists = bookmarkLists, stations = stations, bands = bands)
-        val exportContent = json.encodeToString(export)
+        val exportContent = buildExportJson(bookmarkLists, stations, bands)
         return withContext(Dispatchers.IO) {
             saveFile(outUri, exportContent.toByteArray())
         }
     }
 
-    // Import Band plan from assets:
-    suspend fun importIaruBandPlan(region: Int): Boolean {
-        val fileName = "BandPlans/iaru${region}_bandplan.json"
+    // Import a bundled default list (band plan or station list) from assets:
+    suspend fun importDefaultSet(set: DefaultImportSet, region: Int): Boolean {
+        val fileName = set.assetFileName(region)
         val content = try {
             context.assets.open(fileName).use { it.readBytes() }
         } catch (e: Exception) {
-            Log.e(TAG, "importIaruBandPlan: Exception reading file $fileName: ${e.message}", e)
+            Log.e(TAG, "importDefaultSet: Exception reading file $fileName: ${e.message}", e)
             null
-        }
-        if (content == null) {
-            Log.e(TAG, "importIaruBandPlan: Could not read file $fileName")
-            return false
-        }
+        } ?: return false
 
         val parsedImport = parseInternalJson(content)
         if (parsedImport.status != ParseStatus.SUCCESS) {
-            Log.e(TAG, "importIaruBandPlan: Could not parse file $fileName")
+            Log.e(TAG, "importDefaultSet: Could not parse file $fileName")
             return false
         }
 
         val bookmarkListId = stationRepository.insertBookmarkList(BookmarkList(
             id = 0,
-            name = "Amateur Radio Bands",
-            type = BookmarkListType.BAND,
-            notes = "Band Plans from the IARU (Region $region)",
-            color = 0xFF26A69A.toInt(), // teal
+            name = set.bookmarkListName(region),
+            type = set.bookmarkListType,
+            notes = set.bookmarkListNotes(region),
+            color = set.bookmarkListColor,
         ))
-        val (success, errorMsg) = processParsedData(parsedImport, ImportOption.IMPORT_INTO_SINGLE, null, bookmarkListId, "")
-        if (success) return true
-        else {
-            Log.e(TAG, "importIaruBandPlan: Failed to import band plan (region $region): $errorMsg")
-            return false
+        val (success, errorMsg) = when (set.bookmarkListType) {
+            BookmarkListType.STATION -> processParsedData(parsedImport, ImportOption.IMPORT_INTO_SINGLE, bookmarkListId, null, "")
+            BookmarkListType.BAND -> processParsedData(parsedImport, ImportOption.IMPORT_INTO_SINGLE, null, bookmarkListId, "")
         }
-    }
-
-    // Import ISM, maritime, air bands
-    suspend fun importISMBandPlan(): Boolean {
-        val fileName = "BandPlans/ISM_maritime_air.json"
-        val content = try {
-            context.assets.open(fileName).use { it.readBytes() }
-        } catch (e: Exception) {
-            Log.e(TAG, "importIaruBandPlan: Exception reading file $fileName: ${e.message}", e)
-            null
-        }
-        if (content == null) {
-            Log.e(TAG, "importISMBandPlan: Could not read file $fileName")
-            return false
-        }
-
-        val parsedImport = parseInternalJson(content)
-        if (parsedImport.status != ParseStatus.SUCCESS) {
-            Log.e(TAG, "importISMBandPlan: Could not parse file $fileName")
-            return false
-        }
-
-        val bookmarkListId = stationRepository.insertBookmarkList(BookmarkList(
-            id = 0,
-            name = "ISM, Maritme, Air Bands",
-            type = BookmarkListType.BAND,
-            notes = "Global band allocations such as ISM, Maritime and Air Bands.",
-            color = 0xFFAF4706.toInt(), // orange
-        ))
-        val (success, errorMsg) = processParsedData(parsedImport, ImportOption.IMPORT_INTO_SINGLE, null, bookmarkListId, "")
-        if (success) return true
-        else {
-            Log.e(TAG, "importISMBandPlan: Failed to import band plan: $errorMsg")
-            return false
-        }
+        if (!success) Log.e(TAG, "importDefaultSet: Failed to import ${set.title} (region $region): $errorMsg")
+        return success
     }
 
     suspend fun tryToParseUri(uri: Uri, forcedFormat: ImportFormat? = null): ParsedImport {
@@ -276,28 +287,32 @@ class StationImporterExporter @Inject constructor(
 
     private suspend fun processParsedData(parsedImport: ParsedImport, option: ImportOption, targetStationBookmarkListId: Long?, targetBandBookmarkListId: Long?, prefix: String): Pair<Boolean, String> {
         val (parsedBookmarkLists, parsedStations, parsedBands) = parsedImport.data
+        val defaultListName = if (option == ImportOption.IMPORT_WITH_PREFIX) "$prefix (${parsedImport.detectedFormat}) ${LocalDate.now()}"
+            else "Imported (${parsedImport.detectedFormat}) ${LocalDate.now()}"
         if (parsedStations.isEmpty() && parsedBands.isEmpty()) {
             return Pair(true, "No stations or bands found to import.")
         }
 
         val legacyCatIdToNewCatId = mutableMapOf<Long, Long>()
+        val singleStationList = parsedBookmarkLists.singleOrNull { it.type == BookmarkListType.STATION }
+        val singleBandList = parsedBookmarkLists.singleOrNull { it.type == BookmarkListType.BAND }
         val defaultStationBookmarkList =
-            if (option != ImportOption.IMPORT_INTO_SINGLE
+            if (option != ImportOption.IMPORT_INTO_SINGLE && singleStationList == null
                 && parsedStations.any { station -> station.bookmarkListId == null || !parsedBookmarkLists.any { it.id == station.bookmarkListId && it.type == BookmarkListType.STATION } } // is there any station that does not have a valid bookmarkList set?
             ) {
                 stationRepository.insertBookmarkList(BookmarkList(
                     id = 0,
-                    name = if(option == ImportOption.IMPORT_WITH_PREFIX) "${prefix}_default" else "import_default", // TODO: better import name
+                    name = defaultListName,
                     type = BookmarkListType.STATION,
                 ))
             } else null
         val defaultBandBookmarkList =
-            if (option != ImportOption.IMPORT_INTO_SINGLE
+            if (option != ImportOption.IMPORT_INTO_SINGLE && singleBandList == null
                 && parsedBands.any { band -> band.bookmarkListId == null || !parsedBookmarkLists.any { it.id == band.bookmarkListId && it.type == BookmarkListType.BAND} } // is there any band that does not have a valid bookmarkList set?
             ) {
                 stationRepository.insertBookmarkList(BookmarkList(
                     id = 0,
-                    name = if(option == ImportOption.IMPORT_WITH_PREFIX) "${prefix}_default" else "import_default", // TODO: better import name
+                    name = defaultListName,
                     type = BookmarkListType.BAND,
                 ))
             } else null
@@ -321,7 +336,7 @@ class StationImporterExporter @Inject constructor(
                 ImportOption.IMPORT_INTO_SINGLE -> targetStationBookmarkListId
                 else -> {
                     val newId = station.bookmarkListId?.let { legacyCatIdToNewCatId[it] }
-                    newId ?: defaultStationBookmarkList
+                    newId ?: singleStationList?.let { legacyCatIdToNewCatId[it.id] } ?: defaultStationBookmarkList
                 }
             }
             val stationToInsert = station.copy(
@@ -340,7 +355,7 @@ class StationImporterExporter @Inject constructor(
                 ImportOption.IMPORT_INTO_SINGLE -> targetBandBookmarkListId
                 else -> {
                     val newId = band.bookmarkListId?.let { legacyCatIdToNewCatId[it] }
-                    newId ?: defaultBandBookmarkList
+                    newId ?: singleBandList?.let { legacyCatIdToNewCatId[it.id] } ?: defaultBandBookmarkList
                 }
             }
             val bandToInsert = band.copy(
@@ -392,8 +407,9 @@ class StationImporterExporter @Inject constructor(
             try {
                 val db = SQLiteDatabase.openDatabase(tempFile.path, null, SQLiteDatabase.OPEN_READONLY)
                 db.use {
+                    // RF Analyzer 1.x's schema: its names (categories) must stay as they are
                     // --- Read bookmarkLists ---
-                    it.rawQuery("SELECT _id, bookmarkListName, description FROM bookmarkBookmarkLists", null).use { cursor ->
+                    it.rawQuery("SELECT _id, categoryName, description FROM bookmarkCategories", null).use { cursor ->
                         while (cursor.moveToNext()) {
                             val id = cursor.getLong(0)
                             val name = cursor.getString(1) ?: "Unnamed"
@@ -405,15 +421,14 @@ class StationImporterExporter @Inject constructor(
                     }
 
                     // --- Read bookmarks ---
-                    it.rawQuery("SELECT _id, name, comment, bookmarkListId, frequency, channelWidth, mode, squelch FROM bookmarks", null).use { cursor ->
+                    it.rawQuery("SELECT _id, name, comment, categoryId, frequency, channelWidth, mode, squelch FROM bookmarks", null).use { cursor ->
                         while (cursor.moveToNext()) {
                             val name = cursor.getString(cursor.getColumnIndexOrThrow("name")) ?: "Unnamed"
                             val comment = cursor.getString(cursor.getColumnIndexOrThrow("comment"))
-                            val catIdLegacy = cursor.getLong(cursor.getColumnIndexOrThrow("bookmarkListId"))
+                            val catIdLegacy = cursor.getLong(cursor.getColumnIndexOrThrow("categoryId"))
                             val freq = cursor.getLong(cursor.getColumnIndexOrThrow("frequency"))
                             val width = cursor.getInt(cursor.getColumnIndexOrThrow("channelWidth"))
                             val modeInt = cursor.getInt(cursor.getColumnIndexOrThrow("mode"))
-                            val squelch = cursor.getDouble(cursor.getColumnIndexOrThrow("squelch"))
                             val mode = when (modeInt) {
                                 1 -> DemodulationMode.AM
                                 2 -> DemodulationMode.NFM
@@ -432,7 +447,8 @@ class StationImporterExporter @Inject constructor(
                                 notes = comment,
                                 createdAt = System.currentTimeMillis(),
                                 updatedAt = System.currentTimeMillis(),
-                                demodulationParameters = DemodulationParameters(squelch = DemodulationParameters.Squelch(enabled = true, thresholdDb = squelch.toFloat())),
+                                // the legacy absolute squelch level means nothing on today's scale: the default margin
+                                demodulationParameters = DemodulationParameters(squelch = DemodulationParameters.Squelch(enabled = true)),
                                 source = SourceProvider.BOOKMARK
                             )
                             stations.add(station)

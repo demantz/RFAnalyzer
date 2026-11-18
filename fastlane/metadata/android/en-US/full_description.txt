@@ -7,24 +7,32 @@ hands-on, interactive way to explore radio signals.
 
 FEATURES
 
-- Works with HackRF, RTL-SDR, Airspy, Airspy HF, HydraSDR or pre-recorded IQ files
+- Built-in drivers for RTL-SDR (including the RTL-SDR Blog V4), HackRF, Airspy,
+  Airspy HF+ and HydraSDR - no separate driver app needed
+- No SDR at hand? Listen through public KiwiSDR web receivers all over the
+  world, or connect to an rtl_tcp server
 - View live spectrum (FFT) and waterfall plots
-- Demodulate AM, FM, SSB, and CW signals
-- Record raw IQ samples for offline analysis
-- A responsive and modern Material Design interface
-- Scroll, zoom, and tune through the bands
-- Built-in context-aware help and a full offline in-app manual
+- Demodulate AM, FM, SSB and CW signals, with a squelch for every mode
+- Scroll, zoom and tune through the bands - or long-press the spectrum for
+  quick tune & zoom
+- Record raw IQ samples or just the demodulated channel, and play IQ files back
+- Band plans for your region, including the license-free bands
 - Bookmarks for Stations and Bands
   - Import from SDR# or SDR++
   - Automatically synchronize with online lists (EiBi DB, POTA & SOTA Spots)
+- Optionally starts when an SDR is plugged in
+- A responsive and modern Material Design interface
+- Built-in context-aware help and a full offline in-app manual
 
 REQUIREMENTS
 
-- Android phone or tablet (with USB OTG support)
-- Supported SDR hardware (HackRF, RTL-SDR, Airspy (HF+) or HydraSDR)
-Note: The RTL-SDR Blog v4 is fully supported.
-- USB OTG adapter (USB-A female to USB-C for modern phones)
-Note: This is not necessary for SDRs with USB-C connector (e.g. the HydraSDR)
+- Android 9 or newer
+- For a USB SDR (RTL-SDR, HackRF, Airspy, Airspy HF+ or HydraSDR): a phone or
+  tablet with USB OTG support and a USB OTG adapter (USB-A female to USB-C for
+  modern phones; not needed for SDRs with a USB-C connector such as the
+  HydraSDR)
+- For KiwiSDR and rtl_tcp: a network connection (rtl_tcp streams several MB
+  per second - use WiFi)
 
 LEARN MORE
 
@@ -38,7 +46,7 @@ SUPPORT
 
 This app is open-source so anyone can explore SDR without barriers and let
 the community benefit from a Google-free, privacy-respecting version. If you
-enjoy using it, please support the project - your donation helps keeping it
+enjoy using it, please support the project - your donation helps keep it
 alive and accessible to everyone.
 
 73!
@@ -46,8 +54,8 @@ alive and accessible to everyone.
 
 LICENSE
 
-This application is released under the GNU General Public License v2. It is
-free software and the source code is available on GitHub.
+This application is free software under the GNU General Public License, version 3 or
+later. The source code is available on GitHub.
 
 LEGAL ISSUES
 

@@ -7,8 +7,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
-import com.mantz_it.rfanalyzer.ui.composable.FilesourceFileFormat
+import com.mantz_it.rfanalyzer.ui.tabs.FilesourceFileFormat
 import com.mantz_it.rfanalyzer.ui.composable.asStringWithUnit
+import com.mantz_it.rfanalyzer.ui.tabs.fileExtension
 import kotlinx.coroutines.flow.Flow
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -21,23 +22,8 @@ import java.util.Locale
  * Description: Data Access Object for the Recording Table in the room database.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -84,7 +70,11 @@ interface RecordingDao {
     suspend fun delete(recording: Recording)
 }
 
-fun Recording.calculateFileName(): String {
+fun Recording.calculateFileName(isBaseband: Boolean = false): String {
     val timestampString = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(this.date));
-    return "${timestampString}_${this.name}_${this.fileFormat}_${this.frequency.asStringWithUnit("Hz").replace(" ", "")}_${this.sampleRate.asStringWithUnit("Sps").replace(" ", "")}.iq"
+    val freqAndRate = "${this.frequency.asStringWithUnit("Hz").replace(" ", "")}_${this.sampleRate.asStringWithUnit("Sps").replace(" ", "")}"
+    return if (isBaseband)
+        "${timestampString}_${this.name}_${freqAndRate}.cf32"
+    else
+        "${timestampString}_${this.name}_${this.fileFormat}_${freqAndRate}.${this.fileFormat.fileExtension()}"
 }

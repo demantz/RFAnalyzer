@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.ui.screens
 
+import com.mantz_it.rfanalyzer.ui.startExternalActivity
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
@@ -49,27 +50,12 @@ import kotlin.math.absoluteValue
  * <h1>RF Analyzer - Welcome Screen</h1>
  *
  * Module:      WelcomeScreen.kt
- * Description: The welcome screen which is shown at the first launch of the app
- * or when the user starts the tutorial from the AboutTab.
+ * Description: The tutorial pager behind the welcome screen (first launch), What's New and the
+ *              Bookmark Manager tutorial; the About tab reopens them.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 data class TutorialScreenCard(
@@ -81,7 +67,7 @@ data class TutorialScreenCard(
 )
 
 @Composable
-fun TutorialScreen(pages: List<TutorialScreenCard>, onFinish: () -> Unit) {
+fun TutorialScreen(pages: List<TutorialScreenCard>, skipButtonText: String = "Skip Tutorial", onFinish: () -> Unit) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val screenWidthDp = configuration.screenWidthDp
@@ -160,7 +146,7 @@ fun TutorialScreen(pages: List<TutorialScreenCard>, onFinish: () -> Unit) {
                                     Button(
                                         onClick = {
                                             val intent = Intent(Intent.ACTION_VIEW, pages[pageIndex].imageLink!!.toUri())
-                                            context.startActivity(intent)
+                                            context.startExternalActivity(intent)
                                         },
                                         shape = MaterialTheme.shapes.small,
                                         modifier = Modifier.align(Alignment.CenterVertically)
@@ -227,7 +213,7 @@ fun TutorialScreen(pages: List<TutorialScreenCard>, onFinish: () -> Unit) {
                                     Button(
                                         onClick = {
                                             val intent = Intent(Intent.ACTION_VIEW, pages[pageIndex].imageLink!!.toUri())
-                                            context.startActivity(intent)
+                                            context.startExternalActivity(intent)
                                         },
                                         shape = MaterialTheme.shapes.small,
                                     ) {
@@ -281,7 +267,7 @@ fun TutorialScreen(pages: List<TutorialScreenCard>, onFinish: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Button(onClick = onFinish, shape = MaterialTheme.shapes.extraSmall) {
-                Text("Skip Tutorial")
+                Text(skipButtonText)
             }
 
             if (isLandscape) {
@@ -386,7 +372,7 @@ private fun HorizontalPagerIndicator(
 @Composable
 fun PrevTutorialScreen() {
     TutorialScreen(pages = listOf(
-        TutorialScreenCard("RF Analyzer 2.0", image = R.drawable.rfanalyzer2, description =
+        TutorialScreenCard("Welcome to RF Analyzer", image = R.drawable.rfanalyzer2, description =
             "RF Analyzer turns your Android device into a real-time spectrum analyzer for " +
             "Software Defined Radio (SDR). \n\nVisualize and listen to radio signals around you" +
             " - from amateur radio to broadcast signals and beyond." +
@@ -403,7 +389,7 @@ fun PrevTutorialScreen() {
 @Composable
 fun LandscapePreview() {
     TutorialScreen(pages = listOf(
-        TutorialScreenCard("RF Analyzer 2.0", image = R.drawable.rfanalyzer2, description =
+        TutorialScreenCard("Welcome to RF Analyzer", image = R.drawable.rfanalyzer2, description =
             "RF Analyzer turns your Android device into a real-time spectrum analyzer for " +
             "Software Defined Radio (SDR). \n\nVisualize and listen to radio signals around you" +
             " - from amateur radio to broadcast signals and beyond." +

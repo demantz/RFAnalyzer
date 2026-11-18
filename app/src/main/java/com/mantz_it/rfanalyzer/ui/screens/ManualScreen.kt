@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.ui.screens
 
+import com.mantz_it.rfanalyzer.ui.startExternalActivity
 import android.content.Intent
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -24,27 +25,11 @@ import androidx.core.net.toUri
  * <h1>RF Analyzer - Manual Screen</h1>
  *
  * Module:      ManualScreen.kt
- * Description: The manual screen which contains a embedded browser for the
- * mkdocs manual.
+ * Description: The manual screen which contains an embedded browser for the mkdocs manual.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -93,7 +78,6 @@ fun ManualScreen(navController: NavController, subUrl: String = "index.html") {
                     webViewRef = this
                     settings.javaScriptEnabled = true
                     settings.allowFileAccess = true
-                    //setWebContentsDebuggingEnabled(true)
                     webViewClient = object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                             val url = request?.url.toString()
@@ -103,7 +87,7 @@ fun ManualScreen(navController: NavController, subUrl: String = "index.html") {
                                 true
                             } else {
                                 // Open external links in system browser
-                                context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                context.startExternalActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                                 true
                             }
                         }

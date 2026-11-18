@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: adb control of settings and analyzer for on-device measurements
+     (see DebugControlReceiver). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- DUMP: adb's shell holds it, apps don't - only adb may send these commands (also
+             on profile builds, which share this manifest) -->
+        <receiver
+            android:name=".DebugControlReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>

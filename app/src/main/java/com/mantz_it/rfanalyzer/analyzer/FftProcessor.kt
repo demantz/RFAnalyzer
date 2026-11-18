@@ -3,7 +3,6 @@ package com.mantz_it.rfanalyzer.analyzer
 import android.util.Log
 import com.mantz_it.nativedsp.NativeDsp
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
-import com.mantz_it.rfanalyzer.source.SamplePacket
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -11,30 +10,17 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * <h1>RF Analyzer - Analyzer Processing Loop</h1>
+ * <h1>RF Analyzer - FFT Processor</h1>
  *
  * Module:      FftProcessor.kt
- * Description: This Thread will fetch samples from the incoming queue (provided by the scheduler),
- * do the signal processing (fft) and then forward the result to the AnalyzerSurface.
+ * Description: This Thread computes the spectrum: the Scheduler feeds the samples into a native
+ *              ring buffer, the thread runs the windowed FFT at the waterfall's frame rate and
+ *              writes each frame into FftProcessorData for the UI, and the channel's level to the
+ *              squelch.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -57,17 +43,19 @@ class FftProcessorData {
     var sampleRate: Long? = null
     @Volatile
     var peaks: FloatArray? = null // peak hold values
+    @Volatile
+    var newestRowTimeNs = 0L // System.nanoTime() when the row at readIndex was added
+    @Volatile
+    var rowPeriodNs = 0L     // nominal time between two rows (1 / waterfall fps)
 }
 
 /**
- * FftProcessor orchestrates feeding samples into native ring buffer, calling native FFT,
- * and writing results into fftProcessorData for the UI thread.
- *
- * IMPORTANT CHANGES:
- *  - waterfallBufferSize: fixed at construction time (replaces previous waterfallSpeed)
- *  - fftSize is a setting on this processor (not derived from incoming packet length)
- *  - fftFramesPerSecond: desired maximum FPS (user configurable). Processor will attempt to not exceed this.
- *                       If device can't keep up the processor will run as fast as it can and update actualFftFramesPerSecond.
+ * FftProcessor feeds samples into the native ring buffer, runs the native FFT and writes the
+ * results into fftProcessorData for the UI thread.
+ *  - waterfallBufferSize: the waterfall history, fixed at construction
+ *  - fftSize: set on this processor, independent of the incoming packet length
+ *  - fftFramesPerSecond: the desired maximum frame rate. If the device can't keep up, the
+ *    processor runs as fast as it can (actualFftFramesPerSecond).
  */
 class FftProcessor(
     initialFftSize: Int,
@@ -75,10 +63,14 @@ class FftProcessor(
     initialFrequency: Long,
     initialFftFramesPerSecond: Float,
     initialChannelFrequencyRange: Pair<Long, Long>,
+    initialFftPaddingRatio: Float,
     private val fftProcessorData: FftProcessorData,
     private val waterfallBufferSize: Int,                 // fixed size for waterfall history (cannot change at runtime)
     var fftPeakHold: Boolean,
-    private val onAverageSignalStrengthChanged: (Float) -> Unit,
+    /** Decides the squelch from each frame's channel level and noise floor (Squelch.kt). */
+    private val squelchGate: SquelchGate,
+    /** Each frame's channel level (per-bin dB) for the UI; the floor and decision are in [squelchGate]. */
+    private val onChannelLevelChanged: (Float) -> Unit,
 ) : Thread() {
     private var stopRequested = true // Will stop the thread when set to true
     private var nativeDsp: NativeDsp = NativeDsp()
@@ -92,9 +84,16 @@ class FftProcessor(
     var actualFftFramesPerSecond: Float = 0.0f
         private set
 
-    // current FFT size (complex bins); starts with initialFftSize and can be changed at runtime via setFftSize.
+    // current FFT size (complex bins); starts with initialFftSize and can be changed at runtime.
     @Volatile
     var fftSize: Int = initialFftSize
+
+    // fraction of the FFT transform input that is zero-padding (0f..0.75f). The remaining
+    // (1-fftPaddingRatio)*fftSize real samples are the "analysis window" (M) that gets windowed;
+    // shrinking M reduces the real-time span each frame represents (fixes waterfall time-blur)
+    // at the cost of true frequency resolution (mainlobe width), which is governed by M, not fftSize.
+    @Volatile
+    var fftPaddingRatio: Float = initialFftPaddingRatio
 
     @Volatile
     var sampleRate: Long = initialSampleRate
@@ -108,10 +107,10 @@ class FftProcessor(
     companion object {
         private const val LOGTAG = "FftProcessor"
 
-        // Constants for converting float -> byte in waterfallBuffer
-        const val MIN_DB = -90f
-        const val MAX_DB = 0f
-        const val DB_RANGE = MAX_DB - MIN_DB // 90
+        // Constants for converting float -> byte in waterfallBuffer (dBFS per FFT bin, 0.63 dB steps)
+        const val MIN_DB = -150f
+        const val MAX_DB = 10f
+        const val DB_RANGE = MAX_DB - MIN_DB // 160
         const val BYTE_MAX = 255f
         const val SCALE = BYTE_MAX / DB_RANGE
         const val INV_SCALE = DB_RANGE / BYTE_MAX
@@ -122,12 +121,19 @@ class FftProcessor(
         // lead-time control loop for hop size
         private const val HOP_KP = 0.35f
         private const val HOP_KI = 0.08f
+        private const val LEAD_JUMP_FACTOR = 3
 
 
         // size of the internal ring buffer for input samples:
         const val MAX_FFT_SIZE = 131072
-        //const val MAX_FFT_SIZE = 262144
         private const val FFT_BUFFER_CAPACITY = MAX_FFT_SIZE * 10 // 10x of the max fft size
+
+        // Computes M (analysis window size, real samples windowed per frame) from the configured
+        // FFT size (N, transform size / bin count) and padding ratio. N-M is zero-padded.
+        fun computeAnalysisWindowSize(fftSize: Int, paddingRatio: Float): Int {
+            val ratio = paddingRatio.coerceIn(0f, 0.75f)
+            return (fftSize * (1f - ratio)).roundToInt().coerceIn(1, fftSize)
+        }
     }
 
     private val availableSamples = AtomicInteger(0)
@@ -138,8 +144,8 @@ class FftProcessor(
     private var hopIntegral = 0.0
 
     init {
-        // Initialize nativeDsp with initial fft size.
-        if (!nativeDsp.init(fftSize, FFT_BUFFER_CAPACITY)) {
+        // Initialize nativeDsp with initial fft size and analysis window size.
+        if (!nativeDsp.init(fftSize, FFT_BUFFER_CAPACITY, computeAnalysisWindowSize(fftSize, fftPaddingRatio))) {
             Log.e(LOGTAG, "Failed to init native DSP.")
         }
     }
@@ -157,15 +163,16 @@ class FftProcessor(
      */
     fun stopLoop() {
         this.stopRequested = true
+        LockSupport.unpark(this) // don't sit out the rest of a frame period (up to 1 s at low fps)
     }
 
-    fun putNewFftSamples(samples: FloatArray) {
-        val ret = nativeDsp.addNewSamples(samples)
+    fun putNewFftSamples(samples: FloatArray, count: Int) {
+        val ret = nativeDsp.addNewSamples(samples, count)
         if (ret < 0) {
             Log.e(LOGTAG, "putNewFftSamples: error=${availableSamples.get()}")
         } else {
+            if (ret >= FFT_BUFFER_CAPACITY) GlobalPerformanceData.incrementCounter("fft.ringOverflows")
             availableSamples.set(ret)
-            //Log.d(LOGTAG, "putNewFftSamples: availableSamples=${availableSamples.get()}")
         }
     }
 
@@ -182,7 +189,7 @@ class FftProcessor(
         lastFrameDoneNs = frameDoneNs
     }
 
-    private fun computeHop(currentSampleRate: Long, currentFftSize: Int): Int {
+    private fun computeHop(currentSampleRate: Long, currentFftSize: Int, analysisWindowSize: Int): Int {
         val sr = currentSampleRate.toDouble()
         if (sr <= 0.0) return 1
 
@@ -193,15 +200,23 @@ class FftProcessor(
         // lead-time target for the input buffer
         val FFT_LEAD_TARGET_SECONDS = if(sr<5_000_000) 0.15f else 0.05f // choose smaller lead time on high sample rates to not overfill the buffer
         val targetLeadSamples = max(
-            currentFftSize*2, // hold at least samples for 2 ffts
+            analysisWindowSize*2, // hold at least samples for 2 frames (the zero padding needs none)
             (sr * FFT_LEAD_TARGET_SECONDS).roundToInt()
-        ).coerceAtMost(FFT_BUFFER_CAPACITY - currentFftSize)
+        ).coerceAtMost(FFT_BUFFER_CAPACITY / 2) // leave room for bursts and short stalls (capacity: 65 ms at 20 MSps)
 
         val available = availableSamples.get().coerceAtLeast(0)
         val leadErrorRatio = ((available - targetLeadSamples).toDouble() / targetLeadSamples.toDouble()).coerceIn(-0.5, 0.5)
 
         GlobalPerformanceData.updateLoad("FftProcessorBufferLead", available.toFloat() / targetLeadSamples.toFloat())
         GlobalPerformanceData.updateLoad("FftProcessorBufferFill", available.toFloat() / FFT_BUFFER_CAPACITY.toFloat())
+
+        // Far too much buffered (smaller FFT window after a size change, a stall of this thread):
+        // the controller below would take seconds to catch up, with the waterfall that much behind
+        // and running fast - jump to the target lead instead.
+        if (available > LEAD_JUMP_FACTOR * targetLeadSamples) {
+            hopIntegral = 0.0
+            return (available - targetLeadSamples).coerceIn(1, FFT_BUFFER_CAPACITY - currentFftSize)
+        }
 
         hopIntegral = (hopIntegral + leadErrorRatio).coerceIn(-4.0, 4.0)
 
@@ -210,7 +225,6 @@ class FftProcessor(
         val res = (nominalHop * correction)
             .roundToInt()
             .coerceIn(1, FFT_BUFFER_CAPACITY - currentFftSize) // always leave at least samples for one fft in the buffer
-        //Log.d(LOGTAG, "computeHop: nominalHop=$nominalHop targetLeadSamples=$targetLeadSamples available=$available leadErrorRatio=$leadErrorRatio hopIntegral=$hopIntegral correction=$correction res=$res")
         return res
     }
 
@@ -218,12 +232,12 @@ class FftProcessor(
         this.setName("Thread-FftProcessor-" + System.currentTimeMillis())
         Log.i(LOGTAG, "Processing loop started. (Thread: " + this.name + ")")
 
-        // Preallocate magPacket to current fftSize
-        var magPacket = SamplePacket(fftSize)
-        magPacket.setSize(fftSize)
+        // Newest frame, quantized like the waterfall rows (MIN_DB + byte * INV_SCALE)
+        var magBytes = ByteArray(fftSize)
 
         var lastFrequency: Long? = null
         var lastSampleRate: Long? = null
+        var lastAppliedAnalysisWindowSize = computeAnalysisWindowSize(fftSize, fftPaddingRatio)
 
         // performance tracking
         var totalWaitTimeNs = 0L
@@ -233,10 +247,11 @@ class FftProcessor(
             val currentFftSize = fftSize
             val currentSampleRate = sampleRate
             val currentFrequency = frequency
-            if (magPacket.size() != currentFftSize) {
-                magPacket = SamplePacket(currentFftSize)
-                magPacket.setSize(currentFftSize)
-                nativeDsp.setFftSize(currentFftSize)
+            val currentAnalysisWindowSize = computeAnalysisWindowSize(currentFftSize, fftPaddingRatio)
+            if (magBytes.size != currentFftSize || currentAnalysisWindowSize != lastAppliedAnalysisWindowSize) {
+                if (magBytes.size != currentFftSize) magBytes = ByteArray(currentFftSize)
+                nativeDsp.setFftSize(currentFftSize, currentAnalysisWindowSize)
+                lastAppliedAnalysisWindowSize = currentAnalysisWindowSize
             }
 
             val measureStartNs = System.nanoTime()
@@ -246,20 +261,26 @@ class FftProcessor(
             }
 
             val sleepNs = nextFrameDeadlineNs - measureStartNs
-            var waitDurationNs = 0L
-            if (sleepNs > 0L) {
-                waitDurationNs = sleepNs
-                LockSupport.parkNanos(sleepNs)
-            }
+            if (sleepNs > 0L) LockSupport.parkNanos(sleepNs)
             if (stopRequested) break
+            val workStartNs = System.nanoTime()
+            val waitDurationNs = workStartNs - measureStartNs
 
-            val hop = computeHop(currentSampleRate, currentFftSize)
+            val hop = computeHop(currentSampleRate, currentFftSize, currentAnalysisWindowSize)
 
-            val actualConsumedSamples = nativeDsp.performWindowedFftAndReturnMag(magPacket.re(), hop)
+            val actualConsumedSamples = nativeDsp.performWindowedFftAndReturnMag(magBytes, MIN_DB, SCALE, hop)
             val frameDoneNs = System.nanoTime()
 
-            if (actualConsumedSamples < 0) {
+            if (actualConsumedSamples == NativeDsp.NOT_ENOUGH_SAMPLES) {
+                // Less than one analysis window buffered (start, retune, source gap): wait for the
+                // missing samples instead of showing a partially filled (too weak) frame.
+                GlobalPerformanceData.incrementCounter("fft.skippedFrames")
+                val missingNs = (currentAnalysisWindowSize - availableSamples.get()).coerceAtLeast(1) * 1_000_000_000L / currentSampleRate.coerceAtLeast(1)
+                LockSupport.parkNanos(missingNs.coerceIn(1_000_000L, 50_000_000L))
+                continue
+            } else if (actualConsumedSamples < 0) {
                 Log.e(LOGTAG, "run: nativePerformWindowedFftAndReturnMag returned error code $actualConsumedSamples")
+                LockSupport.parkNanos(10_000_000L) // don't spin on a persistent error
                 continue
             } else if (actualConsumedSamples != hop) {
                 Log.d(LOGTAG, "run: nativePerformWindowedFftAndReturnMag returned $actualConsumedSamples samples (hop=$hop)")
@@ -270,7 +291,7 @@ class FftProcessor(
             updateActualFps(frameDoneNs)
             GlobalPerformanceData.updateLoad("FftProcessorFPS", actualFftFramesPerSecond / 100)
 
-            // Keep the scheduler on a fixed-time base.
+            // Frame deadlines on a fixed time base.
             val targetPeriodNs = (1_000_000_000.0 / fftFramesPerSecond.coerceAtLeast(1f)).toLong()
             if (nextFrameDeadlineNs == 0L) {
                 nextFrameDeadlineNs = frameDoneNs + targetPeriodNs
@@ -282,22 +303,22 @@ class FftProcessor(
                 }
             }
 
-            // Update signal strength in appStateRepository:
-            val samplesPerHz = magPacket.size() / currentSampleRate.toFloat()
+            // The channel's level and the noise floor beside it: the squelch's decision and the UI's level
+            val samplesPerHz = magBytes.size / currentSampleRate.toFloat()
             val frequencyAtIndexZero = currentFrequency - currentSampleRate / 2
             val (channelStartFrequency, channelEndFrequency) = channelFrequencyRange
             val channelStartIndex =
                 ((channelStartFrequency - frequencyAtIndexZero) * samplesPerHz).toInt()
-                    .coerceIn(0, magPacket.size())
+                    .coerceIn(0, magBytes.size)
             val channelEndIndex =
                 ((channelEndFrequency - frequencyAtIndexZero) * samplesPerHz).toInt()
-                    .coerceIn(0, magPacket.size())
-            if (channelEndIndex > channelStartIndex) {
-                var sum = 0f
-                val mag = magPacket.re()
-                for (i in channelStartIndex until channelEndIndex) sum += mag[i]
-                val averageSignalStrengh = sum / (channelEndIndex - channelStartIndex)
-                onAverageSignalStrengthChanged(averageSignalStrengh)
+                    .coerceIn(0, magBytes.size)
+            // a channel narrower than a bin still has its bin
+            val channelEnd = maxOf(channelEndIndex, minOf(channelStartIndex + 1, magBytes.size))
+            val channelLevel = channelLevel(magBytes, channelStartIndex, channelEnd)
+            if (!channelLevel.isNaN()) {
+                squelchGate.update(channelLevel, noiseFloor(magBytes, channelStartIndex, channelEnd), System.currentTimeMillis())
+                onChannelLevelChanged(channelLevel)
             }
 
             // --- Put the results into fftProcessorData
@@ -313,14 +334,13 @@ class FftProcessor(
 
                 val frequencyDiff =
                     if (lastFrequency != null) lastFrequency - currentFrequency else 0L
-                val magBuffer = magPacket.re()
                 lastFrequency = currentFrequency
                 lastSampleRate = currentSampleRate
 
                 // update waterfallBuffer if fftSize changed
-                if (fftProcessorData.waterfallBuffer == null || fftProcessorData.waterfallBuffer!![0].size != magBuffer!!.size) {
+                if (fftProcessorData.waterfallBuffer == null || fftProcessorData.waterfallBuffer!![0].size != magBytes.size) {
                     fftProcessorData.waterfallBuffer =
-                        Array(waterfallBufferSize) { ByteArray(magBuffer.size) }
+                        Array(waterfallBufferSize) { ByteArray(magBytes.size) }
                     fftProcessorData.waterfallBufferDirtyMap =
                         Array(waterfallBufferSize) { true }
                     fftProcessorData.writeIndex = 0
@@ -330,7 +350,7 @@ class FftProcessor(
                     // shift history samples because the source frequency changed
                     val shiftOffset = (frequencyDiff * samplesPerHz).toInt()
                     val shiftLeft = shiftOffset < 0
-                    if ((shiftLeft && shiftOffset * -1 < magBuffer.size) || (!shiftLeft && shiftOffset < magBuffer.size)) {
+                    if ((shiftLeft && shiftOffset * -1 < magBytes.size) || (!shiftLeft && shiftOffset < magBytes.size)) {
                         fftProcessorData.waterfallBuffer!!.forEach {
                             if (shiftLeft) {
                                 System.arraycopy(
@@ -364,34 +384,29 @@ class FftProcessor(
                 }
 
                 // copy newest samples into history
-                for (i in magBuffer.indices) // convert to float -> byte:
-                    fftProcessorData.waterfallBuffer!![fftProcessorData.writeIndex][i] =
-                        ((magBuffer[i].coerceIn(MIN_DB, MAX_DB) - MIN_DB) * SCALE).toInt()
-                            .toByte()
+                System.arraycopy(magBytes, 0, fftProcessorData.waterfallBuffer!![fftProcessorData.writeIndex], 0, magBytes.size)
                 fftProcessorData.waterfallBufferDirtyMap!![fftProcessorData.writeIndex] = true
 
-                // debug
-                //Log.d(LOGTAG, "run: writeIndex=${fftProcessorData.writeIndex} magBuffer[0]=${magBuffer[0]}  magBuffer[5]=${magBuffer[5]}  magBuffer[10]=${magBuffer[10]}")
-
                 // update the read/write indices
+                fftProcessorData.newestRowTimeNs = frameDoneNs
+                // the measured period if the device can't keep up with the setting
+                fftProcessorData.rowPeriodNs = if (actualFftFramesPerSecond > 1f) max(targetPeriodNs, (1e9 / actualFftFramesPerSecond).toLong()) else targetPeriodNs
                 fftProcessorData.readIndex = fftProcessorData.writeIndex
                 fftProcessorData.writeIndex =
                     if (fftProcessorData.writeIndex == 0) fftProcessorData.waterfallBuffer!!.size - 1 else fftProcessorData.writeIndex - 1
 
-                // Update Peak Hold (unchanged)
+                // Update Peak Hold
                 if (fftPeakHold) {
-                    val arraySize = fftProcessorData.waterfallBuffer!![0].size
+                    val arraySize = magBytes.size
                     if (fftProcessorData.peaks == null || fftProcessorData.peaks!!.size != arraySize) {
                         fftProcessorData.peaks = FloatArray(arraySize)
-                        for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] =
-                            -999999f
+                        fftProcessorData.peaks!!.fill(-999999f)
                     }
+                    val peaks = fftProcessorData.peaks!!
                     if (fftProcessorData.frequencyOrSampleRateChanged)
-                        for (i in fftProcessorData.peaks!!.indices) fftProcessorData.peaks!![i] =
-                            -999999f
-                    for (i in fftProcessorData.waterfallBuffer!![fftProcessorData.readIndex].indices)
-                        fftProcessorData.peaks!![i] =
-                            max(fftProcessorData.peaks!![i], magBuffer[i])
+                        peaks.fill(-999999f)
+                    for (i in 0 until arraySize)
+                        peaks[i] = max(peaks[i], (magBytes[i].toInt() and 0xFF) * INV_SCALE + MIN_DB)
                 } else {
                     fftProcessorData.peaks = null
                 }
@@ -400,7 +415,7 @@ class FftProcessor(
             }
 
             // Update timing metrics
-            val fftDurationNs = frameDoneNs - measureStartNs
+            val fftDurationNs = System.nanoTime() - workStartNs
             totalWorkTimeNs += fftDurationNs
             totalWaitTimeNs += waitDurationNs
 
@@ -411,8 +426,6 @@ class FftProcessor(
                 totalWorkTimeNs = 0
                 totalWaitTimeNs = 0
             }
-
-            //Log.d(LOGTAG, "run: actualFftFramesPerSecond=$actualFftFramesPerSecond")
         }
 
         // clean up native resources

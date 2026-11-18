@@ -3,7 +3,7 @@ package com.mantz_it.rfanalyzer.analyzer
 import android.util.Log
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
 import com.mantz_it.rfanalyzer.source.IQSourceInterface
-import com.mantz_it.rfanalyzer.source.SamplePacket
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
 import java.io.BufferedOutputStream
 import java.io.IOException
 import java.util.concurrent.ArrayBlockingQueue
@@ -12,52 +12,51 @@ import java.util.concurrent.ArrayBlockingQueue
  * <h1>RF Analyzer - Scheduler</h1>
  *
  * Module:      Scheduler.kt
- * Description: This Thread is responsible for forwarding the samples from the input hardware
- * to the Demodulator and to the Processing Loop and at the correct speed and format.
- * Sample packets are passed to other blocks by using blocking queues. The samples passed
- * to the Demodulator will be shifted to base band first.
- * If the Demodulator or the Processing Loop are to slow, the scheduler will automatically
- * drop incoming samples to keep the buffer of the source from beeing filled up.
+ * Description: This Thread forwards the samples from the source to the Demodulator, the FFT
+ *              (FftProcessor) and a running recording. Packets reach the Demodulator through
+ *              blocking queues, shifted to baseband first. If the Demodulator is too slow, the
+ *              scheduler drops samples so the source's buffers don't fill up.
  *
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-class Scheduler(private val source: IQSourceInterface, private val putNewFftSamples: (FloatArray) -> Unit) : Thread() {
+class Scheduler(
+    private val source: IQSourceInterface,
+    private val putNewFftSamples: (samples: FloatArray, count: Int) -> Unit, // count: valid floats (2 per IQ sample)
+    // Invoked when the scheduler loop terminates itself due to a fatal condition (source stopped
+    // delivering packets), as opposed to a normal, caller-initiated stopScheduler().
+    private val onUnexpectedStop: () -> Unit,
+    /** The squelch's decision, made from the FFT (Squelch.kt). */
+    private val squelch: SquelchGate,
+) : Thread() {
 
     companion object {
-        // Define the size of the fft output and input Queues. By setting this value to 2 we basically end up
-        // with double buffering. Maybe the two queues are overkill, but it works pretty well like this and
-        // it handles the synchronization between the scheduler thread and the processing loop for us.
-        // Note that setting the size to 1 will not work well and any number higher than 2 will cause
-        // higher delays when switching frequencies.
-        private const val FFT_QUEUE_SIZE = 2
-        private const val DEMOD_QUEUE_SIZE = 20
-        private const val SQUELCH_DEBOUNCE_COUNT = 50  // number of loop iterations to wait before squelch goes from true to false
+        /** The demodulator queue holds at least this many packets, and more when they are small:
+         *  a network source (rtl_tcp's 8192-sample packets, a KiwiSDR's 512) catches up after a
+         *  stall in one burst, which must fit - 20 rtl_tcp packets are only 68 ms at 2.4 MSps. */
+        private const val MIN_DEMOD_QUEUE_SIZE = 20
+        private const val MAX_DEMOD_QUEUE_SIZE = 256
+        private const val DEMOD_QUEUE_SAMPLES = 1_048_576
+        /** How much of what arrived while the squelch was closed is kept for when it opens: the FFT
+         *  notices a burst only some frames after it began, and a recording must keep its start. */
+        private const val PREROLL_MS = 400L
         private const val LOGTAG = "Scheduler"
     }
 
-    val demodOutputQueue: ArrayBlockingQueue<SamplePacket> = ArrayBlockingQueue(DEMOD_QUEUE_SIZE) // Queue that delivers samples to the Demodulator block
-    val demodInputQueue: ArrayBlockingQueue<SamplePacket> = ArrayBlockingQueue(DEMOD_QUEUE_SIZE)  // Queue that collects used buffers from the Demodulator block
+    private val samplesPerPacket = source.packetSize / source.bytesPerSample
+    private val demodQueueSize = (DEMOD_QUEUE_SAMPLES / samplesPerPacket.coerceAtLeast(1)).coerceIn(MIN_DEMOD_QUEUE_SIZE, MAX_DEMOD_QUEUE_SIZE)
+    /** The pre-roll goes to the demodulator only while it has more free buffers than this - it
+     *  must never fill the queue (that counts as overload). */
+    private val demodFreeBuffersKept = demodQueueSize / 4
+    val demodOutputQueue: ArrayBlockingQueue<SamplePacket> = ArrayBlockingQueue(demodQueueSize) // Queue that delivers samples to the Demodulator block
+    val demodInputQueue: ArrayBlockingQueue<SamplePacket> = ArrayBlockingQueue(demodQueueSize)  // Queue that collects used buffers from the Demodulator block
     var channelFrequency: Long = 0 // Shift frequency to this value when passing packets to demodulator
     var isDemodulationActivated: Boolean = false // Indicates if samples should be forwarded to the demodulator queues or not.
-    var squelchSatisfied: Boolean = false // indicates whether the current signal is strong enough to cross the squelch threshold
+    /** Whether the demodulator gets samples only while the squelch is open - the analog modes; a
+     *  digital mode gets everything (its decoder finds the signal by itself). */
+    @Volatile var demodulationFollowsSquelch: Boolean = true
 
     private val interleavedFftBuffer = FloatArray(source.packetSize / source.bytesPerSample * 2)
 
@@ -73,12 +72,21 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
     private var onlyWhenSquelchIsSatisfied: Boolean = false                 // only write samples to file when squelch is satisfied
     private var onRecordingStopped: ((finalSize: Long) -> Unit)? = null     // callback when recording stops (with final file size in bytes)
     private var onFileSizeUpdate: ((currentFileSize: Long) -> Unit)? = null // periodical callback during recording to report file size (in bytes) to ui
-    private var squelchDebounceCounter: Int = 0                             // helper counter to debounce squelch changes
+
+    // What arrived while the squelch was closed and wasn't delivered yet (copies - source packets
+    // go back to their pool), oldest first, at most PREROLL_MS of it. Delivered when it opens.
+    private val preroll = ArrayDeque<ByteArray>()
+    private var prerollBytes = 0L
+    private var squelchWasOpen = true
+    // The pre-roll on its way to the demodulator after the squelch opened: delivered as fast as the
+    // demodulator frees buffers, the live packets queued behind it until it caught up (the
+    // demodulator runs faster than real time, so that takes a fraction of a second).
+    private val demodBacklog = ArrayDeque<ByteArray>()
+    private var demodBacklogBytes = 0L
 
     init {
-        val samplesPerPacket = source.packetSize / source.bytesPerSample
         // allocate the buffer packets.
-        for (i in 0 until DEMOD_QUEUE_SIZE) demodInputQueue.offer(
+        for (i in 0 until demodQueueSize) demodInputQueue.offer(
             SamplePacket(samplesPerPacket)
         )
     }
@@ -91,6 +99,78 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
     override fun start() {
         this.stopRequested = false
         super.start()
+    }
+
+    private fun writeToRecording(bytes: ByteArray, count: Int) {
+        try {
+            bufferedOutputStream?.write(bytes, 0, count)
+            recordedFileSize += count.toLong()
+        } catch (e: IOException) {
+            Log.e(LOGTAG, "run: Error while writing to output stream (recording): " + e.message)
+            this.stopRecording()
+        }
+    }
+
+    /** Fills [demodBuffer] with [packet] shifted by the channel frequency and hands it on. */
+    private fun deliverToDemodulator(packet: ByteArray, demodBuffer: SamplePacket) {
+        demodBuffer.setSize(0) // mark buffer as empty
+        source.mixPacketIntoSamplePacket(packet, demodBuffer, channelFrequency)
+        demodOutputQueue.offer(demodBuffer) // deliver packet
+    }
+
+    /** Keeps a copy of [packet]'s valid bytes while the squelch is closed, dropping the oldest
+     *  beyond PREROLL_MS. */
+    private fun keepForPreroll(packet: ByteArray, validByteCount: Int) {
+        val maxBytes = source.sampleRate.toLong() * source.bytesPerSample * PREROLL_MS / 1000
+        val copy = if (preroll.isNotEmpty() && prerollBytes + validByteCount > maxBytes && preroll.first().size == validByteCount) {
+            preroll.removeFirst().also { prerollBytes -= it.size } // reuse the oldest's array
+        } else ByteArray(validByteCount)
+        System.arraycopy(packet, 0, copy, 0, validByteCount)
+        preroll.addLast(copy)
+        prerollBytes += validByteCount
+        while (prerollBytes > maxBytes && preroll.size > 1) prerollBytes -= preroll.removeFirst().size
+    }
+
+    private fun clearPreroll() {
+        preroll.clear()
+        prerollBytes = 0
+    }
+
+    /**
+     * The squelch just opened: what came in since it closed (up to PREROLL_MS) goes to the
+     * recording, and its newest packets to the demodulator - as many as it has free buffers for,
+     * keeping some for the live packets. In arrival order, before the packet that opened it.
+     */
+    private fun deliverPreroll(toRecording: Boolean, toDemodulator: Boolean) {
+        if (toRecording) preroll.forEach { writeToRecording(it, it.size) }
+        if (toDemodulator) preroll.forEach { addToDemodBacklog(it) }
+        clearPreroll()
+    }
+
+    /** Queues [bytes] behind the backlog; beyond twice the pre-roll (a demodulator that can't keep
+     *  up) the oldest is dropped and reported as lost. */
+    private fun addToDemodBacklog(bytes: ByteArray) {
+        demodBacklog.addLast(bytes)
+        demodBacklogBytes += bytes.size
+        val maxBytes = 2 * source.sampleRate.toLong() * source.bytesPerSample * PREROLL_MS / 1000
+        while (demodBacklogBytes > maxBytes && demodBacklog.size > 1) {
+            val dropped = demodBacklog.removeFirst()
+            demodBacklogBytes -= dropped.size
+            OverloadMonitor.reportLoss("Scheduler", dropped.size / source.bytesPerSample * 1_000_000_000L / source.sampleRate.coerceAtLeast(1))
+        }
+    }
+
+    private fun drainDemodBacklog() {
+        while (demodBacklog.isNotEmpty() && demodInputQueue.size > demodFreeBuffersKept) {
+            val bytes = demodBacklog.removeFirst()
+            demodBacklogBytes -= bytes.size
+            deliverToDemodulator(bytes, demodInputQueue.poll() ?: break)
+        }
+    }
+
+    private fun clearDemodBacklog() {
+        demodBacklog.clear()
+        demodBacklogBytes = 0
     }
 
     /**
@@ -124,36 +204,48 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
         Log.i(LOGTAG, "Scheduler started. (Thread: " + this.name + ")")
         var counter: Long = 0
 
-        val nsPerPacket = (source.packetSize / source.bytesPerSample) * 1_000_000_000f / source.sampleRate
-
         source.startSampling()
+        var gapMs = 0L // time without a packet - a network stream may stall and catch up (IQSourceInterface.maxPacketGapMs)
         while (!stopRequested) {
             // Get a new packet from the source:
+            val waitStartMs = System.currentTimeMillis()
             val packet = source.getPacket(1000)
+            if (packet == null && !stopRequested) {
+                gapMs += System.currentTimeMillis() - waitStartMs
+                if (gapMs < source.maxPacketGapMs) {
+                    Log.w(LOGTAG, "run: no packet for $gapMs ms - waiting (up to ${source.maxPacketGapMs} ms)")
+                    continue
+                }
+            }
+            if (packet != null) gapMs = 0
             if (packet == null) {
-                Log.e(LOGTAG, "run: No more packets from source. Shutting down...")
+                if (stopRequested) {
+                    // Expected: a stop was already requested (e.g. user pressed Stop), which
+                    // itself calls source.stopSampling() - packets legitimately stop arriving.
+                    Log.i(LOGTAG, "run: No more packets from source (stop was already requested).")
+                } else {
+                    // Unexpected: nothing asked this scheduler to stop, yet the source stopped delivering packets.
+                    Log.e(LOGTAG, "run: No more packets from source unexpectedly! Notifying caller and shutting down...")
+                    onUnexpectedStop()
+                }
                 this.stopScheduler()
                 break
             }
             val startTimestamp = System.nanoTime()
+            val validByteCount = source.getValidByteCount(packet)
+            val nsPerPacket = (validByteCount / source.bytesPerSample) * 1_000_000_000f / source.sampleRate
 
-            // Squelch debounce: When squelchSatisfied goes from true to false, wait SQUELCH_DEBOUNCE_COUNT loop iterations before actually stop demodulation/recording
-            if (squelchSatisfied)
-                squelchDebounceCounter = 0
-            else if (squelchDebounceCounter < SQUELCH_DEBOUNCE_COUNT)
-                squelchDebounceCounter++
+            val squelchOpen = squelch.open
+            val recordingFollowsSquelch = bufferedOutputStream != null && onlyWhenSquelchIsSatisfied
+            val demodFollowsSquelch = isDemodulationActivated && demodulationFollowsSquelch
+            if (squelchOpen && !squelchWasOpen) deliverPreroll(recordingFollowsSquelch, demodFollowsSquelch)
+            squelchWasOpen = squelchOpen
+            if (!squelchOpen && (recordingFollowsSquelch || demodFollowsSquelch)) keepForPreroll(packet, validByteCount)
+            else clearPreroll()
 
             ///// Recording ////////////////////////////////////////////////////////////////////////
             if (bufferedOutputStream != null) {
-                if(squelchSatisfied || !onlyWhenSquelchIsSatisfied || squelchDebounceCounter < SQUELCH_DEBOUNCE_COUNT) {
-                    try {
-                        bufferedOutputStream!!.write(packet)
-                        recordedFileSize += packet.size.toLong()
-                    } catch (e: IOException) {
-                        Log.e(LOGTAG, "run: Error while writing to output stream (recording): " + e.message)
-                        this.stopRecording()
-                    }
-                }
+                if (squelchOpen || !onlyWhenSquelchIsSatisfied) writeToRecording(packet, validByteCount)
                 // report file size every 100 packets:
                 if(counter % 100 == 0L) onFileSizeUpdate?.let { it(recordedFileSize) }
                 // check if recording should stop:
@@ -181,24 +273,31 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
             }
 
             ///// Demodulation /////////////////////////////////////////////////////////////////////
-            if (isDemodulationActivated && (squelchSatisfied || squelchDebounceCounter < SQUELCH_DEBOUNCE_COUNT)) {
+            if (!isDemodulationActivated) clearDemodBacklog() else drainDemodBacklog()
+            if (isDemodulationActivated && (squelchOpen || !demodulationFollowsSquelch) && demodBacklog.isNotEmpty()) {
+                addToDemodBacklog(packet.copyOf(validByteCount))
+            } else if (isDemodulationActivated && (squelchOpen || !demodulationFollowsSquelch)) {
                 // Get a buffer from the demodulator inputQueue
                 val demodBuffer = demodInputQueue.poll()
                 if (demodBuffer != null) {
-                    demodBuffer.setSize(0) // mark buffer as empty
-                    // fill the packet into the buffer and shift its spectrum by mixFrequency:
-                    source.mixPacketIntoSamplePacket(packet, demodBuffer, channelFrequency)
-                    demodOutputQueue.offer(demodBuffer) // deliver packet
+                    deliverToDemodulator(packet, demodBuffer)
                 } else {
                     Log.d(LOGTAG, "run: Flush the demod queue because demodulator is too slow!")
+                    var flushed = 0L
+                    var flushedNs = nsPerPacket.toLong() // this packet doesn't reach the demodulator either
                     generateSequence { demodOutputQueue.poll() }
-                        .forEach { demodInputQueue.offer(it) }
+                        .forEach {
+                            if (it.sampleRate > 0) flushedNs += it.size() * 1_000_000_000L / it.sampleRate
+                            demodInputQueue.offer(it); flushed++
+                        }
+                    GlobalPerformanceData.incrementCounter("scheduler.demodQueueDrops", flushed)
+                    OverloadMonitor.reportLoss("Scheduler", flushedNs)
                 }
             }
 
             ///// FFT //////////////////////////////////////////////////////////////////////////////
             source.fillPacketIntoInterleavedBuffer(packet, interleavedFftBuffer)
-            putNewFftSamples(interleavedFftBuffer)
+            putNewFftSamples(interleavedFftBuffer, validByteCount / source.bytesPerSample * 2)
 
             // Return the packet back to the source buffer pool:
             source.returnPacket(packet)
@@ -207,6 +306,7 @@ class Scheduler(private val source: IQSourceInterface, private val putNewFftSamp
             val processingTime = System.nanoTime() - startTimestamp
             val load = processingTime / nsPerPacket
             GlobalPerformanceData.updateLoad("Scheduler", load)
+            OverloadMonitor.reportBusy("Scheduler", processingTime, nsPerPacket.toLong())
         }
         this.stopRequested = true
         if (bufferedOutputStream != null) {

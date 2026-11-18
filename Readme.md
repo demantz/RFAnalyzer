@@ -73,9 +73,9 @@ Get RF Analyzer on **Google Play**:
 
 [![Get it on Google Play](./docs/assets/google_play_badge.png)](https://play.google.com/store/apps/details?id=com.mantz_it.rfanalyzer)
 
-The app is available as a **free trial**, giving you 7 days of usage after
-installation and up to 60 minutes of operation time. This allows you to fully
-explore the features and see if it fits your needs and works with your
+The app is available as a **free trial** with 60 minutes of operating time;
+once it is used up, each start still runs for 30 seconds. This allows you to
+fully explore the features and see if it fits your needs and works with your
 hardware.
 
 If you enjoy using the app, you can unlock the full version via a **one-time
@@ -122,13 +122,40 @@ during the development of RF Analyzer:
   and motivates me to keep improving the app!
 
 
+## Building from Source
+
+The `ipc/` folder is a git submodule,
+[rfanalyzer_ipc](https://github.com/demantz/rfanalyzer_ipc) (MIT): the interface
+to the digital extension. Clone with it and build the F-Droid flavor:
+
+```bash
+git clone --recursive https://github.com/demantz/RFAnalyzer.git
+cd RFAnalyzer
+./gradlew assembleFossDebug
+```
+
+In an existing clone, `git submodule update --init` fetches `ipc/`. Besides the
+Android SDK and NDK, the build needs [MkDocs](https://www.mkdocs.org/) with the
+Material theme (`pip install mkdocs-material`): it turns `docs/` into the
+built-in user manual.
+
 ## License
 
 This software is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public
 License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-[http://www.gnu.org/licenses/gpl.html](http://www.gnu.org/licenses/gpl.html) GPL version 2 or higher
+version 2 of the License, or (at your option) any later version (`COPYING`).
+
+Some files are derived from other projects and carry their licenses, so the app as a whole is
+distributed under the GPL version 3 or later:
+
+- `dsp/FirFilter.kt`, `ComplexFirFilter.kt`, `RationalResampler.kt`, `WindowFunctions.kt` and
+  `nativedsp/src/main/cpp/rational_resampler.c`: derived from GNU Radio, GPL version 3 or later
+  (`LICENSES/GPL-3.0.txt`).
+- `digiext/rds/Tmc.kt` and the TMC tables in `app/src/main/resources/rds/`: derived from RDS
+  Surveyor, LGPL version 3 or later (`LICENSES/LGPL-3.0.txt`).
+
+The bundled libraries keep their own licenses (in their folders and in the app's About screen).
 
 Principal Author: Dennis Mantz
 

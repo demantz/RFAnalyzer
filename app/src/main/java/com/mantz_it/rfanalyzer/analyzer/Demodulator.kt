@@ -2,70 +2,43 @@ package com.mantz_it.rfanalyzer.analyzer
 
 import android.util.Log
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
-import com.mantz_it.rfanalyzer.dsp.ComplexFirFilter
-import com.mantz_it.rfanalyzer.dsp.FirFilter
-import com.mantz_it.rfanalyzer.source.SamplePacket
-import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
+import com.mantz_it.rfanalyzer.dsp.AmDemodulator
+import com.mantz_it.rfanalyzer.dsp.CwDemodulator
+import com.mantz_it.rfanalyzer.dsp.FmDemodulator
+import com.mantz_it.rfanalyzer.dsp.SsbDemodulator
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
+import com.mantz_it.rfanalyzer.ui.tabs.DemodulationMode
+import java.io.BufferedOutputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.ArrayBlockingQueue
-import kotlin.math.atan2
 
 /**
  * <h1>RF Analyzer - Demodulator</h1>
  *
  * Module:      Demodulator.kt
- * Description: This class implements demodulation of various analog radio modes (FM, AM, SSB).
- * It runs as a separate thread. It will read raw complex samples from a queue,
- * process them (channel selection, filtering, demodulating) and forward the to
- * an AudioSink thread.
+ * Description: This class implements demodulation of the analog radio modes (AM, FM, SSB, CW) and
+ *              hands the digital modes' samples to the digital extension. It runs as a separate
+ *              thread. It reads baseband samples from a queue, resamples them to the mode's rate,
+ *              demodulates them and forwards the audio to an AudioSink thread.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 class Demodulator(
     inputQueue: ArrayBlockingQueue<SamplePacket>,   // Queue that delivers received baseband signals
     inputReturnQueue: ArrayBlockingQueue<SamplePacket>,  // Queue to return used buffers from the inputQueue
-    packetSize: Int,                                 // Size of the packets in the input queue
+    val packetSize: Int,                                 // Size of the packets in the input queue
+    val pushDigitalExtensionInputSamples: (SamplePacket) -> Boolean,
+    val pollDigitalExtensionOutputSamples: (SamplePacket) -> Boolean,
     lowPowerformanceMode: Boolean = false           // Flag to enable low performance mode
 ) : Thread() {
 
     companion object {
         private const val LOGTAG = "Demodulator"
-        private const val AUDIO_RATE = 48000
-        private const val BAND_PASS_ATTENUATION = 40
-
-        // The quadrature rate is the sample rate that is used for the demodulation and dependend on the mode:
-        private val DemodulationMode.quadratureRate: Int
-            get() = when(this) {
-                DemodulationMode.OFF -> 2 * AUDIO_RATE  // this value is a dummy to avoid setting the decimator output rate to illegal values!
-                DemodulationMode.AM  -> 2 * AUDIO_RATE
-                DemodulationMode.NFM -> 2 * AUDIO_RATE
-                DemodulationMode.WFM -> 8 * AUDIO_RATE
-                DemodulationMode.LSB -> 2 * AUDIO_RATE
-                DemodulationMode.USB -> 2 * AUDIO_RATE
-                DemodulationMode.CW  -> 1 * AUDIO_RATE
-            }
-        val MIN_INPUT_RATE = DemodulationMode.WFM.quadratureRate
-
-        // FILTERING (This is the channel filter controlled by the user)
-        private const val USER_FILTER_ATTENUATION = 60
-
-        const val CW_OFFSET_FREQUENCY = 750  // Offset for the CW signal. 750Hz will be the audio tone the user hears if the signal is exactly at the channel frequency
+        const val AUDIO_RATE = 48000
     }
 
     private var stopRequested = true
@@ -77,45 +50,85 @@ class Demodulator(
             resampler.maxTaps = (filterQuality*500).toInt()
         }
 
-    // Channel Filter
-    private var userFilter: FirFilter? = null
     var channelWidth: Int = 0
         set(value) { field = value.coerceIn(demodulationMode.minChannelWidth, demodulationMode.maxChannelWidth) }
 
-    // Create internal sample buffers:
-    // Note that we create the buffers for the case that there is no downsampling necessary
-    // All other cases with input decimation > 1 are also possible because they only need
-    // smaller buffers.
+    // Internal sample buffers: packetSize, the most a resampled packet holds.
     private val quadratureSamples = SamplePacket(packetSize)
+    // Demodulated into when the audio sink has no free buffer: the packet is still demodulated
+    // (filter state stays continuous, a digital mode's extension gets every sample), only its
+    // audio is not played.
+    private val droppedAudio = SamplePacket(packetSize)
 
-    // DEMODULATION
-    private var carryOverSamplesRe: Float = 0f // used for FM demodulation
-    private var carryOverSamplesIm: Float = 0f // used for FM demodulation
-    private var lastMax = 0f // used for gain control in AM / SSB demodulation
-    private var bandPassFilter: ComplexFirFilter? = null // used for SSB demodulation
+    // DEMODULATION - one lazily-initialized instance per mode, each owning its own fixed-sample-rate
+    // filter state. Lazy construction and all property mutation below happen exclusively inside
+    // run(), on this thread, so LazyThreadSafetyMode.NONE is safe.
+    private val amDemodulator by lazy(LazyThreadSafetyMode.NONE) { AmDemodulator(DemodulationMode.AM.basebandSamplerate, packetSize) }
+    private val nfmDemodulator by lazy(LazyThreadSafetyMode.NONE) { FmDemodulator(DemodulationMode.NFM.basebandSamplerate, packetSize, maxDeviationRatio = 0.75f, postDemodAudioCutoffHz = 3000f) }
+    private val wfmDemodulator by lazy(LazyThreadSafetyMode.NONE) { FmDemodulator(DemodulationMode.WFM.basebandSamplerate, packetSize, maxDeviationRatio = 0.85f, postDemodAudioCutoffHz = 15000f) }
+    private val lsbDemodulator by lazy(LazyThreadSafetyMode.NONE) { SsbDemodulator(DemodulationMode.LSB.basebandSamplerate, packetSize, upperBand = false) }
+    private val usbDemodulator by lazy(LazyThreadSafetyMode.NONE) { SsbDemodulator(DemodulationMode.USB.basebandSamplerate, packetSize, upperBand = true) }
+    private val cwDemodulator by lazy(LazyThreadSafetyMode.NONE) { CwDemodulator(DemodulationMode.CW.basebandSamplerate, packetSize) }
+
     var demodulationMode: DemodulationMode = DemodulationMode.OFF
         /**
-         * Sets a new demodulation mode. This can be done while the demodulator is running!
-         * Will automatically adjust internal sample rate conversions and the user filter
-         * if necessary
-         *
-         * @param demodulationMode    Demodulation Mode (DEMODULATION_OFF, *_AM, *_NFM, *_WFM, ...)
+         * Sets a new demodulation mode, also while the demodulator is running: sets the
+         * resampler's output rate, the mode's default channel width and stereo or mono audio.
          */
         set(value) {
-            resampler.outputSampleRate = value.quadratureRate
+            resampler.outputSampleRate = value.basebandSamplerate
             field = value
             this.channelWidth = value.defaultChannelWidth
+            audioSink.setStereo(value == DemodulationMode.WFM && wfmStereoEnabled)
         }
 
-    // RESAMPLING (input sample rate --> QUADRATURE_RATE)
-    private val resampler = Resampler(demodulationMode.quadratureRate, packetSize, inputQueue, inputReturnQueue, (filterQuality*500).toInt())
+    // If true, WFM uses the stereo+RDS demodulator in the digital extension; if false, the local mono wfmDemodulator is used instead.
+    var wfmStereoEnabled: Boolean = false
+        set(value) {
+            field = value
+            audioSink.setStereo(value && demodulationMode == DemodulationMode.WFM)
+        }
+
+    // RESAMPLING (input sample rate --> the mode's baseband rate)
+    private val resampler = Resampler(demodulationMode.basebandSamplerate, packetSize, inputQueue, inputReturnQueue, (filterQuality*500).toInt())
 
     // AUDIO OUTPUT
-    private var audioSink: AudioSink = AudioSink(packetSize, AUDIO_RATE, lowPowerformanceMode) // Will do QUADRATURE_RATE --> AUDIO_RATE and audio output
+    private var audioSink: AudioSink = AudioSink(packetSize, AUDIO_RATE, lowPowerformanceMode) // the demodulated audio's rate --> AUDIO_RATE, and the audio output
     var audioVolumeLevel = 1f        // Audio Volume (0 is mute and 1 is full volume)
 
+    // BASEBAND RECORDING
+    // Records the samples exactly as they come out of the resampler, i.e. before channel
+    // filtering (interleaved little-endian float32 I/Q, no header).
+    private var bufferedOutputStream: BufferedOutputStream? = null
+    private var recordedFileSize: Long = 0
+    private var recordedStartTimestamp: Long = 0
+    private var maxRecordingTime: Long? = null
+    private var maxRecordingFileSize: Long? = null
+    private var onRecordingStopped: ((finalSize: Long) -> Unit)? = null
+    private var onFileSizeUpdate: ((currentFileSize: Long) -> Unit)? = null
+    private var onFirstSampleRecorded: ((timestamp: Long) -> Unit)? = null
+    private var stopRecordingRequested = false
+    private var recordingCounter: Long = 0
+    private val recordingByteBuffer = ByteBuffer.allocate(4 * 1000).order(ByteOrder.LITTLE_ENDIAN)
+
+    /** [timestamp]: UTC time (ms) of re[0]/im[0]. */
+    @Throws(IOException::class)
+    private fun writeSamplesToRecording(re: FloatArray, im: FloatArray, n: Int, timestamp: Long) {
+        if (recordedFileSize == 0L && n > 0) onFirstSampleRecorded?.let { it(timestamp) }
+        for (idx in 0..<n) {
+            recordingByteBuffer.putFloat(re[idx])
+            recordingByteBuffer.putFloat(im[idx])
+            if (!recordingByteBuffer.hasRemaining()) {
+                recordingByteBuffer.flip()
+                bufferedOutputStream!!.write(recordingByteBuffer.array(), 0, recordingByteBuffer.limit())
+                recordingByteBuffer.clear()
+            }
+        }
+        recordedFileSize += n.toLong() * 8
+    }
+
     /**
-     * Starts the thread. This thread will start 2 more threads for decimation and audio output.
+     * Starts the thread. This thread will start 2 more threads for resampling and audio output.
      * These threads are managed by the Demodulator and terminated, when the Demodulator thread
      * terminates.
      */
@@ -130,6 +143,36 @@ class Demodulator(
      */
     fun stopDemodulator() {
         stopRequested = true
+        // Wakes the loop immediately out of its bounded resampler/audioSink polls instead of
+        // waiting out their timeouts - both already catch InterruptedException and return null.
+        interrupt()
+    }
+
+    /**
+     * Will stop writing baseband samples to the bufferedOutputStream and close it.
+     */
+    fun stopBasebandRecording() {
+        this.stopRecordingRequested = true
+        Log.i(LOGTAG, "stopBasebandRecording")
+    }
+
+    fun startBasebandRecording(bufferedOutputStream: BufferedOutputStream,
+                                maxRecordingTime: Long? = null,                          // Maximum time to record (in milliseconds). null -> never stop
+                                maxRecordingFileSize: Long? = null,                      // Maximum file size for the recording (in bytes). null -> never stop
+                                onRecordingStopped: (finalSize: Long) -> Unit,           // callback when recording stops (with final file size in bytes)
+                                onFileSizeUpdate: (currentFileSize: Long) -> Unit,       // periodical callback during recording to report file size (in bytes) to ui
+                                onFirstSampleRecorded: (timestamp: Long) -> Unit) {      // callback with the UTC time (ms) of the first recorded sample
+        stopRecordingRequested = false
+        recordedFileSize = 0
+        recordedStartTimestamp = System.currentTimeMillis()
+        recordingByteBuffer.clear()
+        this.bufferedOutputStream = bufferedOutputStream
+        this.maxRecordingTime = maxRecordingTime
+        this.maxRecordingFileSize = maxRecordingFileSize
+        this.onRecordingStopped = onRecordingStopped
+        this.onFileSizeUpdate = onFileSizeUpdate
+        this.onFirstSampleRecorded = onFirstSampleRecorded
+        Log.i(LOGTAG, "startBasebandRecording: Baseband recording started.")
     }
 
     override fun run() {
@@ -142,272 +185,184 @@ class Demodulator(
         // Start the audio sink thread:
         audioSink.start()
 
-        // Start decimator thread:
+        // Start the resampler thread:
         resampler.start()
 
         while (!stopRequested) {
-            // Get downsampled packet from the decimator:
+            // Get a resampled packet from the resampler:
             inputSamples = resampler.getResampledPacket(1000)
             val startTimestamp = System.nanoTime()
 
             // Verify the input sample packet is not null:
             if (inputSamples == null) {
-                //Log.d(LOGTAG, "run: Decimated sample is null. skip this round...");
                 continue
             }
 
-            // filtering (sample rate is demodulationMode.quadratureRate)
-            applyUserFilter(inputSamples, quadratureSamples) // The result from filtering is stored in quadratureSamples
+            ///// Baseband Recording //////////////////////////////////////////////////////////
+            if (bufferedOutputStream != null) {
+                try {
+                    val re = inputSamples.re()
+                    val im = inputSamples.im()
+                    val n = inputSamples.size()
 
-            // return input samples to the decimator block:
+                    // While the squelch gates the samples (analog modes), the Scheduler hands on
+                    // only what passes it - including the burst's start from before it opened.
+                    writeSamplesToRecording(re, im, n, inputSamples.timestamp)
+                } catch (e: IOException) {
+                    Log.e(LOGTAG, "run: Error while writing to output stream (baseband recording): " + e.message)
+                    stopBasebandRecording()
+                }
+                // report file size every 100 packets:
+                if (recordingCounter % 100 == 0L) onFileSizeUpdate?.let { it(recordedFileSize) }
+                // check if recording should stop:
+                maxRecordingTime?.let { if (it <= (System.currentTimeMillis() - recordedStartTimestamp)) {
+                        Log.i(LOGTAG, "run: Max Baseband Recording Time reached!")
+                        stopBasebandRecording()
+                    }
+                }
+                maxRecordingFileSize?.let { if (it <= recordedFileSize) {
+                        Log.i(LOGTAG, "run: Max Baseband Recording File Size reached!")
+                        stopBasebandRecording()
+                    }
+                }
+                if (stopRecordingRequested) {
+                    try {
+                        recordingByteBuffer.flip()
+                        if (recordingByteBuffer.limit() > 0) bufferedOutputStream!!.write(recordingByteBuffer.array(), 0, recordingByteBuffer.limit())
+                        recordingByteBuffer.clear()
+                        bufferedOutputStream!!.close()
+                    } catch (e: IOException) {
+                        Log.e(LOGTAG, "run: Error while closing output stream (baseband recording): " + e.message)
+                    }
+                    bufferedOutputStream = null
+                    Log.i(LOGTAG, "run: Baseband recording stopped.")
+                    onRecordingStopped?.let { it(recordedFileSize) }
+                }
+                recordingCounter++
+            }
+
+            // Channel filtering is each mode's demodulator's job: just copy the resampled I/Q
+            // into quadratureSamples.
+            val inRe = inputSamples.re()
+            val inIm = inputSamples.im()
+            val outRe = quadratureSamples.re()
+            val outIm = quadratureSamples.im()
+            for(i in 0..<inputSamples.size()) {
+                outRe[i] = inRe[i]
+                outIm[i] = inIm[i]
+            }
+            quadratureSamples.setSize(inputSamples.size())
+            quadratureSamples.frequency = inputSamples.frequency
+            quadratureSamples.sampleRate = inputSamples.sampleRate
+            quadratureSamples.timestamp = inputSamples.timestamp
+
+            // Drop packets still tagged with a previous mode's sample rate: the Resampler
+            // reconfigures itself asynchronously on its own thread when demodulationMode changes,
+            // so a packet dequeued right after a mode switch can briefly carry a stale rate. Each
+            // demod class below is built for one fixed rate, so feeding it a wrong-rate packet
+            // would silently mis-filter.
+            if (quadratureSamples.sampleRate != demodulationMode.basebandSamplerate) {
+                Log.d(LOGTAG, "run: dropping packet tagged with stale sampleRate=${quadratureSamples.sampleRate}, expected ${demodulationMode.basebandSamplerate} for mode $demodulationMode")
+                resampler.returnResampledPacket(inputSamples)
+                continue
+            }
+
+            // return input samples to the resampler:
             resampler.returnResampledPacket(inputSamples)
 
             val time1 = System.nanoTime() - startTimestamp
             val nsPerPacket = inputSamples.size() * 1_000_000_000f / inputSamples.sampleRate
 
-            // get buffer from audio sink
-            audioBuffer = audioSink.getPacketBuffer(1000)
+            // Get a buffer from the audio sink without waiting: the chain is clocked by the source,
+            // not by audio playback. With none free (a network source's burst, or the source's
+            // clock running a little ahead of the audio clock) this packet's audio is dropped -
+            // waiting here would back up the whole chain until the Scheduler flushes its queue.
+            val playable = audioSink.getPacketBuffer(0)
+            if (playable == null) GlobalPerformanceData.incrementCounter("demodulator.audioDropped")
+            audioBuffer = playable ?: droppedAudio
 
             val startTimestamp2 = System.nanoTime()
 
-            if (audioBuffer == null) {
-                Log.d(LOGTAG, "run: Audio buffer is null. skip this round...")
-                continue
-            }
-
             audioBuffer.setSize(0) // mark buffer as empty
 
-            // demodulate (sample rate is demodulationMode.quadratureRate)
+            // demodulate (sample rate is demodulationMode.basebandSamplerate)
             when (demodulationMode) {
                 DemodulationMode.OFF -> { }
-                DemodulationMode.AM  -> demodulateAM(quadratureSamples, audioBuffer)
-                DemodulationMode.NFM -> demodulateFM(quadratureSamples, audioBuffer, maxDeviation = channelWidth * 0.75f)
-                DemodulationMode.WFM -> demodulateFM(quadratureSamples, audioBuffer, maxDeviation = channelWidth * 0.85f)
-                DemodulationMode.LSB -> demodulateSSB(quadratureSamples, audioBuffer, false)
-                DemodulationMode.USB -> demodulateSSB(quadratureSamples, audioBuffer, true)
-                DemodulationMode.CW  -> demodulateCW(quadratureSamples, audioBuffer)
+                DemodulationMode.AM  -> {
+                    amDemodulator.channelWidth = channelWidth
+                    amDemodulator.demodulate(quadratureSamples, audioBuffer)
+                }
+                DemodulationMode.NFM -> {
+                    nfmDemodulator.channelWidth = channelWidth
+                    nfmDemodulator.demodulate(quadratureSamples, audioBuffer)
+                }
+                DemodulationMode.WFM -> {
+                    if (wfmStereoEnabled) {
+                        pushDigitalExtensionInputSamples(quadratureSamples)
+                        val pollSuccess = pollDigitalExtensionOutputSamples(audioBuffer)
+                        if (!pollSuccess) GlobalPerformanceData.incrementCounter("demodulator.ipcPollMiss")
+                    } else {
+                        wfmDemodulator.channelWidth = channelWidth
+                        wfmDemodulator.demodulate(quadratureSamples, audioBuffer)
+                    }
+                }
+                DemodulationMode.LSB -> {
+                    lsbDemodulator.channelWidth = channelWidth
+                    lsbDemodulator.demodulate(quadratureSamples, audioBuffer)
+                }
+                DemodulationMode.USB -> {
+                    usbDemodulator.channelWidth = channelWidth
+                    usbDemodulator.demodulate(quadratureSamples, audioBuffer)
+                }
+                DemodulationMode.CW  -> {
+                    cwDemodulator.channelWidth = channelWidth
+                    cwDemodulator.demodulate(quadratureSamples, audioBuffer)
+                }
+                DemodulationMode.RTTY, DemodulationMode.PSK31, DemodulationMode.R09, DemodulationMode.FT8, DemodulationMode.AX25, DemodulationMode.ADSB, DemodulationMode.POCSAG, DemodulationMode.LORA -> {
+                    pushDigitalExtensionInputSamples(quadratureSamples)
+                    val pollSuccess = pollDigitalExtensionOutputSamples(audioBuffer)
+                    if (!pollSuccess) GlobalPerformanceData.incrementCounter("demodulator.ipcPollMiss")
+                }
             }
 
             // apply audio volume:
             val audioBufferRe = audioBuffer.re()
+            val audioBufferIm = audioBuffer.im()
             for (i in 0..<audioBuffer.size()) {
                 audioBufferRe[i] = audioBufferRe[i] * audioVolumeLevel
+                audioBufferIm[i] = audioBufferIm[i] * audioVolumeLevel
             }
 
             // Performance Tracking
             val processingTime = System.nanoTime() - startTimestamp2 + time1
             GlobalPerformanceData.updateLoad("Demodulator", processingTime / nsPerPacket)
+            OverloadMonitor.reportBusy("Demodulator", processingTime, nsPerPacket.toLong())
 
-            // play audio (sample rate is demodulationMode.quadratureRate)
-            audioSink.enqueuePacket(audioBuffer)
+            // play audio (the AudioSink resamples it to AUDIO_RATE)
+            if (playable != null) audioSink.enqueuePacket(playable)
         }
 
         // Stop the audio sink thread:
         audioSink.stopSink()
 
-        // Stop the decimator thread:
+        // Stop the resampler thread:
         resampler.stopResampler()
 
         this.stopRequested = true
+        if (bufferedOutputStream != null) {
+            try {
+                recordingByteBuffer.flip()
+                if (recordingByteBuffer.limit() > 0) bufferedOutputStream!!.write(recordingByteBuffer.array(), 0, recordingByteBuffer.limit())
+                recordingByteBuffer.clear()
+                bufferedOutputStream!!.close()
+            } catch (e: IOException) {
+                Log.e(LOGTAG, "run: Error while closing output stream (cleanup)(baseband recording): " + e.message)
+            }
+            bufferedOutputStream = null
+            Log.i(LOGTAG, "run: Baseband recording stopped (Demodulator shutting down).")
+            onRecordingStopped?.let { it(recordedFileSize) }
+        }
         Log.i(LOGTAG, "Demodulator stopped. (Thread: " + this.name + ")")
     }
 
-    /**
-     * Will filter the samples in input according to the user filter settings.
-     * Filtered samples are stored in output. Note: All samples in output
-     * will always be overwritten!
-     *
-     * @param input     incoming (unfiltered) samples
-     * @param output    outgoing (filtered) samples
-     */
-    private fun applyUserFilter(input: SamplePacket, output: SamplePacket) {
-        // Verify that the filter is still correct configured:
-        if (userFilter == null || (userFilter!!.cutOffFrequency.toInt()) != channelWidth) {
-            // We have to (re-)create the user filter:
-            this.userFilter = FirFilter.createLowPass(
-                1,
-                1f,
-                input.sampleRate.toFloat(),
-                channelWidth.toFloat(),
-                input.sampleRate * 0.10f,
-                USER_FILTER_ATTENUATION.toFloat()
-            )
-
-            if (userFilter == null)
-                return  // This may happen if input samples changed rate or demodulation was turned off. Just skip the filtering.
-
-            Log.d(LOGTAG, ("applyUserFilter: created new user filter with " + userFilter!!.numberOfTaps
-                        + " taps. Decimation=" + userFilter!!.decimation + " Cut-Off=" + userFilter!!.cutOffFrequency
-                        + " transition=" + userFilter!!.transitionWidth)
-            )
-        }
-        output.setSize(0) // mark buffer as empty
-        if (userFilter!!.filter(input, output, 0, input.size()) < input.size()) {
-            Log.e(LOGTAG, "applyUserFilter: could not filter all samples from input packet.")
-        }
-    }
-
-    /**
-     * Will FM demodulate the samples in input. Use ~75000 deviation for wide band FM
-     * and ~3000 deviation for narrow band FM.
-     * Demodulated samples are stored in the real array of output. Note: All samples in output
-     * will always be overwritten!
-     *
-     * @param input        incoming (modulated) samples
-     * @param output    outgoing (demodulated) samples
-     */
-    private fun demodulateFM(input: SamplePacket, output: SamplePacket, maxDeviation: Float) {
-        val reIn = input.re()
-        val imIn = input.im()
-        val reOut = output.re()
-        val imOut = output.im()
-        val inputSize = input.size()
-        val quadratureGain = demodulationMode.quadratureRate / (2 * Math.PI * maxDeviation).toFloat()
-
-        if (inputSize == 0)
-            return
-
-        // Quadrature demodulation:
-        reOut[0] = reIn[0] * carryOverSamplesRe + imIn[0] * carryOverSamplesIm
-        imOut[0] = imIn[0] * carryOverSamplesRe - reIn[0] * carryOverSamplesIm
-        reOut[0] = quadratureGain * atan2(imOut[0], reOut[0])
-        for (i in 1..<inputSize) {
-            reOut[i] = reIn[i] * reIn[i - 1] + imIn[i] * imIn[i - 1]
-            imOut[i] = imIn[i] * reIn[i - 1] - reIn[i] * imIn[i - 1]
-            reOut[i] = quadratureGain * atan2(imOut[i], reOut[i])
-        }
-        carryOverSamplesRe = reIn[inputSize - 1]
-        carryOverSamplesIm = imIn[inputSize - 1]
-        output.setSize(inputSize)
-        output.sampleRate = demodulationMode.quadratureRate
-    }
-
-    /**
-     * Will AM demodulate the samples in input.
-     * Demodulated samples are stored in the real array of output. Note: All samples in output
-     * will always be overwritten!
-     *
-     * @param input        incoming (modulated) samples
-     * @param output    outgoing (demodulated) samples
-     */
-    private fun demodulateAM(input: SamplePacket, output: SamplePacket) {
-        val reIn = input.re()
-        val imIn = input.im()
-        val reOut = output.re()
-        var avg = 0f
-        lastMax *= 0.95.toFloat() // simplest AGC
-
-        // Complex to magnitude
-        for (i in 0..<input.size()) {
-            reOut[i] = (reIn[i] * reIn[i] + imIn[i] * imIn[i])
-            avg += reOut[i]
-            if (reOut[i] > lastMax) lastMax = reOut[i]
-        }
-        avg /= input.size()
-
-        // normalize values:
-        val gain = 0.75f / lastMax
-        for (i in 0..<input.size()) reOut[i] = (reOut[i] - avg) * gain
-
-        output.setSize(input.size())
-        output.sampleRate = demodulationMode.quadratureRate
-    }
-
-    /**
-     * Will SSB demodulate the samples in input.
-     * Demodulated samples are stored in the real array of output. Note: All samples in output
-     * will always be overwritten!
-     *
-     * @param input        incoming (modulated) samples
-     * @param output    outgoing (demodulated) samples
-     * @param upperBand    if true: USB; if false: LSB
-     */
-    private fun demodulateSSB(input: SamplePacket, output: SamplePacket, upperBand: Boolean) {
-        val reOut = output.re()
-
-        // complex band pass:
-        if (bandPassFilter == null || (upperBand && ((bandPassFilter!!.highCutOffFrequency.toInt()) != channelWidth))
-            || (!upperBand && ((bandPassFilter!!.lowCutOffFrequency.toInt()) != -channelWidth))
-        ) {
-            // We have to (re-)create the band pass filter:
-            this.bandPassFilter = ComplexFirFilter.createBandPass(
-                2,  // Decimate by 2; => AUDIO_RATE
-                1f,
-                input.sampleRate.toFloat(),
-                if (upperBand) 200f else -channelWidth.toFloat(),
-                if (upperBand) channelWidth.toFloat() else -200f,
-                input.sampleRate * 0.01f,
-                BAND_PASS_ATTENUATION.toFloat()
-            )
-            if (bandPassFilter == null) return  // This may happen if input samples changed rate or demodulation was turned off. Just skip the filtering.
-
-            Log.d(
-                LOGTAG,
-                ("demodulateSSB: created new band pass filter with " + bandPassFilter!!.numberOfTaps
-                        + " taps. Decimation=" + bandPassFilter!!.decimation + " Low-Cut-Off=" + bandPassFilter!!.lowCutOffFrequency
-                        + " High-Cut-Off=" + bandPassFilter!!.highCutOffFrequency + " transition=" + bandPassFilter!!.transitionWidth)
-            )
-        }
-        output.setSize(0) // mark buffer as empty
-        if (bandPassFilter!!.filter(input, output, 0, input.size()) < input.size()) {
-            Log.e(LOGTAG, "demodulateSSB: could not filter all samples from input packet.")
-        }
-
-        // gain control: searching for max:
-        lastMax *= 0.95.toFloat() // simplest AGC
-        for (i in 0..<output.size()) {
-            if (reOut[i] > lastMax) lastMax = reOut[i]
-        }
-        // normalize values:
-        val gain = 0.75f / lastMax
-        for (i in 0..<output.size()) reOut[i] *= gain
-    }
-
-    /**
-     * Will CW demodulate the samples in input. Expects the signal to be at CW_FREQUENCY_OFFSET Hz.
-     * Demodulated samples are stored in the real array of output. Note: All samples in output
-     * will always be overwritten!
-     *
-     * @param input        incoming (modulated) samples
-     * @param output       outgoing (demodulated) samples
-     */
-    private fun demodulateCW(input: SamplePacket, output: SamplePacket) {
-        val reOut = output.re()
-
-        // complex band pass:
-        if (bandPassFilter == null || (bandPassFilter!!.highCutOffFrequency.toInt() != CW_OFFSET_FREQUENCY + channelWidth/2)) {
-            // We have to (re-)create the band pass filter:
-            this.bandPassFilter = ComplexFirFilter.createBandPass(
-                1,
-                1f,
-                input.sampleRate.toFloat(),
-                CW_OFFSET_FREQUENCY - channelWidth/2.0f,
-                CW_OFFSET_FREQUENCY + channelWidth/2.0f,
-                channelWidth * 0.2f,
-                BAND_PASS_ATTENUATION.toFloat(),
-                2000
-            )
-            if (bandPassFilter == null) return  // This may happen if input samples changed rate or demodulation was turned off. Just skip the filtering.
-
-            Log.d(
-                LOGTAG,
-                ("demodulateCW: created new band pass filter with " + bandPassFilter!!.numberOfTaps
-                        + " taps. Decimation=" + bandPassFilter!!.decimation + " Low-Cut-Off=" + bandPassFilter!!.lowCutOffFrequency
-                        + " High-Cut-Off=" + bandPassFilter!!.highCutOffFrequency + " transition=" + bandPassFilter!!.transitionWidth)
-            )
-        }
-        output.setSize(0) // mark buffer as empty
-        if (bandPassFilter!!.filter(input, output, 0, input.size()) < input.size()) {
-            Log.e(LOGTAG, "demodulateCW: could not filter all samples from input packet.")
-        }
-
-        // gain control: searching for max:
-        lastMax *= 0.95.toFloat() // simplest AGC
-        for (i in 0..<output.size()) {
-            if (reOut[i] > lastMax) lastMax = reOut[i]
-        }
-        // normalize values:
-        val gain = 0.75f / lastMax
-        for (i in 0..<output.size()) reOut[i] *= gain
-    }
 }

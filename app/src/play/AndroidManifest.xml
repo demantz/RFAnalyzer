@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Play builds only: RF Analyzer Digital, the extension FOSS builds never use (DigitalFeatures.shown) -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="com.mantz_it.rfanalyzer_digital.IPC" />
+    <queries>
+        <package android:name="com.mantz_it.rfanalyzer_digital" />
+    </queries>
+
+    <application>
+        <activity android:name=".ui.MainActivity">
+            <!-- The extension's launcher icon (DigitalExtensionApps.ACTION_OPEN_DIGITAL_TAB) -->
+            <intent-filter>
+                <action android:name="com.mantz_it.rfanalyzer.action.OPEN_DIGITAL_TAB" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

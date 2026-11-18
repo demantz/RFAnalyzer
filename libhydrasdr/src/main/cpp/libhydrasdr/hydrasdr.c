@@ -85,7 +85,7 @@ static const hydrasdr_device_entry_t hydrasdr_device_registry[] = {
  */
 static const hydrasdr_device_entry_t* find_device_by_vid_pid(uint16_t vid, uint16_t pid)
 {
-	for (int i = 0; i < HYDRASDR_DEVICE_REGISTRY_COUNT; i++) {
+	for (size_t i = 0; i < HYDRASDR_DEVICE_REGISTRY_COUNT; i++) {
 		if (hydrasdr_device_registry[i].vid == vid &&
 		    hydrasdr_device_registry[i].pid == pid) {
 			return &hydrasdr_device_registry[i];
@@ -100,7 +100,7 @@ static const hydrasdr_device_entry_t* find_device_by_vid_pid(uint16_t vid, uint1
  */
 static const hydrasdr_device_entry_t* find_device_by_board_id(enum hydrasdr_board_id board_id)
 {
-	for (int i = 0; i < HYDRASDR_DEVICE_REGISTRY_COUNT; i++) {
+	for (size_t i = 0; i < HYDRASDR_DEVICE_REGISTRY_COUNT; i++) {
 		if (hydrasdr_device_registry[i].board_id == board_id) {
 			return &hydrasdr_device_registry[i];
 		}
@@ -383,8 +383,11 @@ static int hydrasdr_open_init(struct hydrasdr_device** device, uint64_t serial_n
 	}
 
 #ifdef __ANDROID__
-	// LibUSB does not support device discovery on android
-	libusb_set_option(NULL, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
+	// LibUSB does not support device discovery on native Android,
+	// Termux provides support with a custom libusb package and termux-usb wrapper.
+	if (getenv("TERMUX_VERSION") == NULL) {
+		libusb_set_option(NULL, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
+	}
 #endif
 
 	if (libusb_init(&lib_device->usb_context) != 0) {
@@ -442,7 +445,11 @@ ADDAPI int ADDCALL hydrasdr_list_devices(uint64_t *serials, int count)
 	int output_count = 0;
 
 #ifdef __ANDROID__
-	libusb_set_option(NULL, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
+	// LibUSB does not support device discovery on native Android,
+	// Termux provides support with a custom libusb package and termux-usb wrapper.
+	if (getenv("TERMUX_VERSION") == NULL) {
+		libusb_set_option(NULL, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
+	}
 #endif
 	if (libusb_init(&context) != 0) return HYDRASDR_ERROR_LIBUSB;
 

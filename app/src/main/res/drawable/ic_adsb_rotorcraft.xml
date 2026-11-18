@@ -1,0 +1,16 @@
+<!--
+     ADS-B map marker: Helicopter: fuselage, tail boom and a crossed main rotor.
+     Nose points up (0deg = north), matching the heading convention used for iconRotate in
+     MaplibreView. A single solid shape, because the map draws it as a tintable SDF image; every
+     subpath winds the same way so overlapping parts do not punch holes.
+     Original artwork for RF Analyzer.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M12,5 C14,5 15,7 15,10 C15,12.5 13.5,14.5 12.6,15 L12.6,20 L14.5,20 L14.5,21.5 L9.5,21.5 L9.5,20 L11.4,20 L11.4,15 C10.5,14.5 9,12.5 9,10 C9,7 10,5 12,5 Z M3.59,2.94 L4.41,2.06 L20.41,17.06 L19.59,17.94 Z M19.59,2.06 L20.41,2.94 L4.41,17.94 L3.59,17.06 Z"/>
+</vector>

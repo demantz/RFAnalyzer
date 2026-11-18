@@ -2,8 +2,8 @@ package com.mantz_it.libhackrf
 
 import android.util.Log
 import androidx.annotation.Keep
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.TimeUnit
+import com.mantz_it.libusb.SampleBufferPool
+import com.mantz_it.libusb.SampleStreamDevice
 
 /**
  * <h1>RF Analyzer - Hackrf Device</h1>
@@ -12,32 +12,17 @@ import java.util.concurrent.TimeUnit
  * Description: A Kotlin interface to the native libhackrf driver
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
+class HackrfDevice private constructor(private var nativeDevicePtr: Long) : SampleStreamDevice {
 
     companion object {
         private const val TAG = "HackrfDevice"
 
-        // This matches libhackrf TRANSFER_BUFFER_SIZE (262144)
-        // one RX transfer contains interleaved signed int8 I/Q samples (2 bytes per sample).
+        // libhackrf's TRANSFER_BUFFER_SIZE: one RX transfer of interleaved signed 8-bit I/Q
+        // samples (2 bytes per sample).
         const val BUFFER_SIZE = 262144 // bytes
 
         @JvmStatic
@@ -48,9 +33,8 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
 
         fun open(fd: Int): Pair<HackrfDevice?, Int?> {
             val result = nativeOpenFd(fd)
-            // On error we return a (negative) error code; on success it's a pointer
-            // We detect success by assuming returned > 0 is pointer
-            // but pointer may be negative, so only asume error in the range -10000 - 0
+            // A negative hackrf_error on failure, else the device pointer - which can be negative
+            // as a signed long, so only -10000..0 means an error
             if (result <= 0 && result >= -10000) {
                 Log.e(TAG, "open: Error opening HackRF device: $result")
                 return Pair(null, result.toInt())
@@ -79,25 +63,11 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
     private external fun nativeStartRX(nativePtr: Long): Int
     private external fun nativeStopRX(nativePtr: Long): Int
 
-    private val bufferPoolSize: Int = 70 // ~ a few transfers queued; adjust if necessary
-    private val availableBuffers = ArrayBlockingQueue<ByteArray>(bufferPoolSize)
-    private val filledBuffers = ArrayBlockingQueue<ByteArray>(bufferPoolSize)
+    override val sampleBuffers = SampleBufferPool(BUFFER_SIZE)
 
     init {
         if (nativeDevicePtr == 0L) {
             throw IllegalArgumentException("Native device pointer cannot be null (0) for HackrfDevice.")
-        }
-        // Create Buffers:
-        repeat(bufferPoolSize) {
-            availableBuffers.put(ByteArray(BUFFER_SIZE))
-        }
-    }
-
-    fun flushBufferQueue() {
-        var buffer = filledBuffers.poll()
-        while (buffer != null) {
-            availableBuffers.offer(buffer)
-            buffer = filledBuffers.poll()
         }
     }
 
@@ -109,7 +79,7 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeVersionStringRead(nativeDevicePtr)
     }
 
-    fun isStreaming(): Boolean {
+    override fun isStreaming(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "isStreaming: Device already closed or not opened.")
             return false
@@ -117,7 +87,7 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeIsStreaming(nativeDevicePtr)
     }
 
-    fun close(): Boolean {
+    override fun close(): Boolean {
         if (nativeDevicePtr != 0L) {
             val result = nativeClose(nativeDevicePtr)
             nativeDevicePtr = 0L
@@ -194,7 +164,7 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeSetAntennaEnable(nativeDevicePtr, enable) == 0
     }
 
-    fun startRX(): Boolean {
+    override fun startRX(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "startRX: Device already closed or not opened.")
             return false
@@ -202,7 +172,7 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeStartRX(nativeDevicePtr) == 0
     }
 
-    fun stopRX(): Boolean {
+    override fun stopRX(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "stopRX: Device already closed or not opened.")
             return false
@@ -210,27 +180,11 @@ class HackrfDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeStopRX(nativeDevicePtr) == 0
     }
 
-    // API to get a filled sample buffer (consumed by the app)
-    fun getSampleBuffer(): ByteArray? {
-        return filledBuffers.poll(100, TimeUnit.MILLISECONDS)
-    }
-
-    // Return a buffer to the pool
-    fun returnSampleBuffer(buffer: ByteArray) {
-        availableBuffers.put(buffer)
-    }
-
-    // Called from JNI when native side has samples ready
+    // Called from JNI (sample_handoff.h) on the driver's RX thread
     @Keep
-    private fun onSamplesReady(buffer: ByteArray) {
-        // Blocks if the consumer isn't draining filledBuffers fast enough
-        filledBuffers.put(buffer)
-    }
+    private fun getEmptyBuffer(): ByteArray? = sampleBuffers.takeEmpty()
 
-    // Called from JNI to fetch an empty buffer for filling
     @Keep
-    private fun getEmptyBuffer(): ByteArray {
-        // Blocks until a buffer is available
-        return availableBuffers.take()
-    }
+    private fun onSamplesReady(buffer: ByteArray, validByteCount: Int, droppedSamples: Long) =
+        sampleBuffers.putFilled(buffer, validByteCount, droppedSamples)
 }

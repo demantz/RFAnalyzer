@@ -1,2 +1,7 @@
 a379373639ea0a33e5f1f96956c0909da60faeee
 https://github.com/airspy/airspyone_host/commit/a379373639ea0a33e5f1f96956c0909da60faeee
+
+Except iqconverter_float.c/.h and iqconverter_int16.c/.h: those are their last MIT-licensed
+revisions (float 871fcdc6e8, int16 681dd6c824, both 2018). Upstream later put them under a licence
+limited to the "Airspy ecosystem" (commits of 2025-06-10) without changing their code, which is
+identical (checked 2026-11-16, ignoring line endings).

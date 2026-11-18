@@ -6,7 +6,7 @@ import com.mantz_it.rfanalyzer.database.COUNTRY_CODE_TO_NAME
 import com.mantz_it.rfanalyzer.database.Coordinates
 import com.mantz_it.rfanalyzer.database.SourceProvider
 import com.mantz_it.rfanalyzer.database.Station
-import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
+import com.mantz_it.rfanalyzer.ui.tabs.DemodulationMode
 import com.mantz_it.rfanalyzer.ui.composable.sha256
 import java.time.Instant
 import javax.net.ssl.HttpsURLConnection
@@ -22,13 +22,15 @@ import org.json.JSONArray
  * Description: Fetch stations (bookmarks) from Sota spots
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
 object SotaStationFetcher {
     private const val TAG = "SotaStationFetcher"
+    /** Connect and read timeout, so a stalled server can't hold the update (and block every
+     *  retry as "already running"). */
+    private const val TIMEOUT_MS = 15_000
 
     private var _summitMap: Map<String, Triple<Double, Double, String>>? = null   // summitId -> (lat, lon, countrycode)
     private suspend fun loadSummitMapFromAssets(context: Context) {
@@ -37,7 +39,7 @@ object SotaStationFetcher {
         val newMap: MutableMap<String, Triple<Double, Double, String>> = mutableMapOf()
         withContext(Dispatchers.IO) {
             context.assets.open("summits.csv").bufferedReader().useLines { lines ->
-                lines.drop(2).forEach { line ->
+                lines.drop(1).forEach { line -> // without the header line
                     val cols = line.split(',')
                     val summitCode = cols[0]
                     val lon = cols[1].toDouble()
@@ -65,6 +67,8 @@ object SotaStationFetcher {
         Log.d(TAG, "fetchStations: Fetching $url")
         val url = URL(url)
         val connection = url.openConnection() as HttpsURLConnection
+        connection.connectTimeout = TIMEOUT_MS
+        connection.readTimeout = TIMEOUT_MS
         connection.requestMethod = "GET"
         val data = connection.inputStream.bufferedReader().readText()
         val jsonArray = JSONArray(data)
@@ -83,13 +87,7 @@ object SotaStationFetcher {
             val countryCode = summitMap[summitId]?.third
             val summitName = obj.optString("summitName", "-")
             val altitude = obj.optInt("AltM", 0)
-            val mode = when (obj.optString("mode")) {
-                "CW" -> DemodulationMode.CW
-                "FM" -> DemodulationMode.NFM
-                "SSB" -> if (freq < 10_000.0) DemodulationMode.LSB else DemodulationMode.USB
-                //"FT8"
-                else -> DemodulationMode.OFF
-            }
+            val (mode, tunedFreq) = spotTuning(obj.optString("mode"), freq)
             val summitMapEntry = summitMap[summitId]
             val coordinates = if(summitMapEntry != null) {
                 val (summitLat, summitLon, summitCountryCode) = summitMapEntry
@@ -100,7 +98,7 @@ object SotaStationFetcher {
                 name = "$name (Summit: $summitId)",
                 callsign = name,
                 bookmarkListId = null,
-                frequency = freq.toLong(),
+                frequency = tunedFreq.toLong(),
                 bandwidth = mode.defaultChannelWidth,
                 createdAt = now,
                 updatedAt = now,
@@ -119,8 +117,7 @@ object SotaStationFetcher {
     }
 }
 
-// Create summits.csv:
-
+// The Python script that builds summits.csv (assets/summits.csv.gz: summit code, lon, lat, ISO country):
 /*
 #!/usr/bin/env python3
 

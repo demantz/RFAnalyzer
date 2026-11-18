@@ -3,7 +3,7 @@ package com.mantz_it.rfanalyzer.analyzer
 import android.util.Log
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
 import com.mantz_it.rfanalyzer.dsp.RationalResampler
-import com.mantz_it.rfanalyzer.source.SamplePacket
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 
@@ -13,10 +13,9 @@ import java.util.concurrent.TimeUnit
  * Module:      Resampler.kt
  * Description: Generalized resampler block that downsamples/upsamples the incoming
  *              signal to the desired output sample rate using a RationalResampler.
- *              Runs in its own thread like the old Decimator.
+ *              Runs in its own thread.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -93,7 +92,8 @@ class Resampler(
                 val (interpolation, decimation) = RationalResampler.limitDenominator(outputSampleRate, inRate, 10000)
                 val error = kotlin.math.abs(outputSampleRate.toDouble() / inRate - interpolation.toDouble() / decimation)
                 Log.d(LOGTAG, "run: (Re)creating resampler: interpolation=$interpolation, decimation=$decimation (error=$error or ${(outputSampleRate*error).toInt()} Sps)")
-                resampler = RationalResampler(interpolation, decimation, maxTaps = maxTaps) // limiting tap count to max. 500 per FirFilter (should only kick in for large difference in sample rates, e.g. 20Msps -> 96000kSps)
+                resampler?.close() // release the outgoing instance's native resources before replacing it
+                resampler = RationalResampler(interpolation, decimation, maxTaps = maxTaps) // maxTaps per polyphase subfilter: only limits large rate ratios (e.g. 20 MSps -> 96 kSps)
                 inputRate = inRate
                 lastOutputRate = outputSampleRate
                 lastMaxTaps = maxTaps
@@ -107,8 +107,9 @@ class Resampler(
                     val packet = outputReturnQueue.poll(1000, TimeUnit.MILLISECONDS)
                     if (packet == null) {
                         Log.d(LOGTAG, "run: No packets from outputReturnQueue. Skipping input packet.")
-                        inputReturnQueue.offer(inputSamples)
-                        break
+                        if (inputSamples.sampleRate > 0)
+                            OverloadMonitor.reportLoss("Resampler", (inputSamples.size() - inputBufferIndex) * 1_000_000_000L / inputSamples.sampleRate)
+                        break // the input packet is returned below (once)
                     } else packet
                 } catch (e: InterruptedException) {
                     Log.e(LOGTAG, "run: Interrupted while waiting on output return queue! stop.")
@@ -128,11 +129,13 @@ class Resampler(
             // performance tracking
             val nsPerPacket = inputSamples.size() * 1_000_000_000f / inputSamples.sampleRate
             GlobalPerformanceData.updateLoad("Resampler", totalProcessingTimeNs / nsPerPacket)
+            OverloadMonitor.reportBusy("Resampler", totalProcessingTimeNs, nsPerPacket.toLong())
 
             inputReturnQueue.offer(inputSamples)
         }
 
         stopRequested = true
+        resampler?.close()
         Log.i(LOGTAG, "Resampler stopped. (Thread: $name)")
     }
 

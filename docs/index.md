@@ -1,9 +1,9 @@
-# RF Analyzer 2.0 User Manual
+# RF Analyzer User Manual
 
 <div style="display: flex; align-items: center; flex-wrap: wrap;">
   <div style="flex: 1; min-width: 250px;">
     <p>
-      Welcome to the <b>RF Analyzer 2.0</b> user manual. This guide will help you to
+      Welcome to the <b>RF Analyzer</b> user manual. This guide will help you to
       install, configure, and effectively use the app for spectrum analysis and
       signal demodulation.
     </p>
@@ -25,11 +25,13 @@
 
 ## Features
 - Real-time FFT & waterfall spectrum visualization
-- Support for **HackRF, RTL-SDR, Airspy, HydraSDR and IQ file playback**
-- Analog signal demodulation (CW, AM, nFM, wFM, LSB, USB)
+- Support for **RTL-SDR, HackRF, Airspy, Airspy HF+, HydraSDR, rtl_tcp servers,
+  KiwiSDR web receivers and IQ file playback**
+- Analog demodulation (AM, FM narrow and wide, LSB, USB, CW) with a squelch
+  relative to the noise floor
 - Adjustable SDR settings (frequency, gain, sample rate, etc.)
 - Adjustable FFT settings (FFT size, averaging, peak hold, frame rate, etc.)
-- Raw IQ recording and playback
+- Raw IQ and baseband recording and playback
 - Bookmarks for Stations and Bands
   - Import from SDR# or SDR++
   - Automatically synchronize with online lists (EiBi DB, POTA & SOTA Spots)
@@ -38,6 +40,16 @@
   <img src="./assets/rtlsdr_source_tab.png" width="45%" />
   <img src="./assets/rtlsdr_demodulation_tab_fm.png" width="45%" />
 </p>
+
+### New in RF Analyzer 2.3
+- Built-in RTL-SDR driver - no extra driver app needed
+- KiwiSDR web receivers as a source, with a public receiver list and map
+- Quick tune & zoom: long-press the spectrum
+- True dBFS levels, automatic FFT size, smoother waterfall and much lower CPU use
+- Squelch relative to the noise floor, per mode; baseband recording
+- Location-aware band plans and license-free band lists
+- Every USB SDR is recognized when you plug it in; optional start on plug-in and
+  automatic restart after a USB dropout
 
 ### New in RF Analyzer 2.0
 - Complete rework of the app in a modern language (Kotlin) and with a modern Material Design based UI

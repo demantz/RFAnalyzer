@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup / transfer rules for API 31+ (android:dataExtractionRules).
+    API 30 and below use backup_rules.xml instead - keep the two in sync.
+
+    Cloud backup: see backup_rules.xml for what is left out and why (private data, size).
+
+    Device-to-device transfer (cable or Wi-Fi from the old phone to the new one) is the user moving
+    their own data to their own device, without a quota: everything comes along, the private
+    settings, the recordings and the packet history included.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="datastore/rf_analyzer_private.preferences_pb" />
+        <exclude domain="file" path="recordings/" />
+        <exclude domain="file" path="rfanalyzer.log" />
+        <exclude domain="database" path="digital_packets_db" />
+        <exclude domain="database" path="digital_packets_db-wal" />
+        <exclude domain="database" path="digital_packets_db-shm" />
+    </cloud-backup>
+    <device-transfer>
+        <!-- No excludes: everything moves to the new device. -->
+    </device-transfer>
+</data-extraction-rules>

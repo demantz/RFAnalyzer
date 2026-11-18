@@ -1,0 +1,113 @@
+{
+  "metadata": {
+      "schemaVersion": 2,
+      "appName": "RF Analyzer",
+      "appVersion": "2.1.1"
+    },
+  "bookmarkLists": [
+    ],
+  "stations": [
+    ],
+  "bands": [
+    {
+      "id": 1,
+      "name": "CB Radio 27 MHz (CEPT)",
+      "bookmarkListId": 0,
+      "startFrequency": 26960000,
+      "endFrequency": 27410000,
+      "subBands": [
+        { "version": 1, "name": "1", "startFrequency": 26960000, "endFrequency": 26970000, "notes": null },
+        { "version": 1, "name": "2", "startFrequency": 26970000, "endFrequency": 26980000, "notes": null },
+        { "version": 1, "name": "3", "startFrequency": 26980000, "endFrequency": 26990000, "notes": null },
+        { "version": 1, "name": "4", "startFrequency": 27000000, "endFrequency": 27010000, "notes": null },
+        { "version": 1, "name": "5", "startFrequency": 27010000, "endFrequency": 27020000, "notes": null },
+        { "version": 1, "name": "6", "startFrequency": 27020000, "endFrequency": 27030000, "notes": null },
+        { "version": 1, "name": "7", "startFrequency": 27030000, "endFrequency": 27040000, "notes": null },
+        { "version": 1, "name": "8", "startFrequency": 27050000, "endFrequency": 27060000, "notes": null },
+        { "version": 1, "name": "9", "startFrequency": 27060000, "endFrequency": 27070000, "notes": null },
+        { "version": 1, "name": "10", "startFrequency": 27070000, "endFrequency": 27080000, "notes": null },
+        { "version": 1, "name": "11", "startFrequency": 27080000, "endFrequency": 27090000, "notes": null },
+        { "version": 1, "name": "12", "startFrequency": 27100000, "endFrequency": 27110000, "notes": null },
+        { "version": 1, "name": "13", "startFrequency": 27110000, "endFrequency": 27120000, "notes": null },
+        { "version": 1, "name": "14", "startFrequency": 27120000, "endFrequency": 27130000, "notes": null },
+        { "version": 1, "name": "15", "startFrequency": 27130000, "endFrequency": 27140000, "notes": null },
+        { "version": 1, "name": "16", "startFrequency": 27150000, "endFrequency": 27160000, "notes": null },
+        { "version": 1, "name": "17", "startFrequency": 27160000, "endFrequency": 27170000, "notes": null },
+        { "version": 1, "name": "18", "startFrequency": 27170000, "endFrequency": 27180000, "notes": null },
+        { "version": 1, "name": "19", "startFrequency": 27180000, "endFrequency": 27190000, "notes": null },
+        { "version": 1, "name": "20", "startFrequency": 27200000, "endFrequency": 27210000, "notes": null },
+        { "version": 1, "name": "21", "startFrequency": 27210000, "endFrequency": 27220000, "notes": null },
+        { "version": 1, "name": "22", "startFrequency": 27220000, "endFrequency": 27230000, "notes": null },
+        { "version": 1, "name": "23", "startFrequency": 27250000, "endFrequency": 27260000, "notes": null },
+        { "version": 1, "name": "24", "startFrequency": 27230000, "endFrequency": 27240000, "notes": null },
+        { "version": 1, "name": "25", "startFrequency": 27240000, "endFrequency": 27250000, "notes": null },
+        { "version": 1, "name": "26", "startFrequency": 27260000, "endFrequency": 27270000, "notes": null },
+        { "version": 1, "name": "27", "startFrequency": 27270000, "endFrequency": 27280000, "notes": null },
+        { "version": 1, "name": "28", "startFrequency": 27280000, "endFrequency": 27290000, "notes": null },
+        { "version": 1, "name": "29", "startFrequency": 27290000, "endFrequency": 27300000, "notes": null },
+        { "version": 1, "name": "30", "startFrequency": 27300000, "endFrequency": 27310000, "notes": null },
+        { "version": 1, "name": "31", "startFrequency": 27310000, "endFrequency": 27320000, "notes": null },
+        { "version": 1, "name": "32", "startFrequency": 27320000, "endFrequency": 27330000, "notes": null },
+        { "version": 1, "name": "33", "startFrequency": 27330000, "endFrequency": 27340000, "notes": null },
+        { "version": 1, "name": "34", "startFrequency": 27340000, "endFrequency": 27350000, "notes": null },
+        { "version": 1, "name": "35", "startFrequency": 27350000, "endFrequency": 27360000, "notes": null },
+        { "version": 1, "name": "36", "startFrequency": 27360000, "endFrequency": 27370000, "notes": null },
+        { "version": 1, "name": "37", "startFrequency": 27370000, "endFrequency": 27380000, "notes": null },
+        { "version": 1, "name": "38", "startFrequency": 27380000, "endFrequency": 27390000, "notes": null },
+        { "version": 1, "name": "39", "startFrequency": 27390000, "endFrequency": 27400000, "notes": null },
+        { "version": 1, "name": "40", "startFrequency": 27400000, "endFrequency": 27410000, "notes": null }
+      ],
+      "notes": "License-exempt (CEPT). AM/FM up to 4 W, SSB up to 12 W PEP. Source: ECC/DEC/(11)03; ETSI EN 300 433.",
+      "favorite": false,
+      "createdAt": 0,
+      "updatedAt": 0,
+      "displayColor": null
+    },
+    {
+      "id": 2,
+      "name": "LPD433",
+      "bookmarkListId": 0,
+      "startFrequency": 433050000,
+      "endFrequency": 434790000,
+      "subBands": [
+        { "version": 1, "name": "f1", "startFrequency": 433050000, "endFrequency": 434790000, "notes": "1 mW e.r.p., no duty-cycle limit. No official channel plan." },
+        { "version": 1, "name": "f2", "startFrequency": 434040000, "endFrequency": 434790000, "notes": "10 mW e.r.p.; up to 25 kHz spacing permitted specifically for voice use." }
+      ],
+      "notes": "License-exempt SRD sub-allocations per ERC REC 70-03 Annex 1. The widely-sold '69-channel/25 kHz LPD' plan is an industry convention, not a legal channelization. Source: ERC REC 70-03 Annex 1.",
+      "favorite": false,
+      "createdAt": 0,
+      "updatedAt": 0,
+      "displayColor": null
+    },
+    {
+      "id": 3,
+      "name": "PMR446",
+      "bookmarkListId": 0,
+      "startFrequency": 446000000,
+      "endFrequency": 446200000,
+      "subBands": [
+        { "version": 1, "name": "1", "startFrequency": 446000000, "endFrequency": 446012500, "notes": null },
+        { "version": 1, "name": "2", "startFrequency": 446012500, "endFrequency": 446025000, "notes": null },
+        { "version": 1, "name": "3", "startFrequency": 446025000, "endFrequency": 446037500, "notes": null },
+        { "version": 1, "name": "4", "startFrequency": 446037500, "endFrequency": 446050000, "notes": null },
+        { "version": 1, "name": "5", "startFrequency": 446050000, "endFrequency": 446062500, "notes": null },
+        { "version": 1, "name": "6", "startFrequency": 446062500, "endFrequency": 446075000, "notes": null },
+        { "version": 1, "name": "7", "startFrequency": 446075000, "endFrequency": 446087500, "notes": null },
+        { "version": 1, "name": "8", "startFrequency": 446087500, "endFrequency": 446100000, "notes": null },
+        { "version": 1, "name": "9", "startFrequency": 446100000, "endFrequency": 446112500, "notes": null },
+        { "version": 1, "name": "10", "startFrequency": 446112500, "endFrequency": 446125000, "notes": null },
+        { "version": 1, "name": "11", "startFrequency": 446125000, "endFrequency": 446137500, "notes": null },
+        { "version": 1, "name": "12", "startFrequency": 446137500, "endFrequency": 446150000, "notes": null },
+        { "version": 1, "name": "13", "startFrequency": 446150000, "endFrequency": 446162500, "notes": null },
+        { "version": 1, "name": "14", "startFrequency": 446162500, "endFrequency": 446175000, "notes": null },
+        { "version": 1, "name": "15", "startFrequency": 446175000, "endFrequency": 446187500, "notes": null },
+        { "version": 1, "name": "16", "startFrequency": 446187500, "endFrequency": 446200000, "notes": null }
+      ],
+      "notes": "License-free, EU-wide. 16 channels/12.5 kHz shared by analog FM and 12.5 kHz digital (mode-selectable, same frequencies). 0.5 W ERP, integral antenna only, no repeaters. A separate digital-only 32-ch/6.25 kHz plan exists (446.003125 MHz + n x 6.25 kHz, n=0..31); not enumerated as it's an optional submode duplicating this spectrum. Source: ECC/DEC/(15)05.",
+      "favorite": false,
+      "createdAt": 0,
+      "updatedAt": 0,
+      "displayColor": null
+    }
+  ]
+}

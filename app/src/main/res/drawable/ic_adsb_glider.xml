@@ -1,0 +1,16 @@
+<!--
+     ADS-B map marker: Glider / sailplane (long slender wing).
+     Nose points up (0deg = north), matching the heading convention used for iconRotate in
+     MaplibreView. A single solid shape, because the map draws it as a tintable SDF image; every
+     subpath winds the same way so overlapping parts do not punch holes.
+     Original artwork for RF Analyzer.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M12,3 C11.5,3 11.2,3.8 11.2,5 L11.2,9 L1,9.6 L1,11 L11.2,11.4 L11.6,19 L9.5,19.3 L9.5,20.5 L14.5,20.5 L14.5,19.3 L12.4,19 L12.8,11.4 L23,11 L23,9.6 L12.8,9 L12.8,5 C12.8,3.8 12.5,3 12,3 Z"/>
+</vector>

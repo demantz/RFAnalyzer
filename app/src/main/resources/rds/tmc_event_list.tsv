@@ -1,0 +1,1555 @@
+# Derived from RdsSurveyor (LGPL-3.0), https://github.com/ChristopheJacquet/RdsSurveyor
+# (its EL.DAT). Community-maintained, NOT an official ISO 14819 export - see LICENSE-RDSSURVEYOR.md.
+code	text	text_template	nature	quantifier_type	duration_type	bidirectional	urgency	update_class
+1	traffic problem		Info		Dynamic	0	Urgent	1
+2	queuing traffic. Danger of stationary traffic	queuing traffic with average speeds $Q. Danger of stationary traffic	Info	4	Dynamic	0	Urgent	1
+11	overheight warning system triggered		Info		Dynamic	0	Urgent	4
+12	accident(s), traffic being directed around accident area	$Q accident(s), traffic being directed around accident area	Info	0	Dynamic	0	Urgent	3
+16	closed, rescue and recovery work in progress		Info		Dynamic	0	Urgent	5
+20	service area overcrowded, drive to another service area		Info		Dynamic	0	Normal	9
+22	service area, fuel station closed		Info		Longer-lasting	0	Normal	9
+23	service area, restaurant closed		Info		Longer-lasting	0	Normal	9
+24	bridge closed		Info		Longer-lasting	0	Urgent	9
+25	tunnel closed		Info		Longer-lasting	0	Urgent	9
+26	bridge blocked		Info		Dynamic	0	Urgent	6
+27	tunnel blocked		Info		Dynamic	0	Urgent	6
+28	road closed intermittently		Info		Dynamic	0	Urgent	9
+36	fuel station reopened		Info		Dynamic	0	Normal	9
+37	restaurant reopened		Info		Dynamic	0	Normal	9
+39	reopening of bridge expected	reopening of bridge expected $Q	Forecast	7	Longer-lasting	1	Normal	39
+40	smog alert ended		Info		Dynamic	1	Normal	9
+41	overtaking lane(s) closed	$Q overtaking lane(s) closed	Info	0	Longer-lasting	0	Normal	5
+42	overtaking lane(s) blocked	$Q overtaking lane(s) blocked	Info	0	Dynamic	0	Urgent	5
+51	roadworks, overtaking lane(s) closed	roadworks, $Q overtaking lane(s) closed	Info	0	Longer-lasting	0	Normal	5
+52	roadworks on the hard shoulder	$Q sets of roadworks on the hard shoulder	Info	0	Longer-lasting	0	Normal	11
+53	roadworks in the emergency lane	$Q sets of roadworks in the emergency lane	Info	0	Longer-lasting	0	Normal	11
+55	traffic problem expected		Forecast		Dynamic	0	Normal	2
+56	traffic congestion expected		Forecast		Dynamic	0	Urgent	2
+57	normal traffic expected		Forecast		Dynamic	0	Normal	2
+61	object(s) on roadway	$Q object(s) on roadway	Info	0	Dynamic	0	Urgent	12
+62	burst pipe(s)	$Q burst pipe(s)	Info	0	Dynamic	1	Normal	12
+63	object(s) on the road. Danger	$Q object(s) on the road. Danger	Info	0	Dynamic	0	Urgent	12
+64	burst pipe. Danger		Info		Dynamic	1	Urgent	12
+70	traffic congestion, average speed of 10 km/h		Info		Dynamic	0	Urgent	1
+71	traffic congestion, average speed of 20 km/h		Info		Dynamic	0	Urgent	1
+72	traffic congestion, average speed of 30 km/h		Info		Dynamic	0	Urgent	1
+73	traffic congestion, average speed of 40 km/h		Info		Dynamic	0	Urgent	1
+74	traffic congestion, average speed of 50 km/h		Info		Dynamic	0	Normal	1
+75	traffic congestion, average speed of 60 km/h		Info		Dynamic	0	Normal	1
+76	traffic congestion, average speed of 70 km/h		Info		Dynamic	0	Normal	1
+80	heavy traffic has to be expected		Forecast		Longer-lasting	0	Normal	32
+81	traffic congestion has to be expected		Forecast		Longer-lasting	0	Urgent	32
+82	roadworks. Heavy traffic has to be expected	$Q sets of roadworks. Heavy traffic has to be expected	Forecast	0	Longer-lasting	0	Normal	32
+83	closed ahead. Heavy traffic expected		Forecast		Longer-lasting	0	Urgent	32
+84	major event. Heavy traffic has to be expected		Forecast		Longer-lasting	0	Normal	32
+85	sports meeting. Heavy traffic has to be expected		Forecast		Longer-lasting	0	Normal	32
+86	fair. Heavy traffic has to be expected		Forecast		Longer-lasting	0	Normal	32
+87	evacuation. Heavy traffic has to be expected		Forecast		Longer-lasting	0	Normal	32
+88	traffic congestion forecast withdrawn		Forecast		Dynamic	0	Normal	32
+89	message cancelled		Silent		Dynamic	0	Normal	32
+91	delays for cars	delays $Q for cars	Info	5	Dynamic	0	Normal	20
+101	stationary traffic		Info		Dynamic	0	Urgent	1
+102	stationary traffic for 1 km		Info		Dynamic	0	Urgent	1
+103	stationary traffic for 2 km		Info		Dynamic	0	Urgent	1
+104	stationary traffic for 4 km		Info		Dynamic	0	Urgent	1
+105	stationary traffic for 6 km		Info		Dynamic	0	Urgent	1
+106	stationary traffic for 10 km		Info		Dynamic	0	Urgent	1
+107	stationary traffic expected		Forecast		Dynamic	0	Urgent	2
+108	queuing traffic	queuing traffic with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+109	queuing traffic for 1 km	queuing traffic for 1 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+110	queuing traffic for 2 km	queuing traffic for 2 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+111	queuing traffic for 4 km	queuing traffic for 4 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+112	queuing traffic for 6 km	queuing traffic for 6 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+113	queuing traffic for 10 km	queuing traffic for 10 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+114	queuing traffic expected		Forecast		Dynamic	0	Urgent	2
+115	slow traffic	slow traffic with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+116	slow traffic for 1 km	slow traffic for 1 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+117	slow traffic for 2 km	slow traffic for 2 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+118	slow traffic for 4 km	slow traffic for 4 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+119	slow traffic for 6 km	slow traffic for 6 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+120	slow traffic for 10 km	slow traffic for 10 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+121	slow traffic expected		Forecast		Dynamic	0	Urgent	2
+122	heavy traffic	heavy traffic with average speeds $Q	Info	4	Dynamic	0	Normal	1
+123	heavy traffic expected		Forecast		Dynamic	0	Normal	2
+124	traffic flowing freely	traffic flowing freely with average speeds $Q	Info	4	Dynamic	0	Normal	1
+125	traffic building up	traffic building up with average speeds $Q	Info	4	Dynamic	0	Normal	1
+126	no problems to report		Info		Dynamic	0	Normal	1
+127	traffic congestion cleared		Info		Dynamic	0	Normal	1
+128	message cancelled		Silent		Dynamic	0	Normal	1
+129	stationary traffic for 3 km		Info		Dynamic	0	Urgent	1
+130	danger of stationary traffic		Info		Dynamic	0	Urgent	1
+131	queuing traffic for 3 km	queuing traffic for 3 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+132	danger of queuing traffic	danger of queuing traffic with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+133	long queues	long queues with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+134	slow traffic for 3 km	slow traffic for 3 km with average speeds $Q	Info	4	Dynamic	0	Urgent	1
+135	traffic easing		Info		Dynamic	0	Normal	1
+136	traffic congestion	traffic congestion with average speeds $Q	Info	4	Dynamic	0	Normal	1
+137	traffic lighter than normal	traffic lighter than normal with average speeds $Q	Info	4	Dynamic	0	Normal	1
+138	queuing traffic. Approach with care	queuing traffic with average speeds $Q. Approach with care	Info	4	Dynamic	0	Urgent	1
+139	queuing traffic around a bend in the road		Info		Dynamic	0	Urgent	1
+140	queuing traffic over the crest of a hill		Info		Dynamic	0	Urgent	1
+141	all accidents cleared, no problems to report		Info		Dynamic	0	Normal	3
+142	traffic heavier than normal	traffic heavier than normal with average speeds $Q	Info	4	Dynamic	0	Normal	1
+143	traffic very much heavier than normal	traffic very much heavier than normal with average speeds $Q	Info	4	Dynamic	0	Normal	1
+200	multi vehicle pile up. Delays	multi vehicle pile up. Delays $Q	Info	5	Dynamic	0	Urgent	20
+201	accident(s)	$Q accident(s)	Info	0	Dynamic	0	Normal	3
+202	serious accident(s)	$Q serious accident(s)	Info	0	Dynamic	0	Urgent	3
+203	multi-vehicle accident	multi-vehicle accident involving $Q vehicles	Info	0	Dynamic	0	Urgent	3
+204	accident involving (a) heavy lorr(y/ies)	accident involving a/$Q heavy lorr(y/ies)	Info	0	Dynamic	0	Urgent	3
+205	accident(s) involving hazardous materials	$Q accident(s) involving hazardous materials	Info	0	Dynamic	0	Urgent	3
+206	fuel spillage accident(s)	$Q fuel spillage accident(s)	Info	0	Dynamic	0	Urgent	3
+207	chemical spillage accident(s)	$Q chemical spillage accident(s)	Info	0	Dynamic	0	Urgent	3
+208	vehicles slowing to look at accident(s)	vehicles slowing to look at $Q accident(s)	Info	0	Dynamic	0	Normal	1
+209	accident(s) in the opposing lanes	$Q accident(s) in the opposing lanes	Info	0	Dynamic	0	Normal	3
+210	shed load(s)	$Q shed load(s)	Info	0	Dynamic	0	Normal	12
+211	broken down vehicle(s)	$Q broken down vehicle(s)	Info	0	Dynamic	0	Normal	4
+212	broken down heavy lorr(y/ies)	$Q broken down heavy lorr(y/ies)	Info	0	Dynamic	0	Normal	4
+213	vehicle fire(s)	$Q vehicle fire(s)	Info	0	Dynamic	0	Normal	3
+214	incident(s)	$Q incident(s)	Info	0	Dynamic	0	Normal	4
+215	accident(s). Stationary traffic	$Q accident(s). Stationary traffic	Info	0	Dynamic	0	Urgent	1
+216	accident(s). Stationary traffic for 1 km	$Q accident(s). Stationary traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+217	accident(s). Stationary traffic for 2 km	$Q accident(s). Stationary traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+218	accident(s). Stationary traffic for 4 km	$Q accident(s). Stationary traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+219	accident(s). Stationary traffic for 6 km	$Q accident(s). Stationary traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+220	accident(s). Stationary traffic for 10 km	$Q accident(s). Stationary traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+221	accident(s). Danger of stationary traffic	$Q accident(s). Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+222	accident(s). Queuing traffic	$Q accident(s). Queuing traffic	Info	0	Dynamic	0	Urgent	1
+223	accident(s). Queuing traffic for 1 km	$Q accident(s). Queuing traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+224	accident(s). Queuing traffic for 2 km	$Q accident(s). Queuing traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+225	accident(s). Queuing traffic for 4 km	$Q accident(s). Queuing traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+226	accident(s). Queuing traffic for 6 km	$Q accident(s). Queuing traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+227	accident(s). Queuing traffic for 10 km	$Q accident(s). Queuing traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+228	accident(s). Danger of queuing traffic	$Q accident(s). Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+229	accident(s). Slow traffic	$Q accident(s). Slow traffic	Info	0	Dynamic	0	Urgent	1
+230	accident(s). Slow traffic for 1 km	$Q accident(s). Slow traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+231	accident(s). Slow traffic for 2 km	$Q accident(s). Slow traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+232	accident(s). Slow traffic for 4 km	$Q accident(s). Slow traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+233	accident(s). Slow traffic for 6 km	$Q accident(s). Slow traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+234	accident(s). Slow traffic for 10 km	$Q accident(s). Slow traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+235	accident(s). Slow traffic expected	$Q accident(s). Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+236	accident(s). Heavy traffic	$Q accident(s). Heavy traffic	Info	0	Dynamic	0	Normal	1
+237	accident(s). Heavy traffic expected	$Q accident(s). Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+238	accident(s). Traffic flowing freely	$Q accident(s). Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+239	accident(s). Traffic building up	$Q accident(s). Traffic building up	Info	0	Dynamic	0	Normal	1
+240	road closed due to accident(s)	road closed due to $Q accident(s)	Info	0	Dynamic	0	Urgent	5
+241	accident(s). Right lane blocked	$Q accident(s). Right lane blocked	Info	0	Dynamic	0	Urgent	5
+242	accident(s). Centre lane blocked	$Q accident(s). Centre lane blocked	Info	0	Dynamic	0	Urgent	5
+243	accident(s). Left lane blocked	$Q accident(s). Left lane blocked	Info	0	Dynamic	0	Urgent	5
+244	accident(s). Hard shoulder blocked	$Q accident(s). Hard shoulder blocked	Info	0	Dynamic	0	Urgent	5
+245	accident(s). Two lanes blocked	$Q accident(s). Two lanes blocked	Info	0	Dynamic	0	Urgent	5
+246	accident(s). Three lanes blocked	$Q accident(s). Three lanes blocked	Info	0	Dynamic	0	Urgent	5
+247	accident. Delays	accident. Delays $Q	Info	5	Dynamic	0	Normal	20
+248	accident. Delays expected	accident. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+249	accident. Long delays	accident. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+250	vehicles slowing to look at accident(s). Stationary traffic	vehicles slowing to look at $Q accident(s). Stationary traffic	Info	0	Dynamic	0	Urgent	1
+251	vehicles slowing to look at accident(s). Stationary traffic for 1 km	vehicles slowing to look at $Q accident(s). Stationary traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+252	vehicles slowing to look at accident(s). Stationary traffic for 2 km	vehicles slowing to look at $Q accident(s). Stationary traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+253	vehicles slowing to look at accident(s). Stationary traffic for 4 km	vehicles slowing to look at $Q accident(s). Stationary traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+254	vehicles slowing to look at accident(s). Stationary traffic for 6 km	vehicles slowing to look at $Q accident(s). Stationary traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+255	vehicles slowing to look at accident(s). Stationary traffic for 10 km	vehicles slowing to look at $Q accident(s). Stationary traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+256	vehicles slowing to look at accident(s). Danger of stationary traffic	vehicles slowing to look at $Q accident(s). Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+257	vehicles slowing to look at accident(s). Queuing traffic	vehicles slowing to look at $Q accident(s). Queuing traffic	Info	0	Dynamic	0	Urgent	1
+258	vehicles slowing to look at accident(s). Queuing traffic for 1 km	vehicles slowing to look at $Q accident(s). Queuing traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+259	vehicles slowing to look at accident(s). Queuing traffic for 2 km	vehicles slowing to look at $Q accident(s). Queuing traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+260	vehicles slowing to look at accident(s). Queuing traffic for 4 km	vehicles slowing to look at $Q accident(s). Queuing traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+261	vehicles slowing to look at accident(s). Queuing traffic for 6 km	vehicles slowing to look at $Q accident(s). Queuing traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+262	vehicles slowing to look at accident(s). Queuing traffic for 10 km	vehicles slowing to look at $Q accident(s). Queuing traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+263	vehicles slowing to look at accident(s). Danger of queuing traffic	vehicles slowing to look at $Q accident(s). Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+264	vehicles slowing to look at accident(s). Slow traffic	vehicles slowing to look at $Q accident(s). Slow traffic	Info	0	Dynamic	0	Urgent	1
+265	vehicles slowing to look at accident(s). Slow traffic for 1 km	vehicles slowing to look at $Q accident(s). Slow traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+266	vehicles slowing to look at accident(s). Slow traffic for 2 km	vehicles slowing to look at $Q accident(s). Slow traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+267	vehicles slowing to look at accident(s). Slow traffic for 4 km	vehicles slowing to look at $Q accident(s). Slow traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+268	vehicles slowing to look at accident(s). Slow traffic for 6 km	vehicles slowing to look at $Q accident(s). Slow traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+269	vehicles slowing to look at accident(s). Slow traffic for 10 km	vehicles slowing to look at $Q accident(s). Slow traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+270	vehicles slowing to look at accident(s). Slow traffic expected	vehicles slowing to look at $Q accident(s). Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+271	vehicles slowing to look at accident(s). Heavy traffic	vehicles slowing to look at $Q accident(s). Heavy traffic	Info	0	Dynamic	0	Normal	1
+272	vehicles slowing to look at accident(s). Heavy traffic expected	vehicles slowing to look at $Q accident(s). Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+274	vehicles slowing to look at accident(s). Traffic building up	vehicles slowing to look at $Q accident(s). Traffic building up	Info	0	Dynamic	0	Normal	1
+275	vehicles slowing to look at accident. Delays	vehicles slowing to look at accident. Delays $Q	Info	5	Dynamic	0	Urgent	20
+276	vehicles slowing to look at accident. Delays expected	vehicles slowing to look at accident. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+277	vehicles slowing to look at accident. Long delays	vehicles slowing to look at accident. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+278	shed load(s). Stationary traffic	$Q shed load(s). Stationary traffic	Info	0	Dynamic	0	Urgent	1
+279	shed load(s). Stationary traffic for 1 km	$Q shed load(s). Stationary traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+280	shed load(s). Stationary traffic for 2 km	$Q shed load(s). Stationary traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+281	shed load(s). Stationary traffic for 4 km	$Q shed load(s). Stationary traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+282	shed load(s). Stationary traffic for 6 km	$Q shed load(s). Stationary traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+283	shed load(s). Stationary traffic for 10 km	$Q shed load(s). Stationary traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+284	shed load(s). Danger of stationary traffic	$Q shed load(s). Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+285	shed load(s). Queuing traffic	$Q shed load(s). Queuing traffic	Info	0	Dynamic	0	Urgent	1
+286	shed load(s). Queuing traffic for 1 km	$Q shed load(s). Queuing traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+287	shed load(s). Queuing traffic for 2 km	$Q shed load(s). Queuing traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+288	shed load(s). Queuing traffic for 4 km	$Q shed load(s). Queuing traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+289	shed load(s). Queuing traffic for 6 km	$Q shed load(s). Queuing traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+290	shed load(s). Queuing traffic for 10 km	$Q shed load(s). Queuing traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+291	shed load(s). Danger of queuing traffic	$Q shed load(s). Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+292	shed load(s). Slow traffic	$Q shed load(s). Slow traffic	Info	0	Dynamic	0	Urgent	1
+293	shed load(s). Slow traffic for 1 km	$Q shed load(s). Slow traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+294	shed load(s). Slow traffic for 2 km	$Q shed load(s). Slow traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+295	shed load(s). Slow traffic for 4 km	$Q shed load(s). Slow traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+296	shed load(s). Slow traffic for 6 km	$Q shed load(s). Slow traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+297	shed load(s). Slow traffic for 10 km	$Q shed load(s). Slow traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+298	shed load(s). Slow traffic expected	$Q shed load(s). Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+299	shed load(s). Heavy traffic	$Q shed load(s). Heavy traffic	Info	0	Dynamic	0	Normal	1
+300	shed load(s). Heavy traffic expected	$Q shed load(s). Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+301	shed load(s). Traffic flowing freely	$Q shed load(s). Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+302	shed load(s). Traffic building up	$Q shed load(s). Traffic building up	Info	0	Dynamic	0	Normal	1
+303	blocked by shed load(s)	blocked by $Q shed load(s)	Info	0	Dynamic	0	Urgent	5
+304	shed load(s). Right lane blocked	$Q shed load(s). Right lane blocked	Info	0	Dynamic	0	Urgent	5
+305	shed load(s). Centre lane blocked	$Q shed load(s). Centre lane blocked	Info	0	Dynamic	0	Urgent	5
+306	shed load(s). Left lane blocked	$Q shed load(s). Left lane blocked	Info	0	Dynamic	0	Urgent	5
+307	shed load(s). Hard shoulder blocked	$Q shed load(s). Hard shoulder blocked	Info	0	Dynamic	0	Urgent	5
+308	shed load(s). Two lanes blocked	$Q shed load(s). Two lanes blocked	Info	0	Dynamic	0	Urgent	5
+309	shed load(s). Three lanes blocked	$Q shed load(s). Three lanes blocked	Info	0	Dynamic	0	Urgent	5
+310	shed load. Delays	shed load. Delays $Q	Info	5	Dynamic	0	Normal	20
+311	shed load. Delays expected	shed load. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+312	shed load. Long delays	shed load. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+313	broken down vehicle(s). Stationary traffic	$Q broken down vehicle(s). Stationary traffic	Info	0	Dynamic	0	Urgent	1
+314	broken down vehicle(s). Danger of stationary traffic	$Q broken down vehicle(s). Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+315	broken down vehicle(s). Queuing traffic	$Q broken down vehicle(s). Queuing traffic	Info	0	Dynamic	0	Urgent	1
+316	broken down vehicle(s). Danger of queuing traffic	$Q broken down vehicle(s). Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+317	broken down vehicle(s). Slow traffic	$Q broken down vehicle(s). Slow traffic	Info	0	Dynamic	0	Urgent	1
+318	broken down vehicle(s). Slow traffic expected	$Q broken down vehicle(s). Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+319	broken down vehicle(s). Heavy traffic	$Q broken down vehicle(s). Heavy traffic	Info	0	Dynamic	0	Normal	1
+320	broken down vehicle(s). Heavy traffic expected	$Q broken down vehicle(s). Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+321	broken down vehicle(s). Traffic flowing freely	$Q broken down vehicle(s). Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+322	broken down vehicle(s).Traffic building up	$Q broken down vehicle(s). Traffic building up	Info	0	Dynamic	0	Normal	1
+323	blocked by broken down vehicle(s).	blocked by $Q broken down vehicle(s).	Info	0	Dynamic	0	Urgent	5
+324	broken down vehicle(s). Right lane blocked	$Q broken down vehicle(s). Right lane blocked	Info	0	Dynamic	0	Urgent	5
+325	broken down vehicle(s). Centre lane blocked	$Q broken down vehicle(s). Centre lane blocked	Info	0	Dynamic	0	Urgent	5
+326	broken down vehicle(s). Left lane blocked	$Q broken down vehicle(s). Left lane blocked	Info	0	Dynamic	0	Urgent	5
+327	broken down vehicle(s). Hard shoulder blocked	$Q broken down vehicle(s). Hard shoulder blocked	Info	0	Dynamic	0	Urgent	5
+328	broken down vehicle(s). Two lanes blocked	$Q broken down vehicle(s). Two lanes blocked	Info	0	Dynamic	0	Urgent	5
+329	broken down vehicle(s). Three lanes blocked	$Q broken down vehicle(s). Three lanes blocked	Info	0	Dynamic	0	Urgent	5
+330	broken down vehicle. Delays	broken down vehicle. Delays $Q	Info	5	Dynamic	0	Normal	20
+331	broken down vehicle. Delays expected	broken down vehicle. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+332	broken down vehicle. Long delays	broken down vehicle. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+333	accident cleared		Info		Dynamic	0	Normal	3
+334	message cancelled		Silent		Dynamic	0	Normal	3
+335	accident involving (a) bus(es)	accident involving a/$Q bus(es)	Info	0	Dynamic	0	Urgent	3
+336	oil spillage accident(s)	$Q oil spillage accident(s)	Info	0	Dynamic	0	Urgent	3
+337	overturned vehicle(s)	$Q overturned vehicle(s)	Info	0	Dynamic	0	Normal	3
+338	overturned heavy lorr(y/ies)	$Q overturned heavy lorr(y/ies)	Info	0	Dynamic	0	Urgent	3
+339	jackknifed trailer(s)	$Q jackknifed trailer(s)	Info	0	Dynamic	0	Urgent	3
+340	jackknifed caravan(s)	$Q jackknifed caravan(s)	Info	0	Dynamic	0	Urgent	3
+341	jackknifed articulated lorr(y/ies)	$Q jackknifed articulated lorr(y/ies)	Info	0	Dynamic	0	Urgent	3
+342	vehicle(s) spun around	$Q vehicle(s) spun around	Info	0	Dynamic	0	Normal	3
+343	earlier accident(s)	$Q earlier accident(s)	Info	0	Dynamic	0	Normal	3
+344	accident investigation work		Info		Dynamic	0	Normal	3
+345	secondary accident(s)	$Q secondary accident(s)	Info	0	Dynamic	0	Normal	3
+346	broken down bus(es)	$Q broken down bus(es)	Info	0	Dynamic	0	Normal	4
+347	overheight vehicle(s)	$Q overheight vehicle(s)	Info	0	Dynamic	0	Normal	24
+348	accident(s). Stationary traffic for 3 km	$Q accident(s). Stationary traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+349	accident(s). Queuing traffic for 3 km	$Q accident(s). Queuing traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+350	accident(s). Slow traffic for 3 km	$Q accident(s). Slow traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+351	accident(s) in roadworks area	$Q accident(s) in roadworks area	Info	0	Dynamic	0	Urgent	3
+352	vehicles slowing to look at accident(s). Stationary traffic for 3 km	vehicles slowing to look at $Q accident(s). Stationary traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+353	vehicles slowing to look at accident(s). Queuing traffic for 3 km	vehicles slowing to look at $Q accident(s). Queuing traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+354	vehicles slowing to look at accident(s). Slow traffic for 3 km	vehicles slowing to look at $Q accident(s). Slow traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+355	vehicles slowing to look at accident(s). Danger	vehicles slowing to look at $Q accident(s). Danger	Info	0	Dynamic	0	Urgent	1
+356	shed load(s). Stationary traffic for 3 km	$Q shed load(s). Stationary traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+357	shed load(s). Queuing traffic for 3 km	$Q shed load(s). Queuing traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+358	shed load(s). Slow traffic for 3 km	$Q shed load(s). Slow traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+359	shed load(s). Danger	$Q shed load(s). Danger	Info	0	Dynamic	0	Urgent	12
+360	overturned vehicle(s). Stationary traffic	$Q overturned vehicle(s). Stationary traffic	Info	0	Dynamic	0	Urgent	1
+361	overturned vehicle(s). Danger of stationary traffic	$Q overturned vehicle(s). Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+362	overturned vehicle(s). Queuing traffic	$Q overturned vehicle(s). Queuing traffic	Info	0	Dynamic	0	Urgent	1
+363	overturned vehicle(s). Danger of queuing traffic	$Q overturned vehicle(s). Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+364	overturned vehicle(s). Slow traffic	$Q overturned vehicle(s). Slow traffic	Info	0	Dynamic	0	Urgent	1
+365	overturned vehicle(s). Slow traffic expected	$Q overturned vehicle(s). Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+366	overturned vehicle(s). Heavy traffic	$Q overturned vehicle(s). Heavy traffic	Info	0	Dynamic	0	Normal	1
+367	overturned vehicle(s). Heavy traffic expected	$Q overturned vehicle(s). Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+368	overturned vehicle(s). Traffic building up	$Q overturned vehicle(s). Traffic building up	Info	0	Dynamic	0	Normal	1
+369	blocked by overturned vehicle(s)	blocked by $Q overturned vehicle(s)	Info	0	Dynamic	0	Urgent	5
+370	overturned vehicle(s). Right lane blocked	$Q overturned vehicle(s). Right lane blocked	Info	0	Dynamic	0	Urgent	5
+371	overturned vehicle(s). Centre lane blocked	$Q overturned vehicle(s). Centre lane blocked	Info	0	Dynamic	0	Urgent	5
+372	overturned vehicle(s). Left lane blocked	$Q overturned vehicle(s). Left lane blocked	Info	0	Dynamic	0	Urgent	5
+373	overturned vehicle(s). Two lanes blocked	$Q overturned vehicle(s). Two lanes blocked	Info	0	Dynamic	0	Urgent	5
+374	overturned vehicle(s). Three lanes blocked	$Q overturned vehicle(s). Three lanes blocked	Info	0	Dynamic	0	Urgent	5
+375	overturned vehicle. Delays	overturned vehicle. Delays $Q	Info	5	Dynamic	0	Normal	20
+376	overturned vehicle. Delays expected	overturned vehicle. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+377	overturned vehicle. Long delays	overturned vehicle. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+378	overturned vehicle(s). Danger	$Q overturned vehicle(s). Danger	Info	0	Dynamic	0	Urgent	3
+379	Stationary traffic due to earlier accident(s)	Stationary traffic due to $Q earlier accident(s)	Info	0	Dynamic	0	Urgent	1
+380	Danger of stationary traffic due to earlier accident(s)	Danger of stationary traffic due to $Q earlier accident(s)	Info	0	Dynamic	0	Urgent	1
+381	Queuing traffic due to earlier accident(s)	Queuing traffic due to $Q earlier accident(s)	Info	0	Dynamic	0	Urgent	1
+382	Danger of queuing traffic due to earlier accident(s)	Danger of queuing traffic due to $Q earlier accident(s)	Info	0	Dynamic	0	Urgent	1
+383	Slow traffic due to earlier accident(s)	Slow traffic due to $Q earlier accident(s)	Info	0	Dynamic	0	Urgent	1
+385	Heavy traffic due to earlier accident(s)	Heavy traffic due to $Q earlier accident(s)	Info	0	Dynamic	0	Normal	1
+387	Traffic building up due to earlier accident(s)	Traffic building up due to $Q earlier accident(s)	Info	0	Dynamic	0	Normal	1
+388	Delays due to earlier accident	Delays $Q due to earlier accident	Info	5	Dynamic	0	Normal	20
+390	Long delays due to earlier accident	Long delays $Q due to earlier accident	Info	5	Dynamic	0	Urgent	20
+391	accident investigation work. Danger		Info		Dynamic	0	Urgent	3
+392	secondary accident(s). Danger	$Q secondary accident(s). Danger	Info	0	Dynamic	0	Urgent	3
+393	broken down vehicle(s). Danger	$Q broken down vehicle(s). Danger	Info	0	Dynamic	0	Urgent	4
+394	broken down heavy lorr(y/ies). Danger	$Q broken down heavy lorr(y/ies). Danger	Info	0	Dynamic	0	Urgent	4
+395	road cleared		Info		Dynamic	0	Normal	4
+396	incident cleared		Info		Dynamic	0	Normal	4
+397	rescue and recovery work in progress		Info		Dynamic	0	Urgent	4
+399	message cancelled		Silent		Dynamic	0	Normal	8
+401	closed		Info		Longer-lasting	0	Urgent	5
+402	blocked		Info		Dynamic	0	Urgent	5
+403	closed for heavy vehicles	closed for heavy vehicles over $Q	Info	8	Longer-lasting	0	Urgent	9
+404	no through traffic for heavy lorries	no through traffic for heavy lorries over $Q	Info	8	Longer-lasting	0	Urgent	9
+405	no through traffic		Info		Longer-lasting	0	Urgent	9
+406	entry slip road closed	$Q th entry slip road closed	Info	0	Longer-lasting	0	Urgent	8
+407	exit slip road closed	$Q th exit slip road closed	Info	0	Longer-lasting	0	Urgent	7
+408	slip roads closed		Info		Longer-lasting	0	Urgent	7
+409	slip road restrictions		Info		Longer-lasting	0	Normal	7
+410	closed ahead. Stationary traffic		Info		Dynamic	0	Urgent	1
+411	closed ahead. Stationary traffic for 1 km		Info		Dynamic	0	Urgent	1
+412	closed ahead. Stationary traffic for 2 km		Info		Dynamic	0	Urgent	1
+413	closed ahead. Stationary traffic for 4 km		Info		Dynamic	0	Urgent	1
+414	closed ahead. Stationary traffic for 6 km		Info		Dynamic	0	Urgent	1
+415	closed ahead. Stationary traffic for 10 km		Info		Dynamic	0	Urgent	1
+416	closed ahead. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+417	closed ahead. Queuing traffic		Info		Dynamic	0	Urgent	1
+418	closed ahead. Queuing traffic for 1 km		Info		Dynamic	0	Urgent	1
+419	closed ahead. Queuing traffic for 2 km		Info		Dynamic	0	Urgent	1
+420	closed ahead. Queuing traffic for 4 km		Info		Dynamic	0	Urgent	1
+421	closed ahead. Queuing traffic for 6 km		Info		Dynamic	0	Urgent	1
+422	closed ahead. Queuing traffic for 10 km		Info		Dynamic	0	Urgent	1
+423	closed ahead. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+424	closed ahead. Slow traffic		Info		Dynamic	0	Urgent	1
+425	closed ahead. Slow traffic for 1 km		Info		Dynamic	0	Urgent	1
+426	closed ahead. Slow traffic for 2 km		Info		Dynamic	0	Urgent	1
+427	closed ahead. Slow traffic for 4 km		Info		Dynamic	0	Urgent	1
+428	closed ahead. Slow traffic for 6 km		Info		Dynamic	0	Urgent	1
+429	closed ahead. Slow traffic for 10 km		Info		Dynamic	0	Urgent	1
+430	closed ahead. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+431	closed ahead. Heavy traffic		Info		Dynamic	0	Urgent	1
+432	closed ahead. Heavy traffic expected		Forecast		Dynamic	0	Urgent	2
+433	closed ahead. Traffic flowing freely		Info		Dynamic	0	Urgent	1
+434	closed ahead. Traffic building up		Info		Dynamic	0	Urgent	1
+435	closed ahead. Delays	closed ahead. Delays $Q	Info	5	Dynamic	0	Urgent	20
+436	closed ahead. Delays expected	closed ahead. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+437	closed ahead. Long delays	closed ahead. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+438	blocked ahead. Stationary traffic		Info		Dynamic	0	Urgent	1
+439	blocked ahead. Stationary traffic for 1 km		Info		Dynamic	0	Urgent	1
+440	blocked ahead. Stationary traffic for 2 km		Info		Dynamic	0	Urgent	1
+441	blocked ahead. Stationary traffic for 4 km		Info		Dynamic	0	Urgent	1
+442	blocked ahead. Stationary traffic for 6 km		Info		Dynamic	0	Urgent	1
+443	blocked ahead. Stationary traffic for 10 km		Info		Dynamic	0	Urgent	1
+444	blocked ahead. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+445	blocked ahead. Queuing traffic		Info		Dynamic	0	Urgent	1
+446	blocked ahead. Queuing traffic for 1 km		Info		Dynamic	0	Urgent	1
+447	blocked ahead. Queuing traffic for 2 km		Info		Dynamic	0	Urgent	1
+448	blocked ahead. Queuing traffic for 4 km		Info		Dynamic	0	Urgent	1
+449	blocked ahead. Queuing traffic for 6 km		Info		Dynamic	0	Urgent	1
+450	blocked ahead. Queuing traffic for 10 km		Info		Dynamic	0	Urgent	1
+451	blocked ahead. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+452	blocked ahead. Slow traffic		Info		Dynamic	0	Urgent	1
+453	blocked ahead. Slow traffic for 1 km		Info		Dynamic	0	Urgent	1
+454	blocked ahead. Slow traffic for 2 km		Info		Dynamic	0	Urgent	1
+455	blocked ahead. Slow traffic for 4 km		Info		Dynamic	0	Urgent	1
+456	blocked ahead. Slow traffic for 6 km		Info		Dynamic	0	Urgent	1
+457	blocked ahead. Slow traffic for 10 km		Info		Dynamic	0	Urgent	1
+458	blocked ahead. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+459	blocked ahead. Heavy traffic		Info		Dynamic	0	Urgent	1
+460	blocked ahead. Heavy traffic expected		Forecast		Dynamic	0	Urgent	2
+461	blocked ahead. Traffic flowing freely		Info		Dynamic	0	Urgent	1
+462	blocked ahead. Traffic building up		Info		Dynamic	0	Urgent	1
+463	blocked ahead. Delays	blocked ahead. Delays $Q	Info	5	Dynamic	0	Urgent	20
+464	blocked ahead. Delays expected	blocked ahead. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+465	blocked ahead. Long delays	blocked ahead. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+466	slip roads reopened		Info		Dynamic	0	Normal	7
+467	reopened		Info		Dynamic	0	Normal	5
+468	message cancelled		Silent		Dynamic	0	Normal	9
+469	closed ahead		Info		Longer-lasting	0	Urgent	9
+470	blocked ahead		Info		Dynamic	0	Urgent	9
+471	entry slip road(s) closed	$Q entry slip road(s) closed	Info	0	Longer-lasting	0	Urgent	8
+472	entry slip road blocked	$Q th entry slip road blocked	Info	0	Dynamic	0	Urgent	8
+473	entry blocked		Info		Dynamic	0	Urgent	8
+474	exit slip road(s) closed	$Q exit slip road(s) closed	Info	0	Longer-lasting	0	Urgent	7
+475	exit slip road blocked	$Q th exit slip road blocked	Info	0	Dynamic	0	Urgent	7
+476	exit blocked		Info		Dynamic	0	Urgent	7
+477	slip roads blocked		Info		Dynamic	0	Urgent	7
+478	connecting carriageway closed		Info		Longer-lasting	0	Urgent	7
+479	parallel carriageway closed		Info		Longer-lasting	0	Urgent	6
+480	right-hand parallel carriageway closed		Info		Longer-lasting	0	Urgent	6
+481	left-hand parallel carriageway closed		Info		Longer-lasting	0	Urgent	6
+482	express lanes closed		Info		Longer-lasting	0	Urgent	6
+483	through traffic lanes closed		Info		Longer-lasting	0	Urgent	6
+484	local lanes closed		Info		Longer-lasting	0	Urgent	6
+485	connecting carriageway blocked		Info		Dynamic	0	Urgent	7
+486	parallel carriageway blocked		Info		Dynamic	0	Urgent	6
+487	right-hand parallel carriageway blocked		Info		Dynamic	0	Urgent	6
+488	left-hand parallel carriageway blocked		Info		Dynamic	0	Urgent	6
+489	express lanes blocked		Info		Dynamic	0	Urgent	6
+490	through traffic lanes blocked		Info		Dynamic	0	Urgent	6
+491	local lanes blocked		Info		Dynamic	0	Urgent	6
+492	no motor vehicles		Info		Longer-lasting	1	Urgent	9
+493	restrictions		Info		Longer-lasting	0	Normal	9
+494	closed for heavy lorries	closed for heavy lorries over $Q	Info	8	Longer-lasting	0	Urgent	9
+495	closed ahead. Stationary traffic for 3 km		Info		Dynamic	0	Urgent	1
+496	closed ahead. Queuing traffic for 3 km		Info		Dynamic	0	Urgent	1
+497	closed ahead. Slow traffic for 3 km		Info		Dynamic	0	Urgent	1
+498	blocked ahead. Stationary traffic for 3 km		Info		Dynamic	0	Urgent	1
+499	blocked ahead. Queuing traffic for 3 km		Info		Dynamic	0	Urgent	1
+500	lane(s) closed	$Q lane(s) closed	Info	0	Longer-lasting	0	Normal	5
+501	right lane(s) closed	$Q right lane(s) closed	Info	0	Longer-lasting	0	Normal	5
+502	centre lane(s) closed	$Q centre lane(s) closed	Info	0	Longer-lasting	0	Normal	5
+503	left lane(s) closed	$Q left lane(s) closed	Info	0	Longer-lasting	0	Normal	5
+504	hard shoulder closed		Info		Longer-lasting	0	Normal	5
+505	two lanes closed		Info		Longer-lasting	0	Normal	5
+506	three lanes closed		Info		Longer-lasting	0	Normal	5
+507	right lane(s) blocked	$Q right lane(s) blocked	Info	0	Dynamic	0	Urgent	5
+508	centre lane(s) blocked	$Q centre lane(s) blocked	Info	0	Dynamic	0	Urgent	5
+509	left lane(s) blocked	$Q left lane(s) blocked	Info	0	Dynamic	0	Urgent	5
+510	hard shoulder blocked		Info		Dynamic	0	Normal	5
+511	two lanes blocked		Info		Dynamic	0	Urgent	5
+512	three lanes blocked		Info		Dynamic	0	Urgent	5
+513	single alternate line traffic		Info		Longer-lasting	1	Normal	5
+514	carriageway reduced to one lane	carriageway reduced from $Q lanes to one lane	Info	0	Longer-lasting	0	Normal	5
+515	carriageway reduced to two lanes	carriageway reduced from $Q lanes to two lanes	Info	0	Longer-lasting	0	Normal	5
+516	carriageway reduced to three lanes	carriageway reduced from $Q lanes to three lanes	Info	0	Longer-lasting	0	Normal	5
+517	contraflow		Info		Longer-lasting	1	Normal	5
+518	narrow lanes		Info		Longer-lasting	0	Normal	5
+519	contraflow with narrow lanes		Info		Longer-lasting	1	Normal	5
+520	lane(s) blocked	$Q lane(s) blocked	Info	0	Dynamic	0	Urgent	5
+521	lanes closed. Stationary traffic	$Q lanes closed. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+522	lanes closed. Stationary traffic for 1 km	$Q lanes closed. Stationary traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+523	lanes closed. Stationary traffic for 2 km	$Q lanes closed. Stationary traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+524	lanes closed. Stationary traffic for 4 km	$Q lanes closed. Stationary traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+525	lanes closed. Stationary traffic for 6 km	$Q lanes closed. Stationary traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+526	lanes closed. Stationary traffic for 10 km	$Q lanes closed. Stationary traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+527	lanes closed. Danger of stationary traffic	$Q lanes closed. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+528	lanes closed. Queuing traffic	$Q lanes closed. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+529	lanes closed. Queuing traffic for 1 km	$Q lanes closed. Queuing traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+530	lanes closed. Queuing traffic for 2 km	$Q lanes closed. Queuing traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+531	lanes closed. Queuing traffic for 4 km	$Q lanes closed. Queuing traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+532	lanes closed. Queuing traffic for 6 km	$Q lanes closed. Queuing traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+533	lanes closed. Queuing traffic for 10 km	$Q lanes closed. Queuing traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+534	lanes closed. Danger of queuing traffic	$Q lanes closed. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+535	lanes closed. Slow traffic	$Q lanes closed. Slow traffic	Info	0	Dynamic	0	Urgent	1
+536	lanes closed. Slow traffic for 1 km	$Q lanes closed. Slow traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+537	lanes closed. Slow traffic for 2 km	$Q lanes closed. Slow traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+538	lanes closed. Slow traffic for 4 km	$Q lanes closed. Slow traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+539	lanes closed. Slow traffic for 6 km	$Q lanes closed. Slow traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+540	lanes closed. Slow traffic for 10 km	$Q lanes closed. Slow traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+541	lanes closed. Slow traffic expected	$Q lanes closed. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+542	lanes closed. Heavy traffic	$Q lanes closed. Heavy traffic	Info	0	Dynamic	0	Normal	1
+543	lanes closed. Heavy traffic expected	$Q lanes closed. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+544	lanes closed. Traffic flowing freely	$Q lanes closed. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+545	lanes closed. Traffic building up	$Q lanes closed. Traffic building up	Info	0	Dynamic	0	Normal	1
+546	carriageway reduced to one lane. Stationary traffic	carriageway reduced from $Q lanes to one lane. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+547	carriageway reduced to one lane. Danger of stationary traffic	carriageway reduced from $Q lanes to one lane. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+548	carriageway reduced to one lane. Queuing traffic	carriageway reduced from $Q lanes to one lane. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+549	carriageway reduced to one lane. Danger of queuing traffic	carriageway reduced from $Q lanes to one lane. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+550	carriageway reduced to one lane. Slow traffic	carriageway reduced from $Q lanes to one lane. Slow traffic	Info	0	Dynamic	0	Urgent	1
+551	carriageway reduced to one lane. Slow traffic expected	carriageway reduced from $Q lanes to one lane. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+552	carriageway reduced to one lane. Heavy traffic	carriageway reduced from $Q lanes to one lane. Heavy traffic	Info	0	Dynamic	0	Normal	1
+553	carriageway reduced to one lane. Heavy traffic expected	carriageway reduced from $Q lanes to one lane. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+554	carriageway reduced to one lane. Traffic flowing freely	carriageway reduced from $Q lanes to one lane. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+555	carriageway reduced to one lane. Traffic building up	carriageway reduced from $Q lanes to one lane. Traffic building up	Info	0	Dynamic	0	Normal	1
+556	carriageway reduced to two lanes. Stationary traffic	carriageway reduced from $Q lanes to two lanes. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+557	carriageway reduced to two lanes. Danger of stationary traffic	carriageway reduced from $Q lanes to two lanes. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+558	carriageway reduced to two lanes. Queuing traffic	carriageway reduced from $Q lanes to two lanes. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+559	carriageway reduced to two lanes. Danger of queuing traffic	carriageway reduced from $Q lanes to two lanes. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+560	carriageway reduced to two lanes. Slow traffic	carriageway reduced from $Q lanes to two lanes. Slow traffic	Info	0	Dynamic	0	Urgent	1
+561	carriageway reduced to two lanes. Slow traffic expected	carriageway reduced from $Q lanes to two lanes. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+562	carriageway reduced to two lanes. Heavy traffic	carriageway reduced from $Q lanes to two lanes. Heavy traffic	Info	0	Dynamic	0	Normal	1
+563	carriageway reduced to two lanes. Heavy traffic expected	carriageway reduced from $Q lanes to two lanes. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+564	carriageway reduced to two lanes. Traffic flowing freely	carriageway reduced from $Q lanes to two lanes. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+565	carriageway reduced to two lanes. Traffic building up	carriageway reduced from $Q lanes to two lanes. Traffic building up	Info	0	Dynamic	0	Normal	1
+566	carriageway reduced to three lanes. Stationary traffic	carriageway reduced from $Q lanes to three lanes. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+567	carriageway reduced to three lanes. Danger of stationary traffic	carriageway reduced from $Q lanes to three lanes. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+568	carriageway reduced to three lanes. Queuing traffic	carriageway reduced from $Q lanes to three lanes. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+569	carriageway reduced to three lanes. Danger of queuing traffic	carriageway reduced from $Q lanes to three lanes. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+570	carriageway reduced to three lanes. Slow traffic	carriageway reduced from $Q lanes to three lanes. Slow traffic	Info	0	Dynamic	0	Urgent	1
+571	carriageway reduced to three lanes. Slow traffic expected	carriageway reduced from $Q lanes to three lanes. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+572	carriageway reduced to three lanes. Heavy traffic	carriageway reduced from $Q lanes to three lanes. Heavy traffic	Info	0	Dynamic	0	Normal	1
+573	carriageway reduced to three lanes. Heavy traffic expected	carriageway reduced from $Q lanes to three lanes. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+574	carriageway reduced to three lanes. Traffic flowing freely	carriageway reduced from $Q lanes to three lanes. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+575	carriageway reduced to three lanes. Traffic building up	carriageway reduced from $Q lanes to three lanes. Traffic building up	Info	0	Dynamic	0	Normal	1
+576	contraflow. Stationary traffic		Info		Dynamic	0	Urgent	1
+577	contraflow. Stationary traffic for 1 km		Info		Dynamic	0	Urgent	1
+578	contraflow. Stationary traffic for 2 km		Info		Dynamic	0	Urgent	1
+579	contraflow. Stationary traffic for 4 km		Info		Dynamic	0	Urgent	1
+580	contraflow. Stationary traffic for 6 km		Info		Dynamic	0	Urgent	1
+581	contraflow. Stationary traffic for 10 km		Info		Dynamic	0	Urgent	1
+582	contraflow. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+583	contraflow. Queuing traffic		Info		Dynamic	0	Urgent	1
+584	contraflow. Queuing traffic for 1 km		Info		Dynamic	0	Urgent	1
+585	contraflow. Queuing traffic for 2 km		Info		Dynamic	0	Urgent	1
+586	contraflow. Queuing traffic for 4 km		Info		Dynamic	0	Urgent	1
+587	contraflow. Queuing traffic for 6 km		Info		Dynamic	0	Urgent	1
+588	contraflow. Queuing traffic for 10 km		Info		Dynamic	0	Urgent	1
+589	contraflow. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+590	contraflow. Slow traffic		Info		Dynamic	0	Urgent	1
+591	contraflow. Slow traffic for 1 km		Info		Dynamic	0	Urgent	1
+592	contraflow. Slow traffic for 2 km		Info		Dynamic	0	Urgent	1
+593	contraflow. Slow traffic for 4 km		Info		Dynamic	0	Urgent	1
+594	contraflow. Slow traffic for 6 km		Info		Dynamic	0	Urgent	1
+595	contraflow. Slow traffic for 10 km		Info		Dynamic	0	Urgent	1
+596	contraflow. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+597	contraflow. Heavy traffic		Info		Dynamic	0	Normal	1
+598	contraflow. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+599	contraflow. Traffic flowing freely		Info		Dynamic	0	Normal	1
+600	contraflow. Traffic building up		Info		Dynamic	0	Normal	1
+601	contraflow. Carriageway reduced to one lane	contraflow. Carriageway reduced from $Q lanes to one lane	Info	0	Longer-lasting	0	Normal	5
+602	contraflow. Carriageway reduced to two lanes	contraflow. Carriageway reduced from $Q lanes to two lanes	Info	0	Longer-lasting	0	Normal	5
+603	contraflow. Carriageway reduced to three lanes	contraflow. Carriageway reduced from $Q lanes to three lanes	Info	0	Longer-lasting	0	Normal	5
+604	narrow lanes. Stationary traffic		Info		Dynamic	0	Urgent	1
+605	narrow lanes. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+606	narrow lanes. Queuing traffic		Info		Dynamic	0	Urgent	1
+607	narrow lanes. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+608	narrow lanes. Slow traffic		Info		Dynamic	0	Urgent	1
+609	narrow lanes. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+610	narrow lanes. Heavy traffic		Info		Dynamic	0	Normal	1
+611	narrow lanes. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+612	narrow lanes. Traffic flowing freely		Info		Dynamic	0	Normal	1
+613	narrow lanes. Traffic building up		Info		Dynamic	0	Normal	1
+614	contraflow with narrow lanes. Stationary traffic		Info		Dynamic	0	Urgent	1
+615	contraflow with narrow lanes. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+616	contraflow with narrow lanes. Queuing traffic		Info		Dynamic	0	Urgent	1
+617	contraflow with narrow lanes. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+618	contraflow with narrow lanes. Slow traffic		Info		Dynamic	0	Urgent	1
+619	contraflow with narrow lanes. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+620	contraflow with narrow lanes. Heavy traffic		Info		Dynamic	0	Normal	1
+621	contraflow with narrow lanes. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+622	contraflow with narrow lanes. Traffic flowing freely		Info		Dynamic	0	Normal	1
+623	contraflow with narrow lanes. Traffic building up		Info		Dynamic	0	Normal	1
+624	lane closures removed		Info		Dynamic	0	Normal	5
+625	message cancelled		Silent		Dynamic	0	Normal	5
+626	blocked ahead. Slow traffic for 3 km		Info		Dynamic	0	Urgent	1
+627	no motor vehicles without catalytic converters		Info		Longer-lasting	1	Urgent	9
+628	no motor vehicles with even-numbered registration plates		Info		Longer-lasting	1	Urgent	9
+629	no motor vehicles with odd-numbered registration plates		Info		Longer-lasting	1	Urgent	9
+630	open		Info		Longer-lasting	0	Normal	5
+631	road cleared		Info		Dynamic	0	Normal	5
+632	entry reopened		Info		Dynamic	0	Normal	8
+633	exit reopened		Info		Dynamic	0	Normal	7
+634	all carriageways reopened		Info		Dynamic	0	Normal	6
+635	motor vehicle restrictions lifted		Info		Dynamic	1	Normal	9
+636	traffic restrictions lifted		Info		Dynamic	1	Normal	9
+637	emergency lane closed		Info		Longer-lasting	0	Normal	5
+638	turning lane closed		Info		Longer-lasting	0	Normal	5
+639	crawler lane closed		Info		Longer-lasting	0	Normal	5
+640	slow vehicle lane closed		Info		Longer-lasting	0	Normal	5
+641	one lane closed		Info		Longer-lasting	0	Normal	5
+642	emergency lane blocked		Info		Dynamic	0	Normal	5
+643	turning lane blocked		Info		Dynamic	0	Normal	5
+644	crawler lane blocked		Info		Dynamic	0	Normal	5
+645	slow vehicle lane blocked		Info		Dynamic	0	Normal	5
+646	one lane blocked		Info		Dynamic	0	Urgent	5
+647	carpool lane in operation	$Q person carpool lane in operation	Info	0	Longer-lasting	0	Normal	10
+648	carpool lane closed	$Q person carpool lane closed	Info	0	Longer-lasting	0	Urgent	10
+649	carpool lane blocked	$Q person carpool lane blocked	Info	0	Dynamic	0	Urgent	10
+650	carpool restrictions changed	carpool restrictions changed to $Q persons per vehicle	Info	0	Longer-lasting	0	Urgent	10
+651	lanes closed. Stationary traffic for 3 km	$Q lanes closed. Stationary traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+652	lanes closed. Queuing traffic for 3 km	$Q lanes closed. Queuing traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+653	lanes closed. Slow traffic for 3 km	$Q lanes closed. Slow traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+654	contraflow. Stationary traffic for 3 km		Info		Dynamic	0	Urgent	1
+655	contraflow. Queuing traffic for 3 km		Info		Dynamic	0	Urgent	1
+656	contraflow. Slow traffic for 3 km		Info		Dynamic	0	Urgent	1
+657	lane blockages cleared		Info		Dynamic	0	Normal	5
+658	contraflow removed		Info		Dynamic	0	Normal	5
+659	carpool restrictions lifted	$Q person carpool restrictions lifted	Info	0	Dynamic	0	Normal	10
+660	lane restrictions lifted		Info		Dynamic	0	Normal	9
+661	use of hard shoulder allowed		Info		Dynamic	0	Normal	9
+662	normal lane regulations restored		Info		Dynamic	0	Normal	9
+663	all carriageways cleared		Info		Dynamic	0	Normal	6
+664	carriageway closed		Info		Longer-lasting	0	Normal	5
+665	both directions closed		Info		Longer-lasting	1	Normal	5
+666	intermittent short term closures		Info		Dynamic	1	Urgent	5
+671	bus lane available for carpools	bus lane available for carpools with at least $Q occupants	Info	0	Longer-lasting	0	Normal	10
+672	message cancelled		Silent		Dynamic	0	Normal	6
+673	message cancelled		Silent		Dynamic	0	Normal	7
+675	salting vehicles	$Q salting vehicles	Info	0	Dynamic	0	Normal	23
+676	bus lane blocked		Info		Dynamic	0	Urgent	6
+678	heavy vehicle lane closed		Info		Longer-lasting	0	Normal	5
+679	heavy vehicle lane blocked		Info		Dynamic	0	Urgent	5
+680	reopened for through traffic		Info		Dynamic	0	Normal	9
+681	snowploughs	$Q snowploughs	Forecast	0	Dynamic	0	Urgent	23
+701	roadworks	$Q sets of roadworks	Info	0	Longer-lasting	0	Normal	11
+702	major roadworks	$Q sets of major roadworks	Info	0	Longer-lasting	0	Normal	11
+703	maintenance work	$Q sets of maintenance work	Info	0	Dynamic	0	Normal	11
+704	resurfacing work	$Q sections of resurfacing work	Info	0	Longer-lasting	0	Normal	11
+705	central reservation work	$Q sets of central reservation work	Info	0	Longer-lasting	0	Normal	11
+706	road marking work	$Q sets of road marking work	Info	0	Dynamic	0	Normal	13
+707	bridge maintenance work	bridge maintenance work at $Q bridges	Info	0	Longer-lasting	0	Normal	11
+708	temporary traffic lights	$Q sets of temporary traffic lights	Info	0	Longer-lasting	1	Normal	11
+709	blasting work	$Q sections of blasting work	Info	0	Longer-lasting	1	Normal	11
+710	roadworks. Stationary traffic	$Q sets of roadworks. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+711	roadworks. Stationary traffic for 1 km	$Q sets of roadworks. Stationary traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+712	roadworks. Stationary traffic for 2 km	$Q sets of roadworks. Stationary traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+713	roadworks. Stationary traffic for 4 km	$Q sets of roadworks. Stationary traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+714	roadworks. Stationary traffic for 6 km	$Q sets of roadworks. Stationary traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+715	roadworks. Stationary traffic for 10 km	$Q sets of roadworks. Stationary traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+716	roadworks. Danger of stationary traffic	$Q sets of roadworks. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+717	roadworks. Queuing traffic	$Q sets of roadworks. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+718	roadworks. Queuing traffic for 1 km	$Q sets of roadworks. Queuing traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+719	roadworks. Queuing traffic for 2 km	$Q sets of roadworks. Queuing traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+720	roadworks. Queuing traffic for 4 km	$Q sets of roadworks. Queuing traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+721	roadworks. Queuing traffic for 6 km	$Q sets of roadworks. Queuing traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+722	roadworks. Queuing traffic for 10 km	$Q sets of roadworks. Queuing traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+723	roadworks. Danger of queuing traffic	$Q sets of roadworks. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+724	roadworks. Slow traffic	$Q sets of roadworks. Slow traffic	Info	0	Dynamic	0	Urgent	1
+725	roadworks. Slow traffic for 1 km	$Q sets of roadworks. Slow traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+726	roadworks. Slow traffic for 2 km	$Q sets of roadworks. Slow traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+727	roadworks. Slow traffic for 4 km	$Q sets of roadworks. Slow traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+728	roadworks. Slow traffic for 6 km	$Q sets of roadworks. Slow traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+729	roadworks. Slow traffic for 10 km	$Q sets of roadworks. Slow traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+730	roadworks. Slow traffic expected	$Q sets of roadworks. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+731	roadworks. Heavy traffic	$Q sets of roadworks. Heavy traffic	Info	0	Dynamic	0	Normal	1
+732	roadworks. Heavy traffic expected	$Q sets of roadworks. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+733	roadworks. Traffic flowing freely	$Q sets of roadworks. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+734	roadworks. Traffic building up	$Q sets of roadworks. Traffic building up	Info	0	Dynamic	0	Normal	1
+735	closed due to roadworks	closed due to $Q sets of roadworks	Info	0	Longer-lasting	0	Urgent	5
+736	roadworks. Right lane closed	$Q sets of roadworks. Right lane closed	Info	0	Longer-lasting	0	Normal	5
+737	roadworks. Centre lane closed	$Q sets of roadworks. Centre lane closed	Info	0	Longer-lasting	0	Normal	5
+738	roadworks. Left lane closed	$Q sets of roadworks. Left lane closed	Info	0	Longer-lasting	0	Normal	5
+739	roadworks. Hard shoulder closed	$Q sets of roadworks. Hard shoulder closed	Info	0	Longer-lasting	0	Normal	5
+740	roadworks. Two lanes closed	$Q sets of roadworks. Two lanes closed	Info	0	Longer-lasting	0	Normal	5
+741	roadworks. Three lanes closed	$Q sets of roadworks. Three lanes closed	Info	0	Longer-lasting	0	Normal	5
+742	roadworks. Single alternate line traffic	$Q sets of roadworks. Single alternate line traffic	Info	0	Longer-lasting	1	Normal	5
+743	roadworks. Carriageway reduced to one lane	roadworks. Carriageway reduced from $Q lanes to one lane	Info	0	Longer-lasting	0	Normal	5
+744	roadworks. Carriageway reduced to two lanes	roadworks. Carriageway reduced from $Q lanes to two lanes	Info	0	Longer-lasting	0	Normal	5
+745	roadworks. Carriageway reduced to three lanes	roadworks. Carriageway reduced from $Q lanes to three lanes	Info	0	Longer-lasting	0	Normal	5
+746	roadworks. Contraflow	$Q sets of roadworks. Contraflow	Info	0	Longer-lasting	1	Normal	5
+747	roadworks. Delays	roadworks. Delays $Q	Info	5	Dynamic	0	Normal	20
+748	roadworks. Delays expected	roadworks. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+749	roadworks. Long delays	roadworks. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+750	resurfacing work. Stationary traffic	$Q sections of resurfacing work. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+751	resurfacing work. Stationary traffic for 1 km	$Q sections of resurfacing work. Stationary traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+752	resurfacing work. Stationary traffic for 2 km	$Q sections of resurfacing work. Stationary traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+753	resurfacing work. Stationary traffic for 4 km	$Q sections of resurfacing work. Stationary traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+754	resurfacing work. Stationary traffic for 6 km	$Q sections of resurfacing work. Stationary traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+755	resurfacing work. Stationary traffic for 10 km	$Q sections of resurfacing work. Stationary traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+756	resurfacing work. Danger of stationary traffic	$Q sections of resurfacing work. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+757	resurfacing work. Queuing traffic	$Q sections of resurfacing work. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+758	resurfacing work. Queuing traffic for 1 km	$Q sections of resurfacing work. Queuing traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+759	resurfacing work. Queuing traffic for 2 km	$Q sections of resurfacing work. Queuing traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+760	resurfacing work. Queuing traffic for 4 km	$Q sections of resurfacing work. Queuing traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+761	resurfacing work. Queuing traffic for 6 km	$Q sections of resurfacing work. Queuing traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+762	resurfacing work. Queuing traffic for 10 km	$Q sections of resurfacing work. Queuing traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+763	resurfacing work. Danger of queuing traffic	$Q sections of resurfacing work. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+764	resurfacing work. Slow traffic	$Q sections of resurfacing work. Slow traffic	Info	0	Dynamic	0	Urgent	1
+765	resurfacing work. Slow traffic for 1 km	$Q sections of resurfacing work. Slow traffic for 1 km	Info	0	Dynamic	0	Urgent	1
+766	resurfacing work. Slow traffic for 2 km	$Q sections of resurfacing work. Slow traffic for 2 km	Info	0	Dynamic	0	Urgent	1
+767	resurfacing work. Slow traffic for 4 km	$Q sections of resurfacing work. Slow traffic for 4 km	Info	0	Dynamic	0	Urgent	1
+768	resurfacing work. Slow traffic for 6 km	$Q sections of resurfacing work. Slow traffic for 6 km	Info	0	Dynamic	0	Urgent	1
+769	resurfacing work. Slow traffic for 10 km	$Q sections of resurfacing work. Slow traffic for 10 km	Info	0	Dynamic	0	Urgent	1
+770	resurfacing work. Slow traffic expected	$Q sections of resurfacing work. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+771	resurfacing work. Heavy traffic	$Q sections of resurfacing work. Heavy traffic	Info	0	Dynamic	0	Normal	1
+772	resurfacing work. Heavy traffic expected	$Q sections of resurfacing work. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+773	resurfacing work. Traffic flowing freely	$Q sections of resurfacing work. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+774	resurfacing work. Traffic building up	$Q sections of resurfacing work. Traffic building up	Info	0	Dynamic	0	Normal	1
+775	resurfacing work. Single alternate line traffic	$Q sections of resurfacing work. Single alternate line traffic	Info	0	Longer-lasting	1	Normal	5
+776	resurfacing work. Carriageway reduced to one lane	resurfacing work. Carriageway reduced from $Q lanes to one lane	Info	0	Longer-lasting	0	Normal	5
+777	resurfacing work. Carriageway reduced to two lanes	resurfacing work. Carriageway reduced from $Q lanes to two lanes	Info	0	Longer-lasting	0	Normal	5
+778	resurfacing work. Carriageway reduced to three lanes	resurfacing work. Carriageway reduced from $Q lanes to three lanes	Info	0	Longer-lasting	0	Normal	5
+779	resurfacing work. Contraflow	$Q sections of resurfacing work. Contraflow	Info	0	Longer-lasting	1	Normal	5
+780	resurfacing work. Delays	resurfacing work. Delays $Q	Info	5	Dynamic	0	Normal	20
+781	resurfacing work. Delays expected	resurfacing work. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+782	resurfacing work. Long delays	resurfacing work. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+783	road marking work. Stationary traffic	$Q sets of road marking work. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+784	road marking work. Danger of stationary traffic	$Q sets of road marking work. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+785	road marking work. Queuing traffic	$Q sets of road marking work. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+786	road marking work. Danger of queuing traffic	$Q sets of road marking work. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+787	road marking work. Slow traffic	$Q sets of road marking work. Slow traffic	Info	0	Dynamic	0	Urgent	1
+788	road marking work. Slow traffic expected	$Q sets of road marking work. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+789	road marking work. Heavy traffic	$Q sets of road marking work. Heavy traffic	Info	0	Dynamic	0	Normal	1
+790	road marking work. Heavy traffic expected	$Q sets of road marking work. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+791	road marking work. Traffic flowing freely	$Q sets of road marking work. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+792	road marking work. Traffic building up	$Q sets of road marking work. Traffic building up	Info	0	Dynamic	0	Normal	1
+793	road marking work. Right lane closed	$Q sets of road marking work. Right lane closed	Info	0	Dynamic	0	Normal	5
+794	road marking work. Centre lane closed	$Q sets of road marking work. Centre lane closed	Info	0	Dynamic	0	Normal	5
+795	road marking work. Left lane closed	$Q sets of road marking work. Left lane closed	Info	0	Dynamic	0	Normal	5
+796	road marking work. Hard shoulder closed	$Q sets of road marking work. Hard shoulder closed	Info	0	Dynamic	0	Normal	5
+797	road marking work. Two lanes closed	$Q sets of road marking work. Two lanes closed	Info	0	Dynamic	0	Normal	5
+798	road marking work. Three lanes closed	$Q sets of road marking work. Three lanes closed	Info	0	Dynamic	0	Normal	5
+799	closed for bridge demolition work	closed for bridge demolition work at $Q bridges	Info	0	Longer-lasting	1	Urgent	5
+800	roadworks cleared		Info		Dynamic	0	Normal	11
+801	message cancelled		Silent		Dynamic	0	Normal	11
+802	long-term roadworks	$Q sets of long-term roadworks	Info	0	Longer-lasting	0	Normal	11
+803	construction work	$Q sets of construction work	Info	0	Longer-lasting	0	Normal	11
+804	slow moving maintenance vehicles	$Q sets of slow moving maintenance vehicles	Info	0	Dynamic	0	Urgent	23
+805	bridge demolition work	bridge demolition work at $Q bridges	Info	0	Longer-lasting	0	Urgent	11
+806	water main work	$Q sets of water main work	Info	0	Longer-lasting	1	Normal	11
+807	gas main work	$Q sets of gas main work	Info	0	Longer-lasting	1	Normal	11
+808	work on buried cables	$Q sets of work on buried cables	Info	0	Longer-lasting	1	Normal	11
+809	work on buried services	$Q sets of work on buried services	Info	0	Longer-lasting	1	Normal	11
+810	new roadworks layout		Info		Dynamic	1	Normal	11
+811	new road layout		Info		Dynamic	1	Normal	11
+812	roadworks. Stationary traffic for 3 km	$Q sets of roadworks. Stationary traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+813	roadworks. Queuing traffic for 3 km	$Q sets of roadworks. Queuing traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+814	roadworks. Slow traffic for 3 km	$Q sets of roadworks. Slow traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+815	roadworks during the day time	$Q sets of roadworks during the day time	Info	0	Longer-lasting	0	Normal	11
+816	roadworks during off-peak periods	$Q sets of roadworks during off-peak periods	Info	0	Longer-lasting	0	Normal	11
+817	roadworks during the night	$Q sets of roadworks during the night	Info	0	Longer-lasting	0	Normal	11
+818	resurfacing work. Stationary traffic for 3 km	$Q sections of resurfacing work. Stationary traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+819	resurfacing work. Queuing traffic for 3 km	$Q sections of resurfacing work. Queuing traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+820	resurfacing work. Slow traffic for 3 km	$Q sections of resurfacing work. Slow traffic for 3 km	Info	0	Dynamic	0	Urgent	1
+821	resurfacing work during the day time	$Q sets of resurfacing work during the day time	Info	0	Longer-lasting	0	Normal	11
+822	resurfacing work during off-peak periods	$Q sets of resurfacing work during off-peak periods	Info	0	Longer-lasting	0	Normal	11
+823	resurfacing work during the night	$Q sets of resurfacing work during the night	Info	0	Longer-lasting	0	Normal	11
+824	road marking work. Danger	$Q sets of road marking work. Danger	Info	0	Dynamic	0	Urgent	13
+825	slow moving maintenance vehicles. Stationary traffic	$Q sets of slow moving maintenance vehicles. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+826	slow moving maintenance vehicles. Danger of stationary traffic	$Q sets of slow moving maintenance vehicles. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+827	slow moving maintenance vehicles. Queuing traffic	$Q sets of slow moving maintenance vehicles. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+828	slow moving maintenance vehicles. Danger of queuing traffic	$Q sets of slow moving maintenance vehicles. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+829	slow moving maintenance vehicles. Slow traffic	$Q sets of slow moving maintenance vehicles. Slow traffic	Info	0	Dynamic	0	Urgent	1
+830	slow moving maintenance vehicles. Slow traffic expected	$Q sets of slow moving maintenance vehicles. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+831	slow moving maintenance vehicles. Heavy traffic	$Q sets of slow moving maintenance vehicles. Heavy traffic	Info	0	Dynamic	0	Urgent	1
+832	slow moving maintenance vehicles. Heavy traffic expected	$Q sets of slow moving maintenance vehicles. Heavy traffic expected	Forecast	0	Dynamic	0	Urgent	2
+833	slow moving maintenance vehicles. Traffic flowing freely	$Q sets of slow moving maintenance vehicles. Traffic flowing freely	Info	0	Dynamic	0	Urgent	1
+834	slow moving maintenance vehicles. Traffic building up	$Q sets of slow moving maintenance vehicles. Traffic building up	Info	0	Dynamic	0	Urgent	1
+835	slow moving maintenance vehicles. Right lane closed	$Q sets of slow moving maintenance vehicles. Right lane closed	Info	0	Dynamic	0	Urgent	5
+836	slow moving maintenance vehicles. Centre lane closed	$Q sets of slow moving maintenance vehicles. Centre lane closed	Info	0	Dynamic	0	Urgent	5
+837	slow moving maintenance vehicles. Left lane closed	$Q sets of slow moving maintenance vehicles. Left lane closed	Info	0	Dynamic	0	Urgent	5
+838	slow moving maintenance vehicles. Two lanes closed	$Q sets of slow moving maintenance vehicles. Two lanes closed	Info	0	Dynamic	0	Urgent	5
+839	slow moving maintenance vehicles. Three lanes closed	$Q sets of slow moving maintenance vehicles. Three lanes closed	Info	0	Dynamic	0	Urgent	5
+840	water main work. Delays	water main work. Delays $Q	Info	5	Dynamic	0	Normal	20
+841	water main work. Delays expected	water main work. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+842	water main work. Long delays	water main work. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+843	gas main work. Delays	gas main work. Delays $Q	Info	5	Dynamic	0	Normal	20
+844	gas main work. Delays expected	gas main work. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+845	gas main work. Long delays	gas main work. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+846	work on buried cables. Delays	work on buried cables. Delays $Q	Info	5	Dynamic	0	Normal	20
+847	work on buried cables. Delays expected	work on buried cables. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+848	work on buried cables. Long delays	work on buried cables. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+849	work on buried services. Delays	work on buried services. Delays $Q	Info	5	Dynamic	0	Normal	20
+850	work on buried services. Delays expected	work on buried services. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+851	work on buried services. Long delays	work on buried services. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+852	construction traffic merging		Info		Dynamic	0	Urgent	13
+853	roadwork clearance in progress		Info		Dynamic	0	Normal	11
+854	maintenance work cleared		Info		Dynamic	0	Normal	11
+855	road layout unchanged		Info		Dynamic	1	Normal	11
+856	construction traffic merging. Danger		Info		Dynamic	0	Urgent	13
+857	unprotected accident area(s)	$Q unprotected accident area(s)	Info	0	Dynamic	0	Normal	13
+858	danger of unprotected accident area(s)	danger of $Q unprotected accident area(s)	Info	0	Dynamic	0	Urgent	13
+859	unlit vehicle(s) on the road	$Q unlit vehicle(s) on the road	Info	0	Dynamic	0	Normal	13
+860	danger of unlit vehicle(s) on the road	danger of $Q unlit vehicle(s) on the road	Info	0	Dynamic	0	Urgent	13
+861	snow and ice debris		Info		Longer-lasting	1	Normal	13
+862	danger of snow and ice debris		Info		Longer-lasting	1	Urgent	13
+897	people throwing objects onto the road. Danger		Info		Dynamic	1	X-Urgent	13
+898	obstruction warning withdrawn		Info		Dynamic	1	Normal	12
+899	clearance work in progress, road free again		Info		Dynamic	1	Normal	12
+900	flooding expected		Forecast		Dynamic	1	Urgent	12
+901	obstruction(s) on roadway	$Q obstruction(s) on roadway	Info	0	Dynamic	0	Urgent	12
+902	obstruction(s) on the road. Danger	$Q obstruction(s) on the road. Danger	Info	0	Dynamic	0	Urgent	12
+903	spillage on the road		Info		Dynamic	0	Normal	12
+904	storm damage		Info		Dynamic	1	Normal	12
+905	fallen trees	$Q fallen trees	Info	0	Dynamic	0	Normal	12
+906	fallen trees. Danger	$Q fallen trees. Danger	Info	0	Dynamic	0	Urgent	12
+907	flooding		Info		Longer-lasting	1	Normal	12
+908	flooding. Danger		Info		Longer-lasting	1	Urgent	12
+909	flash floods		Info		Dynamic	1	Urgent	12
+910	danger of flash floods		Info		Dynamic	1	Urgent	12
+911	avalanches		Info		Longer-lasting	1	Normal	12
+912	avalanche risk		Info		Longer-lasting	1	Normal	12
+913	rockfalls		Info		Longer-lasting	1	Normal	12
+914	landslips		Info		Longer-lasting	1	Normal	12
+915	earthquake damage		Info		Longer-lasting	1	Normal	12
+916	road surface in poor condition		Info		Longer-lasting	1	Normal	14
+917	subsidence		Info		Longer-lasting	0	Normal	12
+918	collapsed sewer(s)	$Q collapsed sewer(s)	Info	0	Longer-lasting	1	Normal	12
+919	burst water main		Info		Dynamic	1	Normal	12
+920	gas leak		Info		Dynamic	1	Normal	12
+921	serious fire		Info		Dynamic	1	Normal	12
+922	animals on roadway		Info		Dynamic	0	Normal	13
+923	animals on the road. Danger		Info		Dynamic	1	Urgent	13
+924	clearance work		Info		Dynamic	0	Normal	4
+925	blocked by storm damage		Info		Dynamic	0	Urgent	5
+926	blocked by fallen trees	blocked by $Q fallen trees	Info	0	Dynamic	0	Urgent	5
+927	fallen tree(s). Passable with care	$Q fallen tree(s). Passable with care	Info	0	Dynamic	0	Urgent	12
+928	flooding. Stationary traffic		Info		Dynamic	0	Urgent	1
+929	flooding. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+930	flooding. Queuing traffic		Info		Dynamic	0	Urgent	1
+931	flooding. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+932	flooding. Slow traffic		Info		Dynamic	0	Urgent	1
+933	flooding. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+934	flooding. Heavy traffic		Info		Dynamic	0	Normal	1
+935	flooding. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+936	flooding. Traffic flowing freely		Info		Dynamic	0	Normal	1
+937	flooding. Traffic building up		Info		Dynamic	0	Normal	1
+938	closed due to flooding		Info		Longer-lasting	1	Urgent	9
+939	flooding. Delays	flooding. Delays $Q	Info	5	Dynamic	0	Normal	20
+940	flooding. Delays expected	flooding. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+941	flooding. Long delays	flooding. Long delays $Q	Info	5	Longer-lasting	0	Urgent	20
+942	flooding. Passable with care		Info		Longer-lasting	1	Normal	12
+943	closed due to avalanches		Info		Longer-lasting	1	Urgent	9
+944	avalanches. Passable with care	avalanches. Passable with care above $Q hundred metres	Info	0	Longer-lasting	1	Normal	12
+945	closed due to rockfalls		Info		Longer-lasting	1	Urgent	9
+946	rockfalls. Passable with care		Info		Longer-lasting	1	Normal	12
+947	road closed due to landslips		Info		Longer-lasting	1	Urgent	5
+948	landslips. Passable with care		Info		Longer-lasting	1	Normal	12
+949	closed due to subsidence		Info		Longer-lasting	0	Urgent	9
+950	subsidence. Single alternate line traffic		Info		Longer-lasting	1	Normal	12
+951	subsidence. Carriageway reduced to one lane	subsidence. Carriageway reduced from $Q lanes to one lane	Info	0	Longer-lasting	0	Normal	5
+952	subsidence. Carriageway reduced to two lanes	subsidence. Carriageway reduced from $Q lanes to two lanes	Info	0	Longer-lasting	0	Normal	5
+953	subsidence. Carriageway reduced to three lanes	subsidence. Carriageway reduced from $Q lanes to three lanes	Info	0	Longer-lasting	0	Normal	5
+954	subsidence. Contraflow in operation		Info		Longer-lasting	1	Normal	5
+955	subsidence. Passable with care		Info		Longer-lasting	0	Normal	12
+956	closed due to sewer collapse		Info		Longer-lasting	0	Urgent	5
+957	road closed due to burst water main		Info		Dynamic	0	Urgent	5
+958	burst water main. Delays	burst water main. Delays $Q	Info	5	Dynamic	0	Normal	20
+959	burst water main. Delays expected	burst water main. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+960	burst water main. Long delays	burst water main. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+961	closed due to gas leak		Info		Dynamic	1	Urgent	5
+962	gas leak. Delays	gas leak. Delays $Q	Info	5	Dynamic	0	Normal	20
+963	gas leak. Delays expected	gas leak. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+964	gas leak. Long delays	gas leak. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+965	closed due to serious fire		Info		Dynamic	1	Urgent	5
+966	serious fire. Delays	serious fire. Delays $Q	Info	5	Dynamic	0	Normal	20
+967	serious fire. Delays expected	serious fire. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+968	serious fire. Long delays	serious fire. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+969	closed for clearance work		Info		Dynamic	0	Urgent	5
+970	road free again		Info		Dynamic	1	Normal	12
+971	message cancelled		Silent		Dynamic	0	Normal	12
+972	storm damage expected		Forecast		Dynamic	1	Normal	12
+973	fallen power cables		Info		Dynamic	1	Normal	12
+974	sewer overflow		Info		Longer-lasting	1	Normal	12
+975	ice build-up		Info		Longer-lasting	1	Normal	12
+976	mud slide		Info		Longer-lasting	1	Normal	12
+977	grass fire		Info		Dynamic	1	Normal	12
+978	air crash		Info		Longer-lasting	1	Urgent	12
+979	rail crash		Info		Dynamic	1	Urgent	12
+980	blocked by obstruction(s) on the road	blocked by $Q obstruction(s) on the road	Info	0	Dynamic	0	Urgent	5
+981	obstruction(s) on the road. Passable with care	$Q obstruction(s) on the road. Passable with care	Info	0	Dynamic	0	Urgent	12
+982	blocked due to spillage on roadway		Info		Dynamic	0	Urgent	5
+983	spillage on the road. Passable with care		Info		Dynamic	0	Urgent	12
+984	spillage on the road. Danger		Info		Dynamic	0	Urgent	12
+985	storm damage. Passable with care		Info		Dynamic	1	Urgent	12
+986	storm damage. Danger		Info		Dynamic	1	Urgent	12
+987	blocked by fallen power cables		Info		Dynamic	1	Urgent	5
+988	fallen power cables. Passable with care		Info		Dynamic	0	Urgent	12
+989	fallen power cables. Danger		Info		Dynamic	1	Urgent	12
+990	sewer overflow. Danger		Info		Longer-lasting	1	Urgent	12
+991	flash floods. Danger		Info		Dynamic	1	Urgent	12
+992	avalanches. Danger		Info		Longer-lasting	1	Urgent	12
+993	closed due to avalanche risk		Info		Longer-lasting	1	Urgent	9
+994	avalanche risk. Danger		Info		Longer-lasting	1	Urgent	12
+995	closed due to ice build-up		Info		Longer-lasting	1	Urgent	9
+996	ice build-up. Passable with care	ice build-up. Passable with care above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	12
+997	ice build-up. Single alternate traffic		Info		Longer-lasting	1	Urgent	12
+998	rockfalls. Danger		Info		Longer-lasting	1	Urgent	12
+999	landslips. Danger		Info		Longer-lasting	1	Urgent	12
+1000	earthquake damage. Danger		Info		Longer-lasting	1	Urgent	12
+1001	hazardous driving conditions	hazardous driving conditions above $Q hundred metres	Info	0	Dynamic	1	Urgent	14
+1002	danger of aquaplaning		Info		Dynamic	1	Urgent	14
+1003	slippery road	slippery road above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1004	mud on road		Info		Longer-lasting	1	Normal	14
+1005	leaves on road		Info		Longer-lasting	1	Normal	14
+1006	ice	ice above $Q hundred metres	Info	0	Longer-lasting	1	Normal	14
+1007	danger of ice	danger of ice above $Q hundred metres	Info	0	Longer-lasting	1	Normal	14
+1008	black ice	black ice above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1009	freezing rain	freezing rain above $Q hundred metres	Info	0	Dynamic	1	Urgent	14
+1010	wet and icy roads	wet and icy roads above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1011	slush	slush above $Q hundred metres	Info	0	Dynamic	1	Normal	14
+1012	snow on the road	snow on the road above $Q hundred metres	Info	0	Longer-lasting	1	Normal	14
+1013	packed snow	packed snow above $Q hundred metres	Info	0	Longer-lasting	1	Normal	14
+1014	fresh snow	fresh snow above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1015	deep snow	deep snow above $Q hundred metres	Info	0	Longer-lasting	1	Normal	14
+1016	snow drifts	snow drifts above $Q hundred metres	Info	0	Longer-lasting	1	Normal	14
+1017	slippery due to spillage on roadway		Info		Longer-lasting	0	Normal	14
+1018	slippery road due to snow	slippery road above $Q hundred metres due to snow	Info	0	Longer-lasting	1	Normal	14
+1019	slippery road due to frost	slippery road above $Q hundred metres due to frost	Info	0	Dynamic	1	Urgent	14
+1020	road blocked by snow	road blocked by snow above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1021	snow on the road. Carriageway reduced to one lane	snow on the road. Carriageway reduced from $Q lanes to one lane	Info	0	Dynamic	0	Urgent	5
+1022	snow on the road. Carriageway reduced to two lanes	snow on the road. Carriageway reduced from $Q lanes to two lanes	Info	0	Dynamic	0	Normal	5
+1023	snow on the road. Carriageway reduced to three lanes	snow on the road. Carriageway reduced from $Q lanes to three lanes	Info	0	Dynamic	0	Normal	5
+1024	conditions of road surface improved		Info		Dynamic	0	Normal	14
+1025	message cancelled		Silent		Dynamic	0	Normal	14
+1026	subsidence. Danger		Info		Longer-lasting	0	Urgent	12
+1027	sewer collapse. Delays	sewer collapse. Delays $Q	Info	5	Dynamic	0	Normal	20
+1028	sewer collapse. Delays expected	sewer collapse. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1029	sewer collapse. Long delays	sewer collapse. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1030	sewer collapse. Danger		Info		Longer-lasting	1	Urgent	12
+1031	burst water main. Danger		Info		Dynamic	1	Urgent	12
+1032	gas leak. Danger		Info		Dynamic	1	Urgent	12
+1033	serious fire. Danger		Info		Dynamic	1	Urgent	12
+1034	clearance work. Danger		Info		Dynamic	0	Urgent	4
+1035	impassable	impassable above $Q hundred metres	Info	0	Dynamic	1	Urgent	14
+1036	almost impassable	almost impassable above $Q hundred metres	Info	0	Dynamic	1	Urgent	14
+1037	extremely hazardous driving conditions	extremely hazardous driving conditions above $Q hundred metres	Info	0	Dynamic	1	Urgent	14
+1038	difficult driving conditions	difficult driving conditions above $Q hundred metres	Info	0	Dynamic	1	Urgent	14
+1039	passable with care	passable with care up to $Q hundred metres	Info	0	Dynamic	1	Normal	14
+1040	passable	passable up to $Q hundred metres	Info	0	Dynamic	1	Normal	14
+1041	surface water hazard		Info		Dynamic	1	Normal	14
+1042	loose sand on road		Info		Longer-lasting	1	Normal	14
+1043	loose chippings		Info		Longer-lasting	1	Normal	14
+1044	oil on road		Info		Longer-lasting	0	Normal	14
+1045	petrol on road		Info		Dynamic	0	Normal	14
+1046	ice expected	ice expected above $Q hundred metres	Forecast	0	Longer-lasting	1	Normal	34
+1047	icy patches	icy patches above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1048	danger of icy patches	danger of icy patches above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1049	icy patches expected	icy patches expected above $Q hundred metres	Forecast	0	Longer-lasting	1	Urgent	34
+1050	danger of black ice	danger of black ice above $Q hundred metres	Info	0	Longer-lasting	1	Urgent	14
+1051	black ice expected	black ice expected above $Q hundred metres	Forecast	0	Longer-lasting	1	Urgent	34
+1052	freezing rain expected	freezing rain expected above $Q hundred metres	Forecast	0	Longer-lasting	1	Urgent	34
+1053	snow drifts expected	snow drifts expected above $Q hundred metres	Forecast	0	Longer-lasting	1	Normal	34
+1054	slippery due to loose sand on roadway		Info		Longer-lasting	1	Normal	14
+1055	mud on road. Danger		Info		Longer-lasting	1	Urgent	14
+1056	loose chippings. Danger		Info		Longer-lasting	1	Urgent	14
+1057	oil on road. Danger		Info		Longer-lasting	0	Urgent	14
+1058	petrol on road. Danger		Info		Dynamic	0	Urgent	14
+1059	road surface in poor condition. Danger		Info		Longer-lasting	1	Urgent	14
+1060	icy patches on bridges	icy patches above $Q hundred metres on bridges	Info	0	Longer-lasting	1	Urgent	14
+1061	danger of icy patches on bridges	danger of icy patches above $Q hundred metres on bridges	Info	0	Longer-lasting	1	Urgent	14
+1062	icy patches on bridges, in shaded areas and on slip roads	icy patches above $Q hundred metres on bridges, in shaded areas and on slip roads	Info	0	Longer-lasting	1	Urgent	14
+1063	impassable for heavy vehicles	impassable for heavy vehicles over $Q	Info	8	Dynamic	1	Urgent	14
+1064	impassable for vehicles with trailers	impassable above $Q hundred metres for vehicles with trailers	Info	0	Dynamic	1	Urgent	14
+1065	driving conditions improved		Info		Dynamic	1	Normal	14
+1066	rescue and recovery work in progress. Danger		Info		Dynamic	0	Urgent	4
+1067	large animals on roadway		Info		Dynamic	1	Normal	13
+1068	herds of animals on roadway		Info		Dynamic	1	Normal	13
+1069	skid hazard reduced		Info		Dynamic	1	Normal	14
+1070	snow cleared		Info		Dynamic	1	Normal	14
+1071	road conditions forecast withdrawn		Forecast		Dynamic	1	Normal	34
+1072	message cancelled		Silent		Dynamic	0	Normal	34
+1073	extremely hazardous driving conditions expected	extremely hazardous driving conditions expected above $Q hundred metres	Forecast	0	Dynamic	1	Urgent	14
+1074	freezing rain expected	freezing rain expected above $Q hundred metres	Forecast	0	Dynamic	1	Urgent	14
+1075	danger of road being blocked by snow	danger of road being blocked by snow above $Q hundred metres	Forecast	0	Longer-lasting	1	Urgent	14
+1079	temperature falling rapidly	temperature falling rapidly to $Q	Info	6	Longer-lasting	1	Normal	15
+1080	extreme heat	extreme heat up to $Q	Info	6	Longer-lasting	1	Normal	15
+1081	extreme cold	extreme cold of $Q	Info	6	Longer-lasting	1	Normal	15
+1082	less extreme temperatures		Info		Longer-lasting	1	Normal	15
+1083	current temperature	current temperature $Q	Info	6	Longer-lasting	1	Normal	15
+1084	house fire		Info		Dynamic	1	Normal	12
+1085	forest fire		Info		Longer-lasting	1	Urgent	12
+1086	vehicle stuck under bridge		Info		Dynamic	1	Normal	12
+1090	volcano eruption warning		Info		Longer-lasting	1	Urgent	12
+1101	heavy snowfall	heavy snowfall $Q	Info	10	Dynamic	1	Urgent	16
+1102	heavy snowfall. Visibility reduced to <30 m	heavy snowfall $Q. Visibility reduced to <30 m	Info	10	Dynamic	1	Urgent	16
+1103	heavy snowfall. Visibility reduced to <50 m	heavy snowfall $Q. Visibility reduced to <50 m	Info	10	Dynamic	1	Urgent	16
+1104	snowfall	snowfall $Q	Info	10	Dynamic	1	Urgent	16
+1105	snowfall. Visibility reduced to <100 m	snowfall $Q. Visibility reduced to <100 m	Info	10	Dynamic	1	Normal	16
+1106	hail	hail visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1107	sleet	sleet visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1108	thunderstorms	thunderstorms visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1109	heavy rain	heavy rain $Q	Info	10	Dynamic	1	Normal	16
+1110	heavy rain. Visibility reduced to <30 m	heavy rain $Q. Visibility reduced to <30 m	Info	10	Dynamic	1	Urgent	16
+1111	heavy rain. Visibility reduced to <50 m	heavy rain $Q. Visibility reduced to <50 m	Info	10	Dynamic	1	Normal	16
+1112	rain	rain $Q	Info	10	Dynamic	1	Normal	16
+1113	rain. Visibility reduced to <100 m	rain $Q. Visibility reduced to <100 m	Info	10	Dynamic	1	Normal	16
+1114	showers	showers visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1115	heavy frost		Info		Longer-lasting	1	Normal	15
+1116	frost		Info		Longer-lasting	1	Normal	15
+1117	overcast weather	$Q probability of overcast weather	Forecast	3	Longer-lasting	1	Normal	33
+1118	mostly cloudy	$Q probability of mostly cloudy	Forecast	3	Longer-lasting	1	Normal	33
+1119	partly cloudy	$Q probability of partly cloudy	Forecast	3	Longer-lasting	1	Normal	33
+1120	sunny periods	$Q probability of sunny periods	Forecast	3	Longer-lasting	1	Normal	33
+1121	clear weather	$Q probability of clear weather	Forecast	3	Longer-lasting	1	Normal	33
+1122	sunny weather	$Q probability of sunny weather	Forecast	3	Longer-lasting	1	Normal	33
+1123	mostly dry weather	$Q probability of mostly dry weather	Forecast	3	Longer-lasting	1	Normal	33
+1124	dry weather	$Q probability of dry weather	Forecast	3	Longer-lasting	1	Normal	33
+1125	sunny periods and with showers	sunny periods and with $Q probability of showers	Forecast	3	Longer-lasting	1	Normal	33
+1126	weather situation improved		Info		Dynamic	1	Normal	16
+1127	message cancelled		Silent		Dynamic	0	Normal	15
+1128	winter storm	winter storm visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1129	winter storm	$Q probability of winter storm	Forecast	3	Longer-lasting	1	Urgent	33
+1130	blizzard	blizzard visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1131	blizzard	$Q probability of blizzard	Forecast	3	Longer-lasting	1	Urgent	33
+1132	damaging hail	damaging hail visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1133	damaging hail	$Q probability of damaging hail	Forecast	3	Longer-lasting	1	Urgent	33
+1134	heavy snowfall. Visibility reduced	heavy snowfall. Visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1135	snowfall. Visibility reduced	snowfall. Visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1136	heavy rain. Visibility reduced	heavy rain. Visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1137	rain. Visibility reduced	rain. Visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1138	severe weather warnings cancelled		Forecast		Dynamic	1	Normal	33
+1139	message cancelled		Silent		Dynamic	0	Normal	33
+1140	weather forecast withdrawn		Forecast		Dynamic	1	Normal	33
+1141	fog forecast withdrawn		Forecast		Dynamic	1	Normal	33
+1143	slippery road expected	slippery road expected above $Q hundred metres	Forecast	0	Longer-lasting	1	Normal	34
+1151	heavy snowfall	$Q probability of heavy snowfall	Forecast	3	Longer-lasting	1	Urgent	33
+1152	snowfall	$Q probability of snowfall	Forecast	3	Longer-lasting	1	Normal	33
+1153	hail	$Q probability of hail	Forecast	3	Longer-lasting	1	Normal	33
+1154	sleet	$Q probability of sleet	Forecast	3	Longer-lasting	1	Normal	33
+1155	thunderstorms	$Q probability of thunderstorms	Forecast	3	Longer-lasting	1	Normal	33
+1156	heavy rain	$Q probability of heavy rain	Forecast	3	Longer-lasting	1	Normal	33
+1157	rain	$Q probability of rain	Forecast	3	Longer-lasting	1	Normal	33
+1158	showers	$Q probability of showers	Forecast	3	Longer-lasting	1	Normal	33
+1159	heavy frost	$Q probability of heavy frost	Forecast	3	Longer-lasting	1	Normal	33
+1160	frost	$Q probability of frost	Forecast	3	Longer-lasting	1	Normal	33
+1165	rain changing to snow		Info		Longer-lasting	1	Normal	14
+1166	snow changing to rain		Info		Longer-lasting	1	Normal	14
+1170	heavy snowfall expected	heavy snowfall $Q expected	Forecast	10	Dynamic	1	Urgent	16
+1171	heavy rain expected	heavy rain $Q expected	Forecast	10	Dynamic	1	Urgent	16
+1172	weather expected to improve		Forecast		Dynamic	1	Normal	16
+1173	blizzard expected	blizzard with visibility reduced to $Q expected	Forecast	2	Dynamic	1	Urgent	16
+1174	damaging hail expected	damaging hail with visibility reduced to $Q expected	Forecast	2	Dynamic	1	Urgent	16
+1175	reduced visibility expected	reduced visibility to $Q expected	Forecast	2	Dynamic	1	Normal	16
+1176	freezing fog expected. Danger of slippery roads	freezing fog expected with visibility reduced to $Q. Danger of slippery roads	Forecast	2	Dynamic	1	Urgent	16
+1177	dense fog expected	dense fog with visibility reduced to $Q expected	Forecast	2	Dynamic	1	Urgent	16
+1178	patchy fog expected	patchy fog with visibility reduced to $Q expected	Forecast	2	Dynamic	1	Urgent	16
+1179	visibility expected to improve		Forecast		Dynamic	1	Normal	16
+1180	adverse weather warning withdrawn		Info		Dynamic	1	Normal	16
+1190	severe smog		Info		Longer-lasting	1	Normal	17
+1191	severe exhaust pollution		Info		Longer-lasting	1	Normal	17
+1201	tornadoes		Info		Dynamic	1	Urgent	17
+1202	hurricane force winds	hurricane force winds $Q	Info	4	Longer-lasting	1	Urgent	17
+1203	gales	gales $Q	Info	4	Longer-lasting	1	Urgent	17
+1204	storm force winds	storm force winds $Q	Info	4	Longer-lasting	1	Urgent	17
+1205	strong winds	strong winds $Q	Info	4	Longer-lasting	1	Normal	17
+1206	moderate winds	moderate winds $Q	Forecast	4	Longer-lasting	1	Normal	36
+1207	light winds	light winds $Q	Forecast	4	Longer-lasting	1	Normal	36
+1208	calm weather		Forecast		Longer-lasting	1	Normal	36
+1209	gusty winds	gusty winds $Q	Info	4	Longer-lasting	1	Normal	17
+1210	crosswinds	crosswinds $Q	Info	4	Longer-lasting	1	Normal	17
+1211	strong winds affecting high-sided vehicles	strong winds $Q affecting high-sided vehicles	Info	4	Longer-lasting	1	Normal	17
+1212	closed for high-sided vehicles due to strong winds	closed for high-sided vehicles due to strong winds $Q	Info	4	Longer-lasting	1	Urgent	9
+1213	strong winds easing		Info		Dynamic	1	Normal	17
+1214	message cancelled		Silent		Dynamic	0	Normal	17
+1215	restrictions for high-sided vehicles lifted		Info		Dynamic	1	Urgent	9
+1216	tornado watch cancelled		Forecast		Dynamic	1	Normal	36
+1217	tornado warning ended		Info		Dynamic	1	Urgent	17
+1218	wind forecast withdrawn		Forecast		Dynamic	1	Normal	36
+1219	message cancelled		Silent		Dynamic	0	Normal	36
+1251	tornadoes	$Q probability of tornadoes	Forecast	3	Longer-lasting	1	Urgent	36
+1252	hurricane force winds	hurricane force winds $Q	Forecast	4	Longer-lasting	1	Urgent	36
+1253	gales	gales $Q	Forecast	4	Longer-lasting	1	Urgent	36
+1254	storm force winds	storm force winds $Q	Forecast	4	Longer-lasting	1	Normal	36
+1255	strong winds	strong winds $Q	Forecast	4	Longer-lasting	1	Normal	36
+1256	strong wind forecast withdrawn		Forecast		Dynamic	1	Normal	36
+1300	snowfall and fog expected	snowfall and fog visibility reduced to $Q expected	Forecast	2	Longer-lasting	1	Urgent	33
+1301	dense fog	dense fog visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1302	dense fog. Visibility reduced to <30 m		Info		Dynamic	1	Urgent	16
+1303	dense fog. Visibility reduced to <50 m		Info		Dynamic	1	Urgent	16
+1304	fog	fog visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1305	fog. Visibility reduced to <100 m		Info		Dynamic	1	Normal	16
+1306	fog	$Q probability of fog	Forecast	3	Longer-lasting	1	Normal	33
+1307	patchy fog	patchy fog visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1308	freezing fog	freezing fog visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1309	smoke hazard	smoke hazard visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1310	blowing dust	blowing dust visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1311	severe exhaust pollution	$Q probability of severe exhaust pollution	Forecast	3	Longer-lasting	1	Normal	35
+1312	snowfall and fog	snowfall and fog visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1313	visibility improved		Info		Dynamic	1	Normal	16
+1314	message cancelled		Silent		Dynamic	0	Normal	16
+1315	dense fog	$Q probability of dense fog	Forecast	3	Longer-lasting	1	Urgent	33
+1316	patchy fog	$Q probability of patchy fog	Forecast	3	Longer-lasting	1	Normal	33
+1317	freezing fog	$Q probability of freezing fog	Forecast	3	Longer-lasting	1	Urgent	33
+1318	visibility reduced	visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1319	visibility reduced to <30 m		Info		Dynamic	1	Urgent	16
+1320	visibility reduced to <50 m		Info		Dynamic	1	Urgent	16
+1321	visibility reduced to <100 m		Info		Dynamic	1	Normal	16
+1322	white out	white out visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1323	blowing snow	blowing snow visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1324	spray hazard	spray hazard visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1325	low sun glare		Info		Dynamic	0	Normal	16
+1326	sandstorms	sandstorms visibility reduced to $Q	Info	2	Dynamic	1	Urgent	16
+1327	sandstorms	$Q probability of sandstorms	Forecast	3	Longer-lasting	1	Urgent	33
+1328	air quality: good	$Q probability of air quality: good	Forecast	3	Longer-lasting	1	Normal	35
+1329	air quality: fair	$Q probability of air quality: fair	Forecast	3	Longer-lasting	1	Normal	35
+1330	air quality: poor	$Q probability of air quality: poor	Forecast	3	Longer-lasting	1	Normal	35
+1331	air quality: very poor	$Q probability of air quality: very poor	Forecast	3	Longer-lasting	1	Normal	35
+1332	smog alert		Info		Longer-lasting	1	Normal	9
+1333	smog	$Q probability of smog	Forecast	3	Longer-lasting	1	Normal	35
+1334	pollen count: high	$Q probability of pollen count: high	Forecast	3	Longer-lasting	1	Normal	35
+1335	pollen count: medium	$Q probability of pollen count: medium	Forecast	3	Longer-lasting	1	Normal	35
+1336	pollen count: low	$Q probability of pollen count: low	Forecast	3	Longer-lasting	1	Normal	35
+1337	freezing fog. Slippery roads	freezing fog visibility reduced to $Q. Slippery roads	Info	2	Dynamic	1	Urgent	16
+1338	no motor vehicles due to smog alert		Info		Longer-lasting	1	Urgent	9
+1339	air quality improved		Forecast		Dynamic	1	Normal	35
+1340	swarms of insects	swarms of insects visibility reduced to $Q	Info	2	Dynamic	1	Normal	16
+1345	fog clearing		Info		Dynamic	1	Normal	16
+1346	fog forecast withdrawn		Info		Dynamic	1	Normal	16
+1351	maximum temperature	maximum temperature of $Q	Forecast	6	Longer-lasting	1	Normal	37
+1352	hot	hot maximum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1353	warm	warm maximum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1354	mild	mild maximum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1355	cool	cool maximum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1356	cold	cold maximum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1357	very cold	very cold maximum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1358	message cancelled		Silent		Dynamic	0	Normal	37
+1359	temperature rising	temperature rising to $Q	Forecast	6	Longer-lasting	1	Normal	37
+1360	temperature falling rapidly	temperature falling rapidly to $Q	Forecast	6	Longer-lasting	1	Normal	37
+1361	temperature	temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1362	effective temperature, with wind chill	effective temperature, with wind chill $Q	Forecast	6	Longer-lasting	1	Normal	37
+1364	extreme heat	extreme heat up to $Q	Forecast	6	Longer-lasting	1	Normal	37
+1365	extreme cold	extreme cold of $Q	Forecast	6	Longer-lasting	1	Normal	37
+1401	minimum temperature	minimum temperature of $Q	Forecast	6	Longer-lasting	1	Normal	37
+1402	very warm	very warm minimum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1403	warm	warm minimum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1404	mild	mild minimum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1405	cool	cool minimum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1406	cold	cold minimum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1407	very cold	very cold minimum temperature $Q	Forecast	6	Longer-lasting	1	Normal	37
+1408	less extreme temperatures expected		Forecast		Longer-lasting	1	Normal	37
+1449	emergency training in progress		Info		Dynamic	1	Normal	18
+1450	international sports meeting		Info		Longer-lasting	1	Normal	18
+1451	match		Info		Dynamic	1	Normal	18
+1452	tournament		Info		Longer-lasting	1	Normal	18
+1453	athletics meeting		Info		Dynamic	1	Normal	18
+1454	ball game		Info		Dynamic	1	Normal	18
+1455	boxing tournament		Info		Dynamic	1	Normal	18
+1456	bull fight		Info		Dynamic	1	Normal	18
+1457	cricket match		Info		Dynamic	1	Normal	18
+1458	cycle race		Info		Dynamic	1	Normal	18
+1459	football match		Info		Dynamic	1	Normal	18
+1460	golf tournament		Info		Dynamic	1	Normal	18
+1461	marathon		Info		Dynamic	1	Normal	18
+1462	race meeting		Info		Dynamic	1	Normal	18
+1463	rugby match		Info		Dynamic	1	Normal	18
+1464	show jumping		Info		Dynamic	1	Normal	18
+1465	tennis tournament		Info		Dynamic	1	Normal	18
+1466	water sports meeting		Info		Dynamic	1	Normal	18
+1467	winter sports meeting		Info		Dynamic	1	Normal	18
+1468	funfair		Info		Dynamic	1	Normal	18
+1469	trade fair		Info		Longer-lasting	1	Normal	18
+1470	procession		Info		Dynamic	1	Normal	18
+1471	sightseers obstructing access		Info		Dynamic	1	Urgent	13
+1472	people on roadway		Info		Dynamic	1	Normal	13
+1473	children on roadway		Info		Dynamic	1	Normal	13
+1474	cyclists on roadway		Info		Dynamic	1	Normal	13
+1475	strike		Info		Longer-lasting	1	Urgent	18
+1476	security incident		Info		Dynamic	1	Urgent	19
+1477	police checkpoint		Info		Longer-lasting	1	Normal	19
+1478	terrorist incident		Info		Longer-lasting	1	Urgent	19
+1479	gunfire on roadway, danger		Info		Dynamic	1	X-Urgent	19
+1480	civil emergency		Info		Dynamic	1	Urgent	19
+1481	air raid, danger		Info		Dynamic	1	X-Urgent	19
+1482	people on roadway. Danger		Info		Dynamic	1	Urgent	13
+1483	children on roadway. Danger		Info		Dynamic	1	Urgent	13
+1484	cyclists on roadway. Danger		Info		Dynamic	1	Urgent	13
+1485	closed due to security incident		Info		Dynamic	1	Urgent	9
+1486	security incident. Delays	security incident. Delays $Q	Info	5	Dynamic	0	Urgent	20
+1487	security incident. Delays expected	security incident. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+1488	security incident. Long delays	security incident. Long delays $Q	Info	5	Longer-lasting	0	Urgent	20
+1489	police checkpoint. Delays	police checkpoint. Delays $Q	Info	5	Dynamic	0	Normal	20
+1490	police checkpoint. Delays expected	police checkpoint. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1491	police checkpoint. Long delays	police checkpoint. Long delays $Q	Info	5	Longer-lasting	0	Urgent	20
+1492	security alert withdrawn		Info		Dynamic	1	Normal	19
+1493	sports traffic cleared		Info		Dynamic	1	Normal	18
+1494	evacuation		Info		Dynamic	1	Urgent	19
+1495	evacuation. Heavy traffic		Info		Dynamic	0	Normal	1
+1496	traffic disruption cleared		Info		Dynamic	1	Normal	18
+1497	military training in progress		Info		Dynamic	1	Normal	18
+1498	police activity ongoing		Info		Dynamic	0	Urgent	13
+1499	medical emergency ongoing		Info		Dynamic	0	Urgent	13
+1500	child abduction in progress		Info		Dynamic	1	X-Urgent	19
+1501	major event		Info		Longer-lasting	1	Normal	18
+1502	sports event meeting		Info		Dynamic	1	Normal	18
+1503	show		Info		Dynamic	1	Normal	18
+1504	festival		Info		Dynamic	1	Normal	18
+1505	exhibition		Info		Longer-lasting	1	Normal	18
+1506	fair		Info		Dynamic	1	Normal	18
+1507	market		Info		Dynamic	1	Normal	18
+1508	ceremonial event		Info		Dynamic	1	Normal	18
+1509	state occasion		Info		Dynamic	1	Normal	18
+1510	parade		Info		Dynamic	1	Normal	18
+1511	crowd		Info		Dynamic	1	Normal	18
+1512	march		Info		Dynamic	1	Normal	18
+1513	demonstration		Info		Dynamic	1	Normal	18
+1514	public disturbance		Info		Dynamic	1	Urgent	18
+1515	security alert		Info		Dynamic	1	Normal	19
+1516	bomb alert		Info		Dynamic	1	Urgent	19
+1517	major event. Stationary traffic		Info		Dynamic	0	Urgent	1
+1518	major event. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+1519	major event. Queuing traffic		Info		Dynamic	0	Urgent	1
+1520	major event. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+1521	major event. Slow traffic		Info		Dynamic	0	Urgent	1
+1522	major event. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+1523	major event. Heavy traffic		Info		Dynamic	0	Normal	1
+1524	major event. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+1525	major event. Traffic flowing freely		Info		Dynamic	0	Normal	1
+1526	major event. Traffic building up		Info		Dynamic	0	Normal	1
+1527	closed due to major event		Info		Dynamic	0	Urgent	9
+1528	major event. Delays	major event. Delays $Q	Info	5	Dynamic	0	Normal	20
+1529	major event. Delays expected	major event. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+1530	major event. Long delays	major event. Long delays $Q	Info	5	Longer-lasting	0	Urgent	20
+1531	sports meeting. Stationary traffic		Info		Dynamic	0	Urgent	1
+1532	sports meeting. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+1533	sports meeting. Queuing traffic		Info		Dynamic	0	Urgent	1
+1534	sports meeting. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+1535	sports meeting. Slow traffic		Info		Dynamic	0	Urgent	1
+1536	sports meeting. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+1537	sports meeting. Heavy traffic		Info		Dynamic	0	Normal	1
+1538	sports meeting. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+1539	sports meeting. Traffic flowing freely		Info		Dynamic	0	Normal	1
+1540	sports meeting. Traffic building up		Info		Dynamic	0	Normal	1
+1541	closed due to sports meeting		Info		Dynamic	0	Urgent	9
+1542	sports meeting. Delays	sports meeting. Delays $Q	Info	5	Dynamic	0	Normal	20
+1543	sports meeting. Delays expected	sports meeting. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1544	sports meeting. Long delays	sports meeting. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1545	fair. Stationary traffic		Info		Dynamic	0	Urgent	1
+1546	fair. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+1547	fair. Queuing traffic		Info		Dynamic	0	Urgent	1
+1548	fair. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+1549	fair. Slow traffic		Info		Dynamic	0	Urgent	1
+1550	fair. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+1551	fair. Heavy traffic		Info		Dynamic	0	Normal	1
+1552	fair. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+1553	fair. Traffic flowing freely		Info		Dynamic	0	Normal	1
+1554	fair. Traffic building up		Info		Dynamic	0	Normal	1
+1555	closed due to fair		Info		Dynamic	0	Urgent	9
+1556	fair. Delays	fair. Delays $Q	Info	5	Dynamic	0	Normal	20
+1557	fair. Delays expected	fair. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1558	fair. Long delays	fair. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1559	closed due to parade		Info		Dynamic	0	Urgent	9
+1560	parade. Delays	parade. Delays $Q	Info	5	Dynamic	0	Normal	20
+1561	parade. Delays expected	parade. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+1562	parade. Long delays	parade. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1563	closed due to strike		Info		Dynamic	0	Urgent	9
+1564	strike. Delays	strike. Delays $Q	Info	5	Dynamic	0	Urgent	20
+1565	strike. Delays expected	strike. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+1566	strike. Long delays	strike. Long delays $Q	Info	5	Longer-lasting	0	Urgent	20
+1567	closed due to demonstration		Info		Dynamic	0	Urgent	9
+1568	demonstration. Delays	demonstration. Delays $Q	Info	5	Dynamic	0	Normal	20
+1569	demonstration. Delays expected	demonstration. Delays $Q expected	Forecast	5	Dynamic	0	Urgent	20
+1570	demonstration. Long delays	demonstration. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1571	security alert. Stationary traffic		Info		Dynamic	0	Urgent	1
+1572	security alert. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+1573	security alert. Queuing traffic		Info		Dynamic	0	Urgent	1
+1574	security alert. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+1575	security alert. Slow traffic		Info		Dynamic	0	Urgent	1
+1576	security alert. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+1577	security alert. Heavy traffic		Info		Dynamic	0	Normal	1
+1578	security alert. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+1579	security alert. Traffic building up		Info		Dynamic	0	Normal	1
+1580	closed due to security alert		Info		Dynamic	0	Urgent	9
+1581	security alert. Delays	security alert. Delays $Q	Info	5	Dynamic	0	Normal	20
+1582	security alert. Delays expected	security alert. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1583	security alert. Long delays	security alert. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1584	traffic has returned to normal		Info		Dynamic	0	Normal	1
+1585	message cancelled		Silent		Dynamic	0	Normal	18
+1586	security alert. Traffic flowing freely		Info		Dynamic	0	Normal	1
+1587	air raid warning cancelled		Info		Dynamic	1	Normal	19
+1588	civil emergency cancelled		Info		Dynamic	1	Normal	19
+1589	message cancelled		Silent		Dynamic	0	Normal	2
+1590	several major events		Info		Longer-lasting	1	Normal	18
+1591	information about major event no longer valid		Info		Dynamic	1	Normal	18
+1592	automobile race		Info		Dynamic	1	Normal	18
+1593	baseball game		Info		Dynamic	1	Normal	18
+1594	basketball game		Info		Dynamic	1	Normal	18
+1595	boat race		Info		Dynamic	1	Normal	18
+1596	concert		Info		Dynamic	1	Normal	18
+1597	hockey game		Info		Dynamic	1	Normal	18
+1601	delays	delays $Q	Info	5	Dynamic	0	Normal	20
+1602	delays up to 15 minutes		Info		Dynamic	0	Normal	20
+1603	delays up to 30 minutes		Info		Dynamic	0	Normal	20
+1604	delays up to one hour		Info		Dynamic	0	Normal	20
+1605	delays up to two hours		Info		Dynamic	0	Urgent	20
+1606	delays of several hours		Info		Dynamic	0	Urgent	20
+1607	delays expected	delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1608	long delays	long delays $Q	Info	5	Dynamic	0	Urgent	20
+1609	delays for heavy vehicles	delays $Q for heavy vehicles	Info	5	Dynamic	0	Normal	20
+1610	delays up to 15 minutes for heavy lorr(y/ies)		Info		Dynamic	0	Normal	20
+1611	delays up to 30 minutes for heavy lorr(y/ies)		Info		Dynamic	0	Normal	20
+1612	delays up to one hour for heavy lorr(y/ies)		Info		Dynamic	0	Normal	20
+1613	delays up to two hours for heavy lorr(y/ies)		Info		Dynamic	0	Urgent	20
+1614	delays of several hours for heavy lorr(y/ies)		Info		Dynamic	0	Urgent	20
+1615	service suspended	service suspended until $Q	Info	7	Longer-lasting	0	Urgent	21
+1616	service withdrawn	$Q service withdrawn	Info	7	Longer-lasting	0	Normal	21
+1617	service(s) fully booked	$Q service(s) fully booked	Info	7	Longer-lasting	0	Normal	21
+1618	service(s) fully booked for heavy vehicles	$Q service(s) fully booked for heavy vehicles	Info	7	Longer-lasting	0	Normal	21
+1619	normal services resumed		Info		Dynamic	1	Normal	21
+1620	message cancelled		Silent		Dynamic	0	Normal	20
+1621	delays up to 5 minutes		Info		Dynamic	0	Normal	20
+1622	delays up to 10 minutes		Info		Dynamic	0	Normal	20
+1623	delays up to 20 minutes		Info		Dynamic	0	Normal	20
+1624	delays up to 25 minutes		Info		Dynamic	0	Normal	20
+1625	delays up to 40 minutes		Info		Dynamic	0	Normal	20
+1626	delays up to 50 minutes		Info		Dynamic	0	Normal	20
+1627	delays up to 90 minutes		Info		Dynamic	0	Urgent	20
+1628	delays up to three hours		Info		Dynamic	0	Urgent	20
+1629	delays up to four hours		Info		Longer-lasting	0	Urgent	20
+1630	delays up to five hours		Info		Longer-lasting	0	Urgent	20
+1631	very long delays	very long delays $Q	Info	5	Longer-lasting	0	Urgent	20
+1632	delays of uncertain duration		Info		Dynamic	0	Normal	20
+1633	delayed until further notice		Info		Dynamic	0	Normal	21
+1634	cancellations		Info		Dynamic	0	Normal	21
+1635	park and ride service not operating	park and ride service not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1636	special public transport services operating	special public transport services operating until $Q	Info	7	Dynamic	1	Normal	21
+1637	normal services not operating	normal services not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1638	rail services not operating	rail services not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1639	bus services not operating	bus services not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1640	shuttle service operating	shuttle service operating until $Q	Info	7	Dynamic	1	Normal	21
+1641	free shuttle service operating	free shuttle service operating until $Q	Info	7	Dynamic	1	Normal	21
+1642	delays for heavy lorr(y/ies)	delays $Q for heavy lorr(y/ies)	Info	5	Dynamic	0	Normal	20
+1643	delays for buses	delays $Q for buses	Info	5	Dynamic	0	Normal	20
+1644	service(s) fully booked for heavy lorr(y/ies)	$Q service(s) fully booked for heavy lorr(y/ies)	Info	7	Longer-lasting	0	Normal	21
+1645	service(s) fully booked for buses	$Q service(s) fully booked for buses	Info	7	Longer-lasting	0	Normal	21
+1646	next departure for heavy lorr(y/ies)	next departure $Q for heavy lorr(y/ies)	Forecast	7	Dynamic	0	Normal	22
+1647	next departure for buses	next departure $Q for buses	Forecast	7	Dynamic	0	Normal	22
+1648	delays cleared		Info		Dynamic	0	Normal	20
+1649	rapid transit service not operating	rapid transit service not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1650	delays possible	delays $Q possible	Forecast	5	Dynamic	0	Normal	20
+1651	underground service not operating	underground service not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1652	cancellations expected		Forecast		Dynamic	0	Normal	21
+1653	long delays expected		Forecast		Dynamic	0	Urgent	20
+1654	very long delays expected		Forecast		Longer-lasting	0	Urgent	20
+1655	all services fully booked	all services fully booked until $Q	Info	7	Longer-lasting	0	Urgent	21
+1656	next arrival	next arrival $Q	Forecast	7	Dynamic	0	Normal	22
+1657	rail services irregular. Delays	rail services irregular. Delays $Q	Info	5	Dynamic	1	Normal	21
+1658	bus services irregular. Delays	bus services irregular. Delays $Q	Info	5	Dynamic	1	Normal	21
+1659	underground services irregular		Info		Dynamic	1	Normal	21
+1660	normal public transport services resumed		Info		Dynamic	1	Normal	21
+1661	ferry service not operating	ferry service not operating until $Q	Info	7	Dynamic	1	Urgent	21
+1662	park and ride trip time	park and ride trip time $Q	Info	5	Dynamic	0	Normal	22
+1663	delay expected to be cleared		Forecast		Dynamic	0	Normal	20
+1664	demonstration by vehicles		Info		Dynamic	0	Normal	18
+1680	delays have to be expected	delays $Q have to be expected	Forecast	5	Longer-lasting	0	Normal	38
+1681	delays of several hours have to be expected		Forecast		Longer-lasting	0	Urgent	38
+1682	closed ahead. Delays have to be expected	closed ahead. Delays $Q have to be expected	Forecast	5	Longer-lasting	0	Urgent	38
+1683	roadworks. Delays have to be expected	roadworks. Delays $Q have to be expected	Forecast	5	Longer-lasting	0	Normal	38
+1684	flooding. Delays have to be expected	flooding. Delays $Q have to be expected	Forecast	5	Longer-lasting	0	Urgent	38
+1685	major event. Delays have to be expected	major event. Delays $Q have to be expected	Forecast	5	Longer-lasting	0	Urgent	38
+1686	strike. Delays have to be expected	strike. Delays $Q have to be expected	Forecast	5	Longer-lasting	0	Urgent	38
+1687	delays of several hours for heavy lorries have to be expected		Forecast		Longer-lasting	0	Urgent	38
+1688	long delays have to be expected		Forecast		Longer-lasting	0	Urgent	38
+1689	very long delays have to be expected		Forecast		Longer-lasting	0	Urgent	38
+1690	delay forecast withdrawn		Forecast		Dynamic	1	Normal	38
+1691	message cancelled		Silent		Dynamic	0	Normal	38
+1695	current trip time	current trip time $Q	Info	5	Dynamic	0	Normal	22
+1696	expected trip time	expected trip time $Q	Forecast	5	Dynamic	0	Normal	22
+1700	slow moving maintenance vehicle(s)	$Q slow moving maintenance vehicle(s)	Info	0	Dynamic	0	Urgent	12
+1701	vehicle(s) on wrong carriageway	$Q vehicle(s) on wrong carriageway	Info	0	Dynamic	1	X-Urgent	23
+1702	dangerous vehicle warning cleared		Info		Dynamic	1	Urgent	23
+1703	message cancelled		Silent		Dynamic	0	Normal	23
+1704	reckless driver(s)	$Q reckless driver(s)	Info	0	Dynamic	0	Urgent	23
+1705	prohibited vehicle(s) on the roadway	$Q prohibited vehicle(s) on the roadway	Info	0	Dynamic	0	Urgent	23
+1706	emergency vehicles	$Q emergency vehicles	Info	0	Dynamic	0	Urgent	23
+1707	high-speed emergency vehicles	$Q high-speed emergency vehicles	Info	0	Dynamic	0	X-Urgent	23
+1708	high-speed chase	high-speed chase involving $Q vehicles	Info	0	Dynamic	0	X-Urgent	23
+1709	spillage occurring from moving vehicle		Info		Dynamic	0	Urgent	12
+1710	objects falling from moving vehicle		Info		Dynamic	0	Urgent	23
+1711	emergency vehicle warning cleared		Info		Dynamic	0	Urgent	23
+1712	road cleared		Info		Dynamic	0	Normal	12
+1720	rail services irregular		Info		Dynamic	1	Normal	21
+1721	public transport services not operating		Info		Dynamic	1	Urgent	21
+1731	abnormal load(s), danger	$Q abnormal load(s), danger	Info	0	Dynamic	0	Urgent	24
+1732	wide load(s), danger	$Q wide load(s), danger	Info	0	Dynamic	0	Urgent	24
+1733	long load(s), danger	$Q long load(s), danger	Info	0	Dynamic	0	Urgent	24
+1734	slow vehicle(s), danger	$Q slow vehicle(s), danger	Info	0	Dynamic	0	Urgent	24
+1735	track-laying vehicle(s), danger	$Q track-laying vehicle(s), danger	Info	0	Dynamic	0	Urgent	24
+1736	vehicle(s) carrying hazardous materials. Danger	$Q vehicle(s) carrying hazardous materials. Danger	Info	0	Dynamic	0	Urgent	23
+1737	convoy(s), danger	$Q convoy(s), danger	Info	0	Dynamic	0	Urgent	24
+1738	military convoy(s), danger	$Q military convoy(s), danger	Info	0	Dynamic	0	Urgent	24
+1739	overheight load(s), danger	$Q overheight load(s), danger	Info	0	Dynamic	0	Urgent	24
+1740	abnormal load causing slow traffic. Delays	abnormal load causing slow traffic. Delays $Q	Info	5	Dynamic	0	Urgent	20
+1741	convoy causing slow traffic. Delays	convoy causing slow traffic. Delays $Q	Info	5	Dynamic	0	Urgent	20
+1751	abnormal load(s)	$Q abnormal load(s)	Info	0	Dynamic	0	Normal	24
+1752	wide load(s)	$Q wide load(s)	Info	0	Dynamic	0	Normal	24
+1753	long load(s)	$Q long load(s)	Info	0	Dynamic	0	Normal	24
+1754	slow vehicle(s)	$Q slow vehicle(s)	Info	0	Dynamic	0	Normal	24
+1755	convoy(s)	$Q convoy(s)	Info	0	Dynamic	0	Normal	24
+1756	abnormal load. Delays	abnormal load. Delays $Q	Info	5	Dynamic	0	Urgent	20
+1757	abnormal load. Delays expected	abnormal load. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1758	abnormal load. Long delays	abnormal load. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1759	convoy causing delays	convoy causing delays $Q	Info	5	Dynamic	0	Normal	20
+1760	convoy. Delays expected	convoy. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1761	convoy causing long delays	convoy causing long delays $Q	Info	5	Dynamic	0	Urgent	20
+1762	exceptional load warning cleared		Info		Dynamic	0	Normal	24
+1763	message cancelled		Silent		Dynamic	0	Normal	24
+1764	track-laying vehicle(s)	$Q track-laying vehicle(s)	Info	0	Dynamic	0	Normal	24
+1765	vehicle(s) carrying hazardous materials	$Q vehicle(s) carrying hazardous materials	Info	0	Dynamic	0	Normal	23
+1766	military convoy(s)	$Q military convoy(s)	Info	0	Dynamic	0	Normal	24
+1767	abnormal load(s). No overtaking	$Q abnormal load(s). No overtaking	Info	0	Dynamic	0	Urgent	24
+1768	Vehicles carrying hazardous materials have to stop at next safe place!		Info		Dynamic	0	Urgent	23
+1769	hazardous load warning cleared		Info		Dynamic	0	Normal	23
+1770	convoy cleared		Info		Dynamic	0	Normal	24
+1771	warning cleared		Info		Dynamic	0	Normal	13
+1780	cancellations have to be expected		Forecast		Longer-lasting	0	Normal	39
+1781	all services fully booked	all services fully booked until $Q	Forecast	7	Longer-lasting	0	Urgent	39
+1782	park and ride service will not be operating	park and ride service will not be operating until $Q	Forecast	7	Longer-lasting	1	Urgent	39
+1783	normal services will not be operating	normal services will not be operating until $Q	Forecast	7	Longer-lasting	1	Urgent	39
+1784	rail services will not be operating	rail services will not be operating until $Q	Forecast	7	Longer-lasting	1	Urgent	39
+1785	rapid transit service will not be operating	rapid transit service will not be operating until $Q	Forecast	7	Longer-lasting	1	Urgent	39
+1786	underground service will not be operating	underground service will not be operating until $Q	Forecast	7	Longer-lasting	1	Urgent	39
+1787	public transport will be on strike		Forecast		Longer-lasting	1	Urgent	39
+1788	ferry service will not be operating	ferry service will not be operating until $Q	Forecast	7	Longer-lasting	1	Urgent	39
+1789	normal services expected		Forecast		Longer-lasting	1	Normal	39
+1790	message cancelled		Silent		Dynamic	0	Normal	39
+1801	lane control signs not working		Info		Dynamic	0	Urgent	25
+1802	emergency telephones not working		Info		Dynamic	1	Normal	25
+1803	emergency telephone number not working		Info		Dynamic	1	Normal	25
+1804	traffic lights not working	$Q sets of traffic lights not working	Info	0	Dynamic	1	Normal	25
+1805	traffic lights working incorrectly	$Q sets of traffic lights working incorrectly	Info	0	Dynamic	1	Urgent	25
+1806	level crossing failure		Info		Dynamic	1	Normal	25
+1807	traffic lights not working. Stationary traffic	$Q sets of traffic lights not working. Stationary traffic	Info	0	Dynamic	0	Urgent	1
+1808	traffic lights not working. Danger of stationary traffic	$Q sets of traffic lights not working. Danger of stationary traffic	Info	0	Dynamic	0	Urgent	1
+1809	traffic lights not working. Queuing traffic	$Q sets of traffic lights not working. Queuing traffic	Info	0	Dynamic	0	Urgent	1
+1810	traffic lights not working. Danger of queuing traffic	$Q sets of traffic lights not working. Danger of queuing traffic	Info	0	Dynamic	0	Urgent	1
+1811	traffic lights not working. Slow traffic	$Q sets of traffic lights not working. Slow traffic	Info	0	Dynamic	0	Urgent	1
+1812	traffic lights not working. Slow traffic expected	$Q sets of traffic lights not working. Slow traffic expected	Forecast	0	Dynamic	0	Urgent	2
+1813	traffic lights not working. Heavy traffic	$Q sets of traffic lights not working. Heavy traffic	Info	0	Dynamic	0	Normal	1
+1814	traffic lights not working. Heavy traffic expected	$Q sets of traffic lights not working. Heavy traffic expected	Forecast	0	Dynamic	0	Normal	2
+1815	traffic lights not working. Traffic flowing freely	$Q sets of traffic lights not working. Traffic flowing freely	Info	0	Dynamic	0	Normal	1
+1816	traffic lights not working. Traffic building up	$Q sets of traffic lights not working. Traffic building up	Info	0	Dynamic	0	Normal	1
+1817	traffic lights not working. Delays	traffic lights not working. Delays $Q	Info	5	Dynamic	0	Normal	20
+1818	traffic lights not working. Delays expected	traffic lights not working. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1819	traffic lights not working. Long delays	traffic lights not working. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1820	level crossing failure. Stationary traffic		Info		Dynamic	0	Urgent	1
+1821	level crossing failure. Danger of stationary traffic		Info		Dynamic	0	Urgent	1
+1822	level crossing failure. Queuing traffic		Info		Dynamic	0	Urgent	1
+1823	level crossing failure. Danger of queuing traffic		Info		Dynamic	0	Urgent	1
+1824	level crossing failure. Slow traffic		Info		Dynamic	0	Urgent	1
+1825	level crossing failure. Slow traffic expected		Forecast		Dynamic	0	Urgent	2
+1826	level crossing failure. Heavy traffic		Info		Dynamic	0	Normal	1
+1827	level crossing failure. Heavy traffic expected		Forecast		Dynamic	0	Normal	2
+1828	level crossing failure. Traffic flowing freely		Info		Dynamic	0	Normal	1
+1829	level crossing failure. Traffic building up		Info		Dynamic	0	Normal	1
+1830	level crossing failure. Delays	level crossing failure. Delays $Q	Info	5	Dynamic	0	Normal	20
+1831	level crossing failure. Delays expected	level crossing failure. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1832	level crossing failure. Long delays	level crossing failure. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1833	electronic signs repaired		Info		Dynamic	1	Normal	25
+1834	emergency call facilities restored		Info		Dynamic	1	Normal	25
+1835	traffic signals repaired		Info		Dynamic	1	Normal	25
+1836	level crossing now working normally		Info		Dynamic	1	Normal	25
+1837	message cancelled		Silent		Dynamic	0	Normal	25
+1838	lane control signs working incorrectly		Info		Dynamic	0	Urgent	25
+1839	lane control signs operating		Info		Dynamic	0	Normal	25
+1840	variable message signs not working		Info		Dynamic	0	Normal	25
+1841	variable message signs working incorrectly		Info		Dynamic	0	Urgent	25
+1842	variable message signs operating		Info		Dynamic	0	Normal	25
+1843	ramp control signals not working	$Q sets of ramp control signals not working	Info	0	Dynamic	0	Normal	25
+1844	ramp control signals working incorrectly	$Q sets of ramp control signals working incorrectly	Info	0	Dynamic	0	Normal	25
+1845	temporary traffic lights not working	$Q sets of temporary traffic lights not working	Info	0	Dynamic	1	Normal	25
+1846	temporary traffic lights working incorrectly	$Q sets of temporary traffic lights working incorrectly	Info	0	Dynamic	1	Urgent	25
+1847	traffic signal control computer not working		Info		Dynamic	1	Normal	25
+1848	traffic signal timings changed		Info		Longer-lasting	1	Urgent	25
+1849	tunnel ventilation not working		Info		Dynamic	1	Urgent	25
+1850	lane control signs not working. Danger		Info		Dynamic	0	Urgent	25
+1851	temporary width limit	temporary width limit $Q	Info	9	Dynamic	0	Normal	26
+1852	temporary width limit lifted		Info		Dynamic	0	Normal	26
+1854	traffic regulations have been changed		Info		Dynamic	1	Normal	9
+1855	less than 50 parking spaces available		Info		Dynamic	1	Normal	28
+1856	no parking information available	no parking information available until $Q	Info	7	Dynamic	1	Normal	28
+1857	message cancelled		Silent		Dynamic	0	Normal	26
+1858	Snowplough. Delays	Snowplough. Delays $Q	Info	5	Dynamic	0	Normal	20
+1861	temporary height limit	temporary height limit $Q	Info	9	Dynamic	0	Normal	26
+1862	temporary height limit lifted		Info		Dynamic	0	Normal	26
+1863	automatic payment lanes not working	$Q automatic payment lanes not working	Info	0	Dynamic	0	Normal	25
+1864	lane control signs working incorrectly. Danger		Info		Dynamic	0	Urgent	25
+1865	emergency telephones out of order. Extra police patrols in operation		Info		Dynamic	1	Normal	25
+1866	emergency telephones out of order. In emergency, wait for police patrol		Info		Dynamic	1	Urgent	25
+1867	traffic lights not working. Danger	$Q sets of traffic lights not working. Danger	Info	0	Dynamic	1	Urgent	25
+1868	traffic lights working incorrectly. Delays	traffic lights working incorrectly. Delays $Q	Info	5	Dynamic	0	Normal	20
+1869	traffic lights working incorrectly. Delays expected	traffic lights working incorrectly. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1870	traffic lights working incorrectly. Long delays	traffic lights working incorrectly. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1871	temporary axle load limit	temporary axle load limit $Q	Info	8	Dynamic	1	Normal	26
+1872	temporary gross weight limit	temporary gross weight limit $Q	Info	8	Dynamic	1	Normal	26
+1873	temporary gross weight limit lifted		Info		Dynamic	1	Normal	26
+1874	temporary axle weight limit lifted		Info		Dynamic	1	Normal	26
+1875	traffic lights working incorrectly. Danger	$Q sets of traffic lights working incorrectly. Danger	Info	0	Dynamic	1	Urgent	25
+1876	temporary traffic lights not working. Delays	temporary traffic lights not working. Delays $Q	Info	5	Dynamic	0	Normal	20
+1877	temporary traffic lights not working. Delays expected	temporary traffic lights not working. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1878	temporary traffic lights not working. Long delays	temporary traffic lights not working. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1879	temporary traffic lights not working. Danger	$Q sets of temporary traffic lights not working. Danger	Info	0	Dynamic	1	Urgent	25
+1880	traffic signal control computer not working. Delays	traffic signal control computer not working. Delays $Q	Info	5	Dynamic	0	Normal	20
+1881	temporary length limit	temporary length limit $Q	Info	9	Dynamic	1	Normal	26
+1882	temporary length limit lifted		Info		Dynamic	1	Normal	26
+1883	message cancelled		Silent		Dynamic	0	Normal	27
+1884	traffic signal control computer not working. Delays expected	traffic signal control computer not working. Delays $Q expected	Forecast	5	Dynamic	0	Normal	20
+1885	traffic signal control computer not working. Long delays	traffic signal control computer not working. Long delays $Q	Info	5	Dynamic	0	Urgent	20
+1886	normal parking restrictions lifted		Info		Dynamic	1	Normal	27
+1887	special parking restrictions in force		Info		Longer-lasting	1	Normal	27
+1888	10% full		Info		Dynamic	1	Normal	28
+1889	20% full		Info		Dynamic	1	Normal	28
+1890	30% full		Info		Dynamic	1	Normal	28
+1891	40% full		Info		Dynamic	1	Normal	28
+1892	50% full		Info		Dynamic	1	Normal	28
+1893	60% full		Info		Dynamic	1	Normal	28
+1894	70% full		Info		Dynamic	1	Normal	28
+1895	80% full		Info		Dynamic	1	Normal	28
+1896	90% full		Info		Dynamic	1	Normal	28
+1897	less than 10 parking spaces available		Info		Dynamic	1	Normal	28
+1898	less than 20 parking spaces available		Info		Dynamic	1	Normal	28
+1899	less than 30 parking spaces available		Info		Dynamic	1	Normal	28
+1900	less than 40 parking spaces available		Info		Dynamic	1	Normal	28
+1901	next departure	next departure $Q	Forecast	7	Dynamic	0	Normal	22
+1902	next departure for heavy vehicles	next departure $Q for heavy vehicles	Forecast	7	Dynamic	0	Normal	22
+1903	car park full	car park $Q full	Info	3	Dynamic	1	Urgent	28
+1904	all car parks full	all car parks $Q full	Info	3	Dynamic	1	Urgent	28
+1905	less than car parking spaces available	less than $Q car parking spaces available	Info	1	Dynamic	1	Normal	28
+1906	park and ride service operating	park and ride service operating until $Q	Info	7	Dynamic	1	Normal	21
+1907	(null event)		Info		Dynamic	0	Normal	31
+1908	switch your car radio	switch your car radio to $Q	Info	11	Dynamic	1	Urgent	29
+1909	alarm call: important new information on this frequency follows now in normal programme		Silent		Dynamic	0	Normal	29
+1910	alarm set: new information will be broadcast between these times in normal programme		Silent		Dynamic	0	Normal	29
+1911	message cancelled		Silent		Dynamic	0	Normal	29
+1913	switch your car radio	switch your car radio to $Q	Info	12	Dynamic	1	Urgent	29
+1914	no information available	no information available until $Q	Info	7	Dynamic	1	Normal	30
+1915	this message is for test purposes only, please ignore	this message is for test purposes only number $Q, please ignore	Info	0	Dynamic	0	Normal	31
+1916	no information available due to technical problems	no information available until $Q due to technical problems	Info	7	Dynamic	1	Normal	30
+1917	automatic toll system not working, pay manually		Info		Dynamic	0	Normal	25
+1918	full		Info		Dynamic	1	Urgent	28
+1920	only a few parking spaces available		Info		Dynamic	1	Normal	28
+1921	parking spaces available	$Q parking spaces available	Info	1	Dynamic	1	Normal	28
+1922	expect car park to be full		Forecast		Dynamic	1	Normal	28
+1923	expect no parking spaces available		Forecast		Dynamic	1	Urgent	28
+1924	multi story car parks full		Info		Dynamic	1	Normal	28
+1925	no problems to report with park and ride services		Info		Dynamic	1	Normal	28
+1926	no parking spaces available		Info		Dynamic	1	Urgent	28
+1927	no parking	no parking until $Q	Info	7	Dynamic	1	Normal	27
+1928	special parking restrictions lifted		Info		Dynamic	1	Normal	27
+1929	urgent information will be given on normal programme broadcasts	urgent information will be given at $Q on normal programme broadcasts	Forecast	7	Dynamic	1	Urgent	29
+1930	this TMC-service is not active	this TMC-service is not active until $Q	Info	7	Dynamic	1	Normal	30
+1931	detailed information will be given on normal programme broadcasts	detailed information will be given at $Q on normal programme broadcasts	Forecast	7	Dynamic	1	Urgent	29
+1932	detailed information is provided by another TMC service		Info		Dynamic	1	Urgent	30
+1934	no park and ride information available	no park and ride information available until $Q	Info	7	Dynamic	1	Normal	28
+1938	park and ride information service resumed		Info		Dynamic	1	Normal	28
+1939	travel information telephone service available		Info		Dynamic	1	Normal	30
+1940	additional regional information is provided by another TMC service		Info		Dynamic	1	Normal	30
+1941	additional local information is provided by another TMC service		Info		Dynamic	1	Normal	30
+1942	additional public transport information is provided by another TMC service		Info		Dynamic	1	Normal	30
+1943	national traffic information is provided by another TMC service		Info		Dynamic	1	Normal	30
+1944	this service provides major road information		Info		Dynamic	1	Normal	30
+1945	this service provides regional travel information		Info		Dynamic	1	Normal	30
+1946	this service provides local travel information		Info		Dynamic	1	Normal	30
+1947	no detailed regional information provided by this service		Info		Longer-lasting	1	Normal	30
+1948	no detailed local information provided by this service		Info		Longer-lasting	1	Normal	30
+1949	no cross-border information provided by this service		Info		Longer-lasting	1	Normal	30
+1950	information restricted to this area		Info		Longer-lasting	1	Normal	30
+1951	no new traffic information available	no new traffic information available until $Q	Info	7	Dynamic	1	Normal	30
+1952	no public transport information available		Info		Dynamic	1	Normal	30
+1953	this TMC-service is being suspended	this TMC-service is being suspended at $Q	Info	7	Dynamic	1	Normal	30
+1954	active TMC-service will resume	active TMC-service will resume at $Q	Forecast	7	Dynamic	1	Normal	30
+1955	reference to audio programmes no longer valid		Info		Dynamic	1	Normal	29
+1956	reference to other TMC services no longer valid		Info		Dynamic	1	Normal	30
+1957	previous announcement about this or other TMC services no longer valid		Info		Dynamic	1	Normal	30
+1961	allow emergency vehicles to pass in the carpool lane		Info		Dynamic	0	Urgent	9
+1962	carpool lane available for all vehicles		Info		Longer-lasting	0	Normal	10
+1963	police directing traffic via the carpool lane		Info		Dynamic	0	Normal	10
+1964	rail information service not available		Info		Dynamic	1	Normal	30
+1965	rail information service resumed		Info		Dynamic	1	Normal	30
+1966	rapid transit information service not available		Info		Dynamic	1	Normal	30
+1967	rapid transit information service resumed		Info		Dynamic	1	Normal	30
+1971	police directing traffic		Info		Dynamic	0	Normal	9
+1972	bus lane available for all vehicles		Info		Longer-lasting	0	Normal	9
+1973	police directing traffic via the bus lane		Info		Dynamic	0	Urgent	9
+1974	allow emergency vehicles to pass		Info		Dynamic	0	Urgent	9
+1975	overtaking prohibited for heavy vehicles	overtaking prohibited for heavy vehicles over $Q	Info	8	Dynamic	0	Urgent	9
+1976	overtaking prohibited		Info		Dynamic	0	Normal	9
+1977	allow emergency vehicles to pass in the heavy vehicle lane		Info		Dynamic	0	Urgent	9
+1978	heavy vehicle lane available for all vehicles		Info		Longer-lasting	0	Normal	9
+1979	police directing traffic via the heavy vehicle lane		Info		Dynamic	0	Normal	9
+1980	overtaking prohibited for heavy lorries	overtaking prohibited for heavy lorries over $Q	Info	8	Dynamic	0	Normal	9
+1981	drivers of heavy lorries are recommended to stop at next safe place	drivers of heavy lorries over $Q are recommended to stop at next safe place	Info	8	Dynamic	1	Urgent	9
+1982	bus lane closed		Info		Longer-lasting	0	Normal	6
+1983	power failure		Info		Dynamic	1	Normal	25
+1985	overtaking restriction lifted		Info		Dynamic	0	Normal	9
+1986	Low Emission Zone restriction in force		Info		Longer-lasting	1	Normal	9
+1990	car park closed	car park closed until $Q	Info	7	Dynamic	1	Normal	28
+1991	danger of waiting vehicles on roadway		Info		Dynamic	0	Urgent	13
+1993	number of parking spaces decreasing		Info		Dynamic	1	Normal	28
+1994	number of parking spaces constant		Info		Dynamic	1	Normal	28
+1995	number of parking spaces increasing		Info		Dynamic	1	Normal	28
+1998	dangerous situation on exit slip road		Info		Dynamic	0	Urgent	7
+1999	dangerous situation on entry slip road		Info		Dynamic	0	Urgent	8
+2000	closed due to smog alert	closed due to smog alert until $Q	Info	7	Longer-lasting	1	Urgent	9
+2006	closed for vehicles with less than three occupants		Info		Longer-lasting	0	Urgent	10
+2007	closed for vehicles with only one occupant		Info		Longer-lasting	0	Urgent	10
+2013	service area busy		Info		Dynamic	0	Normal	9
+2021	service not operating, substitute service available		Info		Dynamic	1	Normal	21
+2022	public transport strike		Info		Dynamic	1	Urgent	21
+2028	message cancelled		Silent		Dynamic	0	Normal	4
+2029	message cancelled		Silent		Dynamic	0	Normal	10
+2030	message cancelled		Silent		Dynamic	0	Normal	13
+2032	message cancelled		Silent		Dynamic	0	Normal	35
+2033	message cancelled		Silent		Dynamic	0	Normal	19
+2034	message cancelled		Silent		Dynamic	0	Normal	21
+2035	message cancelled		Silent		Dynamic	0	Normal	22
+2038	message cancelled		Silent		Dynamic	0	Normal	28
+2039	message cancelled		Silent		Dynamic	0	Normal	30
+2040	message cancelled		Silent		Dynamic	0	Normal	31
+2041	nothing to report		Silent		Dynamic	1	Normal	31
+2042	ice build-up on cable structure		Info		Dynamic	1	Urgent	13
+2043	road salted		Info		Dynamic	0	Normal	14
+2044	danger of snow patches		Info		Dynamic	1	Urgent	14
+2045	snow patches		Info		Dynamic	1	Urgent	14
+2046	Convoy service required due to bad weather		Info		Dynamic	1	Urgent	9
+2047	(null message)		Silent		Dynamic	1	Normal	31

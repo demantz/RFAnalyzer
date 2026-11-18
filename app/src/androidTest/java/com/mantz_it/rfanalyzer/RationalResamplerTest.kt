@@ -1,15 +1,28 @@
 package com.mantz_it.rfanalyzer.dsp
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.mantz_it.rfanalyzer.source.SamplePacket
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
+
+/**
+ * <h1>RF Analyzer - Rational Resampler Tests</h1>
+ *
+ * Module:      RationalResamplerTest.kt
+ * Description: Instrumented tests for RationalResampler: a complex tone resampled by 11/17 and back
+ *              by 17/11 matches the input after the filter delay (RMS error below 0.05), and
+ *              limitDenominator() approximates a ratio within 1e-4 with a denominator of at most
+ *              10000, checked for every numerator from 1,000,000 to 10,000,000 over 250,000.
+ *
+ * @author Dennis Mantz
+ * Copyright (C) 2025 Dennis Mantz
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 @RunWith(AndroidJUnit4::class)
 class RationalResamplerTest {
@@ -81,8 +94,8 @@ class RationalResamplerTest {
 
         val delay = 51 // empirically determined delay between input and output
 
-        // callculate error between input and output. Only take the last samples when the filter delay line is not empty
-        // compensate delay between input and output
+        // Error between input and delay-compensated output, over the last samples only (the
+        // filters' delay lines are full there)
         var mse = 0.0
         var count = 0
         for (i in minLen-1000 until minLen-delay) {
@@ -109,9 +122,9 @@ class RationalResamplerTest {
         val error = kotlin.math.abs(ratio - approx)
         println("Approximation: $num/$den = $approx, error: $error")
         // Check denominator bound
-        assert(den <= maxDen)
+        assertTrue(den <= maxDen)
         // Check error is reasonably small
-        assert(error < 1e-4) { "Error too large: $error" }
+        assertTrue("Error too large: $error", error < 1e-4)
     }
 
     @Test
@@ -135,7 +148,7 @@ class RationalResamplerTest {
         }
 
         println("Worst error=$worstError at numIn=$worstNum, approx=$worstApprox")
-        assert(worstError < 1e-4) { "Max error too large: $worstError" }
+        assertTrue("Max error too large: $worstError", worstError < 1e-4)
     }
 
 }

@@ -20,6 +20,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 import kotlin.math.max
 
+/**
+ * <h1>RF Analyzer - File Copy Service</h1>
+ *
+ * Module:      FileCopyService.kt
+ * Description: A foreground service that exports a file to a destination URI the user picked
+ *              (MainActivity uses it for files larger than 10 MB), with a progress notification
+ *              that can cancel the copy and a final notification when the copy completed, was
+ *              cancelled or failed.
+ *
+ * @author Dennis Mantz
+ * Copyright (C) 2026 Dennis Mantz
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
+
 class FileCopyService : Service() {
 
     companion object {
@@ -118,7 +132,7 @@ class FileCopyService : Service() {
         var copied = 0L
         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
         var lastProgressUpdate = Long.MIN_VALUE
-        val progressStep = max(totalBytes / 100, 50*1024*1024) // update every 1% except for files < 5GB
+        val progressStep = max(totalBytes / 100, 50*1024*1024) // every 1 %, but at most every 50 MB (files below 5 GB)
 
         contentResolver.openOutputStream(destUri)?.use { output ->
             srcFile.inputStream().use { input ->

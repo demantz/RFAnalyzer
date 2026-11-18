@@ -2,9 +2,39 @@
 
 The **Settings** tab lets you customize the app's behavior to your preferences.
 
+## Location
+
+Where you listen from. RF Analyzer uses it to preselect the region of the band
+plans when importing default lists and to start the maps on your area.
+
+- **Country or region** - Out of the box, the country is taken from what the
+  phone already knows, without any permission: the mobile network, the time
+  zone, the SIM card or the language setting (shown next to the country, e.g.
+  "from your mobile network"). Tap to choose a country yourself, only an ITU
+  region if you'd rather not tell more, or **Automatic** to go back to the
+  phone's guess.
+- **Your position (optional)** - The maps start there instead of on the whole
+  country. Either type a Maidenhead
+  grid locator (e.g. JN49 or JN49eh) - the maps draw its square as your home - or
+  choose **This device's location**: RF Analyzer then asks for the approximate
+  location permission and takes a location fix now and then while the app is
+  open (never in the background).
+
+| | Used for |
+|---|---|
+| Country or region | the region preselected when importing band plans, where the maps start |
+| Position | where the maps start, the locator's square on the maps |
+
+The location stays on your device. The maps' "my location" button shows where
+the phone is right now, to about 2 km (RF Analyzer only asks for the approximate
+location), and asks for the location permission on its own,
+independent of this setting. If you denied it twice, Android no longer asks;
+the button then offers to open the app's settings, where you can allow it
+under Permissions → Location.
+
 ## Screen Orientation
 
-On default, the **AUTO** setting follows your system's behavior for screen
+By default, the **AUTO** setting follows your system's behavior for screen
 orientation. If you'd like to lock in a fixed screen orientation choose one
 of the following from the dropdown list:
 
@@ -51,6 +81,30 @@ the frequency). However, a physical tuning wheel on an old radio did actually
 work the other way around which can be enabled with this setting. Choose which
 behavior feels better or more natural for you.
 
+## Keep Channel Centered
+
+In the Settings tab, the switch **Keep Channel Centered** decides how the view follows the channel:
+
+- **Enabled** - The FFT display will automatically move to keep the channel
+  selector centered when tuning to a new frequency.
+- **Disabled** - The FFT view remains stationary; only the channel indicator
+  moves. If the indicator scrolls out of view, the display will then follow.
+
+This gives you flexibility in how you want to interact with the spectrum
+display - either keeping the selected signal in the spotlight, or keeping a
+broader overview of the band.
+
+## Start When an SDR Is Plugged In
+
+If enabled, plugging in a USB SDR starts the analyzer with that SDR - also with
+the app in the background, which stays there, and by opening the app if it isn't
+running. Android asks once per SDR whether RF Analyzer may
+access it; tick **Always open RF Analyzer when ... is connected** so that
+plugging in works without that question.
+
+If disabled (the default), Android doesn't offer RF Analyzer when an SDR is
+plugged in, so it doesn't compete with other SDR apps on your device.
+
 ## Control Drawer Alignment (Landscape)
 
 The Control Drawer is accessible on the side of the screen when the device is
@@ -85,38 +139,14 @@ filter taps increase. This setting reduces the filter taps to reduce the load.
 If possible you should rather reduce the input sample rate: This will give you
 better audio quality at the cost of seeing less bandwidth.
 
-## Allow Out-of-Bound Frequency (RTL-SDR)
-
-The RTL-SDR devices have a tune frequency range which is determined by the
-tuner chip:
-
-| Tuner Chip         | Lowest Frequency | Highest Frequency |
-|--------------------|------------------|-------------------|
-| Elonics E4000      | 52 MHz           | 2200 MHz          |
-| Rafael Micro R820T | 24 MHz           | 1766 MHz          |
-| Rafael Micro R828D | 24 MHz           | 1766 MHz          |
-| Fitipower FC0013   | 22 MHz           | 1100 MHz          |
-| Fitipower FC0012   | 22 MHz           | 948.6 MHz         |
-| FCI FC2580         | 146 MHz          | 924 MHz           |
-
-RF Analyzer is programmed to restrict the tune frequency according to
-the tuner chip that is currently used. If this is undesired, this setting
-allows you to disable these restrictions. That means any frequency can
-be entered. The result however, may be incorrect if the chip does not
-support the frequency.
-
-If you use a RTL-SDR Blog v4 dongle it is recommended to enable this setting.
-This will allow you to tune below the 24MHz which is usually the lowest
-frequency which the R828D tuner can tune. But the Blog v4 has an automatic
-upconverter build in which allows you to tune below this frequency.
-
-!!! warning 
-    This is an expert setting that should only be enabled if you know what you are doing.
+The mode also limits the drawing of the FFT and waterfall to 30 frames per
+second (see [Max Frame Rate](./fft.md#max-frame-rate)).
 
 ## Show Debug Information
 
-With this switch enabled, debug information (e.g. current FPS) is printed in
-the upper right corner of the FFT plot.
+With this switch enabled, debug information - the frame rate and the
+processing load (see [Processing Overload](./troubleshooting.md#processing-overload))
+- is printed in the upper right corner of the FFT plot.
 
 ## Logging
 

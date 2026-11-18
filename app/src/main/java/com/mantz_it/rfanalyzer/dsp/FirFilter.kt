@@ -1,35 +1,33 @@
 package com.mantz_it.rfanalyzer.dsp
 
 import android.util.Log
-import com.mantz_it.rfanalyzer.source.SamplePacket
-import kotlin.math.cos
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
 import kotlin.math.sin
 
 /**
  * <h1>RF Analyzer - FIR Filter</h1>
  *
  * Module:      FirFilter.kt
- * Description: This class implements a FIR filter. Most of the code is
- * copied from the firdes and firfilter module from GNU Radio.
+ * Description: A FIR filter with real taps and its low-pass design, derived from GNU Radio's
+ *              firdes and fir_filter (gr-filter).
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
- * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * GNU Radio: Copyright (C) 2002-2013 Free Software Foundation, Inc.
+ * License: GPL version 3 or later - GNU Radio's license, which applies to code derived from it.
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 class FirFilter(
 	val taps: FloatArray,
@@ -74,12 +72,14 @@ class FirFilter(
             delaysReal[tapCounter] = reIn[offset + i]
             delaysImag[tapCounter] = imIn[offset + i]
 
-            // Calculate the filter output for every Mth element (were M = decimation)
+            // Calculate the filter output for every Mth element (where M = decimation)
             if (decimationCounter == 0) {
                 // first check if we have enough space in the output buffers:
                 if (indexOut == outputCapacity) {
                     outPacket.setSize(indexOut) // update size of output sample packet
                     outPacket.sampleRate = inPacket.sampleRate / decimation // update the sample rate of the output sample packet
+                    outPacket.frequency = inPacket.frequency
+                    outPacket.timestamp = inPacket.timestamp
                     return i // We return the number of consumed samples from the input buffers
                 }
 
@@ -106,6 +106,8 @@ class FirFilter(
         }
         outPacket.setSize(indexOut) // update size of output sample packet
         outPacket.sampleRate = inPacket.sampleRate / decimation // update the sample rate of the output sample packet
+        outPacket.frequency = inPacket.frequency
+        outPacket.timestamp = inPacket.timestamp
         return length // We return the number of consumed samples from the input buffers
     }
 
@@ -129,12 +131,14 @@ class FirFilter(
         for (i in 0..<length) {
             delaysReal[tapCounter] = reIn[offset + i]
 
-            // Calculate the filter output for every Mth element (were M = decimation)
+            // Calculate the filter output for every Mth element (where M = decimation)
             if (decimationCounter == 0) {
                 // first check if we have enough space in the output buffers:
                 if (indexOut == outputCapacity) {
                     outPacket.setSize(indexOut) // update size of output sample packet
                     outPacket.sampleRate = inPacket.sampleRate / decimation // update the sample rate of the output sample packet
+                    outPacket.frequency = inPacket.frequency
+                    outPacket.timestamp = inPacket.timestamp
                     return i // We return the number of consumed samples from the input buffers
                 }
 
@@ -159,6 +163,8 @@ class FirFilter(
         }
         outPacket.setSize(indexOut) // update size of output sample packet
         outPacket.sampleRate = inPacket.sampleRate / decimation // update the sample rate of the output sample packet
+        outPacket.frequency = inPacket.frequency
+        outPacket.timestamp = inPacket.timestamp
         return length // We return the number of consumed samples from the input buffers
     }
 
@@ -168,7 +174,7 @@ class FirFilter(
         /**
          * FROM GNU Radio firdes::low_pass_2:
          *
-         * Will calculate the tabs for the specified low pass filter and return a FirFilter instance
+         * Will calculate the taps for the specified low pass filter
          *
          * @param decimation            decimation factor
          * @param gain                    filter pass band gain
@@ -176,7 +182,7 @@ class FirFilter(
          * @param cutoffFrequency            cut off frequency (end of pass band)
          * @param transitionWidth        width from end of pass band to start stop band
          * @param attenuationInDecibels        attenuation of stop band
-         * @return instance of FirFilter
+         * @return the taps; null if the parameters are invalid
          */
 		@JvmStatic
 		fun createLowPassTaps(
@@ -205,7 +211,7 @@ class FirFilter(
                 return null
             }
 
-            // Calculate number of tabs
+            // Calculate number of taps
             // Based on formula from Multirate Signal Processing for
             // Communications Systems, fredric j harris
             var ntaps = (attenuationInDecibels * sampleRate / (22.0 * transitionWidth)).toInt()
@@ -240,6 +246,7 @@ class FirFilter(
             return taps
         }
 
+        @JvmOverloads
         @JvmStatic
         fun createLowPass(
             decimation: Int,
@@ -248,9 +255,10 @@ class FirFilter(
             cutoffFrequency: Float,
             transitionWidth: Float,
             attenuationInDecibels: Float,
+            maxTaps: Int = 0,  // Tap count will be limited by maxTaps. Value '0' means no limit
         ): FirFilter?
         {
-            val taps = createLowPassTaps(decimation, gain, sampleRate, cutoffFrequency, transitionWidth, attenuationInDecibels, BlackmanWindow())
+            val taps = createLowPassTaps(decimation, gain, sampleRate, cutoffFrequency, transitionWidth, attenuationInDecibels, BlackmanWindow(), maxTaps)
             return if(taps == null) null else FirFilter(
                 taps,
                 decimation,

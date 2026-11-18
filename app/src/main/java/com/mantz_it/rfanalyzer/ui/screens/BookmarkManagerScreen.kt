@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.ui.screens
 
+import com.mantz_it.rfanalyzer.location.ItuRegion
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -32,17 +33,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.mantz_it.rfanalyzer.database.*
-import com.mantz_it.rfanalyzer.ui.composable.BandFilterRow
-import com.mantz_it.rfanalyzer.ui.composable.StationCard
-import com.mantz_it.rfanalyzer.ui.composable.BandCard
-import com.mantz_it.rfanalyzer.ui.composable.BookmarkListCard
-import com.mantz_it.rfanalyzer.ui.composable.CopyOrMoveSheet
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.BandFilterRow
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.StationCard
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.BandCard
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.BookmarkListCard
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.CopyOrMoveSheet
 import com.mantz_it.rfanalyzer.ui.composable.DEFAULT_MIN_BOX_HEIGHT
-import com.mantz_it.rfanalyzer.ui.composable.OnlineSourceCard
-import com.mantz_it.rfanalyzer.ui.composable.EditBandBookmarkSheet
-import com.mantz_it.rfanalyzer.ui.composable.EditBookmarkListSheet
-import com.mantz_it.rfanalyzer.ui.composable.EditStationBookmarkSheet
-import com.mantz_it.rfanalyzer.ui.composable.ExportSheet
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.OnlineSourceCard
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.EditBandBookmarkSheet
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.EditBookmarkListSheet
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.EditStationBookmarkSheet
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.ExportSheet
 import com.mantz_it.rfanalyzer.ui.composable.IconFrequencyBand
 import com.mantz_it.rfanalyzer.ui.composable.IconFrequencyBandOpen
 import com.mantz_it.rfanalyzer.ui.composable.LazyColumnWithScrollAwayHeaderElement
@@ -53,7 +54,7 @@ import com.mantz_it.rfanalyzer.ui.composable.SettingsActionRow
 import com.mantz_it.rfanalyzer.ui.composable.SettingsInfoRow
 import com.mantz_it.rfanalyzer.ui.composable.SettingsSection
 import com.mantz_it.rfanalyzer.ui.composable.SettingsSwitchRow
-import com.mantz_it.rfanalyzer.ui.composable.StationsFilterRow
+import com.mantz_it.rfanalyzer.ui.composable.bookmarks.StationsFilterRow
 import com.mantz_it.rfanalyzer.ui.composable.rememberCreateFilePicker
 import com.mantz_it.rfanalyzer.ui.composable.rememberOpenFilePicker
 import com.mantz_it.rfanalyzer.ui.composable.rememberScrollAwayHeaderState
@@ -65,7 +66,6 @@ import com.mantz_it.rfanalyzer.ui.composable.rememberScrollAwayHeaderState
  * Description: Screen for displaying Bookmarks. Also called the 'Bookmark Manager' inside the App
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -96,7 +96,7 @@ fun BookmarkManagerScreen(
     val useCustomFftBandFilter by viewModel.useCustomFftBandFilter.collectAsState()
     val legacyDbAvailable by viewModel.legacyDbAvailable.collectAsState()
     val displayedImportLegacyDialog by viewModel.displayedLegacyImportDialog.collectAsState()
-    val displayDefaultBandImportDialog by viewModel.displayDefaultBandImportDialog.collectAsState()
+    val displayDefaultImportDialog by viewModel.displayDefaultImportDialog.collectAsState()
 
     val stationFilterForList by viewModel.stationFilterForList.collectAsState()
     val stationFilterForFft by viewModel.stationFilterForFft.collectAsState()
@@ -348,6 +348,7 @@ fun BookmarkManagerScreen(
                                                 OnlineStationProvider.EIBI -> "bookmarks.html#eibi-database"
                                                 OnlineStationProvider.POTA -> "bookmarks.html#pota-spots"
                                                 OnlineStationProvider.SOTA -> "bookmarks.html#sota-spots"
+                                                OnlineStationProvider.DIGITAL_STATIONS -> "bookmarks.html#digital-stations"
                                             }
                                         )
                                     }
@@ -597,7 +598,7 @@ fun BookmarkManagerScreen(
                             item {
                                 SettingsActionRow(
                                     title = "Export Database Backup",
-                                    description = "Backup your entire RF analyzer database",
+                                    description = "Back up all bookmarks, bands and lists to a JSON file",
                                     icon = Icons.Default.Upload,
                                     onClick = exportBackupFileChooser
                                 )
@@ -635,9 +636,9 @@ fun BookmarkManagerScreen(
 
                             item {
                                 SettingsActionRow(
-                                    title = "Import Default Band Plans",
+                                    title = "Import Default Lists",
                                     icon = IconFrequencyBandOpen,
-                                    onClick = viewModel::showDefaultBandImportDialog
+                                    onClick = viewModel::showDefaultImportDialog
                                 )
                             }
 
@@ -854,6 +855,7 @@ fun BookmarkManagerScreen(
                     itemsWithBookmarkList = items,
                     itemType = type,
                     onExport = { uri -> viewModel.confirmItemsToExport(uri) },
+                    buildExportJson = { viewModel.buildExportJson() },
                     onDismiss = { viewModel.setItemsToExport(null, null) },
                 )
             }
@@ -898,12 +900,12 @@ fun BookmarkManagerScreen(
                         }
                     }
                 )
-            } else if (displayDefaultBandImportDialog) {
-                ImportBandPlansDialog(
-                    onStartImport = { importAmateur, importOther, region ->
-                        viewModel.importBandPlans(importOther, importAmateur, region)
-                    },
-                    onDismiss = { viewModel.dismissDefaultBandImportDialog() }
+            } else if (displayDefaultImportDialog) {
+                val ituRegion by viewModel.ituRegion.collectAsState()
+                ImportDefaultListsDialog(
+                    locationRegion = ituRegion,
+                    onStartImport = { region, selectedSets -> viewModel.importDefaultLists(region, selectedSets) },
+                    onDismiss = { viewModel.dismissDefaultImportDialog() }
                 )
             }
         }
@@ -1061,29 +1063,24 @@ fun ImportConfirmationSheet(
 }
 
 @Composable
-fun ImportBandPlansDialog(
-    onStartImport: (
-        importAmateur: Boolean,
-        importOther: Boolean,
-        region: Int
-    ) -> Unit,
+fun ImportDefaultListsDialog(
+    /** The region of the user's location, preselected; null if it isn't known. */
+    locationRegion: ItuRegion?,
+    onStartImport: (region: Int, selectedSets: Set<DefaultImportSet>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var importAmateur by remember { mutableStateOf(true) }
-    var importOther by remember { mutableStateOf(true) }
-    var selectedRegion by remember { mutableStateOf(1) }
-
-    val regions = listOf(
-        Pair("Region 1", "Africa, Europe, Middle East, and northern Asia"),
-        Pair("Region 2", "The Americas"),
-        Pair("Region 3", "Asia and the Pacific")
-    )
+    var selectedRegion by remember { mutableStateOf(locationRegion ?: ItuRegion.REGION_1) }
+    val checkedSets = remember {
+        mutableStateMapOf<DefaultImportSet, Boolean>().apply {
+            DefaultImportSet.entries.forEach { put(it, true) }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Import Band Plans",
+                text = "Import Default Lists",
                 style = MaterialTheme.typography.titleLarge
             )
         },
@@ -1091,46 +1088,27 @@ fun ImportBandPlansDialog(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
                 Text(
-                    text = "Select which band plans you would like to import into the bookmark database:",
+                    text = "Select your region and which bundled lists you would like to import into the bookmark database:",
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                // --- Amateur Radio checkbox ---
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = importAmateur,
-                        onCheckedChange = { importAmateur = it }
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Amateur Radio Band Plan",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-
-                // --- Region selection (only if Amateur is enabled) ---
-                if (importAmateur) {
-                    Column(
-                        modifier = Modifier.padding(start = 32.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        regions.forEachIndexed { index, region ->
-                            Row(verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { selectedRegion = index + 1 }
-                            ) {
-                                RadioButton(
-                                    selected = selectedRegion == index + 1,
-                                    onClick = { selectedRegion = index + 1 }
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Column {
-                                    Text(text = region.first, style = MaterialTheme.typography.bodyMedium)
-                                    Text(text = region.second, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
+                // --- Region selection ---
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    ItuRegion.entries.forEach { region ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedRegion = region }
+                        ) {
+                            RadioButton(
+                                selected = selectedRegion == region,
+                                onClick = { selectedRegion = region }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column {
+                                Text(text = region.label + if (region == locationRegion) " (your location)" else "", style = MaterialTheme.typography.bodyMedium)
+                                Text(text = region.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -1138,27 +1116,35 @@ fun ImportBandPlansDialog(
 
                 Divider()
 
-                // --- ISM / Maritime / Air checkbox ---
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = importOther,
-                        onCheckedChange = { importOther = it }
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "ISM, Maritime and Air Band Plan",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                // --- Importable list checkboxes ---
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DefaultImportSet.entries.forEach { set ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { checkedSets[set] = !(checkedSets[set] ?: false) }
+                        ) {
+                            Checkbox(
+                                checked = checkedSets[set] ?: false,
+                                onCheckedChange = { checkedSets[set] = it }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = set.title, style = MaterialTheme.typography.bodyLarge)
+                                Text(text = set.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
                 }
             }
         },
         confirmButton = {
+            val selectedSets = DefaultImportSet.entries.filter { checkedSets[it] == true }.toSet()
             TextButton(
-                enabled = importAmateur || importOther,
+                enabled = selectedSets.isNotEmpty(),
                 onClick = {
-                    onStartImport(importAmateur, importOther, selectedRegion)
+                    onStartImport(selectedRegion.number, selectedSets)
                 }
             ) {
                 Text("Start Import")

@@ -2,10 +2,10 @@
 <resources>
     <string name="app_name">RF Analyzer</string>
     <string name="about_screen_html"><![CDATA[
-Copyright &#169; 2025 Dennis Mantz<br /><br />
+Copyright &#169; 2014-2026 Dennis Mantz<br /><br />
 
 <h1>About the App</h1>
-RF Analyzer is an open source spectrum analyzer that lets you use you
+RF Analyzer is an open source spectrum analyzer that lets you use your
 SDR hardware together with an Android device. A detailed description
 can be found in the <a href=https://demantz.github.io/RFAnalyzer/>
 manual</a>.
@@ -20,7 +20,7 @@ join the beta program on Google Play:<br />
 https://play.google.com/apps/testing/com.mantz_it.rfanalyzer</a>
 
 <h1>Reporting Bugs</h1>
-If you find any bugs or translation mistakes or if you want to request
+If you find any bugs or if you want to request
 a new feature please use the GitHub page of the project:<br />
 <a href=https://github.com/demantz/RFAnalyzer/issues>
 https://github.com/demantz/RFAnalyzer/issues</a>
@@ -29,21 +29,9 @@ Alternatively you could write me an email to
 <a href=mailto:rfanalyzerapp@gmail.com>rfanalyzerapp@gmail.com</a>.
 
 <h1>License</h1>
-<a href=http://www.gnu.org/licenses/gpl.html>GPL version 2 or higher</a>
+RF Analyzer is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either <a href=https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>version 2</a> of the License or (at your option) any later version. Some parts are derived from GNU Radio (<a href=https://www.gnu.org/licenses/gpl-3.0.html>GPL version 3</a> or later) and RDS Surveyor (<a href=https://www.gnu.org/licenses/lgpl-3.0.html>LGPL version 3</a> or later), so the app as a whole is distributed under the GPL version 3 or later.
 <br /><br />
-<small>This application is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-<br /><br />
-This application is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-<br /><br />
-You should have received a copy of the GNU General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</small>
+<small>This application is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.</small>
 <br /><br />
 Get the source code of the app here on <a href=https://github.com/demantz/RFAnalyzer>GitHub</a>!
 
@@ -66,7 +54,7 @@ FFTPACK license:
 http://www.cisl.ucar.edu/css/software/fftpack5/ftpk.html
 <br /><br />
 Copyright (c) 2004 the University Corporation for Atmospheric
-Research ("UCAR"). All rights reserved. Developed by NCARs
+Research ("UCAR"). All rights reserved. Developed by NCAR\'s
 Computational and Information Systems Laboratory, UCAR,
 www.cisl.ucar.edu.
 <br /><br />
@@ -74,7 +62,7 @@ Redistribution and use of the Software in source and binary forms,
 with or without modification, is permitted provided that the
 following conditions are met:
 <br /><br />
-- Neither the names of NCARs Computational and Information Systems
+- Neither the names of NCAR\'s Computational and Information Systems
 Laboratory, the University Corporation for Atmospheric Research,
 nor the names of its sponsors or contributors may be used to
 endorse or promote products derived from this Software without
@@ -99,16 +87,73 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
 SOFTWARE.
 
 <h2>libhackrf</h2>
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+Copyright (c) 2012-2026 Great Scott Gadgets; Copyright (c) 2012, Jared Boone; Copyright (c) 2013, Benjamin Vernoux. All rights reserved.
+<br /><br />
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Great Scott Gadgets nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+<br /><br />
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <h2>libairspy</h2>
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+Copyright (c) 2012, Jared Boone; Copyright (c) 2013, Michael Ossmann; Copyright (c) 2014, Youssef Touil; Copyright (c) 2014, Benjamin Vernoux; Copyright (c) 2015, Ian Gilmour. All rights reserved.
+<br /><br />
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of AirSpy nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+<br /><br />
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+<br /><br />
+IQ converters: Copyright (C) 2014, Youssef Touil.
+<br /><br />
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 <h2>libairspyhf</h2>
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+Copyright (c) 2012, Jared Boone; Copyright (c) 2013, Michael Ossmann; Copyright (c) 2013-2017, Benjamin Vernoux; Copyright (c) 2013-2017, Ian Gilmour; Copyright (c) 2013-2023, Youssef Touil; Copyright (c) 2018, Leif Asbrink. All rights reserved.
+<br /><br />
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Airspy HF+ nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+<br /><br />
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+<h2>librtlsdr</h2>
+Copyright (C) 2012-2014 by Steve Markgraf, Dimitri Stolnikov and contributors (osmocom rtl-sdr). Licensed under the GNU General Public License, version 2 or later. http://www.gnu.org/licenses/gpl.html
 
 <h2>libhydrasdr</h2>
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+Copyright (c) 2012, Jared Boone; Copyright (c) 2013, Michael Ossmann; Copyright (C) 2013-2016, Youssef Touil; Copyright (c) 2013-2026, Benjamin Vernoux. All rights reserved.
+<br /><br />
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of HydraSDR nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+<br /><br />
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+<h2>libusb</h2>
+Copyright (C) the libusb contributors. Licensed under the GNU Lesser General Public License, version 2.1 or later. <a href=https://libusb.info>libusb.info</a>
+
+<h2>OkHttp</h2>
+Copyright 2019 Square, Inc. Licensed under the Apache License, Version 2.0. <a href=https://square.github.io/okhttp/>square.github.io/okhttp</a>
+
+<h2>MapLibre (maps)</h2>
+MapLibre Native and MapLibre Compose, copyright the MapLibre contributors, BSD licenses. <a href=https://maplibre.org>maplibre.org</a>
+<br /><br />
+Map data &#169; <a href=https://www.openstreetmap.org/copyright>OpenStreetMap contributors</a> (ODbL), map tiles by <a href=https://openfreemap.org>OpenFreeMap</a> and &#169; <a href=https://openmaptiles.org>OpenMapTiles</a>.
+
+<h2>GNU Radio (filters, resampler, window functions)</h2>
+The FIR filters with their filter design, the rational resampler and the window functions are derived from <a href=https://www.gnuradio.org>GNU Radio</a>. Copyright (C) 2002-2013 Free Software Foundation, Inc. Licensed under the GNU General Public License, version 3 or later.
+
+<h2>gqrx (waterfall colors)</h2>
+The GQRX color map is the default waterfall color table of <a href=https://gqrx.dk>gqrx</a>, which comes from CuteSDR.
+<br /><br />
+Copyright 2010 Moe Wheatley. All rights reserved. Copyright 2011-2013 Alexandru Csete OZ9AEC.
+<br /><br />
+<small>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+<br /><br />
+THIS SOFTWARE IS PROVIDED BY Moe Wheatley ``AS IS\'\' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Moe Wheatley OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+<br /><br />
+The views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of Moe Wheatley.</small>
+
+<h2>multimon-ng (POCSAG)</h2>
+The alphanumeric and numeric readings of POCSAG pages follow <a href=https://github.com/EliasOenal/multimon-ng>multimon-ng</a>. Copyright (C) 1996 Thomas Sailer and the multimon-ng contributors. Licensed under the GNU General Public License, version 2 or later.
+
+<h2>RDS Surveyor (RDS Traffic Message Channel)</h2>
+The ALERT-C (RDS Traffic Message Channel) event and supplementary-information tables, and the formulas that turn a traffic message\'s quantifiers, durations, times and route lengths into text, are derived from <a href=https://github.com/ChristopheJacquet/RdsSurveyor>RDS Surveyor</a>. Copyright (c) 2009, 2010 Christophe Jacquet and the RDS Surveyor contributors. Licensed under the GNU Lesser General Public License, version 3 or later.
+
+<h2>APRS Symbol Icons</h2>
+The APRS symbol icons shown on the map are built from the aprs.fi machine-readable APRS symbol index and symbol graphics set, via <a href=https://aprs-tools.temporarilyoffline.com/get-symbol.html>aprs-tools.temporarilyoffline.com</a>. The symbol index is licensed under <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a>; the graphics are published by that site for APRS application use.
 ]]></string>
 
 </resources>

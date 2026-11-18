@@ -2,8 +2,8 @@ package com.mantz_it.libhydrasdr
 
 import android.util.Log
 import androidx.annotation.Keep
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.TimeUnit
+import com.mantz_it.libusb.SampleBufferPool
+import com.mantz_it.libusb.SampleStreamDevice
 
 /**
  * <h1>RF Analyzer - HydraSDR Device</h1>
@@ -11,31 +11,16 @@ import java.util.concurrent.TimeUnit
  * Module:      HydraSdrDevice.kt
  * Description: A Kotlin interface to the native libhydrasdr driver
  *
- * @author Dennis Mantz
- *
+ * @author Dennis Mantz (with contributions by Benjamin Vernoux <bvernoux@hydrasdr.com>)
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
+class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) : SampleStreamDevice {
 
     companion object {
         private const val TAG = "HydraSdrDevice"
-        const val BUFFER_SIZE = 262144 // from hydrasdr.c:949 (1024*256)  - value is in bytes. one IQ sample is 4 bytes!
+        const val BUFFER_SIZE = 262144 // bytes per transfer (DEFAULT_BUFFER_SIZE, hydrasdr_shared.h); an INT16_IQ sample is 4 bytes
 
         @JvmStatic
         private external fun nativeOpenFd(fd: Int): Long
@@ -50,7 +35,7 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
                 Log.e(TAG, "open: Error opening HydraSDR device: $result ($error)")
                 Pair(null, error)
             } else {
-                val devicePtr = result // Assuming result is the device pointer on success
+                val devicePtr = result // on success, the native device pointer
                 Pair(HydraSdrDevice(devicePtr), null)
             }
         }
@@ -66,38 +51,21 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
     private external fun nativeVersionStringRead(nativePtr: Long): String?
     private external fun nativeIsStreaming(nativePtr: Long): Boolean
     private external fun nativeClose(nativePtr: Long): Int
-    private external fun nativeSetLnaGain(nativePtr: Long, gain: Int): Int
-    private external fun nativeSetMixerGain(nativePtr: Long, gain: Int): Int
-    private external fun nativeSetVgaGain(nativePtr: Long, gain: Int): Int
-    private external fun nativeSetLinearityGain(nativePtr: Long, gain: Int): Int
-    private external fun nativeSetSensitivityGain(nativePtr: Long, gain: Int): Int
+    private external fun nativeSetGain(nativePtr: Long, gainType: Int, value: Int): Int
     private external fun nativeSetSampleRate(nativePtr: Long, sampleRate: Int): Int
-    private external fun nativeSetFrequency(nativePtr: Long, frequency: Int): Int
+    private external fun nativeSetFrequency(nativePtr: Long, frequency: Long): Int
     private external fun nativeSetRfBias(nativePtr: Long, bias: Boolean): Int
     private external fun nativeSetRfPort(nativePtr: Long, port: Int): Int
     private external fun nativeGetSamplerates(nativePtr: Long, sampleRates: List<Int>): Int
+    private external fun nativeGetDeviceInfo(nativePtr: Long): String?
     private external fun nativeStartRX(nativePtr: Long): Int
     private external fun nativeStopRX(nativePtr: Long): Int
 
-    private val bufferPoolSize: Int = 70 // ~ 0.5sec of samples @10MSps; adjust if necessary!
-    private val availableBuffers = ArrayBlockingQueue<ByteArray>(bufferPoolSize)
-    private val filledBuffers = ArrayBlockingQueue<ByteArray>(bufferPoolSize)
+    override val sampleBuffers = SampleBufferPool(BUFFER_SIZE)
 
     init {
         if (nativeDevicePtr == 0L) {
             throw IllegalArgumentException("Native device pointer cannot be null (0) for HydraSdrDevice.")
-        }
-        // Create Buffers:
-        repeat(bufferPoolSize) {
-            availableBuffers.put(ByteArray(BUFFER_SIZE))
-        }
-    }
-
-    fun flushBufferQueue() {
-        var buffer = filledBuffers.poll()
-        while (buffer != null) {
-            availableBuffers.offer(buffer)
-            buffer = filledBuffers.poll()
         }
     }
 
@@ -109,7 +77,7 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeVersionStringRead(nativeDevicePtr)
     }
 
-    fun isStreaming(): Boolean {
+    override fun isStreaming(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "isStreaming: Device already closed or not opened.")
             return false
@@ -117,12 +85,11 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeIsStreaming(nativeDevicePtr)
     }
 
-    // Call this to release the native resources
-    fun close(): Boolean {
+    override fun close(): Boolean {
         if (nativeDevicePtr != 0L) {
             val result = nativeClose(nativeDevicePtr)
             nativeDevicePtr = 0L // Mark as closed, prevent further use
-            if (result == HydraSdrError.HYDRASDR_SUCCESS.code) { // Assuming you map errors
+            if (result == HydraSdrError.HYDRASDR_SUCCESS.code) {
                 Log.i(TAG, "close: HydraSdr device closed successfully.")
                 return true
             } else {
@@ -132,8 +99,7 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return false
     }
 
-    // Ensure resources are released if the object is GC'd without explicit close
-    // This is a fallback, explicit close() is always better.
+    // Fallback for a device that was never closed
     protected fun finalize() {
         if (nativeDevicePtr != 0L) {
             Log.w(TAG, "finalize: HydraSdrDevice was not explicitly closed. Closing in finalize().")
@@ -149,7 +115,7 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeSetSampleRate(nativeDevicePtr, sampleRate) == HydraSdrError.HYDRASDR_SUCCESS.code
     }
 
-    fun setFrequency(frequency: Int): Boolean {
+    fun setFrequency(frequency: Long): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "setFrequency: nativeDevicePtr is null. Device might be closed or not initialized.")
             return false
@@ -157,44 +123,13 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeSetFrequency(nativeDevicePtr, frequency) == HydraSdrError.HYDRASDR_SUCCESS.code
     }
 
-    fun setLnaGain(gain: Int): Boolean {
+    // One setter for every gain type (libhydrasdr's hardware-agnostic API, v1.1)
+    fun setGain(type: HydraSdrGainType, value: Int): Boolean {
         if (nativeDevicePtr == 0L) {
-            Log.e(TAG, "setLnaGain: nativeDevicePtr is null. Device might be closed or not initialized.")
+            Log.e(TAG, "setGain: nativeDevicePtr is null. Device might be closed or not initialized.")
             return false
         }
-        return nativeSetLnaGain(nativeDevicePtr, gain) == HydraSdrError.HYDRASDR_SUCCESS.code
-    }
-
-    fun setMixerGain(gain: Int): Boolean {
-        if (nativeDevicePtr == 0L) {
-            Log.e(TAG, "setMixerGain: nativeDevicePtr is null. Device might be closed or not initialized.")
-            return false
-        }
-        return nativeSetMixerGain(nativeDevicePtr, gain) == HydraSdrError.HYDRASDR_SUCCESS.code
-    }
-
-    fun setVgaGain(gain: Int): Boolean {
-        if (nativeDevicePtr == 0L) {
-            Log.e(TAG, "setVgaGain: nativeDevicePtr is null. Device might be closed or not initialized.")
-            return false
-        }
-        return nativeSetVgaGain(nativeDevicePtr, gain) == HydraSdrError.HYDRASDR_SUCCESS.code
-    }
-
-    fun setLinearityGain(gain: Int): Boolean {
-        if (nativeDevicePtr == 0L) {
-            Log.e(TAG, "setLinearityGain: nativeDevicePtr is null. Device might be closed or not initialized.")
-            return false
-        }
-        return nativeSetLinearityGain(nativeDevicePtr, gain) == HydraSdrError.HYDRASDR_SUCCESS.code
-    }
-
-    fun setSensitivityGain(gain: Int): Boolean {
-        if (nativeDevicePtr == 0L) {
-            Log.e(TAG, "setSensitivityGain: nativeDevicePtr is null. Device might be closed or not initialized.")
-            return false
-        }
-        return nativeSetSensitivityGain(nativeDevicePtr, gain) == HydraSdrError.HYDRASDR_SUCCESS.code
+        return nativeSetGain(nativeDevicePtr, type.nativeValue, value) == HydraSdrError.HYDRASDR_SUCCESS.code
     }
 
     fun setRfBias(bias: Boolean): Boolean {
@@ -220,10 +155,26 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         }
         val sampleRates = mutableListOf<Int>()
         nativeGetSamplerates(nativeDevicePtr, sampleRates)
-        return sampleRates.filter { it != 0 } // Filter out any trailing zeros if the native side pads
+        return sampleRates.filter { it != 0 }
     }
 
-    fun startRX(): Boolean {
+    // The device's capabilities (gain ranges, RF ports, frequency range, board identity), from
+    // the v1.1 hardware-agnostic API. Null (logged) if the device doesn't support the query or the
+    // answer can't be parsed: callers then use HydraSdrDeviceInfo's DEFAULT_MIN/MAX_FREQUENCY.
+    fun getDeviceInfo(): HydraSdrDeviceInfo? {
+        if (nativeDevicePtr == 0L) {
+            Log.e(TAG, "getDeviceInfo: Device already closed or not opened.")
+            return null
+        }
+        val json = nativeGetDeviceInfo(nativeDevicePtr)
+        if (json == null) {
+            Log.w(TAG, "getDeviceInfo: native query failed or returned null.")
+            return null
+        }
+        return HydraSdrDeviceInfo.parse(json)
+    }
+
+    override fun startRX(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "startRX: Device already closed or not opened.")
             return false
@@ -231,7 +182,7 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeStartRX(nativeDevicePtr) == HydraSdrError.HYDRASDR_SUCCESS.code
     }
 
-    fun stopRX(): Boolean {
+    override fun stopRX(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "stopRX: Device already closed or not opened.")
             return false
@@ -239,27 +190,13 @@ class HydraSdrDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeStopRX(nativeDevicePtr) == HydraSdrError.HYDRASDR_SUCCESS.code
     }
 
-    // Get a buffer with samples from the HydraSdr
-    fun getSampleBuffer(): ByteArray? {
-        return filledBuffers.poll(100, TimeUnit.MILLISECONDS) // returns null if no buffer is available after 100ms
-    }
-
-    // Return a buffer to the pool
-    fun returnSampleBuffer(buffer: ByteArray) {
-        availableBuffers.put(buffer) // return buffer to pool
-    }
-
-    // Called from JNI when native side has samples ready
+    // Called from JNI (sample_handoff.h) on the driver's RX thread
     @Keep
-    private fun onSamplesReady(buffer: ByteArray) {
-        filledBuffers.put(buffer) // blocks if user isn't consuming fast enough
-    }
+    private fun getEmptyBuffer(): ByteArray? = sampleBuffers.takeEmpty()
 
-    // Called from JNI to fetch an empty buffer for filling
     @Keep
-    private fun getEmptyBuffer(): ByteArray {
-        return availableBuffers.take() // blocks until a buffer is free
-    }
+    private fun onSamplesReady(buffer: ByteArray, validByteCount: Int, droppedSamples: Long) =
+        sampleBuffers.putFilled(buffer, validByteCount, droppedSamples)
 }
 
 enum class HydraSdrError(val code: Int) {

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Auto Backup rules for API 30 and below (android:fullBackupContent).
+    API 31+ uses data_extraction_rules.xml instead - keep the two in sync.
+
+    The cloud backup holds the settings and the bookmarks database (recordings_db: bookmarks,
+    stations, bands, the recordings list) - small, and what a user wants back on a new device.
+    Left out, so private data doesn't leave the device (privacy policy: "Data on your device"):
+
+      - datastore/rf_analyzer_private.preferences_pb: the location (country or region, grid
+        locator, device fix), the KiwiSDR password, where the KiwiSDR map was looked at
+        (PrivateSettings.kt).
+      - recordings/: IQ recordings. Also far too big: Auto Backup has a 25 MB quota per app, and
+        exceeding it disables the backup of the WHOLE app. Rows of recordings whose file is
+        missing after a restore are removed at start (MainViewModel.checkRecordingsAtStart).
+      - digital_packets_db: the decoded-packet history. It grows far past the quota, and what was
+        received says where the receiver was.
+      - rfanalyzer.log: the app's log file.
+-->
+<full-backup-content>
+    <exclude domain="file" path="datastore/rf_analyzer_private.preferences_pb" />
+    <exclude domain="file" path="recordings/" />
+    <exclude domain="file" path="rfanalyzer.log" />
+    <exclude domain="database" path="digital_packets_db" />
+    <exclude domain="database" path="digital_packets_db-wal" />
+    <exclude domain="database" path="digital_packets_db-shm" />
+</full-backup-content>

@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.ui
 
+import com.mantz_it.rfanalyzer_ipc.digiext.DigitalMode
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -23,23 +24,28 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.ViewConfiguration
 import androidx.core.content.ContextCompat
 import com.mantz_it.rfanalyzer.BuildConfig
+import com.mantz_it.rfanalyzer.billing.License
 import com.mantz_it.rfanalyzer.database.AppStateRepository
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_LOWER_BOUNDARY
 import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_UPPER_BOUNDARY
 import com.mantz_it.rfanalyzer.database.collectAppState
-import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
-import com.mantz_it.rfanalyzer.ui.composable.FftColorMap
-import com.mantz_it.rfanalyzer.ui.composable.FftDrawingType
-import com.mantz_it.rfanalyzer.ui.composable.FontSize
-import com.mantz_it.rfanalyzer.ui.composable.asSizeInBytesToString
+import com.mantz_it.rfanalyzer.ui.composable.reverseSaturationFunction
+import com.mantz_it.rfanalyzer.ui.composable.saturationFunction
+import com.mantz_it.rfanalyzer.ui.tabs.DemodulationMode
+import com.mantz_it.rfanalyzer.ui.tabs.FftColorMap
+import com.mantz_it.rfanalyzer.ui.tabs.FftDrawingType
+import com.mantz_it.rfanalyzer.ui.tabs.FontSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 import com.mantz_it.rfanalyzer.R
 import com.mantz_it.rfanalyzer.analyzer.FftProcessor
 import com.mantz_it.rfanalyzer.analyzer.FftProcessorData
@@ -47,6 +53,8 @@ import com.mantz_it.rfanalyzer.database.BandWithBookmarkList
 import com.mantz_it.rfanalyzer.database.GlobalPerformanceData
 import com.mantz_it.rfanalyzer.database.SourceProvider
 import com.mantz_it.rfanalyzer.database.StationWithBookmarkList
+import com.mantz_it.rfanalyzer.digiext.ExtensionConnectionState
+import com.mantz_it.rfanalyzer_ipc.digiext.DemodStatus
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -57,30 +65,15 @@ import kotlinx.coroutines.launch
  * Description: The custom SurfaceView which draws the FFT and the Waterfall plots.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
 data class AnalyzerSurfaceActions(
     val onViewportFrequencyChanged: (Long) -> Unit,
     val onViewportSampleRateChanged: (Long) -> Unit,
-    val onViewportVerticalScaleChanged: (Pair<Float, Float>) -> Unit,  // former minDB, maxDB
+    val onViewportVerticalScaleChanged: (Pair<Float, Float>) -> Unit,  // (minDB, maxDB)
     val onChannelFrequencyChanged: (newFrequency: Long) -> Unit,
     val onChannelWidthChanged: (newWidth: Int) -> Unit,
     val onSquelchChanged: (newSquelch: Float) -> Unit,
@@ -120,6 +113,7 @@ data class SubBandLabel(
 
 class AnalyzerSurface(context: Context,
                       private val sourceName: AppStateRepository.State<String>,
+                      private val analyzerRunning: AppStateRepository.State<Boolean>,
                       private val sourceOptimalSampleRates: AppStateRepository.State<List<Long>>,
                       private val sourceFrequency: AppStateRepository.State<Long>,
                       private val sourceSampleRate: AppStateRepository.State<Long>,
@@ -139,8 +133,12 @@ class AnalyzerSurface(context: Context,
                       private val channelStartFrequency: AppStateRepository.State<Long>,
                       private val channelEndFrequency: AppStateRepository.State<Long>,
                       private val squelchEnabled: AppStateRepository.State<Boolean>,
+                      /** Where the squelch opens now (noise floor + margin), in the plot's dB. */
                       private val squelch: AppStateRepository.State<Float>,
+                      /** The squelch's margin above the noise floor - its label. */
+                      private val squelchMargin: AppStateRepository.State<Float>,
                       private val recordingRunning: AppStateRepository.State<Boolean>,
+                      private val basebandRecordingRunning: AppStateRepository.State<Boolean>,
                       private val recordOnlyWhenSquelchIsSatisfied: AppStateRepository.State<Boolean>,
                       private val recordingCurrentFileSize: AppStateRepository.State<Long>,
                       private val fontSize: AppStateRepository.State<FontSize>,
@@ -153,22 +151,51 @@ class AnalyzerSurface(context: Context,
                       private val viewportEndFrequency: AppStateRepository.State<Long>,
                       private val averageSignalStrength: AppStateRepository.State<Float>,
                       private val squelchSatisfied: AppStateRepository.State<Boolean>,
-                      private val isFullVersion: AppStateRepository.State<Boolean>,
+                      private val license: AppStateRepository.State<License>,
                       private val fftProcessorData: FftProcessorData,
                       private val stationListFlow: StateFlow<List<StationWithBookmarkList>>,
                       private val bandListFlow: StateFlow<List<BandWithBookmarkList>>,
                       private val displayStationsInFft: AppStateRepository.State<Boolean>,
                       private val displayBandsInFft: AppStateRepository.State<Boolean>,
+                      private val demodStatusFlow: StateFlow<DemodStatus?>,
+                      private val demodPacketCountsFlow: StateFlow<Map<DigitalMode, Int>>,
+                      private val extensionConnectionStateFlow: StateFlow<ExtensionConnectionState>,
+                      private val demodulationWfmStereoAndRdsEnabled: AppStateRepository.State<Boolean>,
                       private val analyzerSurfaceActions: AnalyzerSurfaceActions) : SurfaceView(context){
 
     companion object {
         private const val LOGTAG = "AnalyzerSurface"
+        private const val WATERFALL_STRIP_ROWS = 25 // rows per waterfall bitmap strip
         private const val MIN_VIRTUAL_SAMPLERATE = 64L // Smallest virtual sample rate
 
         const val STROKE_WIDTH_CHANNELWIDTHSELECTOR = 1f
         const val STROKE_WIDTH_SQUELCH = 3f
         const val STROKE_WIDTH_CHANNELSELECTOR = 3f
         const val STROKE_WIDTH_ACTIVE = 6f
+
+        // Quick tune/zoom gesture (long-press on empty space)
+        const val QUICK_TUNE_CENTER_DOT_RADIUS_DP = 30f
+        const val QUICK_TUNE_RING_RADIUS_DP = 30f // circular dead zone; leaving it commits (locks in) one axis for the rest of the gesture
+        const val QUICK_TUNE_ZOOM_TOTAL_RANGE_DP = 240f // total vertical travel spanning the entire 0..max zoom range
+        const val QUICK_TUNE_SATURATION_A = 3.5f // identical saturation curve to the zoom slider (DemodulationTab.kt)
+        const val QUICK_TUNE_SATURATION_K = 0.15f
+        const val QUICK_TUNE_FINE_TUNE_STEP_COUNT = 20 // number of discrete tune steps offered in each direction
+        const val QUICK_TUNE_FINE_TUNE_TICK_HALF_HEIGHT_DP = 55f // ticks extend well above/below the touch point so they stay visible under the finger
+        const val QUICK_TUNE_FINE_TUNE_MARKER_HALF_HEIGHT_DP = 75f // the selected-step marker is taller still, to stand out
+        const val QUICK_TUNE_FINE_TUNE_STEP_SPACING_DP = 28f // pixel spacing per discrete tune step
+        const val QUICK_TUNE_LABEL_MARGIN_DP = 8f // gap between an axis's end and its label
+        const val QUICK_TUNE_HINT_LABEL_MARGIN_DP = 40f // gap between the ring and the direction hints, clear of the fingers
+
+        // Label rows in the FFT (px): a station label box is its text size + STATION_LABEL_BOX_PADDING
+        // high with STATION_LABEL_ROW_GAP between rows; a band box holds the band and sub-band names.
+        const val STATION_LABEL_BOX_PADDING = 10f
+        // While the analyzer is stopped: how often the draw thread checks for a change, and the
+        // longest it goes without drawing.
+        const val IDLE_POLL_MS = 40L
+        const val IDLE_REDRAW_MS = 1000L
+        const val STATION_LABEL_ROW_GAP = 6f
+        const val BAND_LABEL_ROW_GAP = 12f
+        const val MAX_LABEL_ROWS = 7
     }
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -198,6 +225,10 @@ class AnalyzerSurface(context: Context,
             return if (xinch < 30) (75 * xdpi / 200).toInt() // Smartphone / Tablet / Computer screen
             else (400 * xdpi / 200).toInt() // TV screen
         }
+    // The drag handles sit high while the squelch line is low. They change sides only once the line
+    // is well past the middle (hysteresis): the line follows the noise floor, and the handles would
+    // jump up and down with it near the switch point.
+    @Volatile private var dragHandlesHigh = false
     private val channelSelectorDragHandlePosition: Pair<Float, Float> // vertical position of the drag handles (in dB; first: channel handle; second: channelWidth handle)
         get() {
             val minDB = viewportVerticalScaleMin.value
@@ -205,7 +236,10 @@ class AnalyzerSurface(context: Context,
             val viewportHeightInDb = maxDB - minDB
             val centerHandlePosition: Float
             val outerHandlePosition: Float
-            if(squelch.value < minDB + viewportHeightInDb*0.35f) {
+            val squelchHeight = (squelch.value - minDB) / viewportHeightInDb
+            if (squelchHeight < 0.32f) dragHandlesHigh = true
+            else if (squelchHeight > 0.38f) dragHandlesHigh = false
+            if(dragHandlesHigh) {
                 centerHandlePosition = minDB + viewportHeightInDb * 0.55f
                 outerHandlePosition = minDB + viewportHeightInDb * 0.45f
             } else {
@@ -219,9 +253,31 @@ class AnalyzerSurface(context: Context,
     fun freqToX(freq: Long): Float = ((freq - viewportStartFrequency.value).toFloat() / viewportSampleRate.value.toFloat()) * width
 
     private var stationList: List<StationWithBookmarkList>? = null
+    @Volatile
+    private var touchEventCount = 0L
+
+    /**
+     * Everything a frame shows while the analyzer is stopped - no new FFT rows then (except the
+     * last ones arriving just after the stop), so the frame changes only with the view (pan, zoom,
+     * the drawer resizing it), a setting, a label or a touch. The draw thread draws when this
+     * changes (and once a second for anything it misses) instead of at Max Frame Rate.
+     */
+    private fun idleFrameSignature(): List<Any?> = listOf(
+        width, height, fftHeight, touchEventCount, stationLabels, bandLabels, fftProcessorData.newestRowTimeNs,
+        viewportFrequency.value, viewportSampleRate.value, viewportVerticalScaleMin.value, viewportVerticalScaleMax.value,
+        channelFrequency.value, channelWidth.value, squelchEnabled.value, squelch.value, demodulationMode.value,
+        demodulationEnabled.value, waterfallColorMap.value, fftDrawingType.value, fftRelativeFrequency.value,
+        fftWaterfallRatio.value, fftPeakHold.value, fontSize.value, showDebugInformation.value, sourceName.value,
+        recordingRunning.value, basebandRecordingRunning.value, license.value, displayStationsInFft.value,
+        displayBandsInFft.value, demodulationWfmStereoAndRdsEnabled.value, extensionConnectionStateFlow.value,
+    )
+
     private var stationLabels: List<StationLabel>? = null
     private var bandList: List<BandWithBookmarkList>? = null
     private var bandLabels: List<BandLabel>? = null
+    @Volatile private var demodStatus: DemodStatus? = null
+    @Volatile private var demodPacketCounts: Map<DigitalMode, Int> = emptyMap()
+    @Volatile private var extensionConnectionState: ExtensionConnectionState = ExtensionConnectionState.DISCONNECTED
 
     // Handle Station Label Clicks (long press or simple click)
     private val LONG_PRESS_THRESHOLD = 300L // ms
@@ -246,11 +302,133 @@ class AnalyzerSurface(context: Context,
         updateBandLabels()
     }
     private fun debouncedLabelUpdate() {
-        // Cancel pending update
         labelDebouncedUpdateHandler.removeCallbacks(labelDebouncedUpdateRunnable)
 
-        // Schedule new update
         labelDebouncedUpdateHandler.postDelayed(labelDebouncedUpdateRunnable, 250) // 250ms debounce
+    }
+
+    // Quick tune/zoom: long-press on empty space engages a joystick-style gesture. The two axes are
+    // mutually exclusive - whichever axis the finger first leaves the center ring on stays engaged
+    // for the rest of the gesture, the other is ignored until the finger lifts. With demodulation
+    // off there is no channel to tune, so only the zoom axis exists.
+    private enum class QuickTuneAxis { VERTICAL, HORIZONTAL }
+
+    @Volatile private var quickTuneActive = false
+    @Volatile private var quickTuneCenterX = 0f
+    @Volatile private var quickTuneCenterY = 0f
+    @Volatile private var quickTuneCurrentX = 0f // live finger position, for indicator drawing only
+    @Volatile private var quickTuneCurrentY = 0f
+    @Volatile private var quickTuneEngagedAxis: QuickTuneAxis? = null // null while still inside the ring
+    @Volatile private var quickTuneTuneAxisAvailable = false // demodulation enabled, frozen at activation
+    private var quickTuneArmed = false
+    private var quickTuneDownX = 0f
+    private var quickTuneDownY = 0f
+    private var quickTuneCenterChannelFrequency = 0L
+    private var quickTuneZoomAnchorFrequency = 0L // frequency that keeps its screen position while zooming
+    private var quickTuneFineTuneStepHz = 0L // mode's smallest tune-step setting, frozen at activation
+    private var quickTuneZoomTopLengthPx = 0f // distance above center to reach max zoom
+    private var quickTuneZoomBottomLengthPx = 0f // distance below center to reach no zoom
+    private var quickTuneZoomPhysicalMax = 0f // per-mode max, same post-saturation domain as the zoom slider's value
+    private val quickTuneHandler = Handler(Looper.getMainLooper())
+    private val quickTuneArmRunnable = Runnable { activateQuickTune() }
+
+    private fun activateQuickTune() {
+        if (!quickTuneArmed) return // cancelled in the meantime (e.g. touch-slop move)
+        quickTuneArmed = false
+        quickTuneActive = true
+        quickTuneEngagedAxis = null
+        quickTuneTuneAxisAvailable = demodulationEnabled.value
+        quickTuneCenterX = quickTuneDownX
+        quickTuneCenterY = quickTuneDownY
+        quickTuneCurrentX = quickTuneDownX
+        quickTuneCurrentY = quickTuneDownY
+        quickTuneCenterChannelFrequency = channelFrequency.value
+        quickTuneFineTuneStepHz = demodulationMode.value.tuneStepOptions.min().toLong()
+        // Zoom around the channel while it is on screen, otherwise around the pressed point. Frozen for
+        // the whole gesture: a channel that zooms out into view does not take over the anchor mid-gesture.
+        val channelOnScreen = quickTuneTuneAxisAvailable &&
+                channelFrequency.value in viewportStartFrequency.value..viewportEndFrequency.value
+        quickTuneZoomAnchorFrequency = if (channelOnScreen) channelFrequency.value
+            else viewportStartFrequency.value + (quickTuneDownX / width * viewportSampleRate.value).toLong()
+
+        // Where the current zoom sits along the zoom slider's physical (post-reverse-saturation)
+        // domain determines how much of the fixed on-screen range is left above vs. below center.
+        val currentZoomFraction = (1f - viewportSampleRate.value.toFloat() / sourceSampleRate.value.toFloat()).coerceIn(0f, 1f)
+        val physicalCurrent = reverseSaturationFunction(currentZoomFraction, QUICK_TUNE_SATURATION_A, QUICK_TUNE_SATURATION_K)
+        quickTuneZoomPhysicalMax = quickTuneMaxPhysicalZoomValue()
+        val s = (physicalCurrent / quickTuneZoomPhysicalMax).coerceIn(0f, 1f)
+        val totalRangePx = QUICK_TUNE_ZOOM_TOTAL_RANGE_DP * resources.displayMetrics.density
+        quickTuneZoomTopLengthPx = (1f - s) * totalRangePx
+        quickTuneZoomBottomLengthPx = s * totalRangePx
+
+        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+    }
+
+    private fun deactivateQuickTune() {
+        quickTuneHandler.removeCallbacks(quickTuneArmRunnable)
+        quickTuneActive = false
+        quickTuneArmed = false
+        quickTuneEngagedAxis = null
+    }
+
+    /** Per-mode max value of the zoom slider's `valueRange` (DemodulationTab.kt) - already in the post-saturation domain. */
+    private fun quickTuneMaxPhysicalZoomValue(): Float = when (demodulationMode.value) {
+        DemodulationMode.OFF -> 0.995f
+        DemodulationMode.AM, DemodulationMode.NFM, DemodulationMode.AX25, DemodulationMode.POCSAG -> 0.7f
+        DemodulationMode.WFM, DemodulationMode.LORA -> 0.45f
+        DemodulationMode.ADSB -> 0.45f
+        DemodulationMode.LSB, DemodulationMode.USB -> 0.95f
+        DemodulationMode.CW, DemodulationMode.RTTY, DemodulationMode.PSK31, DemodulationMode.R09, DemodulationMode.FT8 -> 0.997f
+    }
+
+    /** Called on every touch-move while quick-tune is active; picks an axis once, then updates only that axis. */
+    private fun updateQuickTune(x: Float, y: Float) {
+        quickTuneCurrentX = x
+        quickTuneCurrentY = y
+        if (quickTuneEngagedAxis == null) {
+            val ringRadiusPx = QUICK_TUNE_RING_RADIUS_DP * resources.displayMetrics.density
+            val dx = x - quickTuneCenterX
+            val dy = y - quickTuneCenterY
+            if (dx * dx + dy * dy > ringRadiusPx * ringRadiusPx) {
+                quickTuneEngagedAxis = if (!quickTuneTuneAxisAvailable || abs(dy) >= abs(dx)) QuickTuneAxis.VERTICAL else QuickTuneAxis.HORIZONTAL
+            }
+        }
+        when (quickTuneEngagedAxis) {
+            QuickTuneAxis.VERTICAL -> updateQuickTuneZoom(y)
+            QuickTuneAxis.HORIZONTAL -> updateQuickTuneTune(x)
+            null -> { }
+        }
+    }
+
+    /** Maps the finger position onto the frozen physical zoom track, exactly like dragging the zoom slider. */
+    private fun updateQuickTuneZoom(y: Float) {
+        val dy = (y - quickTuneCenterY).coerceIn(-quickTuneZoomTopLengthPx, quickTuneZoomBottomLengthPx)
+        val totalRangePx = quickTuneZoomTopLengthPx + quickTuneZoomBottomLengthPx
+        val s = if (totalRangePx > 0f) (quickTuneZoomBottomLengthPx - dy) / totalRangePx else 0f
+        val physicalValue = s.coerceIn(0f, 1f) * quickTuneZoomPhysicalMax
+        applyZoom(saturationFunction(physicalValue, QUICK_TUNE_SATURATION_A, QUICK_TUNE_SATURATION_K))
+    }
+
+    /** Snaps the finger position to the nearest of a fixed number of fine-tune steps in each direction. */
+    private fun updateQuickTuneTune(x: Float) {
+        val stepPx = QUICK_TUNE_FINE_TUNE_STEP_SPACING_DP * resources.displayMetrics.density
+        val stepIndex = ((x - quickTuneCenterX) / stepPx).roundToInt().coerceIn(-QUICK_TUNE_FINE_TUNE_STEP_COUNT, QUICK_TUNE_FINE_TUNE_STEP_COUNT)
+        applyTune(quickTuneCenterChannelFrequency + stepIndex.toLong() * quickTuneFineTuneStepHz)
+    }
+
+    /** Identical formula to the zoom slider's onZoomChanged (MainViewModel.kt), anchored at [quickTuneZoomAnchorFrequency]. */
+    private fun applyZoom(zoom: Float) {
+        val newVirtualSampleRate = ((1f - zoom) * sourceSampleRate.value).toLong().coerceAtLeast(MIN_VIRTUAL_SAMPLERATE)
+        val sampleRateDiff = newVirtualSampleRate - viewportSampleRate.value
+        val anchorToCenterOffset = viewportFrequency.value - quickTuneZoomAnchorFrequency
+        val offsetRatio = anchorToCenterOffset / (viewportSampleRate.value.toFloat() / 2)
+        val newVirtualFrequency = viewportFrequency.value + (sampleRateDiff / 2 * offsetRatio).toLong()
+        analyzerSurfaceActions.onViewportSampleRateChanged(newVirtualSampleRate)
+        analyzerSurfaceActions.onViewportFrequencyChanged(newVirtualFrequency)
+    }
+
+    private fun applyTune(newFrequency: Long) {
+        analyzerSurfaceActions.onChannelFrequencyChanged(newFrequency.coerceIn(sourceSignalStartFrequency.value, sourceSignalEndFrequency.value))
     }
 
     // scroll type stores the intention of the user on a pointer down event:
@@ -264,6 +442,7 @@ class AnalyzerSurface(context: Context,
         SQUELCH
     }
     private var scrollType = ScrollType.NORMAL
+    private var channelWidthDragStartValue = channelWidth.value  // reference channel width during scrolling/draging the width
 
     private final val scaleGestureListener = object: ScaleGestureDetector.OnScaleGestureListener {
         override fun onScaleBegin(detector: ScaleGestureDetector): Boolean { return true }
@@ -272,6 +451,8 @@ class AnalyzerSurface(context: Context,
             when (scrollType) {
                 ScrollType.NORMAL -> {
                     val xScale = detector.currentSpanX / detector.previousSpanX
+                    // 0/0 when both fingers share an x coordinate - that would snap to maximum zoom
+                    if (!xScale.isFinite() || xScale <= 0f) return true
                     val sourceMaxSampleRate = sourceOptimalSampleRates.value.last().coerceAtLeast(MIN_VIRTUAL_SAMPLERATE)
                     val newVirtualSampleRate = (viewportSampleRate.value / xScale).toLong().coerceIn(MIN_VIRTUAL_SAMPLERATE, sourceMaxSampleRate)
                     val frequencyFocus = viewportFrequency.value + ((detector.focusX / width - 0.5) * newVirtualSampleRate).toInt()
@@ -283,6 +464,8 @@ class AnalyzerSurface(context: Context,
                     val minDB = viewportVerticalScaleMin.value
                     val maxDB = viewportVerticalScaleMax.value
                     val yScale = detector.currentSpanY / detector.previousSpanY
+                    // 0/0 when both fingers share a y coordinate - a NaN scale would get persisted
+                    if (!yScale.isFinite() || yScale <= 0f || fftHeight <= 0) return true
                     val dBFocus = maxDB - (maxDB - minDB) * (detector.focusY / fftHeight)
                     val newMinDB = (dBFocus - (dBFocus - minDB) / yScale).coerceIn(VERTICAL_SCALE_LOWER_BOUNDARY, VERTICAL_SCALE_UPPER_BOUNDARY - 10)
                     val newMaxDB = (dBFocus - (dBFocus - maxDB) / yScale).coerceIn(newMinDB + 10, VERTICAL_SCALE_UPPER_BOUNDARY)
@@ -335,6 +518,7 @@ class AnalyzerSurface(context: Context,
                     && touchedFrequency < channelStartFrequency + channelFrequencyVariation
                     && touchedFrequency > channelStartFrequency - channelFrequencyVariation) {
                 scrollType = ScrollType.CHANNEL_WIDTH_LEFT
+                channelWidthDragStartValue = channelWidth.value
                 drawingThread?.channelWidthSelectorPaint?.strokeWidth = STROKE_WIDTH_ACTIVE
             } else if (demodulationEnabled && showUpperBand
                     && touchedDB in outerDragHandlePositionDb - dbVariation .. outerDragHandlePositionDb + dbVariation
@@ -342,6 +526,7 @@ class AnalyzerSurface(context: Context,
                     && touchedFrequency > channelEndFrequency - channelFrequencyVariation
             ) {
                 scrollType = ScrollType.CHANNEL_WIDTH_RIGHT
+                channelWidthDragStartValue = channelWidth.value
                 drawingThread?.channelWidthSelectorPaint?.strokeWidth = STROKE_WIDTH_ACTIVE
             } else if (e.x > gridSize * 1.5 || e.y > fftHeight - gridSize)
                 scrollType = ScrollType.NORMAL
@@ -381,7 +566,7 @@ class AnalyzerSurface(context: Context,
                 return true
             val hzPerPx = viewportSampleRate.value / width.toFloat()
 
-            // scroll horizontally or adjust channel selector (scroll type was selected in onDown() event routine:
+            // scroll horizontally or adjust the channel selector (scrollType was chosen in onDown()):
             when (scrollType) {
                 ScrollType.NONE -> Log.w(LOGTAG, "onScroll: No ScrollType specified!")
                 // Scroll horizontal if touch point in the main area
@@ -393,6 +578,7 @@ class AnalyzerSurface(context: Context,
                 }
                 ScrollType.NORMAL_VERTICAL -> {
                     // Scroll viewport vertical scale
+                    if (fftHeight <= 0) return true
                     val minDB = viewportVerticalScaleMin.value
                     val maxDB = viewportVerticalScaleMax.value
                     var yDiff = (maxDB - minDB) * (distanceY / fftHeight.toFloat())
@@ -408,8 +594,8 @@ class AnalyzerSurface(context: Context,
                 }
 
                 ScrollType.CHANNEL_WIDTH_LEFT, ScrollType.CHANNEL_WIDTH_RIGHT -> {
-                    val tmpChannelWidth = if (scrollType == ScrollType.CHANNEL_WIDTH_LEFT) (channelWidth.value + distanceX * hzPerPx).toInt() else (channelWidth.value - distanceX * hzPerPx).toInt()
-                    analyzerSurfaceActions.onChannelWidthChanged(tmpChannelWidth.coerceIn(demodulationMode.value.minChannelWidth, demodulationMode.value.maxChannelWidth))
+                    channelWidthDragStartValue = if (scrollType == ScrollType.CHANNEL_WIDTH_LEFT) (channelWidthDragStartValue + distanceX * hzPerPx).toInt() else (channelWidthDragStartValue - distanceX * hzPerPx).toInt()
+                    analyzerSurfaceActions.onChannelWidthChanged(channelWidthDragStartValue)
                 }
 
                 ScrollType.SQUELCH -> {
@@ -488,31 +674,29 @@ class AnalyzerSurface(context: Context,
     private fun observeAppState() {
         fun updateViewport() {
             // if viewport is out of range of the source's new frequency and samplerate, we try to fix it
-            // if the virtual sample rate is larger than the source sample rate we reset it:
-            if (viewportSampleRate.value > sourceSampleRate.value) {
-                //Log.d(LOGTAG, "observeAppState: calling onViewportSampleRateChanged(${sourceSampleRate.value}) [one]")
+            // a file source has no sample rate until a file is opened: nothing to fit the viewport to
+            if (sourceSampleRate.value <= 0) return
+            // if the virtual sample rate is larger than the source sample rate, or 0 (stored while
+            // such a file source was selected), we reset it:
+            if (viewportSampleRate.value <= 0 || viewportSampleRate.value > sourceSampleRate.value) {
                 analyzerSurfaceActions.onViewportSampleRateChanged(sourceSampleRate.value)
             }
             // if the viewport is completely outside of the actual signal, we reset freq and sample rate:
             if (viewportStartFrequency.value > sourceSignalEndFrequency.value || viewportEndFrequency.value < sourceSignalStartFrequency.value) {
-                //Log.d(LOGTAG, "observeAppState: calling onViewportFrequencyChanged(${sourceFrequency.value})")
                 analyzerSurfaceActions.onViewportFrequencyChanged(sourceFrequency.value)
-                //Log.d(LOGTAG, "observeAppState: calling onViewportSampleRateChanged(${sourceSampleRate.value}) [two]")
                 if (viewportSampleRate.value > sourceSampleRate.value)
                     analyzerSurfaceActions.onViewportSampleRateChanged(sourceSampleRate.value)
             }
-            // if the viewport is a bit to much on the right we shift it left:
+            // if the viewport reaches past the right end of the signal we shift it left:
             if (viewportEndFrequency.value > sourceSignalEndFrequency.value) {
                 val sef = sourceSignalEndFrequency.value
                 val sf  = sourceFrequency.value
                 val newViewportFrequency = sef - viewportSampleRate.value / 2
-                //Log.d(LOGTAG, "observeAppState: calling onViewportFrequencyChanged($newViewportFrequency)  [sf=$sf   sef=$sef]")
                 analyzerSurfaceActions.onViewportFrequencyChanged(newViewportFrequency)
             }
-            // if the viewport is a bit to much on the left we shift it right:
+            // if the viewport reaches past the left end of the signal we shift it right:
             if (viewportStartFrequency.value < sourceSignalStartFrequency.value) {
                 val newViewportFrequency = sourceSignalStartFrequency.value + viewportSampleRate.value / 2
-                //Log.d(LOGTAG, "observeAppState: calling onViewportFrequencyChanged($newViewportFrequency) [four]")
                 analyzerSurfaceActions.onViewportFrequencyChanged(newViewportFrequency)
             }
         }
@@ -526,6 +710,8 @@ class AnalyzerSurface(context: Context,
             drawingThread?.apply { updateTextPaint() }
             debouncedLabelUpdate()
         }
+        coroutineScope.collectAppState(demodulationEnabled) { debouncedLabelUpdate() }
+        coroutineScope.collectAppState(sourceName) { debouncedLabelUpdate() }
         coroutineScope.collectAppState(waterfallColorMap) { drawingThread?.createWaterfallColorMap(it) }
         coroutineScope.collectAppState(fftDrawingType) { drawingThread?.apply { updateFftPaint() } }
         coroutineScope.collectAppState(squelchSatisfied) { drawingThread?.squelchPaint?.color = if(it) Color.GREEN else Color.RED }
@@ -541,25 +727,76 @@ class AnalyzerSurface(context: Context,
                 debouncedLabelUpdate()
             }
         }
+        coroutineScope.launch {
+            demodStatusFlow.collect { newDemodStatus ->
+                demodStatus = newDemodStatus
+            }
+        }
+        coroutineScope.launch {
+            demodPacketCountsFlow.collect { newCounts ->
+                demodPacketCounts = newCounts
+            }
+        }
+        coroutineScope.launch {
+            extensionConnectionStateFlow.collect { newState ->
+                extensionConnectionState = newState
+            }
+        }
         coroutineScope.collectAppState(displayStationsInFft) { debouncedLabelUpdate() }
         coroutineScope.collectAppState(displayBandsInFft) { debouncedLabelUpdate() }
         coroutineScope.collectAppState(viewportFrequency) { debouncedLabelUpdate() }
         coroutineScope.collectAppState(viewportSampleRate) { debouncedLabelUpdate() }
+        coroutineScope.collectAppState(channelWidth) { newChannelWidth ->
+            // need to update in case the channelwidth is changed externally during drag
+            channelWidthDragStartValue = newChannelWidth
+        }
+    }
+
+    private val smallTextSize: Float // the top-right overlay's and the frequency grid's text size
+        get() = gridSize * when (fontSize.value) {
+            FontSize.SMALL -> 0.13f
+            FontSize.NORMAL -> 0.2f
+            FontSize.LARGE -> 0.25f
+        }
+
+    // Station labels stack upwards from stationLabelBaseY to the top of the FFT, band labels upwards
+    // from bandLabelBaseY (above the frequency grid) towards stationLabelBaseY. Each gets as many rows
+    // as fit into its part of the FFT, at least one.
+    private val stationLabelBaseY: Float
+        get() = fftHeight * 0.45f
+    private val stationLabelTopY: Float
+        get() = height * 0.01f
+    private val bandLabelBaseY: Float
+        get() = fftHeight - gridSize * 0.7f
+
+    private fun stationLabelRowHeight(textSize: Float) = textSize + STATION_LABEL_BOX_PADDING + STATION_LABEL_ROW_GAP
+    private fun bandLabelBoxHeight(size: FontSize) = 4f + size.bandLabelFontSize + 12f + size.subBandLabelFontSize
+
+    private fun labelRows(space: Float, rowHeight: Float) = (space / rowHeight).toInt().coerceIn(1, MAX_LABEL_ROWS)
+
+    // The overlay's right-aligned lines at the top (TopRightOverlayRenderer): the source name, and while
+    // demodulating the channel frequency and the signal meter below it. A station label row reaching
+    // into them ends left of them.
+    private fun stationLabelRightLimit(rowTop: Float, rowBottom: Float): Float {
+        val lineHeight = smallTextSize * 1.1f
+        val paint = Paint().apply { textSize = smallTextSize }
+        var widest = 0f
+        if (rowTop < stationLabelTopY + lineHeight)
+            widest = paint.measureText(sourceName.value)
+        if (demodulationEnabled.value && rowTop < stationLabelTopY + 3 * lineHeight && rowBottom > stationLabelTopY + lineHeight)
+            widest = maxOf(widest, paint.measureText("demod at 0000.000000 MHz"))
+        return if (widest == 0f) Float.MAX_VALUE else width * 0.99f - widest - 10f
     }
 
     private fun updateStationLabels() {
         val drawingThread = drawingThread
         val stationList = stationList
         if (stationList != null && displayStationsInFft.value) {
-            // calculate number of layers based on the current font size and fft height
-            val heightNorm = ((fftHeight - 500f) / 600f).coerceIn(0f, 1f) // normalize FFT height: 0 at 500px, 1 at 1100px
-            val sizeNorm = ((50f - fontSize.value.stationLabelFontSize) / 20f).coerceIn(0f, 1f)      // normalize font size: 0 at 50px, 1 at 30px
-            val score = (heightNorm*10f + sizeNorm) / 11f // combine both, height has more influence
-            val layersCount = (1f + 6f * score).toInt().coerceIn(1, 7) // map to 1..7 range
+            val textSize = fontSize.value.stationLabelFontSize
             val newStationLabels = layoutStationsForFft(
                 stations = stationList,
-                layerCount = layersCount,
-                textSize = fontSize.value.stationLabelFontSize
+                layerCount = labelRows(stationLabelBaseY - stationLabelTopY, stationLabelRowHeight(textSize)),
+                textSize = textSize
             )
             stationLabels = newStationLabels
             drawingThread?.stationListHasChanged = true
@@ -570,15 +807,9 @@ class AnalyzerSurface(context: Context,
         val bands = bandList
 
         if (bands != null && displayBandsInFft.value) {
-
-            val heightNorm = ((fftHeight - 500f) / 600f).coerceIn(0f, 1f)
-            val sizeNorm = ((50f - fontSize.value.bandLabelFontSize) / 20f).coerceIn(0f, 1f)
-            val score = (heightNorm * 10f + sizeNorm) / 11f
-            val layers = (1f + 6f * score).toInt().coerceIn(1, 7)
-
             val newLabels = layoutBandsForFft(
                 bands = bands,
-                layerCount = layers,
+                layerCount = labelRows(bandLabelBaseY - stationLabelBaseY, bandLabelBoxHeight(fontSize.value) + BAND_LABEL_ROW_GAP),
                 textSize = fontSize.value.bandLabelFontSize
             )
             bandLabels = newLabels
@@ -597,6 +828,12 @@ class AnalyzerSurface(context: Context,
 
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        touchEventCount++ // the idle draw loop redraws on interaction (see idleFrameSignature)
+        // A second finger touching down while quick-tune is active falls back to pinch-zoom:
+        if (event.actionMasked == MotionEvent.ACTION_POINTER_DOWN && quickTuneActive) {
+            deactivateQuickTune()
+        }
+
         // Start timer for long press on down press:
         if (event.action == MotionEvent.ACTION_DOWN) {
             pressedLabel = findStationLabelAt(event.x, event.y)
@@ -604,6 +841,8 @@ class AnalyzerSurface(context: Context,
             pressedLabel?.let {
                 longPressHandler.postDelayed(longPressRunnable, LONG_PRESS_THRESHOLD) // Schedule long press if down on label
             }
+            quickTuneDownX = event.x
+            quickTuneDownY = event.y
         }
 
         // If finger moved off label -> cancel long press
@@ -612,18 +851,44 @@ class AnalyzerSurface(context: Context,
                 pressedLabel = null
                 cancelLongPressRunnable()
             }
+            if (quickTuneArmed) {
+                // Cancel the pending long-press if the finger moved too far before it fired:
+                val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+                if (abs(event.x - quickTuneDownX) > touchSlop || abs(event.y - quickTuneDownY) > touchSlop) {
+                    quickTuneHandler.removeCallbacks(quickTuneArmRunnable)
+                    quickTuneArmed = false
+                }
+            }
+            if (quickTuneActive) updateQuickTune(event.x, event.y)
         }
 
+        // Captured before deactivation below: the final ACTION_UP/CANCEL of a quick-tune gesture must
+        // not reach gestureDetector either, or it reads as a stray single-tap (it never saw the
+        // intervening moves, which quick-tune was suppressing below).
+        val endingQuickTuneGesture = (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) && quickTuneActive
+
         // Reset the stroke width of the channel controls if the user lifts his finger:
-        if (event.action == MotionEvent.ACTION_UP) {
+        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
             drawingThread?.squelchPaint?.strokeWidth = STROKE_WIDTH_SQUELCH
             drawingThread?.channelSelectorPaint?.strokeWidth = STROKE_WIDTH_CHANNELSELECTOR
             drawingThread?.channelWidthSelectorPaint?.strokeWidth = STROKE_WIDTH_CHANNELWIDTHSELECTOR
             scrollType = ScrollType.NONE
+            deactivateQuickTune()
         }
 
-        var retVal = scaleGestureDetector.onTouchEvent(event)
-        retVal = gestureDetector.onTouchEvent(event) || retVal
+        var retVal = true
+        if (!quickTuneActive && !endingQuickTuneGesture) {
+            retVal = scaleGestureDetector.onTouchEvent(event)
+            retVal = gestureDetector.onTouchEvent(event) || retVal
+        }
+
+        // Arm quick-tune only on empty space: not a station label, not a channel/squelch drag handle
+        // (scrollType reflects the hit-test gestureListener.onDown() just did above).
+        if (event.action == MotionEvent.ACTION_DOWN && pressedLabel == null && scrollType == ScrollType.NORMAL) {
+            quickTuneArmed = true
+            quickTuneHandler.postDelayed(quickTuneArmRunnable, LONG_PRESS_THRESHOLD)
+        }
+
         return retVal
     }
 
@@ -668,7 +933,10 @@ class AnalyzerSurface(context: Context,
     ): List<StationLabel> {
         if (stations.isEmpty()) return emptyList()
         val sorted = stations.sortedByDescending { it.station.frequency } // right → left
-        val layerLeftEdges = FloatArray(layerCount) { Float.MAX_VALUE }
+        val layerLeftEdges = FloatArray(layerCount) { layer ->
+            val rowTop = stationLabelBaseY - (layer + 1) * stationLabelRowHeight(textSize)
+            stationLabelRightLimit(rowTop, rowBottom = rowTop + textSize + STATION_LABEL_BOX_PADDING)
+        }
         val results = mutableListOf<StationLabel>()
         val paint = Paint().apply{ this.textSize = textSize }
 
@@ -841,9 +1109,9 @@ class AnalyzerSurface(context: Context,
     }
 
     private fun isInsideStationLabel(x: Float, y: Float, label: StationLabel): Boolean {
-        val boxHeight = (drawingThread?.stationPaint?.textSize ?: 40f) + 10f
-        val stationLayerY = fftHeight/2.5f
-        val boxTop = stationLayerY - (label.layer + 1) * (boxHeight + 10f)
+        val textSize = drawingThread?.stationPaint?.textSize ?: fontSize.value.stationLabelFontSize
+        val boxHeight = textSize + STATION_LABEL_BOX_PADDING
+        val boxTop = stationLabelBaseY - (label.layer + 1) * stationLabelRowHeight(textSize)
         val boxBottom = boxTop + boxHeight
         val boxLeft = label.x
         val boxRight = label.x + label.widthPx
@@ -873,11 +1141,35 @@ class AnalyzerSurface(context: Context,
         val channelWidthSelectorPaint: Paint = Paint()  // Paint object to draw the borders of the channel
         val squelchPaint: Paint = Paint()               // Paint object to draw the squelch selector
         val stationPaint: Paint = Paint()               // Paint object to draw the station labels
-        val bandPaint: Paint = Paint()                  // Paint object to draw the subbands
+        val bandPaint: Paint = Paint()                  // Paint object to draw the bands
         val subBandPaint: Paint = Paint()               // Paint object to draw the subbands
         val bandBorderPaint: Paint = Paint()            // Paint object to draw the band borders
         val bandPinPaint: Paint = Paint()               // Paint object to draw the band marker pins
         val labelLinePaint = Paint()
+        private val quickTuneIndicatorPaint = Paint()   // Paint object to draw the quick tune/zoom gesture circle
+        private val topRightOverlayRenderer = TopRightOverlayRenderer(
+            textPaint = textPaint,
+            textSmallPaint = textSmallPaint,
+            defaultPaint = defaultPaint,
+            squelchPaint = squelchPaint,
+            sourceName = sourceName,
+            analyzerRunning = analyzerRunning,
+            demodulationEnabled = demodulationEnabled,
+            channelFrequency = channelFrequency,
+            squelch = squelch,
+            viewportVerticalScaleMin = viewportVerticalScaleMin,
+            viewportVerticalScaleMax = viewportVerticalScaleMax,
+            recordingRunning = recordingRunning,
+            squelchSatisfied = squelchSatisfied,
+            recordOnlyWhenSquelchIsSatisfied = recordOnlyWhenSquelchIsSatisfied,
+            basebandRecordingRunning = basebandRecordingRunning,
+            sourceFrequency = sourceFrequency,
+            demodulationMode = demodulationMode,
+            sourceSampleRate = sourceSampleRate,
+            recordingCurrentFileSize = recordingCurrentFileSize,
+            showDebugInformation = showDebugInformation,
+            demodulationWfmStereoAndRdsEnabled = demodulationWfmStereoAndRdsEnabled,
+        )
         private val leftRightArrowDrawable = ContextCompat.getDrawable(context, R.drawable.left_right_arrow_icon)
         private val topBottomArrowDrawable = ContextCompat.getDrawable(context, R.drawable.top_bottom_arrow_icon)
         private var fftPath: Path = Path()                  // Path object to draw the fft lines
@@ -886,7 +1178,18 @@ class AnalyzerSurface(context: Context,
         private var fftGridCanvas: Canvas? = null           // canvas for drawing onto the fftGridBitmap
         private val fftGridBitmapState: MutableMap<String, Any> = HashMap() // Hashmap to track all relevant variables for the grid
                                                                             // (stores all variables which influence the grid at the time the bitmap was drawn)
-        private var waterfallBitmap: Bitmap? = null
+        // The waterfall as a ring of row strips in the order of waterfallBuffer (not on screen):
+        // only strips with recomputed rows are converted and re-uploaded to the GPU each frame
+        // (one bitmap for all rows would be 1-2 MB per frame), draw() places them scrolled.
+        private var waterfallStrips: Array<Bitmap>? = null
+        private var waterfallStripDirty: BooleanArray? = null
+        private var waterfallRows = 0                // rows in the waterfall ring (waterfallBuffer.size)
+        private var waterfallTopRow = 0              // ring index of the newest row (shown at the top)
+        private var waterfallTopRowTimeNs = 0L       // when that row arrived, and the row period:
+        private var waterfallRowPeriodNs = 0L        // draw() scrolls by the elapsed part of a row
+        // drawPreprocessing recomputes only a few rows per frame: rows still waiting after a full
+        // invalidation (new surface, pan, zoom, scale, color map) keep the stopped draw loop going
+        private var waterfallRowsPending = false
         private var timeAverageSamples: FloatArray? = null // Used to calculate the average of multiple values in the past 'averagingLength' fft sample rows
         private var peaksYCoordinates: FloatArray? = null // peak hold y-coordinates
         private var colorBuffer: IntArray? = null // Preallocated color array
@@ -944,6 +1247,13 @@ class AnalyzerSurface(context: Context,
                 color = Color.GRAY
                 strokeWidth = 2f
             }
+            quickTuneIndicatorPaint.apply {
+                style = Paint.Style.STROKE
+                color = Color.WHITE
+                strokeWidth = 3f
+                isAntiAlias = true
+                alpha = 0xA0
+            }
 
             // Create the color map for the waterfall plot
             this.createWaterfallColorMap(waterfallColorMap.value)
@@ -962,10 +1272,26 @@ class AnalyzerSurface(context: Context,
                 var frameRateFrameCounter = 0
                 var frameRate = 0
                 var didDrawWatermarkOnce = false
-                var oldIsFullVersion = isFullVersion.value
+                var oldLicense = license.value
+                var lastIdleSignature: List<Any?>? = null
+                var lastIdleDrawMs = 0L
 
                 while (running) {
                     val startTimestamp = System.currentTimeMillis()
+                    // Stopped: draw only on a change (idleFrameSignature) - redrawing a still picture
+                    // at Max Frame Rate would keep the draw and render threads busy.
+                    if (!analyzerRunning.value) {
+                        val signature = idleFrameSignature()
+                        if (signature == lastIdleSignature && !waterfallRowsPending && !doAutoscaleInNextDraw &&
+                            startTimestamp - lastIdleDrawMs < IDLE_REDRAW_MS) {
+                            sleep(IDLE_POLL_MS)
+                            continue
+                        }
+                        lastIdleSignature = signature
+                        lastIdleDrawMs = startTimestamp
+                    } else {
+                        lastIdleSignature = null
+                    }
                     frameRateFrameCounter++
                     if (startTimestamp - frameRateTimestamp > 1000) { // only measure every second
                         frameRate =
@@ -1025,11 +1351,11 @@ class AnalyzerSurface(context: Context,
                     if (doDraw) {
                         draw(frameRate)
                     } else {
-                        val currentIsFullVersion = isFullVersion.value
-                        if (!didDrawWatermarkOnce || oldIsFullVersion != currentIsFullVersion)
+                        val currentLicense = license.value
+                        if (!didDrawWatermarkOnce || oldLicense != currentLicense)
                             drawWatermark() // Draw watermark
                         didDrawWatermarkOnce = true
-                        oldIsFullVersion = currentIsFullVersion
+                        oldLicense = currentLicense
                     }
 
                     // measure current frametime to derive how long we need to sleep to meet the user's preferred framerate
@@ -1069,8 +1395,13 @@ class AnalyzerSurface(context: Context,
             val fftSize = waterfallBuffer[0].size
             val doAutoscale = doAutoscaleInNextDraw
 
-            if(waterfallBitmap == null || waterfallBitmap!!.width != width || waterfallBitmap!!.height != waterfallBuffer.size) {
-                waterfallBitmap = Bitmap.createBitmap(width, waterfallBuffer.size, Bitmap.Config.ARGB_8888)
+            if(waterfallStrips == null || waterfallStrips!![0].width != width || waterfallRows != waterfallBuffer.size) {
+                waterfallRows = waterfallBuffer.size
+                val stripCount = (waterfallRows + WATERFALL_STRIP_ROWS - 1) / WATERFALL_STRIP_ROWS
+                waterfallStrips = Array(stripCount) { k ->
+                    Bitmap.createBitmap(width, min(WATERFALL_STRIP_ROWS, waterfallRows - k * WATERFALL_STRIP_ROWS), Bitmap.Config.ARGB_8888)
+                }
+                waterfallStripDirty = BooleanArray(stripCount)
                 waterfallBufferDirtyMap.fill(true)
             }
             if(colorBuffer == null || colorBuffer!!.size != width * waterfallBuffer.size) {
@@ -1107,58 +1438,61 @@ class AnalyzerSurface(context: Context,
             val scale = waterfallColorMapArray.size / dbDiff // scale for the color mapping of the waterfall
 
             val timeAveragingLength = fftAverageLength.value
-            var avg: Float              // Used to calculate the average of multiple values in mag (horizontal average)
-            var peakAvg: Float          // Used to calculate the average of multiple values in peaks (horizontal average)
-            var counter: Int            // Used to calculate the average of multiple values in mag and peaks
+            var avg: Float              // value of one pixel in mag (maximum of the bins it covers)
+            var peakAvg: Float          // value of one pixel in peaks (maximum of the bins it covers)
 
             // measure the signal min and max for autoscale:
             var minMeasuredSignal = VERTICAL_SCALE_UPPER_BOUNDARY
             var maxMeasuredSignal = VERTICAL_SCALE_LOWER_BOUNDARY
             val black = Color.rgb(0, 0, 0)
 
-            // The start position to draw is either 0 or greater 0, if start is negative:
-            val firstPixel = if (start >= 0) 0 else ((start * -1) / samplesPerPx).toInt()
+            // The start position to draw is either 0 or greater 0, if start is negative.
+            // Both pixel bounds are clamped to the screen: if the samples lie far outside a deeply
+            // zoomed viewport (e.g. right after a large retune) the raw values overflow Int and the
+            // pixel range check below would let fftRow be indexed out of bounds.
+            val firstPixel = if (start >= 0) 0 else (-start.toDouble() / samplesPerPx).coerceIn(0.0, width.toDouble()).toInt()
 
             // We will only draw to the end of mag, not beyond:
-            val lastPixel = if (end >= fftSize) ((fftSize - start) / samplesPerPx).toInt() else ((end - start) / samplesPerPx).toInt()
+            val lastPixel = (if (end >= fftSize) (fftSize.toDouble() - start) / samplesPerPx else (end.toDouble() - start) / samplesPerPx)
+                .coerceIn(0.0, width.toDouble()).toInt()
 
             // Reset fft path and start at the first pixel:
             fftPath.reset()
             fftPath.moveTo(firstPixel.toFloat(), fftHeight.toFloat()) // start graph at the bottom left
 
-            //Log.d(LOGTAG, "SURFACE - before outer loop: " + (System.currentTimeMillis()-startTimestamp));
             var rowsProcessed = 0
+            waterfallRowsPending = false
             for(rowNumber in 0 until waterfallBuffer.size) {
                 val bufferIndex = (currentRowIdx + rowNumber) % waterfallBuffer.size // from newest sample to oldest (ringbuffer is ordered in reverse)
 
                 // only process dirty rows and only up to 5 rows each run (to keep the interface snappy and responsive)
                 if(!waterfallBufferDirtyMap[bufferIndex] && rowNumber > timeAveragingLength)
                     continue  // current row was already processed and is up to date!
-                if(rowsProcessed > timeAveragingLength + 5) // only process 5 additional dirty rows per run
+                if(rowsProcessed > timeAveragingLength + 5) { // only process 5 additional dirty rows per run
+                    waterfallRowsPending = true
                     break
+                }
 
                 val fftRow = waterfallBuffer[bufferIndex]
 
-                // Draw pixel by pixel:
-                // We start at firstPixel+1 because of integer round off error
-                //for (i in firstPixel + 1 until lastPixel) {
+                // Draw pixel by pixel; the pixels outside firstPixel+1 until lastPixel-1 (integer
+                // round-off at the edges) are black:
                 for (i in 0 until width) {
                     if(i in (firstPixel + 1)..<lastPixel-1) {
-                        // Calculate the average value for this pixel (horizontal average - not the time domain average):
-                        avg = 0f
-                        peakAvg = 0f
-                        counter = 0
+                        // Value for this pixel: the maximum of all bins it covers (like gqrx/SDR++) -
+                        // an average would dilute a narrowband signal into the noise when zoomed out.
+                        var maxByteVal = 0
+                        var peakMax = -Float.MAX_VALUE
                         var j = (i * samplesPerPx).toInt()
                         while (j < (i + 1) * samplesPerPx && (j+start)<fftSize) {
                             val unsignedByteVal = fftRow[j + start].toInt() and 0xFF
-                            val floatVal = unsignedByteVal * FftProcessor.INV_SCALE + FftProcessor.MIN_DB
-                            avg += floatVal
-                            if (rowNumber == 0 && calcPeaks) peakAvg += peaks[j + start]
-                            counter++
+                            if (unsignedByteVal > maxByteVal) maxByteVal = unsignedByteVal
+                            if (rowNumber == 0 && calcPeaks && peaks[j + start] > peakMax) peakMax = peaks[j + start]
                             j++
                         }
-                        avg /= counter
-                        if (rowNumber == 0 && calcPeaks) peaksYCoordinates[i] = fftHeight - (peakAvg/counter - minDB) * dbWidth
+                        avg = maxByteVal * FftProcessor.INV_SCALE + FftProcessor.MIN_DB
+                        peakAvg = peakMax
+                        if (rowNumber == 0 && calcPeaks) peaksYCoordinates[i] = fftHeight - (peakAvg - minDB) * dbWidth
 
                         // FFT Path:
                         if(rowNumber <= timeAveragingLength)
@@ -1182,10 +1516,18 @@ class AnalyzerSurface(context: Context,
                 }
                 rowsProcessed += 1
                 waterfallBufferDirtyMap[bufferIndex] = false
-                //bitmap!!.setPixels(colorBuffer!!, bufferIndex*width, width, 0, rowNumber, width, 1)
+                waterfallStripDirty!![bufferIndex / WATERFALL_STRIP_ROWS] = true
             }
-            waterfallBitmap!!.setPixels(colorBuffer, currentRowIdx*width, width, 0, 0, width, waterfallBuffer.size-currentRowIdx)
-            waterfallBitmap!!.setPixels(colorBuffer, 0, width, 0, waterfallBuffer.size-currentRowIdx, width, currentRowIdx)
+            val strips = waterfallStrips!!
+            val stripDirty = waterfallStripDirty!!
+            for (k in strips.indices) {
+                if (!stripDirty[k]) continue
+                strips[k].setPixels(colorBuffer, k * WATERFALL_STRIP_ROWS * width, width, 0, 0, width, strips[k].height)
+                stripDirty[k] = false
+            }
+            waterfallTopRow = currentRowIdx
+            waterfallTopRowTimeNs = fftProcessorData.newestRowTimeNs
+            waterfallRowPeriodNs = fftProcessorData.rowPeriodNs
             fftPath.lineTo(lastPixel.toFloat(), fftHeight.toFloat()) // end at the bottom right
             if (doAutoscale && minMeasuredSignal < maxMeasuredSignal) {
                 minMeasuredSignal -= 5f // leave a bit room
@@ -1193,7 +1535,6 @@ class AnalyzerSurface(context: Context,
                 analyzerSurfaceActions.onViewportVerticalScaleChanged(Pair(minMeasuredSignal.coerceAtLeast(VERTICAL_SCALE_LOWER_BOUNDARY), maxMeasuredSignal.coerceAtMost(VERTICAL_SCALE_UPPER_BOUNDARY)))
                 doAutoscaleInNextDraw = false
             }
-            //Log.d(LOGTAG, "SURFACE - after outer loop: " + (System.currentTimeMillis()-startTimestamp));
         }
 
         /**
@@ -1202,9 +1543,9 @@ class AnalyzerSurface(context: Context,
          * @param frameRate    current frame rate (FPS)
          */
         fun draw(frameRate: Int) {
+            if (width <= 0 || fftHeight <= 0) return  // surface too small to draw (createBitmap() would throw)
             // Redraw/recreate the fft grid bitmap if necessary
             if (hasFftGridChanged()) {
-                //Log.d(LOGTAG, "SURFACE - before redraw grid: " + (System.currentTimeMillis()-startTime));
                 if (fftGridBitmap == null || fftGridBitmap!!.height != fftHeight || fftGridBitmap!!.width != width) {
                     // fft height has changed!
                     fftGridBitmap = Bitmap.createBitmap(width, fftHeight, Bitmap.Config.ARGB_8888)
@@ -1215,15 +1556,17 @@ class AnalyzerSurface(context: Context,
                 drawFrequencyGrid(fftGridCanvas!!)
                 drawPowerGrid(fftGridCanvas!!)
                 // draw the station/band labels:
+                // (the change flags are cleared even when labels are hidden or not computed yet -
+                // otherwise the grid is redrawn and re-uploaded on every frame)
+                stationListHasChanged = false
+                bandListHasChanged = false
                 val stationLabels = stationLabels
                 if(stationLabels != null && displayStationsInFft.value) {
-                    drawStationLabels(fftGridCanvas!!, stationLabels, baseY = fftHeight.toFloat(), stationLayerY = fftHeight/2.5f)
-                    stationListHasChanged = false
+                    drawStationLabels(fftGridCanvas!!, stationLabels, baseY = fftHeight.toFloat(), stationLayerY = stationLabelBaseY)
                 }
                 val bandLabels = bandLabels
                 if(bandLabels != null && displayBandsInFft.value) {
-                    drawBandLabels(fftGridCanvas!!, bandLabels, bandLayerY = fftHeight - gridSize*0.7f)
-                    bandListHasChanged = false
+                    drawBandLabels(fftGridCanvas!!, bandLabels, bandLayerY = bandLabelBaseY)
                 }
                 if (demodulationEnabled.value) {
                     drawDemodulationChannel(fftGridCanvas!!)
@@ -1247,7 +1590,7 @@ class AnalyzerSurface(context: Context,
                 fftGridBitmapState["squelchPaintColor"] = squelchPaint.color
                 fftGridBitmapState["channelSelectorStrokeWidth"] = channelSelectorPaint.strokeWidth
                 fftGridBitmapState["channelWidthSelectorStrokeWidth"] = channelWidthSelectorPaint.strokeWidth
-                fftGridBitmapState["showUpperBand"] = demodulationMode.value != DemodulationMode.USB
+                fftGridBitmapState["showUpperBand"] = demodulationMode.value != DemodulationMode.USB && demodulationMode.value != DemodulationMode.FT8
                 fftGridBitmapState["showLowerBand"] = demodulationMode.value != DemodulationMode.LSB
                 fftGridBitmapState["displayStationsInFft"] = displayStationsInFft.value
                 fftGridBitmapState["displayBandsInFft"] = displayBandsInFft.value
@@ -1269,7 +1612,7 @@ class AnalyzerSurface(context: Context,
                         for(i in 0 until width)
                             c.drawPoint(i.toFloat(), peaksYCoordinates!![i], peakHoldPaint)
                     // Draw waterfall (scale to fit waterfallHeight)
-                    c.drawBitmap(waterfallBitmap!!, Rect(0, 0, waterfallBitmap!!.width, waterfallBitmap!!.height), Rect(0, fftHeight, width, height), null)
+                    drawWaterfall(c)
                     // Draw Grid (with channel selector)
                     c.drawBitmap(fftGridBitmap!!, 0f, 0f, null)
 
@@ -1280,7 +1623,9 @@ class AnalyzerSurface(context: Context,
                         c.drawLine(channelPosition, fftHeight.toFloat(), channelPosition, height.toFloat(), channelSelectorPaint)
                     }
 
-                    drawPerformanceInfo(c, frameRate, averageSignalStrength.value)
+                    topRightOverlayRenderer.draw(c, width, height, frameRate, averageSignalStrength.value, demodStatus, demodPacketCounts, extensionConnectionState)
+
+                    drawQuickTuneIndicator(c)
                 } else Log.d(LOGTAG, "draw: Canvas is null.")
             } catch (e: Exception) {
                 Log.e(LOGTAG, "draw: Error while drawing on the canvas. Stop!")
@@ -1293,6 +1638,45 @@ class AnalyzerSurface(context: Context,
         }
 
         /**
+         * Draws the waterfall strips scaled into the area below the FFT, newest row at the top.
+         * The rows move down continuously by the elapsed fraction of a row period since the newest
+         * row arrived (it slides in from above): FFT rows and drawn frames come from two clocks,
+         * so whole-row steps alone give frames without movement followed by double steps.
+         */
+        private fun drawWaterfall(c: Canvas) {
+            val strips = waterfallStrips ?: return
+            val rows = waterfallRows
+            val rowHeight = (height - fftHeight).toFloat() / rows
+            val elapsedRows = if (waterfallRowPeriodNs > 0)
+                ((System.nanoTime() - waterfallTopRowTimeNs).toFloat() / waterfallRowPeriodNs).coerceIn(0f, 1f) else 1f
+            waterfallScrollOffset = (elapsedRows - 1f) * rowHeight
+            c.save()
+            c.clipRect(0, fftHeight, width, height)
+            for (k in strips.indices) {
+                val strip = strips[k]
+                val firstRow = k * WATERFALL_STRIP_ROWS
+                // display position of the strip's first row; a strip holding the newest row wraps
+                val displayRow = (firstRow - waterfallTopRow + rows) % rows
+                val rowsBeforeWrap = min(strip.height, rows - displayRow)
+                drawWaterfallRows(c, strip, 0, rowsBeforeWrap, displayRow, rowHeight)
+                if (rowsBeforeWrap < strip.height)
+                    drawWaterfallRows(c, strip, rowsBeforeWrap, strip.height, 0, rowHeight)
+            }
+            c.restore()
+        }
+
+        private var waterfallScrollOffset = 0f
+
+        private val waterfallSrcRect = Rect()
+        private val waterfallDstRect = RectF()
+        private fun drawWaterfallRows(c: Canvas, strip: Bitmap, fromRow: Int, toRow: Int, displayRow: Int, rowHeight: Float) {
+            waterfallSrcRect.set(0, fromRow, strip.width, toRow)
+            val top = fftHeight + displayRow * rowHeight + waterfallScrollOffset
+            waterfallDstRect.set(0f, top, width.toFloat(), top + (toRow - fromRow) * rowHeight)
+            c.drawBitmap(strip, waterfallSrcRect, waterfallDstRect, null)
+        }
+
+        /**
          * checks current state vs old state (fftGridBitmapState)
          * @return true if the fft grid bitmap must be redrawn
          */
@@ -1302,7 +1686,7 @@ class AnalyzerSurface(context: Context,
             if (stationListHasChanged)
                 return true
             return !(fftGridBitmapState["fftHeight"] == fftHeight &&
-                    fftGridBitmapState["fontSize"] == fontSize &&
+                    fftGridBitmapState["fontSize"] == fontSize.value &&
                     fftGridBitmapState["scrollType"] == scrollType &&
                     fftGridBitmapState["virtualSampleRate"] ==viewportSampleRate.value &&
                     fftGridBitmapState["virtualFrequency"] == viewportFrequency.value &&
@@ -1319,7 +1703,7 @@ class AnalyzerSurface(context: Context,
                     fftGridBitmapState["squelchPaintColor"] == squelchPaint.color &&
                     fftGridBitmapState["channelSelectorStrokeWidth"] == channelSelectorPaint.strokeWidth &&
                     fftGridBitmapState["channelWidthSelectorStrokeWidth"] == channelWidthSelectorPaint.strokeWidth &&
-                    fftGridBitmapState["showUpperBand"] == (demodulationMode.value != DemodulationMode.USB) &&
+                    fftGridBitmapState["showUpperBand"] == (demodulationMode.value != DemodulationMode.USB && demodulationMode.value != DemodulationMode.FT8) &&
                     fftGridBitmapState["showLowerBand"] == (demodulationMode.value != DemodulationMode.LSB) &&
                     fftGridBitmapState["displayStationsInFft"] == displayStationsInFft.value &&
                     fftGridBitmapState["displayBandsInFft"] == displayBandsInFft.value
@@ -1348,8 +1732,8 @@ class AnalyzerSurface(context: Context,
             textPaint.getTextBounds("--", 0, 2, bounds)
             val minFreeSpaceBetweenText = bounds.width().toFloat()
 
-            // Calculate span of a minor tick (must be a power of 10KHz)
-            var tickSize = 10 // we start with 10KHz
+            // Calculate span of a minor tick (a power of 10, in Hz)
+            var tickSize = 10 // we start with 10 Hz
             var helperVar = virtualSampleRate / 20f
             while (helperVar > 100) {
                 helperVar = helperVar / 10f
@@ -1364,7 +1748,7 @@ class AnalyzerSurface(context: Context,
                 if (fftRelativeFrequency.value) ((virtualFrequency-sourceFrequency.value) - (virtualSampleRate / 2.0)).toLong()
                 else (virtualFrequency - (virtualSampleRate / 2.0)).toLong()
 
-            // Calculate the frequency and position of the first Tick (ticks are every <tickSize> KHz)
+            // Calculate the frequency and position of the first Tick (ticks are every <tickSize> Hz)
             var tickFreq = (ceil(startFrequency.toDouble() / tickSize.toFloat()) * tickSize).toLong()
             var tickPos = pixelPerMinorTick / tickSize.toFloat() * (tickFreq - startFrequency)
 
@@ -1373,7 +1757,7 @@ class AnalyzerSurface(context: Context,
             while (i < virtualSampleRate / tickSize.toFloat()) {
                 var tickHeight: Float
                 if (tickFreq % (tickSize * 10) == 0L) {
-                    // Major Tick (10x <tickSize> KHz)
+                    // Major Tick (10x <tickSize> Hz)
                     tickHeight = (gridSize / 2.0).toFloat()
 
                     // Draw Frequency Text (always in MHz)
@@ -1388,7 +1772,7 @@ class AnalyzerSurface(context: Context,
                         lastTextEndPos = textPos + bounds.width()
                     }
                 } else if (tickFreq % (tickSize * 5) == 0L) {
-                    // Half major tick (5x <tickSize> KHz)
+                    // Half major tick (5x <tickSize> Hz)
                     tickHeight = (gridSize / 3.0).toFloat()
 
                     // Draw Frequency Text (always in MHz)...
@@ -1406,7 +1790,7 @@ class AnalyzerSurface(context: Context,
                         }
                     }
                 } else {
-                    // Minor tick (<tickSize> KHz)
+                    // Minor tick (<tickSize> Hz)
                     tickHeight = (gridSize / 4.0).toFloat()
                 }
 
@@ -1421,6 +1805,86 @@ class AnalyzerSurface(context: Context,
             }
         }
 
+        /**
+         * Draws the quick tune/zoom indicator while quick-tune is active. Before an axis is
+         * engaged, shows just the ring plus a direction hint for each axis. Once the finger leaves
+         * the ring, the ring and the other axis's hints disappear and the engaged axis's full
+         * indicator (with a marker for the current position) takes their place.
+         */
+        private fun drawQuickTuneIndicator(c: Canvas) {
+            if (!quickTuneActive) return
+            val cx = quickTuneCenterX
+            val cy = quickTuneCenterY
+            val density = resources.displayMetrics.density
+            val dotRadiusPx = QUICK_TUNE_CENTER_DOT_RADIUS_DP * density
+
+            when (quickTuneEngagedAxis) {
+                null -> {
+                    val ringRadiusPx = QUICK_TUNE_RING_RADIUS_DP * density
+                    val hintDistancePx = ringRadiusPx + QUICK_TUNE_HINT_LABEL_MARGIN_DP * density
+                    drawCenteredText(c, "Zoom In", cx, cy - hintDistancePx, alignBottom = true)
+                    drawCenteredText(c, "Zoom Out", cx, cy + hintDistancePx, alignBottom = false)
+                    if (quickTuneTuneAxisAvailable) {
+                        drawCenteredText(c, "◄ Tune", cx - hintDistancePx, cy, alignRight = true)
+                        drawCenteredText(c, "Tune ►", cx + hintDistancePx, cy, alignRight = false)
+                    }
+                    c.drawCircle(cx, cy, ringRadiusPx, quickTuneIndicatorPaint)
+                }
+                QuickTuneAxis.VERTICAL -> {
+                    val labelMarginPx = QUICK_TUNE_LABEL_MARGIN_DP * density
+                    c.drawLine(cx, cy - quickTuneZoomTopLengthPx, cx, cy + quickTuneZoomBottomLengthPx, quickTuneIndicatorPaint)
+                    drawCenteredText(c, "Zoom In", cx, cy - quickTuneZoomTopLengthPx - labelMarginPx, alignBottom = true)
+                    drawCenteredText(c, "Zoom Out", cx, cy + quickTuneZoomBottomLengthPx + labelMarginPx, alignBottom = false)
+                    val markerY = cy + (quickTuneCurrentY - cy).coerceIn(-quickTuneZoomTopLengthPx, quickTuneZoomBottomLengthPx)
+                    c.drawCircle(cx, markerY, dotRadiusPx / 2f, quickTuneIndicatorPaint)
+                }
+                QuickTuneAxis.HORIZONTAL -> {
+                    val labelMarginPx = QUICK_TUNE_LABEL_MARGIN_DP * density
+                    val tuneRangePx = QUICK_TUNE_FINE_TUNE_STEP_COUNT * QUICK_TUNE_FINE_TUNE_STEP_SPACING_DP * density
+                    drawFineTuneTicks(c, cx, cy, density)
+                    drawCenteredText(c, "◄ Tune", cx - tuneRangePx - labelMarginPx, cy, alignRight = true)
+                    drawCenteredText(c, "Tune ►", cx + tuneRangePx + labelMarginPx, cy, alignRight = false)
+                    drawFineTuneMarker(c, cx, cy, density)
+                }
+            }
+            c.drawCircle(cx, cy, dotRadiusPx, quickTuneIndicatorPaint)
+        }
+
+        /** Tick mark at each discrete fine-tune step, tall enough to peek out from under the fingertip. */
+        private fun drawFineTuneTicks(c: Canvas, cx: Float, cy: Float, density: Float) {
+            val stepPx = QUICK_TUNE_FINE_TUNE_STEP_SPACING_DP * density
+            val tickHalfHeight = QUICK_TUNE_FINE_TUNE_TICK_HALF_HEIGHT_DP * density
+            for (i in -QUICK_TUNE_FINE_TUNE_STEP_COUNT..QUICK_TUNE_FINE_TUNE_STEP_COUNT) {
+                if (i == 0) continue
+                val tx = cx + i * stepPx
+                c.drawLine(tx, cy - tickHalfHeight, tx, cy + tickHalfHeight, quickTuneIndicatorPaint)
+            }
+        }
+
+        /** Taller, thicker tick marking the currently selected fine-tune step, so it stands out from the regular ticks. */
+        private fun drawFineTuneMarker(c: Canvas, cx: Float, cy: Float, density: Float) {
+            val stepPx = QUICK_TUNE_FINE_TUNE_STEP_SPACING_DP * density
+            val stepIndex = ((quickTuneCurrentX - cx) / stepPx).roundToInt().coerceIn(-QUICK_TUNE_FINE_TUNE_STEP_COUNT, QUICK_TUNE_FINE_TUNE_STEP_COUNT)
+            val markerX = cx + stepIndex * stepPx
+            val markerHalfHeight = QUICK_TUNE_FINE_TUNE_MARKER_HALF_HEIGHT_DP * density
+            val originalStrokeWidth = quickTuneIndicatorPaint.strokeWidth
+            quickTuneIndicatorPaint.strokeWidth = originalStrokeWidth * 2.5f
+            c.drawLine(markerX, cy - markerHalfHeight, markerX, cy + markerHalfHeight, quickTuneIndicatorPaint)
+            quickTuneIndicatorPaint.strokeWidth = originalStrokeWidth
+        }
+
+        /**
+         * Draws [textStr] horizontally centered on [x], and vertically anchored above/below or
+         * left/right of ([x], [y]) depending on [alignBottom]/[alignRight].
+         */
+        private fun drawCenteredText(c: Canvas, textStr: String, x: Float, y: Float, alignBottom: Boolean? = null, alignRight: Boolean? = null) {
+            textPaint.getTextBounds(textStr, 0, textStr.length, bounds)
+            val drawX = (if (alignRight == true) x - bounds.width() else if (alignRight == false) x else x - bounds.width() / 2f)
+                .coerceIn(0f, (width - bounds.width()).toFloat().coerceAtLeast(0f)) // whole on screen, also at its edges
+            val drawY = if (alignBottom == true) y else if (alignBottom == false) y + bounds.height() else y + bounds.height() / 2f
+            c.drawText(textStr, drawX, drawY, textPaint)
+        }
+
         private fun drawDemodulationChannel(c: Canvas) {
             val showUpperBand = demodulationMode.value != DemodulationMode.LSB
             val minDB = viewportVerticalScaleMin.value
@@ -1433,8 +1897,6 @@ class AnalyzerSurface(context: Context,
             val channelPosition = width / 2 + pxPerHz * (channelFrequency.value - virtualFrequency)
             val leftBorder = width / 2 + pxPerHz * (channelStartFrequency.value - virtualFrequency)
             val rightBorder = width / 2 + pxPerHz * (channelEndFrequency.value - virtualFrequency)
-            //val leftBorder = channelPosition - pxPerHz * channelWidth.value
-            //val rightBorder = channelPosition + pxPerHz * channelWidth.value
             val dbWidth = fftHeight / (maxDB - minDB)
             val squelchYPosition = if(squelchEnabled) fftHeight - (squelch.value - minDB) * dbWidth else fftHeight.toFloat()
             val squelchXPosition = if(showUpperBand) rightBorder else leftBorder
@@ -1470,7 +1932,7 @@ class AnalyzerSurface(context: Context,
                 c.drawLine(leftBorder, squelchYPosition, rightBorder, squelchYPosition, squelchPaint)
 
                 // draw squelch text above the squelch selector:
-                textStr = String.format("%2.1f dB", squelch.value)
+                textStr = String.format("+%.0f dB", squelchMargin.value)
                 textSmallPaint.getTextBounds(textStr, 0, textStr.length, bounds)
                 c.drawText(textStr, channelPosition - bounds.width() / 2f, squelchYPosition - bounds.height() * 0.1f, textSmallPaint)
 
@@ -1518,7 +1980,7 @@ class AnalyzerSurface(context: Context,
                 if (tickDB % 10 == 0) {
                     // Major Tick (10dB)
                     tickWidth = (gridSize / 3.0).toFloat()
-                    // Draw Frequency Text:
+                    // Draw the dB value:
                     c.drawText("" + tickDB, (gridSize / 2.9).toFloat(), tickPos, textPaint)
                     // Draw grid line across the entire FFT plot:
                     val savedColor = textPaint.color
@@ -1541,123 +2003,17 @@ class AnalyzerSurface(context: Context,
             }
         }
 
-        /**
-         * This method will draw the performance information into the canvas
-         *
-         * @param c                canvas of the surface view
-         * @param frameRate    current frame rate (FPS)
-         * @param load            current load (percentage [0..1])
-         * @param averageSignalStrength        average magnitude of the signal in the selected channel
-         */
-        private fun drawPerformanceInfo(c: Canvas, frameRate: Int, averageSignalStrength: Float) {
-            var text: String
-            var yPos = height * 0.01f
-            val rightBorder = width * 0.99f
-            val minDB = viewportVerticalScaleMin.value
-            val maxDB = viewportVerticalScaleMax.value
-
-            // Name
-            text = sourceName.value
-            textSmallPaint.getTextBounds(text, 0, text.length, bounds)
-            c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint);
-            yPos += bounds.height() * 1.1f;
-
-            if (demodulationEnabled.value) {
-                // Draw the channel frequency if demodulation is enabled:
-                text = String.format("demod at %4.6f MHz", channelFrequency.value / 1000000f)
-                textSmallPaint.getTextBounds(text, 0, text.length, bounds)
-                c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint)
-
-                // increase yPos:
-                yPos += bounds.height() * 1.1f
-
-                // Draw the average signal strength indicator if demodulation is enabled
-                text = String.format("%2.1f dB", averageSignalStrength)
-                textSmallPaint.getTextBounds(text, 0, text.length, bounds)
-
-                val indicatorWidth = (width / 10).toFloat()
-                val indicatorPosX = rightBorder - indicatorWidth
-                val indicatorPosY = yPos + bounds.height()
-                val squelchTickPos = (squelch.value - minDB) / (maxDB - minDB) * indicatorWidth
-                var signalWidth = (averageSignalStrength - minDB) / (maxDB - minDB) * indicatorWidth
-                if (signalWidth < 0) signalWidth = 0f
-                if (signalWidth > indicatorWidth) signalWidth = indicatorWidth
-
-                // draw signal rectangle:
-                c.drawRect(
-                    indicatorPosX,
-                    yPos + bounds.height() * 0.1f,
-                    indicatorPosX + signalWidth,
-                    indicatorPosY,
-                    squelchPaint
-                )
-
-                // draw left border, right border, bottom line and squelch tick:
-                c.drawLine(indicatorPosX, indicatorPosY, indicatorPosX, yPos, textPaint)
-                c.drawLine(rightBorder, indicatorPosY, rightBorder, yPos, textPaint)
-                c.drawLine(indicatorPosX, indicatorPosY, rightBorder, indicatorPosY, textPaint)
-                c.drawLine(
-                    indicatorPosX + squelchTickPos,
-                    indicatorPosY + 2,
-                    indicatorPosX + squelchTickPos,
-                    yPos + bounds.height() * 0.5f,
-                    textPaint
-                )
-
-                // draw text:
-                c.drawText(text, indicatorPosX - bounds.width() * 1.1f, indicatorPosY, textSmallPaint)
-
-                // increase yPos:
-                yPos += bounds.height() * 1.1f
-            }
-
-            // Draw recording information
-            if (recordingRunning.value) {
-                if (squelchSatisfied.value || !recordOnlyWhenSquelchIsSatisfied.value) {
-                    text = String.format("%4.6f MHz @ %2.3f MSps (%s)", sourceFrequency.value / 1000000f, sourceSampleRate.value / 1000000f, recordingCurrentFileSize.value.asSizeInBytesToString())
-                    textSmallPaint.getTextBounds(text, 0, text.length, bounds)
-                    c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint)
-                    defaultPaint.color = Color.RED
-                    c.drawCircle(
-                        rightBorder - bounds.width() - (bounds.height() / 2) * 1.3f,
-                        yPos + bounds.height() / 2,
-                        (bounds.height() / 2).toFloat(),
-                        defaultPaint
-                    )
-                    // increase yPos:
-                    yPos += bounds.height() * 1.1f
-                }
-            }
-
-            if (showDebugInformation.value) {
-                // Draw the FFT/s rate
-                text = "$frameRate FPS"
-                textSmallPaint.getTextBounds(text, 0, text.length, bounds)
-                c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint)
-                yPos += bounds.height() * 1.1f
-
-                // Draw the load
-                GlobalPerformanceData.getAllLoads().forEach { (metricId, value) ->
-                    text = String.format("$metricId: %03.1f %%", value * 100)
-                    textSmallPaint.getTextBounds(text, 0, text.length, bounds)
-                    c.drawText(text, rightBorder - bounds.width(), yPos + bounds.height(), textSmallPaint)
-                    yPos += bounds.height() * 1.1f
-                }
-            }
-        }
-
-
         private fun drawStationLabels(
             canvas: Canvas,
             labels: List<StationLabel>,
             baseY: Float,
             stationLayerY: Float
         ) {
-            val boxHeight = stationPaint.textSize + 10f
+            val boxHeight = stationPaint.textSize + STATION_LABEL_BOX_PADDING
 
             for (label in labels) {
                 val x = freqToX(label.frequency)
-                val boxTop = stationLayerY - (label.layer + 1) * (boxHeight + 10f)
+                val boxTop = stationLayerY - (label.layer + 1) * stationLabelRowHeight(stationPaint.textSize)
                 val boxBottom = boxTop + boxHeight
                 val textX = x + 10f
                 val textY = boxBottom - 13f
@@ -1710,7 +2066,7 @@ class AnalyzerSurface(context: Context,
 
             for (label in labels) {
 
-                val boxTop = bandLayerY - (label.layer + 1) * (boxHeight + 12f)
+                val boxTop = bandLayerY - (label.layer + 1) * (boxHeight + BAND_LABEL_ROW_GAP)
                 val boxBottom = boxTop + boxHeight
 
                 val bandXStart = freqToX(label.freqStart)
@@ -1811,21 +2167,10 @@ class AnalyzerSurface(context: Context,
         }
 
         fun updateTextPaint() {
-            val normalTextSize: Float
-            val smallTextSize: Float
-            when (fontSize.value) {
-                FontSize.SMALL -> {
-                    normalTextSize = gridSize * 0.2f
-                    smallTextSize = gridSize * 0.13f
-                }
-                FontSize.NORMAL -> {
-                    normalTextSize = gridSize * 0.3f
-                    smallTextSize = gridSize * 0.2f
-                }
-                FontSize.LARGE -> {
-                    normalTextSize = gridSize * 0.476f
-                    smallTextSize = gridSize * 0.25f
-                }
+            val normalTextSize = when (fontSize.value) {
+                FontSize.SMALL -> gridSize * 0.2f
+                FontSize.NORMAL -> gridSize * 0.3f
+                FontSize.LARGE -> gridSize * 0.476f
             }
             textPaint.textSize = normalTextSize
             textSmallPaint.textSize = smallTextSize
@@ -1844,7 +2189,11 @@ class AnalyzerSurface(context: Context,
             var text = if(BuildConfig.IS_FOSS) {
                 "FOSS VERSION"
             } else {
-                if(isFullVersion.value) "FULL VERSION" else "TRIAL VERSION"
+                when (license.value) {
+                    License.FULL -> "FULL VERSION"
+                    License.BASE -> "BASE VERSION"
+                    License.TRIAL -> "TRIAL VERSION"
+                }
             }
             val paint = Paint()
             val textPaint = Paint()

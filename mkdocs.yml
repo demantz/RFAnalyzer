@@ -1,7 +1,9 @@
-site_name: RF Analyzer 2.0 User Manual
+site_name: RF Analyzer User Manual
 theme:
   name: material
   logo: assets/logo.png
+  # The manual is also the app's offline help: no Google Fonts (privacy policy: "loads nothing from the internet")
+  font: false
   features:
     - navigation.sections
     - navigation.instant
@@ -25,7 +27,30 @@ nav:
   - Additional Information: advanced.md
   - Troubleshooting & FAQs: troubleshooting.md
   - About: about.md
+  - Legal:
+      - Privacy Policy: legal/privacy.md
+      - Terms of Use: legal/terms.md
+      - Nutzungsbedingungen (DE): legal/terms-de.md
+      - Imprint / Impressum: legal/imprint.md
+
+# RF Analyzer 2.3: the digital features are hidden until the extension is installed, so the manual
+# leaves them out of the navigation and the search (each page's front matter). The pages are still
+# built - the app's Help opens them while the extension is installed. From 2.4 on they belong in nav
+# as a "Digital Extension" section after Signal Demodulation: Overview, The Digital Tab, RTTY,
+# PSK31, R09, FT8, AX.25 / Packet Radio, ADS-B, POCSAG, LoRa, RDS.
+not_in_nav: |
+  /digital-extension.md
+  /digital-tab.md
+  /rtty.md
+  /psk31.md
+  /r09.md
+  /ft8.md
+  /ax25.md
+  /adsb.md
+  /pocsag.md
+  /lora.md
+  /rds.md
 
 # create pdf:
 # mkdocs serve
-# a=1; for i in "" quickstart setup ui-overview sdr-source fft demodulation recording settings advanced troubleshooting about; do cnt=0000$a; wkhtmltopdf http://127.0.0.1:8000/$i "${cnt:(-3)}_$i.pdf"; a=$(($a+1)); done; pdfunite * out.pdf
+# a=1; for i in "" quickstart setup ui-overview sdr-source fft demodulation digital-extension digital-tab rtty psk31 r09 ft8 ax25 adsb pocsag lora rds recording bookmarks settings advanced troubleshooting about; do cnt=0000$a; wkhtmltopdf http://127.0.0.1:8000/$i "${cnt:(-3)}_$i.pdf"; a=$(($a+1)); done; pdfunite * out.pdf

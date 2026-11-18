@@ -1,41 +1,33 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.mantz_it.libhackrf"
-    compileSdk = 36
+    compileSdk {
+        version = release(37)
+    }
 
     defaultConfig {
         minSdk = 28
-
-        consumerProguardFiles("consumer-rules.pro")
         externalNativeBuild {
             cmake {
-                // This is necessary for ndk v27 to build 16KB Page-Size compatible libs:
+                // 16 KB page sizes: NDK r28+ aligns the load segments by default, but newer Android
+                // versions also require the RELRO segment to end on a 16 KB boundary.
                 // https://developer.android.com/guide/practices/page-sizes
-                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+                arguments += listOf("-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,common-page-size=16384")
             }
         }
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     externalNativeBuild {
         cmake {
             path("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }
+    }
+    buildFeatures {
+        prefab = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -43,14 +35,7 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-    }
-}
-
 dependencies {
-    implementation(project(":libusb"))
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
+    api(project(":libusb")) // api: the app uses SampleStreamDevice/SampleBufferPool
+    implementation(libs.androidx.annotation)
 }

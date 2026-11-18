@@ -1,8 +1,8 @@
 package com.mantz_it.rfanalyzer.ui
 
+import com.mantz_it.rfanalyzer.digiext.DigitalFeatures
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -53,6 +53,8 @@ import androidx.core.app.ShareCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
+import com.mantz_it.rfanalyzer.location.openAppSettings
+import com.mantz_it.rfanalyzer.source.LocalNetworkAccess
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -62,7 +64,7 @@ import com.mantz_it.rfanalyzer.BuildConfig
 import com.mantz_it.rfanalyzer.LogcatLogger
 import com.mantz_it.rfanalyzer.analyzer.AnalyzerService
 import com.mantz_it.rfanalyzer.database.AppStateRepository
-import com.mantz_it.rfanalyzer.database.BillingRepositoryInterface
+import com.mantz_it.rfanalyzer.billing.BillingRepository
 import com.mantz_it.rfanalyzer.database.collectAppState
 import com.mantz_it.rfanalyzer.ui.MainViewModel.UiAction
 import com.mantz_it.rfanalyzer.ui.composable.LocalShowHelp
@@ -70,28 +72,32 @@ import com.mantz_it.rfanalyzer.ui.composable.LocalSnackbarHostState
 import com.mantz_it.rfanalyzer.ui.screens.LogFileScreen
 import com.mantz_it.rfanalyzer.ui.screens.MainScreen
 import com.mantz_it.rfanalyzer.ui.screens.RecordingsScreen
-import com.mantz_it.rfanalyzer.ui.composable.ScreenOrientation
-import com.mantz_it.rfanalyzer.ui.composable.SourceType
+import com.mantz_it.rfanalyzer.ui.tabs.AnalyzerTabs
+import com.mantz_it.rfanalyzer.ui.tabs.ScreenOrientation
+import com.mantz_it.rfanalyzer.ui.tabs.SourceType
 import com.mantz_it.rfanalyzer.ui.screens.AboutScreen
 import com.mantz_it.rfanalyzer.ui.screens.ManualScreen
 import com.mantz_it.rfanalyzer.ui.screens.TutorialScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
-import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import android.provider.Settings
 import androidx.compose.runtime.mutableStateOf
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mantz_it.rfanalyzer.FileCopyService
 import com.mantz_it.rfanalyzer.R
+import com.mantz_it.rfanalyzer.source.UsbSdrType
 import com.mantz_it.rfanalyzer.ui.composable.FossDonationDialog
 import com.mantz_it.rfanalyzer.ui.composable.toTimeSpanString
 import com.mantz_it.rfanalyzer.ui.screens.StationsPage
 import com.mantz_it.rfanalyzer.ui.screens.BookmarkManagerScreen
 import com.mantz_it.rfanalyzer.ui.screens.BookmarkManagerViewModel
 import com.mantz_it.rfanalyzer.ui.screens.TutorialScreenCard
+import com.mantz_it.rfanalyzer_ipc.digiext.DigitalExtensionApps
 import kotlin.collections.listOf
 
 /**
@@ -101,23 +107,8 @@ import kotlin.collections.listOf
  * Description: The main activity of the app.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -127,18 +118,58 @@ const val RECORDINGS_DIRECTORY = "recordings"
 class MainActivity: ComponentActivity() {
 
     @Inject lateinit var appStateRepository: AppStateRepository
-    @Inject lateinit var billingRepository: BillingRepositoryInterface
+    @Inject lateinit var billingRepository: BillingRepository
     private val mainViewModel: MainViewModel by viewModels()
     private var analyzerService: AnalyzerService? = null
     private var isBound = false
     private lateinit var analyzerSurface: AnalyzerSurface
-
-    // Activity Launchers
-    private lateinit var startRtlsdrDriverLauncher: ActivityResultLauncher<Intent>
+    // Registered with the activity (before it starts): a launcher registered later - from the
+    // export snackbar's button - throws.
+    private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) Log.d(TAG, "POST_NOTIFICATIONS permission granted.")
+        else Log.w(TAG, "POST_NOTIFICATIONS permission denied.")
+    }
+    // Android 17's local network permission, asked right before a network source starts (LocalNetworkAccess)
+    private var localNetworkHost: String? = null
+    private var localNetworkExplainedBefore = false
+    private val localNetworkPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        // (the host is gone if the activity was recreated meanwhile)
+        val host = localNetworkHost ?: networkSourceHost() ?: ""
+        localNetworkHost = null
+        Log.i(TAG, "localNetworkPermission: granted=$granted (for $host)")
+        if (granted) {
+            startAnalyzerService()
+            return@registerForActivityResult
+        }
+        abandonStart()
+        if (!localNetworkExplainedBefore && !shouldShowRequestPermissionRationale(LocalNetworkAccess.PERMISSION))
+            showLocalNetworkSettingsHint(host) // refused without a dialog: the user denied it for good earlier
+        else
+            mainViewModel.showSnackbar(SnackbarEvent("Without local network access, RF Analyzer can't reach $host."))
+    }
 
     companion object {
         private const val TAG = "MainActivity"
+
+        // USB SDRs (by UsbDevice.deviceName, which changes on every re-plug) already handled in
+        // this process. Process-wide so activity recreation doesn't re-trigger, and empty on a
+        // cold start so an SDR attached at launch selects its source type.
+        private val seenSdrDeviceNames = mutableSetOf<String>()
+
+        // SourceType name of the SDR whose plug-in opened the app (UsbAttachActivity)
+        const val EXTRA_USB_SDR_ATTACHED = "com.mantz_it.rfanalyzer.extra.USB_SDR_ATTACHED"
+
+        // Read by UsbAttachActivity: whether the app's UI exists / is in front
+        @Volatile
+        var isCreated = false
+            private set
+        @Volatile
+        var isStarted = false
+            private set
     }
+
+    // set from EXTRA_USB_SDR_ATTACHED, handed to the service once it is bound
+    private var usbSdrAttachedAtLaunch: SourceType? = null
 
     // Callbacks for bind/unbindService
     private val serviceConnection = object : ServiceConnection {
@@ -147,6 +178,15 @@ class MainActivity: ComponentActivity() {
             val localBinder = binder as AnalyzerService.LocalBinder
             analyzerService = localBinder.getService()
             isBound = true
+            usbSdrAttachedAtLaunch?.let { sourceType ->
+                usbSdrAttachedAtLaunch = null
+                lifecycleScope.launch {
+                    // a source type set before the settings are loaded would be overwritten
+                    appStateRepository.sourceType.awaitInitialized()
+                    appStateRepository.startAnalyzerOnUsbAttach.awaitInitialized()
+                    analyzerService?.onUsbSdrAttached(sourceType)
+                }
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -156,76 +196,60 @@ class MainActivity: ComponentActivity() {
         }
     }
 
-    // broadcast receiver to auto-detect HACKRF and RTL-SDR USB devices:
+    // broadcast receiver to auto-detect USB SDRs attached while the activity is started:
     val usbBroadcastReceiver = object: BroadcastReceiver() {
-        private val rtlsdrIds = setOf( // from https://github.com/osmocom/rtl-sdr/blob/master/rtl-sdr.rules
-            Pair(0x0bda, 0x2832), Pair(0x0bda, 0x2838), Pair(0x0413, 0x6680), Pair(0x0413, 0x6f0f), Pair(0x0458, 0x707f), Pair(0x0ccd, 0x00a9),
-            Pair(0x0ccd, 0x00b3), Pair(0x0ccd, 0x00b4), Pair(0x0ccd, 0x00b5), Pair(0x0ccd, 0x00b7), Pair(0x0ccd, 0x00b8), Pair(0x0ccd, 0x00b9),
-            Pair(0x0ccd, 0x00c0), Pair(0x0ccd, 0x00c6), Pair(0x0ccd, 0x00d3), Pair(0x0ccd, 0x00d7), Pair(0x0ccd, 0x00e0), Pair(0x1554, 0x5020),
-            Pair(0x15f4, 0x0131), Pair(0x15f4, 0x0133), Pair(0x185b, 0x0620), Pair(0x185b, 0x0650), Pair(0x185b, 0x0680), Pair(0x1b80, 0xd393),
-            Pair(0x1b80, 0xd394), Pair(0x1b80, 0xd395), Pair(0x1b80, 0xd397), Pair(0x1b80, 0xd398), Pair(0x1b80, 0xd39d), Pair(0x1b80, 0xd3a4),
-            Pair(0x1b80, 0xd3a8), Pair(0x1b80, 0xd3af), Pair(0x1b80, 0xd3b0), Pair(0x1d19, 0x1101), Pair(0x1d19, 0x1102), Pair(0x1d19, 0x1103),
-            Pair(0x1d19, 0x1104), Pair(0x1f4d, 0xa803), Pair(0x1f4d, 0xb803), Pair(0x1f4d, 0xc803), Pair(0x1f4d, 0xd286), Pair(0x1f4d, 0xd803)
-            )
         override fun onReceive(context: Context?, intent: Intent?) {
             if(intent?.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
-                val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
-                } else {
-                    // else branch necessary as long as minSdk is < 33 (tiramisu)
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-                }
-                device?.let {
-                    Log.d(TAG, "Device attached: ${it.deviceName} (vendor: ${device.vendorId}, product: ${device.productId}, name: ${device.manufacturerName}|${device.productName})")
-                    if (device.vendorId == 0x1d50 && device.productId in listOf(0x604b, 0x6089, 0xcc15) ) {
-                        Toast.makeText( this@MainActivity, "HackRF Device attached.", Toast.LENGTH_SHORT).show()
-                        if (!appStateRepository.analyzerRunning.value)
-                            appStateRepository.sourceType.set(SourceType.HACKRF)
-                    } else if(Pair(it.vendorId, it.productId) in rtlsdrIds) {
-                        Toast.makeText( this@MainActivity, "RTL-SDR Device '${device.productName}' attached.", Toast.LENGTH_SHORT).show()
-                        if (device.vendorId == 0x0bda && device.productId == 0x2838 && device.productName == "Blog V4") {
-                            Log.i(TAG, "usbBroadcastReceiver:onReceive: RTL-SDR Blog V4 attached!")
-                            appStateRepository.rtlsdrBlogV4connected.set(true)
-                        }
-                        if (!appStateRepository.analyzerRunning.value)
-                            appStateRepository.sourceType.set(SourceType.RTLSDR)
-                    } else if (device.vendorId == 0x1d50 && device.productId == 0x60a1) {
-                        Toast.makeText( this@MainActivity, "Airspy Device attached.", Toast.LENGTH_SHORT).show()
-                        if (!appStateRepository.analyzerRunning.value)
-                            appStateRepository.sourceType.set(SourceType.AIRSPY)
-                    } else if (device.vendorId == 0x03eb && device.productId == 0x800c) {
-                        Toast.makeText( this@MainActivity, "AirspyHF Device attached.", Toast.LENGTH_SHORT).show()
-                        if (!appStateRepository.analyzerRunning.value)
-                            appStateRepository.sourceType.set(SourceType.AIRSPYHF)
-                    } else if (device.vendorId == 0x38af && device.productId == 0x0001) {
-                        Toast.makeText( this@MainActivity, "HydraSDR Device attached.", Toast.LENGTH_SHORT).show()
-                        if (!appStateRepository.analyzerRunning.value)
-                            appStateRepository.sourceType.set(SourceType.HYDRASDR)
-                    }
+                UsbSdrType.deviceFromIntent(intent)?.let { device ->
+                    Log.d(TAG, "Device attached: ${device.deviceName} (vendor: ${device.vendorId}, product: ${device.productId}, name: ${device.manufacturerName}|${device.productName})")
+                    val type = UsbSdrType.of(device) ?: return
+                    if (seenSdrDeviceNames.add(device.deviceName))
+                        onSdrAttached(device, type)
                 }
             } else if(intent?.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
-                val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
-                } else {
-                    // else branch necessary as long as minSdk is < 33 (tiramisu)
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-                }
-                device?.let {
+                UsbSdrType.deviceFromIntent(intent)?.let { device ->
                     Log.d(TAG, "usbBroadcastReceiver:onReceive: Device detached (${device.vendorId}:${device.productId} - ${device.productName})")
-                    if (device.vendorId == 0x0bda && device.productId == 0x2838 && device.productName == "Blog V4") {
-                        Log.i(TAG, "usbBroadcastReceiver:onReceive: RTL-SDR Blog V4 detached!")
-                        appStateRepository.rtlsdrBlogV4connected.set(false)
-                    }
+                    seenSdrDeviceNames.remove(device.deviceName)
                 }
             }
         }
     }
 
+    // RFA Digital installed, updated or removed while the activity is started (onStart rechecks the
+    // rest of the time): the Digital tab's notices follow at once.
+    private val digitalExtensionPackageReceiver = object: BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.data?.schemeSpecificPart == DigitalExtensionApps.EXTENSION_PACKAGE)
+                mainViewModel.recheckDigitalExtension()
+        }
+    }
+
+    // The receiver above only runs while the activity is started, so an SDR plugged in while the
+    // app was in the background (or not running) is picked up by rescanning in onStart instead.
+    private suspend fun detectSdrsAttachedWhileStopped() {
+        // Settings load asynchronously; a switch made before sourceType is loaded would be
+        // overwritten by the persisted value.
+        appStateRepository.sourceType.awaitInitialized()
+        val usbManager = getSystemService(USB_SERVICE) as UsbManager
+        val attached = UsbSdrType.findAttached(usbManager)
+        attached.filter { (device, _) -> device.deviceName !in seenSdrDeviceNames }
+            .forEach { (device, type) -> onSdrAttached(device, type) }
+        seenSdrDeviceNames.clear()
+        seenSdrDeviceNames.addAll(attached.map { (device, _) -> device.deviceName })
+    }
+
+    private fun onSdrAttached(device: UsbDevice, type: UsbSdrType) {
+        Log.i(TAG, "onSdrAttached: ${type.displayName} device '${device.productName}' (${device.deviceName})")
+        Toast.makeText(this, "${type.displayName} device '${device.productName}' attached.", Toast.LENGTH_SHORT).show()
+        if (!appStateRepository.analyzerRunning.value)
+            appStateRepository.sourceType.set(type.sourceType)
+    }
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        isCreated = true
+        usbSdrAttachedAtLaunch = intent.getStringExtra(EXTRA_USB_SDR_ATTACHED)?.let { name -> SourceType.entries.firstOrNull { it.name == name } }
         Log.d(TAG, "onCreate: Activity created.")
 
         // Get version name:
@@ -255,17 +279,10 @@ class MainActivity: ComponentActivity() {
         if (!recordingsDir.exists()) {
             recordingsDir.mkdirs()
         }
+        // Drops rows whose file is gone, asks about a recording the app was closed during
+        mainViewModel.checkRecordingsAtStart(recordingsDir)
 
         // Check and request POST_NOTIFICATIONS permission if needed
-        val requestPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            if (isGranted) {
-                Log.d(TAG, "POST_NOTIFICATIONS permission granted.")
-            } else {
-                Log.w(TAG, "POST_NOTIFICATIONS permission denied.")
-            }
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Log.d(TAG, "onCreate: Check for permissions..")
             if (ContextCompat.checkSelfPermission(
@@ -276,7 +293,7 @@ class MainActivity: ComponentActivity() {
                 lifecycleScope.launch {
                     appStateRepository.dontAskForNotificationPermission.awaitInitialized() // block until this setting is loaded and safe to access
                     if (!appStateRepository.dontAskForNotificationPermission.value) {
-                        requestNotificationPermission(requestPermissionLauncher)
+                        requestNotificationPermission(notificationPermissionLauncher)
                     }
                 }
             }
@@ -294,6 +311,7 @@ class MainActivity: ComponentActivity() {
         analyzerSurface = AnalyzerSurface(
             context = this,
             sourceName = appStateRepository.sourceName,
+            analyzerRunning = appStateRepository.analyzerRunning,
             sourceOptimalSampleRates = appStateRepository.sourceSupportedSampleRates,
             sourceFrequency = appStateRepository.sourceFrequency,
             sourceSampleRate = appStateRepository.sourceSampleRate,
@@ -301,7 +319,7 @@ class MainActivity: ComponentActivity() {
             sourceSignalEndFrequency = appStateRepository.sourceSignalEndFrequency,
             fftAverageLength = appStateRepository.fftAverageLength,
             fftPeakHold = appStateRepository.fftPeakHold,
-            maxFrameRate = appStateRepository.maxFrameRate,
+            maxFrameRate = appStateRepository.effectiveMaxFrameRate,
             waterfallColorMap = appStateRepository.waterfallColorMap,
             fftDrawingType = appStateRepository.fftDrawingType,
             fftRelativeFrequency = appStateRepository.fftRelativeFrequency,
@@ -312,9 +330,11 @@ class MainActivity: ComponentActivity() {
             channelWidth = appStateRepository.channelWidth,
             channelStartFrequency = appStateRepository.channelStartFrequency,
             channelEndFrequency = appStateRepository.channelEndFrequency,
-            squelchEnabled = appStateRepository.squelchEnabled,
-            squelch = appStateRepository.squelch,
-            recordingRunning = appStateRepository.recordingRunning,
+            squelchEnabled = appStateRepository.effectiveSquelchEnabled,
+            squelch = appStateRepository.squelchThresholdDb,
+            squelchMargin = appStateRepository.effectiveSquelchMargin,
+            recordingRunning = appStateRepository.anyRecordingRunning,
+            basebandRecordingRunning = appStateRepository.basebandRecordingRunning,
             recordOnlyWhenSquelchIsSatisfied = appStateRepository.recordOnlyWhenSquelchIsSatisfied,
             recordingCurrentFileSize = appStateRepository.recordingCurrentFileSize,
             fontSize = appStateRepository.fontSize,
@@ -327,12 +347,16 @@ class MainActivity: ComponentActivity() {
             viewportEndFrequency = appStateRepository.viewportEndFrequency,
             averageSignalStrength = appStateRepository.averageSignalStrength,
             squelchSatisfied = appStateRepository.squelchSatisfied,
-            isFullVersion = appStateRepository.isFullVersion,
+            license = appStateRepository.license,
             fftProcessorData = appStateRepository.fftProcessorData,
             stationListFlow = mainViewModel.displayedStations,
             bandListFlow = mainViewModel.displayedBands,
             displayStationsInFft = appStateRepository.displayStationsInFft,
             displayBandsInFft = appStateRepository.displayBandsInFft,
+            demodStatusFlow = mainViewModel.demodStatus,
+            demodPacketCountsFlow = mainViewModel.demodPacketCounts,
+            extensionConnectionStateFlow = mainViewModel.extensionConnectionState,
+            demodulationWfmStereoAndRdsEnabled = appStateRepository.demodulationWfmStereoAndRdsEnabled,
             analyzerSurfaceActions = mainViewModel.analyzerSurfaceActions
         )
 
@@ -346,6 +370,9 @@ class MainActivity: ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 LaunchedEffect(Unit) {
                     mainViewModel.navigationEvent.collect { screen ->
+                        // Navigating to MainScreen from MainScreen would pop and recreate it, losing its state
+                        if (screen == AppScreen.MainScreen && navController.currentDestination?.route == AppScreen.MainScreen.route)
+                            return@collect
                         var navigationTarget = screen.route + screen.subUrl
                         if(screen.route == AppScreen.BookmarkManagerScreen().route && appStateRepository.displayBookmarkTutorial.value) {
                             navigationTarget = AppScreen.BookmarksTutorial.route
@@ -402,35 +429,96 @@ class MainActivity: ComponentActivity() {
                             }
                             NavHost(
                                 navController = navController,
-                                startDestination = if (appStateRepository.welcomeScreenFinished.value)
-                                                       AppScreen.MainScreen.route
-                                                   else
-                                                       AppScreen.WelcomeScreen.route,
+                                startDestination = when {
+                                                       // Opened from the Digital Extension's launcher icon: straight to the Digital tab.
+                                                       // The first-start screens stay pending for the app's own icon.
+                                                       isOpenDigitalTabIntent(intent) -> AppScreen.MainScreen.route
+                                                       !appStateRepository.welcomeScreenFinished.value -> AppScreen.WelcomeScreen.route
+                                                       appStateRepository.lastSeenWhatsNewVersion.value < AppStateRepository.CURRENT_WHATS_NEW_VERSION -> AppScreen.WhatsNewScreen.route
+                                                       else -> AppScreen.MainScreen.route
+                                                   },
                                 modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable(AppScreen.WelcomeScreen.route) {
                                     TutorialScreen(
                                         pages = listOf(
-                                            TutorialScreenCard("RF Analyzer 2.0", image = R.drawable.rfanalyzer2, description =
+                                            TutorialScreenCard("Welcome to RF Analyzer", image = R.drawable.rfanalyzer2, description =
                                                 "RF Analyzer turns your Android device into a real-time spectrum analyzer for " +
                                                 "Software Defined Radio (SDR). \n\nVisualize and listen to radio signals around you" +
                                                 " - from amateur radio to broadcast signals and beyond." +
-                                                "\n\nThe TRIAL VERSION allows you to test compatibility with your hardware and lets you try all features."),
+                                                (if (BuildConfig.IS_FOSS) "" else
+                                                    "\n\nThe TRIAL VERSION allows you to test compatibility with your hardware and lets you try all features.")),
                                             TutorialScreenCard("How To Start",
                                                 description = "This tutorial is also available on YouTube. \n\nThe 6-minute video guides you through the first steps with RF Analyzer. \n\nOr simply tap 'Next' to continue with the in-app tutorial.",
                                                 image = R.drawable.youtube_quick_start_tutorial,
                                                 imageLink = "https://www.youtube.com/watch?v=sui54fqbImw"),
                                             TutorialScreenCard("Connect SDR","Plug your SDR dongle into the USB-OTG adapter and the USB-OTG adapter into your Android device.\n\nThe USB-OTG adapter sometimes comes with your phone or can be bought at very low cost. \nInstead of a USB-OTG adapter it is also possible to use a USB hub or docking station with USB-C connector.", image = R.drawable.tutorial_connect_sdr),
-                                            TutorialScreenCard("Select Source Type", "When you start the app, first select your SDR type in the Signal Source dropdown menu. \n\nThen press the PLAY button on the right.", image = R.drawable.tutorial_select_source),
-                                            TutorialScreenCard("RTL-SDR Driver", "To use RTL-SDR devices, an external driver app called \"RTL2832U\" must be installed first. If it's not found, RF Analyzer will prompt you to install it from the Google Play Store.\n\nOnce the driver is installed, return to RF Analyzer and press Play again.\n\nThis time, the driver should load and ask for permission to access the USB device.\n\nGrant permission - and the FFT plot should start displaying live spectrum data.", image = R.drawable.rtl2832u_driver_logo),
+                                            TutorialScreenCard("Select Source Type", "When you start the app, first select your SDR type in the Signal Source dropdown menu. \n\nThen press the PLAY button on the right.\n\nAndroid will ask for USB permission the first time - grant it, and the FFT plot should start displaying live spectrum data.", image = R.drawable.tutorial_select_source),
                                             TutorialScreenCard("Explore the Spectrum","Explore the spectrum with scroll and zoom gestures. \n\nSwipe left or right inside the FFT or waterfall plot to browse the spectrum. The tuner automatically follows as you scroll.\n\nTo adjust how signals appear vertically, interact with the left axis of the FFT plot. Swipe up/down to shift the visible range or use pinch-to-zoom to adjust the scaling.", image = R.drawable.tutorial_explore),
                                             TutorialScreenCard("Demodulate Signal","Go to the 'Demodulation' tab. \nSelect a mode, e.g. 'FM (wide)' for broadcast radio. \n\nTap on the signal in the FFT plot to move the channel selector. You can also use the tuning wheel. \nCongrats, now you should hear audio :-)", image = R.drawable.tutorial_enable_demodulation),
                                             TutorialScreenCard("Tip: Context Help","A long-press on any label brings you directly to the respective section in the user manual. \n\nHave fun exploring!", image = R.drawable.tutorial_context_help),
                                         ),
                                         onFinish = {
                                         appStateRepository.welcomeScreenFinished.set(true)
+                                        // New users start out already "caught up" - they just saw everything in the tutorial above.
+                                        appStateRepository.lastSeenWhatsNewVersion.set(AppStateRepository.CURRENT_WHATS_NEW_VERSION)
                                         mainViewModel.navigate(AppScreen.MainScreen)
                                     })
+                                }
+                                composable(AppScreen.WhatsNewScreen.route) {
+                                    TutorialScreen(
+                                        skipButtonText = "Skip",
+                                        // What 2.3 brings outside the digital modes for everyone; the digital pages
+                                        // only while digital features are shown (DigitalFeatures).
+                                        pages = listOfNotNull(
+                                            TutorialScreenCard("What's New in RF Analyzer 2.3",
+                                                description = "The biggest update yet: built-in drivers for every supported SDR, KiwiSDR web receivers, a new quick tune gesture, " +
+                                                    "a squelch for every mode and much more" + (if (DigitalFeatures.shown) " - and the digital modes of RFA Digital." else ".") +
+                                                    "\n\nTap through the next pages for the highlights, or skip ahead if you'd rather explore on your own."),
+                                            TutorialScreenCard("Built-in SDR Drivers", image = R.drawable.whatsnew_sources, description =
+                                                "RTL-SDR dongles now work with a built-in driver, like HackRF, Airspy, Airspy HF+ and HydraSDR - no separate driver app needed." +
+                                                "\n\nPlugging in an SDR selects its source type, RF Analyzer can start by itself when one is plugged in (Settings), " +
+                                                "and it restarts on its own after a short USB dropout."),
+                                            TutorialScreenCard("KiwiSDR Web Receivers", image = R.drawable.whatsnew_kiwisdr, description =
+                                                "No SDR at hand? Listen through public KiwiSDR web receivers all over the world." +
+                                                "\n\nIn the Source tab choose KiwiSDR (web), then Choose from Public List: pick a receiver from the list or the map."),
+                                            TutorialScreenCard("Quick Tune & Zoom", image = R.drawable.whatsnew_quick_tune, description =
+                                                "Long-press on empty space in the spectrum or waterfall to bring up the quick tune control." +
+                                                "\n\nDrag up or down to zoom, left or right to fine-tune the channel - all without lifting your finger."),
+                                            TutorialScreenCard("A Squelch for Every Mode", image = R.drawable.whatsnew_squelch, description =
+                                                "The squelch level is now set in dB above the noise, so it fits every SDR, gain and antenna. " +
+                                                "Each mode keeps its own squelch, and whole transmissions get through, their start included." +
+                                                "\n\nSquelch settings from before the update start out off."),
+                                            TutorialScreenCard("Baseband Recording", image = R.drawable.whatsnew_recording, description =
+                                                "Besides the raw IQ samples, you can now record just the demodulated channel (Record Baseband) - much smaller files." +
+                                                "\n\nRecordings keep running in the background, also when you swipe the app away."),
+                                            TutorialScreenCard("Band Plans for Your Region", image = R.drawable.whatsnew_band_plans, description =
+                                                "The bundled band plans follow your ITU region, with new lists of license-free bands (CB, PMR446, FRS, GMRS) " +
+                                                "and of ISM, maritime and air bands. Import them in the Bookmark Manager."),
+                                            TutorialScreenCard("Digital Modes", image = R.drawable.whatsnew_digital_overview, description =
+                                                "With the RFA Digital app (free to install), RF Analyzer decodes FT8, APRS and packet radio, ADS-B, POCSAG, " +
+                                                "LoRa mesh networks (MeshCore, Meshtastic), RDS, RTTY, PSK31 and R09 in its new Digital tab." +
+                                                "\n\nDigital modes are part of the Full Version - bought it before? They are included. " +
+                                                "Without it, try them for two hours of decoding time.").takeIf { DigitalFeatures.shown },
+                                            TutorialScreenCard("Lists, Search & Map", image = R.drawable.whatsnew_digital_map, description =
+                                                "Everything decoded is collected per station, aircraft, pager or mesh node: searchable, exportable, " +
+                                                "and on the map when it has a position.").takeIf { DigitalFeatures.shown },
+                                            TutorialScreenCard("More Improvements",
+                                                description = "Also in this release:" +
+                                                    "\n\n• True dBFS levels, an automatic FFT size and a smoother waterfall with much lower CPU use" +
+                                                    "\n• A new mode picker, a tune step for each mode" +
+                                                    "\n• Gain modes for Airspy and HydraSDR, fixes for HackRF, Airspy and HydraSDR" +
+                                                    "\n• rtl_tcp and KiwiSDR ride out short network stalls" +
+                                                    (if (DigitalFeatures.shown) "\n• Station lists for the digital modes" else "") +
+                                                    "\n\nThe FFT size is now chosen automatically; turn on Manual FFT Size in the Display tab to pick your own."),
+                                        ),
+                                        onFinish = {
+                                            appStateRepository.lastSeenWhatsNewVersion.set(AppStateRepository.CURRENT_WHATS_NEW_VERSION)
+                                            mainViewModel.navigate(AppScreen.MainScreen)
+                                            // On to the biggest new feature: the Digital tab says what is
+                                            // missing (install the extension) and rechecks on return.
+                                            if (DigitalFeatures.shown) mainViewModel.requestTab(AnalyzerTabs.PACKETS)
+                                        })
                                 }
                                 composable(AppScreen.MainScreen.route) { MainScreen(analyzerSurface, mainViewModel, appStateRepository) }
                                 composable(AppScreen.RecordingScreen.route) { RecordingsScreen(navController, mainViewModel.recordings, appStateRepository.displayOnlyFavoriteRecordings.stateFlow, mainViewModel.recordingsScreenActions) }
@@ -528,6 +616,11 @@ class MainActivity: ComponentActivity() {
             mainViewModel.uiActions.collect { action ->
                 when (action) {
                     is UiAction.OnStartClicked -> onStartClickedAction()
+                    is UiAction.StartAnalyzerIfUsbSdrAttached -> {
+                        val usbManager = getSystemService(USB_SERVICE) as UsbManager
+                        if (UsbSdrType.findAttached(usbManager).any { (_, type) -> type.sourceType == appStateRepository.sourceType.value })
+                            mainViewModel.startAnalyzerIfStopped()
+                    }
                     is UiAction.OnStopClicked  -> onStopClickedAction()
                     is UiAction.OnAutoscaleClicked -> analyzerSurface.autoscale()
                     is UiAction.ShowDialog -> AlertDialog.Builder(this@MainActivity)
@@ -537,6 +630,7 @@ class MainActivity: ComponentActivity() {
                             action.action?.let { it() }
                         }
                         .setNegativeButton(action.negativeButton) { dialog, _ ->
+                            action.negativeAction?.let { it() }
                             dialog.dismiss()
                         }
                         .show()
@@ -556,6 +650,8 @@ class MainActivity: ComponentActivity() {
                     is UiAction.OnShareLogFileClicked -> shareFile(File(filesDir, LogcatLogger.logfileName), "text/plain", "Share log file via")
                     is UiAction.OnStartRecordingClicked -> if(isBound) analyzerService?.startRecording()
                     is UiAction.OnStopRecordingClicked -> if(isBound) analyzerService?.stopRecording()
+                    is UiAction.OnStartBasebandRecordingClicked -> if(isBound) analyzerService?.startBasebandRecording()
+                    is UiAction.OnStopBasebandRecordingClicked -> if(isBound) analyzerService?.stopBasebandRecording()
                     is UiAction.OnDeleteRecordingClicked -> {
                         val file = File(action.filePath)
                         if(file.exists()) file.delete()
@@ -568,8 +664,27 @@ class MainActivity: ComponentActivity() {
                     is UiAction.RenameFile -> renameFile(action.file, action.newName)
                     is UiAction.WriteInternalFileToFile -> saveFileToUserDirectory(action.destUri, File(action.filename))
                     is UiAction.OnShareRecordingClicked -> shareFile(File(action.filename), "application/octet-stream", "Share recording via")
-                    is UiAction.OnBuyFullVersionClicked -> mainViewModel.buyFullVersion(this@MainActivity)
-                    is UiAction.OnStartExternalActivity -> startActivity(action.intent)
+                    is UiAction.OnShareJsonExportClicked -> {
+                        val file = File.createTempFile(action.filenamePrefix, ".json", cacheDir)
+                        file.writeText(action.json)
+                        shareFile(file, "application/json", "Share data via")
+                    }
+                    is UiAction.OnShareJsonFileClicked -> {
+                        mainViewModel.showLoadingIndicator(true)
+                        try {
+                            val file = withContext(Dispatchers.IO) {
+                                File.createTempFile(action.filenamePrefix, ".json", cacheDir).also { file ->
+                                    file.bufferedWriter().use { action.write(it) }
+                                }
+                            }
+                            shareFile(file, "application/json", "Share data via")
+                        } finally {
+                            mainViewModel.showLoadingIndicator(false)
+                        }
+                    }
+                    is UiAction.LaunchPurchase -> lifecycleScope.launch { mainViewModel.purchase(this@MainActivity, action.product) }
+                    is UiAction.OnStartExternalActivity -> startExternalActivity(action.intent)
+                    is UiAction.RetryDigitalExtension -> analyzerService?.retryDigitalExtension()
                     null -> Log.e(TAG, "mainViewModel.uiActions.collect: action is NULL!")
                 }
             }
@@ -580,47 +695,16 @@ class MainActivity: ComponentActivity() {
             setScreenOrientation(it)
         }
 
-        // Register the Activity Result Launcher for Intent that start the Rtlsdr driver
-        startRtlsdrDriverLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                Log.i(TAG, "startRtlsdrDriverLauncher: RTL2832U driver was successfully started.")
-                // Start the AnalyzerService:
-                if (isBound) {
-                    analyzerService?.startAnalyzer()
-                } else {
-                    Log.w(TAG, "startRtlsdrDriverLauncher.onActivityResult: Service is not bound! Cannot start Analyzer")
-                    appStateRepository.analyzerStartPending.set(false)
-                }
-            } else {
-                val errorId = result.data?.getIntExtra("marto.rtl_tcp_andro.RtlTcpExceptionId", -1) ?: -1
-                val exceptionCode = result.data?.getIntExtra("detailed_exception_code", 0) ?: 0
-                val detailedDescription: String = result.data?.getStringExtra("detailed_exception_message") ?: ""
-                // err_info from RTL2832U:
-                val rtlsdrErrInfo = arrayOf(
-                    "permission_denied", "root_required", "no_devices_found", "unknown_error", "replug", "already_running"
-                )
-                val errorMsg =  if (errorId >= 0 && errorId < rtlsdrErrInfo.size) rtlsdrErrInfo[errorId]
-                                else "ERROR NOT SPECIFIED"
-                Log.e(TAG, "startRtlsdrDriverLauncher.onActivityResult: RTL2832U driver returned with error: " +
-                            "$errorMsg ($errorId): $detailedDescription ($exceptionCode)")
-
-                appStateRepository.analyzerStartPending.set(false)
-
-                mainViewModel.showSnackbar(
-                    SnackbarEvent(
-                        message = "Error with RTL-SDR Driver: $errorMsg ($errorId): $detailedDescription ($exceptionCode)",
-                        buttonText = null,
-                        callback = { }
-                    ),
-                )
-            }
-        }
-
-        // Handle incoming intent (when app was started by opening an .iq file with RF Analyzer
+        // Handle the incoming intent (an IQ file opened with RF Analyzer, the extension's launcher icon)
         if(intent != null) {
             Log.d(TAG, "onCreate: Incoming intent: action=${intent.action} categories=${intent.categories} data=${intent.data}")
-            if("android.intent.action.VIEW" == intent.action && intent.data != null)
+            // Not again after a configuration change, which recreates the activity with the same intent
+            if (savedInstanceState == null && "android.intent.action.VIEW" == intent.action && intent.data != null)
                 handleIncomingFile(intent)
+            if (savedInstanceState == null && isOpenDigitalTabIntent(intent)) {
+                mainViewModel.recheckDigitalExtension() // the switch may not know of the install yet (DigitalFeatures)
+                mainViewModel.requestTab(AnalyzerTabs.PACKETS)
+            }
         }
     }
 
@@ -664,7 +748,16 @@ class MainActivity: ComponentActivity() {
         Log.d(TAG, "onNewIntent: received intent: action=${intent.action} categories=${intent.categories} data=${intent.data}")
         super.onNewIntent(intent)
         handleIncomingFile(intent)
+        if (isOpenDigitalTabIntent(intent)) {
+            mainViewModel.recheckDigitalExtension() // the switch may not know of the install yet (DigitalFeatures)
+            mainViewModel.navigate(AppScreen.MainScreen)
+            mainViewModel.requestTab(AnalyzerTabs.PACKETS)
+        }
     }
+
+    // Sent by the extension's launcher icon. The sender isn't checked: the Digital tab exists only
+    // while digital features are shown (MainScreen), which the callers recheck first.
+    private fun isOpenDigitalTabIntent(intent: Intent?) = intent?.action == DigitalExtensionApps.ACTION_OPEN_DIGITAL_TAB && DigitalFeatures.inBuild
 
     private fun handleIncomingFile(intent: Intent) {
         val uri = intent.data
@@ -689,8 +782,18 @@ class MainActivity: ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Purchases made, completed or refunded while the app was in the background - also right
+        // after Google Play's purchase sheet closes (Google's recommendation).
+        billingRepository.refresh()
+    }
+
     override fun onStart() {
         super.onStart()
+        isStarted = true
+        mainViewModel.recheckDigitalExtension() // back from installing or updating RFA Digital?
+        mainViewModel.refreshLocation()
         Log.d(TAG, "onStart: Binding to service if running.")
         // Bind Service:
         Intent(this, AnalyzerService::class.java).also { intent ->
@@ -702,10 +805,18 @@ class MainActivity: ComponentActivity() {
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
         registerReceiver(usbBroadcastReceiver, filter)
+        registerReceiver(digitalExtensionPackageReceiver, IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+        })
+        lifecycleScope.launch { detectSdrsAttachedWhileStopped() }
     }
 
     override fun onStop() {
         super.onStop()
+        isStarted = false
         Log.d(TAG, "onStop: Unbinding from service.")
         if (isBound) {
             unbindService(serviceConnection)
@@ -713,26 +824,73 @@ class MainActivity: ComponentActivity() {
         }
         // Unregistering the USB broadcast receiver
         unregisterReceiver(usbBroadcastReceiver)
+        unregisterReceiver(digitalExtensionPackageReceiver)
     }
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy: Activity destroyed.")
+        isCreated = false
         super.onDestroy()
     }
 
     private fun onStartClickedAction() {
         Log.d(TAG, "onStartPressedAction")
-        // If RTL-SDR Source is configured (without external server) we need to start the driver activity:
-        if (appStateRepository.sourceType.value == SourceType.RTLSDR &&
-            !appStateRepository.rtlsdrExternalServerEnabled.value) {
-            startRtlsdrDriver() // this will call analyzerService.startAnalyzer() once successful
-        } else {
-            // Start the AnalyzerService:
-            if (isBound) {
-                analyzerService?.startAnalyzer()
-            } else {
-                Log.w(TAG, "onStartClickedAction: Service is not bound! Cannot start Analyzer")
+        // An rtl_tcp server or a KiwiSDR in the local network needs Android 17's permission first
+        val host = networkSourceHost()
+        if (host != null && LocalNetworkAccess.isBlocked(this)) {
+            lifecycleScope.launch {
+                if (LocalNetworkAccess.isLocalHost(host)) askForLocalNetworkAccess(host) else startAnalyzerService()
             }
+            return
+        }
+        startAnalyzerService()
+    }
+
+    /** The host a network source connects to (an rtl_tcp server, a KiwiSDR); null for the others. */
+    private fun networkSourceHost(): String? = when (appStateRepository.sourceType.value) {
+        SourceType.RTLSDR -> appStateRepository.rtlsdrExternalServerIP.value.takeIf { appStateRepository.rtlsdrExternalServerEnabled.value }
+        SourceType.KIWISDR -> appStateRepository.kiwiSdrHost.value
+        else -> null
+    }
+
+    private fun askForLocalNetworkAccess(host: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Local network access")
+            .setMessage("RF Analyzer connects to $host in your local network. Android asks for your permission for this " +
+                        "(\"Nearby devices\"). RF Analyzer only connects to the servers you enter.")
+            .setPositiveButton("Continue") { _, _ ->
+                localNetworkHost = host
+                localNetworkExplainedBefore = shouldShowRequestPermissionRationale(LocalNetworkAccess.PERMISSION)
+                localNetworkPermissionLauncher.launch(LocalNetworkAccess.PERMISSION)
+            }
+            .setNegativeButton("Cancel") { _, _ -> abandonStart() }
+            .setOnCancelListener { abandonStart() }
+            .show()
+    }
+
+    /** Start was pressed, but the analyzer won't start (a permission was refused): the button's
+     *  spinner (analyzerStartPending, set by the view model) goes back to the Start button. */
+    private fun abandonStart() {
+        if (!appStateRepository.analyzerRunning.value) appStateRepository.analyzerStartPending.set(false)
+    }
+
+    private fun showLocalNetworkSettingsHint(host: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Local network access is off")
+            .setMessage("Android no longer asks for RF Analyzer's local network permission, so it can't reach $host. " +
+                        "Allow it in the app's settings: Permissions → Nearby devices.")
+            .setPositiveButton("Open settings") { _, _ -> openAppSettings(this) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun startAnalyzerService() {
+        // Start the AnalyzerService:
+        if (isBound) {
+            analyzerService?.startAnalyzer()
+        } else {
+            Log.w(TAG, "onStartClickedAction: Service is not bound! Cannot start Analyzer")
+            abandonStart()
         }
     }
 
@@ -749,50 +907,11 @@ class MainActivity: ComponentActivity() {
         var filename: String? = null
         contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (nameIndex != -1) {
-                cursor.moveToFirst()
+            if (nameIndex != -1 && cursor.moveToFirst())
                 filename = cursor.getString(nameIndex)
-            }
         }
         Log.d(TAG, "setFileSourceFromContentUri: URI: $uri (Original Filename: $filename)")
         mainViewModel.setFilesourceUri(uri.toString(), filename)
-    }
-
-    private fun startRtlsdrDriver(): Boolean {
-        // start local rtl_tcp instance:
-        try {
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setClassName("marto.rtl_tcp_andro", "com.sdrtouch.rtlsdr.DeviceOpenActivity");
-                val enableBiasT = if(appStateRepository.rtlsdrEnableBiasT.value) "-T 1" else "-T 0"
-                data = "iqsrc://-a 127.0.0.1 -p 1234 -n 1 $enableBiasT".toUri()
-            }
-            startRtlsdrDriverLauncher.launch(intent)
-            return true
-        } catch (e: ActivityNotFoundException) {
-            // Driver not installed
-            Log.e(TAG, "openSource: RTL2832U is not installed")
-            appStateRepository.analyzerStartPending.set(false)
-            // Show a dialog that links to the play market:
-            AlertDialog.Builder(this)
-                .setTitle("RTL2832U driver not installed!")
-                .setMessage("You need to install the (free) RTL2832U driver to use RTL-SDR dongles.")
-                .setPositiveButton(
-                    "Install from Google Play"
-                ) { dialog, whichButton ->
-                    val marketIntent = Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("market://details?id=marto.rtl_tcp_andro")
-                    )
-                    startActivity(marketIntent)
-                }
-                .setNegativeButton(
-                    "Cancel"
-                ) { dialog, whichButton ->
-                    // do nothing
-                }
-                .show()
-            return false// abort the start of the analyzer service
-        }
     }
 
     private fun setScreenOrientation(screenOrientation: ScreenOrientation) {
@@ -820,16 +939,7 @@ class MainActivity: ComponentActivity() {
                             message = "Missing Permission. Cannot export file.",
                             buttonText = "Give Permission",
                             callback = {
-                                val requestPermissionLauncher = registerForActivityResult(
-                                    ActivityResultContracts.RequestPermission()
-                                ) { isGranted ->
-                                    if (isGranted) {
-                                        Log.d(TAG, "POST_NOTIFICATIONS permission granted.")
-                                    } else {
-                                        Log.w(TAG, "POST_NOTIFICATIONS permission denied.")
-                                    }
-                                }
-                                requestNotificationPermission(requestPermissionLauncher, "This app needs the permission to display notifications while exporting files in the background.")
+                                requestNotificationPermission(notificationPermissionLauncher, "This app needs the permission to display notifications while exporting files in the background.")
                             }
                         ))
                         return

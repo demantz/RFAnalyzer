@@ -1,0 +1,3 @@
+[submodule "ipc"]
+	path = ipc
+	url = https://github.com/demantz/rfanalyzer_ipc.git

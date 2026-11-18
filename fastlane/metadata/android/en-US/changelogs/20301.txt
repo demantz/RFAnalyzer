@@ -1,0 +1,9 @@
+- Built-in RTL-SDR driver (incl. RTL-SDR Blog V4): no separate driver app needed
+- KiwiSDR: listen through public web receivers all over the world - no SDR needed
+- Quick tune & zoom: long-press empty space in the spectrum or waterfall
+- A squelch for every mode, in dB above the noise
+- Baseband recording: just the demodulated channel
+- Band plans for your region, license-free band lists
+- True dBFS levels, automatic FFT size, much lower CPU use
+- Start when an SDR is plugged in
+- Many fixes

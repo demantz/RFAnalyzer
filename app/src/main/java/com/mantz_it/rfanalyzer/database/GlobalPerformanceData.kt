@@ -7,23 +7,8 @@ package com.mantz_it.rfanalyzer.database
  * Description: A singleton object holding averaged performance data from various Threads.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -35,6 +20,9 @@ object GlobalPerformanceData {
     private data class EmaState(var value: Float, var initialized: Boolean = false)
 
     private val loads = mutableMapOf<String, EmaState>()
+    // Cumulative event counters (queue drops, IPC poll misses, ring overwrites, ...): rare, bursty
+    // events that an average would hide.
+    private val counters = mutableMapOf<String, Long>()
     private val lock = Any()
 
     fun updateLoad(id: String, newSample: Float) {
@@ -64,9 +52,22 @@ object GlobalPerformanceData {
         }
     }
 
+    fun incrementCounter(id: String, by: Long = 1) {
+        synchronized(lock) {
+            counters[id] = (counters[id] ?: 0L) + by
+        }
+    }
+
+    fun getAllCounters(): Map<String, Long> {
+        synchronized(lock) {
+            return counters.toMap()
+        }
+    }
+
     fun reset() {
         synchronized(lock) {
             loads.clear()
+            counters.clear()
         }
     }
 }

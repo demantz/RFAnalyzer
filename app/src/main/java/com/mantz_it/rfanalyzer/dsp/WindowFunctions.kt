@@ -1,31 +1,29 @@
 package com.mantz_it.rfanalyzer.dsp
 
 /**
- * <h1>RF Analyzer - DSP Window Function</h1>
+ * <h1>RF Analyzer - DSP Window Functions</h1>
  *
  * Module:      WindowFunctions.kt
- *
- * Description: This class implements Window Functions (Hamming, Kaiser, ...)
- * for DSP operations. Mostly copied and inspired from GNU Radio.
+ * Description: Window functions (Blackman, Hamming, Kaiser) for filter design, derived from GNU
+ *              Radio's window functions (gr-fft).
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
- * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * GNU Radio: Copyright (C) 2002-2013 Free Software Foundation, Inc.
+ * License: GPL version 3 or later - GNU Radio's license, which applies to code derived from it.
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 interface WindowFunction {
     /**
@@ -65,7 +63,7 @@ class KaiserWindow(private val beta: Double) : WindowFunction {
     override fun value(n: Int, N: Int): Float {
         if (beta < 0.0) throw IllegalArgumentException("Kaiser beta must be >= 0")
 
-        // Precompute inverse of I0(beta) once
+        // Inverse of I0(beta)
         val iBeta = 1.0 / izero(beta)
 
         // Special case for edges (numerical stability)

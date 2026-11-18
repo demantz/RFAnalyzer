@@ -1,17 +1,25 @@
 package com.mantz_it.rfanalyzer.database
 
+import com.mantz_it.rfanalyzer.digiext.DigitalFeatures
 import android.graphics.Color
 import androidx.paging.PagingSource
 import androidx.room.*
-import com.mantz_it.rfanalyzer.database.AppStateRepository.Companion.VERTICAL_SCALE_LOWER_BOUNDARY
-import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
+import com.mantz_it.rfanalyzer.ui.tabs.DemodulationMode
+import com.mantz_it.rfanalyzer_ipc.DigitalDemodParams
+import com.mantz_it.rfanalyzer_ipc.RttyPolarity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlin.math.abs
 import kotlin.math.floor
+import com.mantz_it.rfanalyzer_ipc.LoraSpreadingFactors
+import com.mantz_it.rfanalyzer_ipc.LoraIqMode
+
 /**
  * <h1>RF Analyzer - StationDao</h1>
  *
@@ -23,7 +31,6 @@ import kotlin.math.floor
  *              - OnlineStationProviderSettings
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -107,10 +114,8 @@ data class Coordinates(val latitude: Double, val longitude: Double) {
                     )
                 ) -1.0 else 1.0
                 val out = sign * (degrees + minutes / 60.0 + seconds / 3600.0)
-                //Log.d("StationLocation.Coordinates", "valuesToDouble: $out")
                 return out
             }
-            //Log.d("StationLocation.Coordinates", "parseDMSPart: $part")
             if (part.contains('°')) {
                 // formats like: 40°50'10"N
                 val regex =
@@ -120,7 +125,6 @@ data class Coordinates(val latitude: Double, val longitude: Double) {
                 val match = regex.find(part)
                 match?.let {
                     val (degStr, minStr, secStr, hemStr) = it.destructured
-                    //Log.d("StationLocation.Coordinates", "parseDMSPart: $degStr  | $hemStr  |  $minStr  |  $secStr")
                     return valuesToDouble(degStr, minStr, secStr, hemStr)
                 }
             } else {
@@ -130,39 +134,33 @@ data class Coordinates(val latitude: Double, val longitude: Double) {
                 val match = regex.find(part)
                 match?.let {
                     val (degStr, hemStr, minStr, secStr) = it.destructured
-                    //Log.d("StationLocation.Coordinates", "parseDMSPart (simple): $degStr  | $hemStr  |  $minStr  |  $secStr")
                     return valuesToDouble(degStr, minStr, secStr, hemStr)
                 }
             }
             return null
         }
 
+        private val MAIDENHEAD = Regex("""[A-R]{2}[0-9]{2}([A-X]{2}([0-9]{2})?)?""", RegexOption.IGNORE_CASE)
+
+        /** Centre of a 4, 6 or 8 character Maidenhead locator ("JN49", "JN49hl", "JN49hl37");
+         *  null for anything else - also for a half-typed one, without throwing. */
         fun maidenheadToLatLon(locator: String): Pair<Double, Double>? {
-            if(locator.length < 6) return null
-
-            // Convert letters to indices
-            val lonField = locator[0].uppercaseChar() - 'A'
-            val latField = locator[1].uppercaseChar() - 'A'
-
-            val lonSquare = locator[2].digitToInt()
-            val latSquare = locator[3].digitToInt()
-
-            val lonSub = locator[4].lowercaseChar() - 'a'
-            val latSub = locator[5].lowercaseChar() - 'a'
-
-            // Calculate longitude
-            var lon = lonField * 20.0 - 180.0       // field
-            lon += lonSquare * 2.0                  // square
-            lon += lonSub * (2.0 / 24.0)            // subsquare
-            lon += 2.0 / 48.0                       // center of subsquare
-
-            // Calculate latitude
-            var lat = latField * 10.0 - 90.0        // field
-            lat += latSquare * 1.0                   // square
-            lat += latSub * (1.0 / 24.0)             // subsquare
-            lat += 1.0 / 48.0                        // center of subsquare
-
-            return Pair(lat, lon)
+            if (!MAIDENHEAD.matches(locator)) return null
+            var lon = (locator[0].uppercaseChar() - 'A') * 20.0 - 180.0 + locator[2].digitToInt() * 2.0
+            var lat = (locator[1].uppercaseChar() - 'A') * 10.0 - 90.0 + locator[3].digitToInt() * 1.0
+            var lonCell = 2.0
+            var latCell = 1.0
+            if (locator.length >= 6) {
+                lonCell /= 24; latCell /= 24
+                lon += (locator[4].lowercaseChar() - 'a') * lonCell
+                lat += (locator[5].lowercaseChar() - 'a') * latCell
+            }
+            if (locator.length == 8) {
+                lonCell /= 10; latCell /= 10
+                lon += locator[6].digitToInt() * lonCell
+                lat += locator[7].digitToInt() * latCell
+            }
+            return Pair(lat + latCell / 2, lon + lonCell / 2) // the centre of the cell
         }
     }
 }
@@ -204,19 +202,48 @@ data class Schedule(
 @Serializable
 data class DemodulationParameters(
     val version: Int = 1,
+    @Serializable(with = SquelchSerializer::class)
     val squelch: Squelch?,
-    //val agc: AGC? = null,
+    val rtty: Rtty? = null,
+    val pocsag: Pocsag? = null,
+    val ax25: Ax25? = null,
+    val psk31: Psk31? = null,
+    val r09: R09? = null,
+    val lora: Lora? = null,
 ) {
     @Serializable
     data class Squelch(
         val enabled: Boolean = false,
-        val thresholdDb: Float = VERTICAL_SCALE_LOWER_BOUNDARY, // in dBFS
+        /** dB above the noise floor (see Squelch.kt). */
+        val marginDb: Float = AppStateRepository.DEFAULT_SQUELCH_MARGIN,
     )
-    //@Serializable
-    //data class AGC(
-    //    val mode: String = "Fast", // "Fast", "Slow", "Manual"
-    //    val decayMs: Int = 100
-    //)
+    @Serializable
+    data class Rtty(
+        val baudRate: Float = DigitalDemodParams.Rtty.AUTO,        // AUTO (0) / 45.45 / 50 / 75 / 100
+        val frequencyShift: Float = DigitalDemodParams.Rtty.AUTO,  // AUTO (0) / 85 / 170 / 450 / 850 Hz
+        val polarity: RttyPolarity = RttyPolarity.AUTO,
+    )
+    @Serializable
+    data class Pocsag(
+        val baudRate: Int = 0,  // 0 = Auto (try 512/1200/2400 in parallel), else 512/1200/2400
+    )
+    @Serializable
+    data class Psk31(
+        val baudRate: Float = DigitalDemodParams.Psk31.AUTO,      // AUTO (0) / 31.25 / 62.5 / 125
+    )
+    @Serializable
+    data class R09(
+        val baudRate: Int = DigitalDemodParams.R09.AUTO,        // AUTO (0) / 2400 / 1200
+    )
+    @Serializable
+    data class Lora(
+        val spreadingFactors: Int = LoraSpreadingFactors.AUTO, // a LoraSpreadingFactors set; AUTO = SF7-12
+        val iqMode: LoraIqMode = LoraIqMode.AUTO,
+    )
+    @Serializable
+    data class Ax25(
+        val baudRate: Int = 1200,  // 300 (HF), 1200 (VHF/Bell202), 9600 (G3RUH): the AX.25 variant
+    )
 }
 
 
@@ -225,7 +252,11 @@ enum class SourceProvider(val displayName: String, val color: Int) {
     EIBI("EiBi DB", Color.argb(255, 150, 0, 0) /*dark red*/),
     POTA("POTA Spots", Color.argb(255, 0, 150, 0) /*dark green*/),
     SOTA("SOTA Spots", Color.argb(255, 230, 230, 230) /*light grey*/),
+    DIGITAL_LIST("Digital Stations", Color.argb(255, 0, 150, 150) /*teal*/),
 }
+
+/** Whether [this] source is offered (DigitalFeatures: the digital station list only while digital features are shown). */
+val SourceProvider.shown: Boolean get() = this != SourceProvider.DIGITAL_LIST || DigitalFeatures.shown
 
 @Serializable
 data class SubBand(
@@ -241,39 +272,55 @@ enum class BookmarkListType(val displayName: String) {
     BAND("Bands"),
 }
 
+/**
+ * 2.2.1 stored the squelch threshold as an absolute level ("thresholdDb", in a half-dB unit;
+ * pre-release builds of 2.3 "thresholdDbfs"). It depended on the SDR, its gain and the FFT size and
+ * isn't carried over: a bookmark that had one gets the default margin above the noise floor.
+ */
+object SquelchSerializer : JsonTransformingSerializer<DemodulationParameters.Squelch>(DemodulationParameters.Squelch.serializer()) {
+    private val LEGACY_KEYS = setOf("thresholdDb", "thresholdDbfs")
+
+    override fun transformDeserialize(element: JsonElement): JsonElement =
+        if (element !is JsonObject) element else JsonObject(element.filterKeys { it !in LEGACY_KEYS })
+}
+
 // --- Type Converters ---
+/** Stored station JSON may hold fields this build doesn't know (written by a newer one, restored
+ *  from a backup): they are skipped rather than failing every query that reads the row. */
+private val stationJson = Json { ignoreUnknownKeys = true }
+
 class StationTypeConverters {
     @TypeConverter
     fun fromCoordinates(coords: Coordinates?): String? =
-        coords?.let { Json.encodeToString(Coordinates.serializer(), it) }
+        coords?.let { stationJson.encodeToString(Coordinates.serializer(), it) }
 
     @TypeConverter
     fun toCoordinates(json: String?): Coordinates? =
-        json?.let { Json.decodeFromString(Coordinates.serializer(), it) }
+        json?.let { stationJson.decodeFromString(Coordinates.serializer(), it) }
 
     @TypeConverter
     fun fromSchedule(schedule: Schedule?): String? =
-        schedule?.let { Json.encodeToString(Schedule.serializer(), it) }
+        schedule?.let { stationJson.encodeToString(Schedule.serializer(), it) }
 
     @TypeConverter
     fun toSchedule(json: String?): Schedule? =
-        json?.let { Json.decodeFromString(Schedule.serializer(), it) }
+        json?.let { stationJson.decodeFromString(Schedule.serializer(), it) }
 
     @TypeConverter
     fun fromSubBands(subBands: List<SubBand>?): String? =
-        subBands?.let { Json.encodeToString(ListSerializer(SubBand.serializer()), it) }
+        subBands?.let { stationJson.encodeToString(ListSerializer(SubBand.serializer()), it) }
 
     @TypeConverter
     fun toSubBands(json: String?): List<SubBand>? =
-        json?.let { Json.decodeFromString(ListSerializer(SubBand.serializer()), it) }
+        json?.let { stationJson.decodeFromString(ListSerializer(SubBand.serializer()), it) }
 
     @TypeConverter
     fun fromDemodulationParameters(value: DemodulationParameters?): String? =
-        value?.let { Json.encodeToString(it) }
+        value?.let { stationJson.encodeToString(it) }
 
     @TypeConverter
     fun toDemodulationParameters(json: String?): DemodulationParameters? =
-        json?.let { Json.decodeFromString<DemodulationParameters>(it) }
+        json?.let { stationJson.decodeFromString<DemodulationParameters>(it) }
 }
 
 // --- Entity Wrappers ---
@@ -306,7 +353,7 @@ data class BandWithBookmarkList(
 @Serializable
 @Entity(tableName = "bookmarkLists")
 data class BookmarkList(
-    @PrimaryKey(autoGenerate = true) @Transient val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String = "",
     val type: BookmarkListType = BookmarkListType.STATION,
     val notes: String? = null,
@@ -420,6 +467,10 @@ interface StationDao {
 
     @Query("SELECT * FROM stations WHERE source = :source")
     fun getStationsBySource(source: SourceProvider): Flow<List<Station>>
+
+    /** The mode sheet's candidates: the stations of [modes] from [listSource] and the favorites. */
+    @Query("SELECT * FROM stations WHERE mode IN (:modes) AND (source = :listSource OR favorite = 1)")
+    fun getModeSheetStations(modes: List<DemodulationMode>, listSource: SourceProvider): Flow<List<Station>>
 
     @Query("SELECT * FROM stations WHERE source = :source AND remoteHash IN (:hashes)")
     suspend fun getBySourceAndHashes(source: SourceProvider, hashes: List<String>): List<Station>

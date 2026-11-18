@@ -2,4 +2,5 @@
 <paths>
     <files-path name="recording_files" path="recordings/" />
     <files-path name="logfile" path="." />
+    <cache-path name="rds_exports" path="." />
 </paths>

@@ -52,7 +52,7 @@ import com.mantz_it.rfanalyzer.database.Recording
 import com.mantz_it.rfanalyzer.R
 import com.mantz_it.rfanalyzer.database.calculateFileName
 import com.mantz_it.rfanalyzer.ui.composable.EditStringDialog
-import com.mantz_it.rfanalyzer.ui.composable.FilesourceFileFormat
+import com.mantz_it.rfanalyzer.ui.tabs.FilesourceFileFormat
 import com.mantz_it.rfanalyzer.ui.composable.asSizeInBytesToString
 import com.mantz_it.rfanalyzer.ui.composable.asStringWithUnit
 import com.mantz_it.rfanalyzer.ui.composable.rememberCreateFilePicker
@@ -70,23 +70,8 @@ import java.util.Locale
  * Description: A screen which displays all recordings.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -316,7 +301,6 @@ fun RecScreenPreview() {
         filePath = "abc://test",
         favorite = true
     )
-    //val _recordings = MutableStateFlow<List<Recording>>(emptyList())
     val _recordings = MutableStateFlow<List<Recording>>(listOf(rec))
     val recordings: StateFlow<List<Recording>> = _recordings.asStateFlow()
     RecordingsScreen(

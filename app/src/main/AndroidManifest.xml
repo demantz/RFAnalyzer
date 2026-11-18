@@ -1,22 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <!-- Internet is used to connect to local and remote rtl_tcp instances -->
+    <!-- Internet: rtl_tcp servers, KiwiSDR receivers and their public list, map tiles, the online
+         station lists, time servers (FT8) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 17: an rtl_tcp server or a KiwiSDR in the local network (LocalNetworkAccess),
+         asked for right before such a source starts -->
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
 
-    <!-- Permissions for the AnalyzerService -->
+    <!-- Foreground services: AnalyzerService (mediaPlayback, connectedDevice) and FileCopyService
+         (dataSync), both with a notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- connectedDevice: the session keeps an SDR streaming (USB, or rtl_tcp/KiwiSDR over the
+         network). CHANGE_NETWORK_STATE is that type's prerequisite (one of the connectivity
+         permissions it accepts); RF Analyzer doesn't change the network with it. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Approximate location only, asked for in context: the map's "Show my location" button
+         (MaplibreView) and "This device's location" in the location sheet. Nothing needs more
+         than about 2 km - users who want it precise enter their grid locator. (Precise location
+         would need a Play Console declaration for apps targeting Android 17.) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- The digital extension's permission and queries: app/src/play/AndroidManifest.xml -->
 
     <application
         android:name=".RFAnalyzerApplication"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@drawable/ic_launcher_round"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
         <activity
             android:name=".ui.MainActivity"
@@ -25,6 +46,24 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <!-- A supported SDR was plugged in: grants the USB permission (see UsbAttachActivity).
+             Disabled unless start-on-plug-in is on or a dropped-out SDR is awaited. -->
+        <activity
+            android:name=".ui.UsbAttachActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_sdr_devices" />
         </activity>
 
         <activity
@@ -47,7 +86,7 @@
         <service
             android:name=".analyzer.AnalyzerService"
             android:enabled="true"
-            android:foregroundServiceType="mediaPlayback"
+            android:foregroundServiceType="mediaPlayback|connectedDevice"
             android:exported="false" />
 
         <service

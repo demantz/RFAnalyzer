@@ -1,5 +1,6 @@
 package com.mantz_it.rfanalyzer.ui.screens
 
+import com.mantz_it.rfanalyzer.location.LocationRepository
 import android.net.Uri
 import android.util.Log
 import androidx.compose.material.icons.Icons
@@ -41,7 +42,6 @@ import javax.inject.Inject
  * Description: View Model for the BookmarkManagerScreen
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -71,7 +71,8 @@ sealed class DeleteRequest {
 class BookmarkManagerViewModel @Inject constructor(
     private val repository: StationRepository,
     private val stationImporterExporter: StationImporterExporter,
-    private val appStateRepository: AppStateRepository
+    private val appStateRepository: AppStateRepository,
+    locationRepository: LocationRepository,
 ) : ViewModel() {
 
     companion object {
@@ -83,9 +84,11 @@ class BookmarkManagerViewModel @Inject constructor(
     fun showSnackbar(snackbarEvent: SnackbarEvent) { _snackbarEvent.tryEmit(snackbarEvent) }
     fun showMessage(msg: String) { showSnackbar(SnackbarEvent(msg)) }
 
-    val displayDefaultBandImportDialog = appStateRepository.displayDefaultBandImportDialog.stateFlow
-    fun showDefaultBandImportDialog() { appStateRepository.displayDefaultBandImportDialog.set(true) }
-    fun dismissDefaultBandImportDialog() { appStateRepository.displayDefaultBandImportDialog.set(false) }
+    val displayDefaultImportDialog = appStateRepository.displayDefaultImportDialog.stateFlow
+    /** Preselects the import dialog's region. */
+    val ituRegion = locationRepository.location.map { it.ituRegion }.stateIn(viewModelScope, SharingStarted.Eagerly, locationRepository.location.value.ituRegion)
+    fun showDefaultImportDialog() { appStateRepository.displayDefaultImportDialog.set(true) }
+    fun dismissDefaultImportDialog() { appStateRepository.displayDefaultImportDialog.set(false) }
 
     private val _legacyDbAvailable = MutableStateFlow(false)
     val legacyDbAvailable = _legacyDbAvailable.asStateFlow()
@@ -437,12 +440,7 @@ class BookmarkManagerViewModel @Inject constructor(
             bandwidth = appStateRepository.channelWidth.value,
             createdAt = System.currentTimeMillis(),
             mode = appStateRepository.demodulationMode.value,
-            demodulationParameters = if(appStateRepository.squelchEnabled.value) {
-                DemodulationParameters(squelch = DemodulationParameters.Squelch(
-                    enabled = true,
-                    thresholdDb = appStateRepository.squelch.value
-                ))
-            } else null,
+            demodulationParameters = appStateRepository.captureCurrentDemodulationParameters(),
         )
     }
     fun setEditedBandToNewWithDefaults(defaultBookmarkListId: Long? = null) {
@@ -456,8 +454,6 @@ class BookmarkManagerViewModel @Inject constructor(
 
     fun insertStation(station: Station) {
         viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            station.copy(createdAt = now, updatedAt = now)
             Log.i(TAG, "insertStation: $station")
             repository.insertStation(station)
         }
@@ -552,20 +548,33 @@ class BookmarkManagerViewModel @Inject constructor(
             BookmarkListType.BAND -> viewModelScope.launch { itemsToExport = repository.getBandsWithBookmarkListByBookmarkLists(setOf(bookmarkList.id)).first() to BookmarkListType.BAND }
         }
     }
+    // itemsToExport as the (bookmarkLists, stations, bands) to export: to a file the user chose
+    // (confirmItemsToExport) or as JSON for the ExportSheet's "Share" (buildExportJson).
+    private fun resolveExportData(items: List<Any>, type: BookmarkListType): Triple<List<BookmarkList>, List<Station>, List<Band>> {
+        return if (type == BookmarkListType.STATION) {
+            val stationItems = items.filterIsInstance<StationWithBookmarkList>()
+            val bookmarkLists: List<BookmarkList> = stationItems.mapNotNull { it.bookmarkList }.distinct()
+            val stations: List<Station> = stationItems.map { it.station }
+            Triple(bookmarkLists, stations, emptyList())
+        } else {
+            val bandItems = items.filterIsInstance<BandWithBookmarkList>()
+            val bookmarkLists: List<BookmarkList> = bandItems.mapNotNull { it.bookmarkList }.distinct()
+            val bands: List<Band> = bandItems.map { it.band }
+            Triple(bookmarkLists, emptyList(), bands)
+        }
+    }
+
+    fun buildExportJson(): String {
+        val (items, type) = itemsToExport ?: return stationImporterExporter.buildExportJson(emptyList(), emptyList(), emptyList())
+        val (bookmarkLists, stations, bands) = resolveExportData(items, type)
+        return stationImporterExporter.buildExportJson(bookmarkLists, stations, bands)
+    }
+
     fun confirmItemsToExport(uri: Uri) {
         viewModelScope.launch {
             val (items, type) = itemsToExport ?: return@launch
-            val success = if (type == BookmarkListType.STATION) {
-                val stationItems = items.filterIsInstance<StationWithBookmarkList>()
-                val bookmarkLists: List<BookmarkList> = stationItems.mapNotNull { it.bookmarkList }.distinct()
-                val stations: List<Station> = stationItems.map { it.station }
-                stationImporterExporter.export(uri, bookmarkLists, stations, emptyList())
-            } else {
-                val bandItems = items.filterIsInstance<BandWithBookmarkList>()
-                val bookmarkLists: List<BookmarkList> = bandItems.mapNotNull { it.bookmarkList }.distinct()
-                val bands: List<Band> = bandItems.map { it.band }
-                stationImporterExporter.export(uri, bookmarkLists, emptyList(), bands)
-            }
+            val (bookmarkLists, stations, bands) = resolveExportData(items, type)
+            val success = stationImporterExporter.export(uri, bookmarkLists, stations, bands)
             if (success) {
                 showMessage("Export successful!")
                 setItemsToExport(null, null)
@@ -635,26 +644,24 @@ class BookmarkManagerViewModel @Inject constructor(
         }
     }
 
-    fun importBandPlans(importIsm: Boolean, importIaru: Boolean, iaruRegion: Int) {
-        if(iaruRegion !in 1..3) {
-            Log.d(TAG, "importIaruBandPlan: Invalid region: $iaruRegion")
+    fun importDefaultLists(region: Int, selectedSets: Set<DefaultImportSet>) {
+        if (region !in 1..3) {
+            Log.d(TAG, "importDefaultLists: Invalid region: $region")
         }
         viewModelScope.launch {
-            if (importIaru) {
-                if (stationImporterExporter.importIaruBandPlan(iaruRegion)) {
-                    setPage(StationsPage.BOOKMARKLISTS)
-                    showMessage("Import into list 'Amateur Radio Bands' successful!")
-                } else
-                    showMessage("Import of IARU Band Plan failed!")
+            val succeeded = mutableListOf<String>()
+            val failed = mutableListOf<String>()
+            for (set in selectedSets) {
+                if (stationImporterExporter.importDefaultSet(set, region)) succeeded.add(set.bookmarkListName(region))
+                else failed.add(set.title)
             }
-            if (importIsm) {
-                if (stationImporterExporter.importISMBandPlan()) {
-                    setPage(StationsPage.BOOKMARKLISTS)
-                    showMessage("Import into list 'ISM, Maritime, Air Bands' successful!")
-                } else
-                    showMessage("Import of ISM, Maritime, Air Band Plan failed!")
-            }
-            appStateRepository.displayDefaultBandImportDialog.set(false)
+            if (succeeded.isNotEmpty()) setPage(StationsPage.BOOKMARKLISTS)
+            val message = buildString {
+                if (succeeded.isNotEmpty()) append("Imported: ${succeeded.joinToString(", ")}. ")
+                if (failed.isNotEmpty()) append("Failed: ${failed.joinToString(", ")}.")
+            }.trim()
+            if (message.isNotBlank()) showMessage(message)
+            appStateRepository.displayDefaultImportDialog.set(false)
         }
     }
 }

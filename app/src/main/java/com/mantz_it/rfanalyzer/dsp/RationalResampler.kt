@@ -1,7 +1,8 @@
 package com.mantz_it.rfanalyzer.dsp
 
 import android.util.Log
-import com.mantz_it.rfanalyzer.source.SamplePacket
+import com.mantz_it.nativedsp.NativeRationalResampler
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
 import kotlin.Int
 import kotlin.math.abs
 
@@ -9,36 +10,42 @@ import kotlin.math.abs
  * <h1>RF Analyzer - Rational Resampler</h1>
  *
  * Module:      RationalResampler.kt
- *
  * Description: This class implements a Rational Resampler combining interpolation and decimation
- *  using a polyphase filterbank built from FirFilter. Most of the code is
- * copied and inspired from the rational_resampler_ccf module from GNU Radio.
+ *              using a polyphase filterbank (taps from FirFilter's low-pass design), derived from
+ *              GNU Radio's rational_resampler_ccf (gr-filter).
+ *
+ * Performance: the per-sample polyphase convolution runs natively (NativeRationalResampler,
+ * nativedsp/src/main/cpp/rational_resampler.c), a bit-identical port of the Kotlin loop below.
+ * If the native library can't be loaded, the Kotlin loop runs instead.
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
- * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * GNU Radio: Copyright (C) 2004-2012 Free Software Foundation, Inc.
+ * License: GPL version 3 or later - GNU Radio's license, which applies to code derived from it.
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 class RationalResampler(
     private var interpolation: Int,
     private var decimation: Int,
     taps: FloatArray? = null,
     private var fractionalBw: Float = 0.4f,
-    maxTaps: Int = 0  // Tap count (per FirFilter) will be limited by maxTaps. Value '0' means no limit
+    maxTaps: Int = 0,  // Tap count (per polyphase subfilter) will be limited by maxTaps. Value '0' means no limit
+    // Test-only seam: forces the Kotlin fallback engine even when native is available, so tests
+    // can deliberately construct a Kotlin-backed instance on-device for byte-identity comparison
+    // against a native-backed one. Do not set this from production code.
+    forceKotlinFallback: Boolean = false
 ) {
     private val firTaps: Array<FloatArray>
     private val delayReal: FloatArray
@@ -46,9 +53,16 @@ class RationalResampler(
     private var delayIndex: Int = 0
     private val ctrInit = 0
     private var ctr = ctrInit
+    private val nt: Int
+    private val native: NativeRationalResampler?
 
     fun getInterpolation(): Int = interpolation
     fun getDecimation(): Int = decimation
+
+    /** True if this instance is backed by the native resampler; false if running the Kotlin
+     * fallback engine (native unavailable, or [forceKotlinFallback] was requested). Exposed for
+     * test assertions. */
+    val isUsingNative: Boolean get() = native != null
 
     init {
         require(interpolation > 0) { "Interpolation must be > 0" }
@@ -75,12 +89,27 @@ class RationalResampler(
         }
 
         // Split taps into polyphase subfilters
-        val nt = newTaps.size / interpolation
+        nt = newTaps.size / interpolation
         firTaps = Array(interpolation) { phase ->
             FloatArray(nt) { i -> newTaps[i * interpolation + phase] }
         }
         delayReal = FloatArray(nt)
         delayImag = FloatArray(nt)
+
+        native = if (forceKotlinFallback) {
+            null
+        } else {
+            try {
+                val flatFirTaps = FloatArray(interpolation * nt)
+                for (phase in 0 until interpolation) {
+                    System.arraycopy(firTaps[phase], 0, flatFirTaps, phase * nt, nt)
+                }
+                NativeRationalResampler(interpolation, decimation, flatFirTaps, nt)
+            } catch (e: Throwable) {
+                Log.w(LOGTAG, "Native resampler unavailable, falling back to Kotlin implementation: ${e.message}")
+                null
+            }
+        }
     }
 
     /**
@@ -88,6 +117,30 @@ class RationalResampler(
      * @return number of consumed input samples
      */
     fun resample(inPacket: SamplePacket, outPacket: SamplePacket, offset: Int, length: Int): Int {
+        val n = native
+        val outStart = outPacket.size()
+        val consumed = if (n != null) {
+            val outOffset = outPacket.size()
+            val (consumedNative, produced) = n.resample(
+                inPacket.re(), inPacket.im(), offset, length,
+                outPacket.re(), outPacket.im(), outOffset, outPacket.capacity()
+            )
+            outPacket.setSize(outOffset + produced)
+            consumedNative
+        } else {
+            resampleKotlinFallback(inPacket, outPacket, offset, length)
+        }
+        outPacket.sampleRate = (inPacket.sampleRate.toLong() * interpolation / decimation).toInt()
+        outPacket.frequency = inPacket.frequency
+        // the first output sample belongs to input sample [offset] (an output packet that already
+        // held samples keeps the time of its first one)
+        if (outStart == 0 && inPacket.sampleRate > 0)
+            outPacket.timestamp = inPacket.timestamp + offset * 1000L / inPacket.sampleRate
+        return consumed
+    }
+
+    /** The pure-Kotlin polyphase engine, used when native is unavailable. */
+    private fun resampleKotlinFallback(inPacket: SamplePacket, outPacket: SamplePacket, offset: Int, length: Int): Int {
         val reIn = inPacket.re()
         val imIn = inPacket.im()
         val reOut = outPacket.re()
@@ -129,7 +182,6 @@ class RationalResampler(
             }
             reOut[indexOut] = reSum
             imOut[indexOut] = imSum
-            //println("out[$indexOut] = fir[$ctr].filter(${reIn[inIdx]}, ${imIn[inIdx]}) = ${reOut[indexOut]}, ${imOut[indexOut]}")
             indexOut++
 
             // Step phase counter
@@ -150,9 +202,12 @@ class RationalResampler(
         }
 
         outPacket.setSize(indexOut)
-        outPacket.sampleRate = (inPacket.sampleRate.toLong() * interpolation / decimation).toInt()
-        outPacket.frequency = inPacket.frequency
         return consumed
+    }
+
+    /** Frees native resources. Safe to call even if the Kotlin fallback engine is in use. */
+    fun close() {
+        native?.close()
     }
 
     companion object {
@@ -171,7 +226,7 @@ class RationalResampler(
 
         /**
          * Given a target ratio (outRate / inRate), find a 'nice' rational approximation
-         * whose denominator does not exceed maxDen, or whose error is tolerable.
+         * whose denominator does not exceed maxDenominator.
          *
          * Similar in spirit to Python’s Fraction.limit_denominator().
          *
@@ -250,7 +305,7 @@ class RationalResampler(
                 transitionWidth = transWidth,
                 attenuationInDecibels = 72.22087f,  // hardcoded, max. attenuation for Kaiser @ beta=7.0
                 windowFunction = KaiserWindow(beta),
-                maxTaps = maxTaps * interpolation   // we will have <interpolation> number of FirFilters, so specify the total amount of taps
+                maxTaps = maxTaps * interpolation   // the taps are split into <interpolation> subfilters: the total amount of taps
             ) ?: FloatArray(0)
         }
     }

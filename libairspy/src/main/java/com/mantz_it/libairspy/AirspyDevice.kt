@@ -2,8 +2,8 @@ package com.mantz_it.libairspy
 
 import android.util.Log
 import androidx.annotation.Keep
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.TimeUnit
+import com.mantz_it.libusb.SampleBufferPool
+import com.mantz_it.libusb.SampleStreamDevice
 
 /**
  * <h1>RF Analyzer - Airspy Device</h1>
@@ -12,30 +12,15 @@ import java.util.concurrent.TimeUnit
  * Description: A Kotlin interface to the native libairspy driver
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
+class AirspyDevice private constructor(private var nativeDevicePtr: Long) : SampleStreamDevice {
 
     companion object {
         private const val TAG = "AirspyDevice"
-        const val BUFFER_SIZE = 262144 // from airspy.c:883 (1024*256)  - value is in bytes. one IQ sample is 4 bytes!
+        const val BUFFER_SIZE = 262144 // bytes per transfer (airspy.c: buffer_size); an INT16_IQ sample is 4 bytes
 
         @JvmStatic
         private external fun nativeOpenFd(fd: Int): Long
@@ -50,7 +35,7 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
                 Log.e(TAG, "open: Error opening Airspy device: $result ($error)")
                 Pair(null, error)
             } else {
-                val devicePtr = result // Assuming result is the device pointer on success
+                val devicePtr = result // on success, the native device pointer
                 Pair(AirspyDevice(devicePtr), null)
             }
         }
@@ -78,25 +63,11 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
     private external fun nativeStartRX(nativePtr: Long): Int
     private external fun nativeStopRX(nativePtr: Long): Int
 
-    private val bufferPoolSize: Int = 70 // ~ 0.5sec of samples @10MSps; adjust if necessary!
-    private val availableBuffers = ArrayBlockingQueue<ByteArray>(bufferPoolSize)
-    private val filledBuffers = ArrayBlockingQueue<ByteArray>(bufferPoolSize)
+    override val sampleBuffers = SampleBufferPool(BUFFER_SIZE)
 
     init {
         if (nativeDevicePtr == 0L) {
             throw IllegalArgumentException("Native device pointer cannot be null (0) for AirspyDevice.")
-        }
-        // Create Buffers:
-        repeat(bufferPoolSize) {
-            availableBuffers.put(ByteArray(BUFFER_SIZE))
-        }
-    }
-
-    fun flushBufferQueue() {
-        var buffer = filledBuffers.poll()
-        while (buffer != null) {
-            availableBuffers.offer(buffer)
-            buffer = filledBuffers.poll()
         }
     }
 
@@ -108,7 +79,7 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeVersionStringRead(nativeDevicePtr)
     }
 
-    fun isStreaming(): Boolean {
+    override fun isStreaming(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "isStreaming: Device already closed or not opened.")
             return false
@@ -116,12 +87,11 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeIsStreaming(nativeDevicePtr)
     }
 
-    // Call this to release the native resources
-    fun close(): Boolean {
+    override fun close(): Boolean {
         if (nativeDevicePtr != 0L) {
             val result = nativeClose(nativeDevicePtr)
             nativeDevicePtr = 0L // Mark as closed, prevent further use
-            if (result == AirspyError.AIRSPY_SUCCESS.code) { // Assuming you map errors
+            if (result == AirspyError.AIRSPY_SUCCESS.code) {
                 Log.i(TAG, "close: Airspy device closed successfully.")
                 return true
             } else {
@@ -131,8 +101,7 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
         return false
     }
 
-    // Ensure resources are released if the object is GC'd without explicit close
-    // This is a fallback, explicit close() is always better.
+    // Fallback for a device that was never closed
     protected fun finalize() {
         if (nativeDevicePtr != 0L) {
             Log.w(TAG, "finalize: AirspyDevice was not explicitly closed. Closing in finalize().")
@@ -211,10 +180,10 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
         }
         val sampleRates = mutableListOf<Int>()
         nativeGetSamplerates(nativeDevicePtr, sampleRates)
-        return sampleRates.filter { it != 0 } // Filter out any trailing zeros if the native side pads
+        return sampleRates.filter { it != 0 }
     }
 
-    fun startRX(): Boolean {
+    override fun startRX(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "startRX: Device already closed or not opened.")
             return false
@@ -222,7 +191,7 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeStartRX(nativeDevicePtr) == AirspyError.AIRSPY_SUCCESS.code
     }
 
-    fun stopRX(): Boolean {
+    override fun stopRX(): Boolean {
         if (nativeDevicePtr == 0L) {
             Log.e(TAG, "stopRX: Device already closed or not opened.")
             return false
@@ -230,27 +199,13 @@ class AirspyDevice private constructor(private var nativeDevicePtr: Long) {
         return nativeStopRX(nativeDevicePtr) == AirspyError.AIRSPY_SUCCESS.code
     }
 
-    // Get a buffer with samples from the Airspy
-    fun getSampleBuffer(): ByteArray? {
-        return filledBuffers.poll(100, TimeUnit.MILLISECONDS) // returns null if no buffer is available after 100ms
-    }
-
-    // Return a buffer to the pool
-    fun returnSampleBuffer(buffer: ByteArray) {
-        availableBuffers.put(buffer) // return buffer to pool
-    }
-
-    // Called from JNI when native side has samples ready
+    // Called from JNI (sample_handoff.h) on the driver's RX thread
     @Keep
-    private fun onSamplesReady(buffer: ByteArray) {
-        filledBuffers.put(buffer) // blocks if user isn't consuming fast enough
-    }
+    private fun getEmptyBuffer(): ByteArray? = sampleBuffers.takeEmpty()
 
-    // Called from JNI to fetch an empty buffer for filling
     @Keep
-    private fun getEmptyBuffer(): ByteArray {
-        return availableBuffers.take() // blocks until a buffer is free
-    }
+    private fun onSamplesReady(buffer: ByteArray, validByteCount: Int, droppedSamples: Long) =
+        sampleBuffers.putFilled(buffer, validByteCount, droppedSamples)
 }
 
 enum class AirspyError(val code: Int) {

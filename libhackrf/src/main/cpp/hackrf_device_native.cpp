@@ -7,6 +7,7 @@
 #include <android/log.h>
 #include <libusb.h>
 #include "libhackrf/hackrf.h"
+#include "sample_handoff.h"
 
 /**
  * <h1>RF Analyzer - hackrf device native code</h1>
@@ -41,10 +42,8 @@
 // ============================================================
 // Globals
 // ============================================================
-static JavaVM *g_vm = nullptr;
-static jobject g_hackrfDeviceObj = nullptr;
-static jmethodID g_getEmptyBufferMethod = nullptr;
-static jmethodID g_onSamplesReadyMethod = nullptr;
+// Hands the transfers of the RX callback to HackrfDevice (bound at start, released at stop/close).
+static SampleHandoff g_handoff;
 
 // Serializes lifecycle/state transitions for the single native device handle.
 static std::mutex g_nativeStateMutex;
@@ -56,20 +55,11 @@ static inline bool is_close_started() {
     return g_nativeCloseStarted.load(std::memory_order_acquire);
 }
 
-static inline void clear_callback_state(JNIEnv* env) {
-    if (g_hackrfDeviceObj != nullptr) {
-        env->DeleteGlobalRef(g_hackrfDeviceObj);
-        g_hackrfDeviceObj = nullptr;
-    }
-    g_getEmptyBufferMethod = nullptr;
-    g_onSamplesReadyMethod = nullptr;
-}
-
 // ============================================================
 // JNI: Cache JavaVM
 // ============================================================
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-    g_vm = vm;
+    g_handoff.init(vm);
     return JNI_VERSION_1_6;
 }
 
@@ -202,15 +192,15 @@ Java_com_mantz_1it_libhackrf_HackrfDevice_nativeClose(
 
     g_nativeCloseStarted.store(true, std::memory_order_release);
 
-    // Drop Java callback references before closing so stop/close cannot race with callback cleanup.
-    clear_callback_state(env);
+    // Release the Java object before closing: waits for a delivery in progress, later ones are ignored.
+    g_handoff.unbind(env);
 
     LOGI("Closing HackRF device, pointer: %p", device);
     int result = hackrf_close(device);
     if (result != HACKRF_SUCCESS) {
         LOGE("Failed to close HackRF device, error: %d", result);
     }
-    // Optionally call hackrf_exit() elsewhere when cleaning up resources
+    // No hackrf_exit(): the libusb context of hackrf_init() stays for the process and is reused
     return result;
 }
 
@@ -465,62 +455,11 @@ Java_com_mantz_1it_libhackrf_HackrfDevice_nativeSetAntennaEnable(
 // callback signature: int (*hackrf_sample_block_cb_fn)(hackrf_transfer* transfer)
 // ============================================================
 static int hackrf_callback(hackrf_transfer* transfer) {
-    JNIEnv *env = nullptr;
-
-    if (g_vm == nullptr) {
-        return 0;
-    }
-
-    if (g_vm->AttachCurrentThread(&env, nullptr) != 0) {
-        LOGE("hackrf_callback: Failed to attach thread to JVM");
-        return 0;
-    }
-
-    // NO LOCKING HERE - take a snapshot instead
     if (is_close_started()) {
         return 0;
     }
-
-    jobject obj = g_hackrfDeviceObj;
-    jmethodID getEmptyMethod = g_getEmptyBufferMethod;
-    jmethodID onSamplesMethod = g_onSamplesReadyMethod;
-
-    if (obj == nullptr || getEmptyMethod == nullptr || onSamplesMethod == nullptr) {
-        return 0;
-    }
-
-    // Create local ref from global ref
-    jobject localHackrfObj = env->NewLocalRef(obj);
-    if (localHackrfObj == nullptr) {
-        return 0;
-    }
-
-    // Call Kotlin to get an empty buffer
-    jbyteArray buffer = (jbyteArray) env->CallObjectMethod(localHackrfObj, getEmptyMethod);
-    if (buffer == nullptr) {
-        LOGE("hackrf_callback: getEmptyBuffer returned null");
-        env->DeleteLocalRef(localHackrfObj);
-        return 0;
-    }
-
-    // Determine how many bytes we can copy
-    jsize buf_len = env->GetArrayLength(buffer);
-    size_t to_copy = transfer->valid_length;
-    if ((size_t)buf_len < to_copy) {
-        // Avoid overflow, copy only what fits
-        to_copy = static_cast<size_t>(buf_len);
-    }
-
-    // Copy transfer->buffer into Java byte array
-    env->SetByteArrayRegion(buffer, 0, static_cast<jsize>(to_copy), reinterpret_cast<const jbyte*>(transfer->buffer));
-
-    // Notify Kotlin that samples are ready
-    env->CallVoidMethod(localHackrfObj, onSamplesMethod, buffer);
-
-    // Release local refs
-    env->DeleteLocalRef(buffer);
-    env->DeleteLocalRef(localHackrfObj);
-
+    // libhackrf reports no dropped samples
+    g_handoff.deliver(transfer->buffer, static_cast<size_t>(transfer->valid_length), 0);
     return 0;
 }
 // ============================================================
@@ -546,47 +485,18 @@ Java_com_mantz_1it_libhackrf_HackrfDevice_nativeStartRX(
         return HACKRF_ERROR_INVALID_PARAM;
     }
 
-    // If a previous callback object exists, clear it before creating a new one.
-    if (g_hackrfDeviceObj != nullptr) {
-        env->DeleteGlobalRef(g_hackrfDeviceObj);
-        g_hackrfDeviceObj = nullptr;
-    }
-
-    // Keep global reference to HackrfDevice instance
-    g_hackrfDeviceObj = env->NewGlobalRef(thiz);
-    if (g_hackrfDeviceObj == nullptr) {
-        LOGE("nativeStartRX: Failed to create global ref");
+    if (!g_handoff.bind(env, thiz)) {
+        LOGE("nativeStartRX: HackrfDevice lacks the sample callbacks");
         return HACKRF_ERROR_OTHER;
     }
 
-    // Resolve Java methods for our callback
-    jclass cls = env->GetObjectClass(thiz);
-    if (cls == nullptr) {
-        LOGE("nativeStartRX: Failed to get object class");
-        clear_callback_state(env);
-        return HACKRF_ERROR_OTHER;
-    }
-
-    g_getEmptyBufferMethod = env->GetMethodID(cls, "getEmptyBuffer", "()[B");
-    g_onSamplesReadyMethod = env->GetMethodID(cls, "onSamplesReady", "([B)V");
-    env->DeleteLocalRef(cls);
-
-    if (g_getEmptyBufferMethod == nullptr || g_onSamplesReadyMethod == nullptr) {
-        LOGE("nativeStartRX: Failed to resolve callback methods");
-        clear_callback_state(env);
-        return HACKRF_ERROR_OTHER;
-    }
-
-    // Start streaming with callback
     int result = hackrf_start_rx(device, hackrf_callback, nullptr);
     if (result != HACKRF_SUCCESS) {
         LOGE("hackrf_start_rx() failed: %d", result);
 
-        // Cleanup callback state if start fails.
-        clear_callback_state(env);
-
-        // close on failure to avoid resource leak (consistent with Airspy style)
-        hackrf_close(device);
+        // The device stays open: nativeStopRX()/nativeClose() own its lifecycle, and the Kotlin
+        // side still holds the pointer.
+        g_handoff.unbind(env);
         return result;
     }
 
@@ -617,11 +527,9 @@ Java_com_mantz_1it_libhackrf_HackrfDevice_nativeStopRX(
         return HACKRF_ERROR_INVALID_PARAM;
     }
 
-    // Stop streaming
     int result = hackrf_stop_rx(device);
 
-    // Free global ref / callback state
-    clear_callback_state(env);
+    g_handoff.unbind(env);
 
     LOGI("nativeStopRX: HackRF streaming stopped");
     return (result == HACKRF_SUCCESS) ? HACKRF_SUCCESS : result;

@@ -131,10 +131,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <stdint.h>
 #include "hydrasdr_commands.h"
 
-#define HYDRASDR_VERSION "1.1.1"
+#define HYDRASDR_VERSION "1.1.2"
 #define HYDRASDR_VER_MAJOR 1
 #define HYDRASDR_VER_MINOR 1
-#define HYDRASDR_VER_REVISION 1
+#define HYDRASDR_VER_REVISION 2
 
 /** @brief Auto-bandwidth mode for hydrasdr_set_bandwidth() */
 #define HYDRASDR_BANDWIDTH_AUTO UINT32_MAX
@@ -552,6 +552,7 @@ typedef struct
  * - current_decimation_mode: 0=Low Bandwidth, 1=High Definition
  * - current_packing: 0=16-bit, 1=12-bit packed
  * - bandwidth_auto_selected: 1 if bandwidth was auto-selected, 0 if manually set
+ * - current_adc_bits: ADC bit depth for current sample rate (8, 10, 12, 14, or 16)
  * - current_decimation_factor: Decimation factor (1, 2, 4, 8, 16, 32, or 64)
  * - current_bandwidth: Currently active RF bandwidth in Hz
  * - current_samplerate: Currently active effective sample rate in Hz
@@ -658,7 +659,7 @@ typedef struct
 	uint8_t current_decimation_mode;    /**< Current decimation mode (0=Low Bandwidth, 1=High Definition) */
 	uint8_t current_packing;            /**< Current packing mode (0=16-bit, 1=12-bit packed) */
 	uint8_t bandwidth_auto_selected;    /**< 1 if bandwidth was auto-selected, 0 if manually set */
-	uint8_t config_state_reserved1;     /**< Reserved for 32-bit alignment */
+	uint8_t current_adc_bits;           /**< ADC bit depth for current sample rate (8, 10, 12, 14, or 16); 0 if unknown @since v1.1.2 */
 	uint32_t current_decimation_factor; /**< Current decimation factor (1, 2, 4, 8, 16, 32, or 64) */
 	uint32_t current_bandwidth;         /**< Currently selected RF bandwidth in Hz (0 if not set) */
 	uint32_t current_samplerate;        /**< Currently selected effective sample rate in Hz (0 if not set) */

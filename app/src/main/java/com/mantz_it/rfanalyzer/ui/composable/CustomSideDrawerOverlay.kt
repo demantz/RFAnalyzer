@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -66,31 +67,15 @@ import kotlin.math.roundToInt
 /**
  * <h1>RF Analyzer - Control Drawer</h1>
  *
- * Module:      CustomSideDrawer.kt
- * Description: A composable component hat provides a side drawer overlay.
- * This drawer slides in and out from either the left or right side of the
- * screen and can be used to display additional options or information.
- * based on: https://medium.com/@kerry.bisset/implementing-a-customside-sheet-in-jetpack-compose-49e5d61b9847
+ * Module:      CustomSideDrawerOverlay.kt
+ * Description: The control drawer overlay: slides in from the bottom (portrait) or from the left
+ *              or right side (landscape), with the FAB menu next to it.
+ *              Based on: https://medium.com/@kerry.bisset/implementing-a-customside-sheet-in-jetpack-compose-49e5d61b9847
  *
  * @author Kerry Bisset (original template)
  * @author Dennis Mantz (modifications)
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 
@@ -101,32 +86,37 @@ enum class DrawerSide {
 data class FabAction(val icon: ImageVector, val label: String, val customIconComposable: (@Composable () -> Unit)? = null, val onClick: () -> Unit)
 
 /**
- * A custom composable that provides a side drawer overlay.
- * This drawer slides in and out from either the left or right side of the screen and can be used to
- * display additional options or information.
- * based on: https://medium.com/@kerry.bisset/implementing-a-customside-sheet-in-jetpack-compose-49e5d61b9847
+ * The main screen [content] with the control drawer over it, which slides in from [drawerSide], and
+ * the FAB menu of [fabActions].
+ * Based on: https://medium.com/@kerry.bisset/implementing-a-customside-sheet-in-jetpack-compose-49e5d61b9847
  *
- * @param isDrawerOpen Boolean indicating whether the drawer is open.
- * @param onDismiss Callback function that gets called when the drawer should be dismissed.
+ * @param isDrawerOpen Whether the drawer is open.
+ * @param onDismiss Called when the drawer should close (back, or dragged closed).
+ * @param onOpen Called by the open button shown while the drawer is closed.
+ * @param drawerHeader Composable shown above [drawerContent] (the tab row).
  * @param drawerContent Composable content that is displayed inside the drawer.
  * @param content Composable content of the main screen.
  * @param modifier Modifier to be applied to the drawer overlay container.
- * @param drawerSizeExpanded Size of the drawer in Dp.
+ * @param drawerSizeExpanded Height of the open bottom drawer.
+ * @param drawerWidth Width of a side drawer, maximum width of the bottom drawer.
  * @param animationDuration Duration of the drawer open/close animation in milliseconds.
- * @param drawerSide Side of the screen where the drawer appears (left or right).
- * @param cornerRadius Corner radius of the drawer for rounded edges.
- * @param dragThresholdFraction Fraction of the drawer's width that must be dragged to open/close it.
- * @param enableSwipe Boolean indicating whether swipe gestures are enabled to open/close the drawer.
+ * @param drawerSide Side of the screen where the drawer appears.
+ * @param cornerRadius Corner radius of the drawer; the drag handle lies in this strip.
+ * @param dragThresholdFraction Fraction of the drawer's size that must be dragged to close it.
+ * @param enableSwipe Whether the drag handle opens/closes the drawer.
  */
 @Composable
 fun CustomSideDrawerOverlay(
     isDrawerOpen: Boolean,
     onDismiss: () -> Unit,
     onOpen: () -> Unit,
+    drawerHeader: @Composable () -> Unit,
     drawerContent: @Composable () -> Unit,
     content: @Composable () -> Unit,
     fabActions: List<FabAction>,
     modifier: Modifier = Modifier,
+    /** Small info hovering at the start, level with the FAB's bottom, moving with the drawer like it. */
+    floatingInfo: (@Composable () -> Unit)? = null,
     drawerSizeExpanded: Dp = 350.dp,
     drawerWidth: Dp = 400.dp,
     animationDuration: Int = 300,
@@ -135,7 +125,6 @@ fun CustomSideDrawerOverlay(
     dragThresholdFraction: Float = 0.7f,
     enableSwipe: Boolean = true,
 ) {
-    // Coroutine scope for managing animations
     val scope = rememberCoroutineScope()
     val drawerHandleColor = MaterialTheme.colorScheme.secondary
 
@@ -148,10 +137,7 @@ fun CustomSideDrawerOverlay(
     val drawerSizePx = with(density) { drawerSizeExpanded.toPx() }
     val drawerWidthPx = with(density) { drawerWidth.toPx() }
 
-    // This is necessary to have the current value of drawerSide available in scope.launch{}
-    // environments. Switching drawerSide between Left and Right does not propagate into the launch context.
-    // It gets "frozen" because it's captured at the time the lambda is created, not updated dynamically.
-    // As a workaround we have the currentDrawerSide variable which is always current even inside launch.
+    // The drag handler (pointerInput(Unit)) would otherwise keep the drawerSide it was created with.
     val currentDrawerSide by rememberUpdatedState(drawerSide)
 
     // State of the FAB menu:
@@ -250,7 +236,6 @@ fun CustomSideDrawerOverlay(
             modifier = Modifier.then(
                 if (drawerSide == DrawerSide.BOTTOM) {
                     Modifier
-                        //.fillMaxWidth()
                         .padding(horizontal = 10.dp)
                         .widthIn(max = drawerWidth)
                         .height(screenHeightDp - with(density){offset.value.toDp()})  // Bottom drawer drag affects size of drawer
@@ -273,9 +258,9 @@ fun CustomSideDrawerOverlay(
                 )
                 .background(
                     color = if(drawerSide == DrawerSide.BOTTOM)
-                                MaterialTheme.colorScheme.surfaceVariant   // Use grey for the drag handle in portrait mode
+                                MaterialTheme.colorScheme.surfaceVariant   // the handle strip matches the content (portrait)
                             else
-                                MaterialTheme.colorScheme.surface,         // Use darkgrey if in landscape mode
+                                MaterialTheme.colorScheme.surface,         // darker handle strip (landscape)
                     shape = if (cornerRadius > 0.dp) {
                         if (drawerSide == DrawerSide.LEFT) {
                             RoundedCornerShape(topEnd = cornerRadius, bottomEnd = cornerRadius)
@@ -289,7 +274,7 @@ fun CustomSideDrawerOverlay(
                     }
                 )
                 .drawBehind {
-                    // Draw a line at the top of the Column
+                    // The drag handle: a line in the corner-radius strip
                     val strokeWidth = 2.dp.toPx()
                     if (drawerSide == DrawerSide.BOTTOM) {
                         drawLine(
@@ -310,66 +295,114 @@ fun CustomSideDrawerOverlay(
                         )
                     }
                 }
-                .pointerInput(Unit) {
-                    if (enableSwipe) {
-                        detectDragGestures(
-                            onDragEnd = {
-                                scope.launch {
-                                    val shouldClose = when (currentDrawerSide) {
-                                        DrawerSide.LEFT -> offset.value < -drawerWidthPx * dragThresholdFraction
-                                        DrawerSide.RIGHT -> offset.value > drawerWidthPx * dragThresholdFraction
-                                        DrawerSide.BOTTOM -> drawerSizeFullScreenPx - offset.value < drawerSizePx * (1-dragThresholdFraction)
-                                    }
-
-                                    val finalTarget = if (shouldClose) {
-                                        when (currentDrawerSide) {
-                                            DrawerSide.BOTTOM -> drawerSizeFullScreenPx
-                                            DrawerSide.LEFT -> drawerWidthPx * -1
-                                            DrawerSide.RIGHT -> drawerWidthPx
-                                        }
-                                    } else if (currentDrawerSide==DrawerSide.BOTTOM) {
-                                        offset.value
-                                    } else {
-                                        0f
-                                    }
-
-                                    offset.animateTo(
-                                        targetValue = finalTarget,
-                                        animationSpec = tween(durationMillis = animationDuration)
-                                    )
-
-                                    if (shouldClose) {
-                                        onDismiss()
-                                    }
-                                }
-                            }
-                        ) { change, dragAmount ->
-                            change.consume()
-
-                            scope.launch {
-                                val newOffset =
-                                    offset.value + if (currentDrawerSide == DrawerSide.BOTTOM) dragAmount.y else dragAmount.x
-
-                                val clampedOffset = when (currentDrawerSide) {
-                                    DrawerSide.LEFT -> newOffset.coerceIn(-drawerWidthPx, 0f)
-                                    DrawerSide.RIGHT -> newOffset.coerceIn(0f, drawerWidthPx)
-                                    DrawerSide.BOTTOM -> newOffset.coerceIn(0f, drawerSizeFullScreenPx)
-                                }
-
-                                offset.snapTo(clampedOffset)
-                            }
-                        }
-                    }
-                }
         ) {
-            // Content inside the drawer (use a box with padding for the drag handle)
-            Box(modifier = when(drawerSide) {
+            // Content inside the drawer, padded to leave the drag handle strip free.
+            // pointerHitTestSink() comes before the padding, so it covers the whole drawer including
+            // the handle strip: a tap on blank drawer space must not fall through to the
+            // AnalyzerSurface and retune. The drag-handle Box below is a later sibling and so is
+            // still hit-tested first.
+            Box(modifier = Modifier.pointerHitTestSink().then(when(drawerSide) {
                 DrawerSide.LEFT   -> Modifier.padding(end   = cornerRadius)
                 DrawerSide.RIGHT  -> Modifier.padding(start = cornerRadius)
                 DrawerSide.BOTTOM -> Modifier.padding(top   = cornerRadius)
-            }.background(MaterialTheme.colorScheme.surfaceVariant)  // background of the content
+            }).background(MaterialTheme.colorScheme.surfaceVariant)  // background of the content
             ) {
-                drawerContent()
+                Column {
+                    drawerHeader()
+                    drawerContent()
+                }
+            }
+
+            // The drag handle's own hit area, around the handle line rather than the whole drawer
+            // (that would steal gestures from drawerContent()). It reaches dragHandleOffset into the
+            // FFT/waterfall plot so it is easier to grab.
+            val dragHandleOffset = 15.dp
+            Box(
+                modifier = Modifier
+                    .align(
+                        when (drawerSide) {
+                            DrawerSide.BOTTOM -> Alignment.TopCenter
+                            DrawerSide.LEFT   -> Alignment.CenterEnd
+                            DrawerSide.RIGHT  -> Alignment.CenterStart
+                        }
+                    )
+                    .offset(
+                        x = if (drawerSide == DrawerSide.BOTTOM) 0.dp else dragHandleOffset.times(-1),
+                        y = if (drawerSide == DrawerSide.BOTTOM) dragHandleOffset.times(-1) else 0.dp,
+                    )
+                    .then(
+                        if (drawerSide == DrawerSide.BOTTOM) Modifier.fillMaxWidth(0.95f).height(cornerRadius + dragHandleOffset + 3.dp) // +3.dp to overlap minimal into the tab header
+                        else Modifier.fillMaxHeight().width(cornerRadius + dragHandleOffset + 5.dp) // +5.dp to overlap a bit into the tab space (which is padding anyway)
+                    )
+                    .pointerInput(Unit) {
+                        if (enableSwipe) {
+                            detectDragGestures(
+                                onDragEnd = {
+                                    scope.launch {
+                                        val shouldClose = when (currentDrawerSide) {
+                                            DrawerSide.LEFT -> offset.value < -drawerWidthPx * dragThresholdFraction
+                                            DrawerSide.RIGHT -> offset.value > drawerWidthPx * dragThresholdFraction
+                                            DrawerSide.BOTTOM -> drawerSizeFullScreenPx - offset.value < drawerSizePx * (1-dragThresholdFraction)
+                                        }
+
+                                        val finalTarget = if (shouldClose) {
+                                            when (currentDrawerSide) {
+                                                DrawerSide.BOTTOM -> drawerSizeFullScreenPx
+                                                DrawerSide.LEFT -> drawerWidthPx * -1
+                                                DrawerSide.RIGHT -> drawerWidthPx
+                                            }
+                                        } else if (currentDrawerSide==DrawerSide.BOTTOM) {
+                                            offset.value
+                                        } else {
+                                            0f
+                                        }
+
+                                        offset.animateTo(
+                                            targetValue = finalTarget,
+                                            animationSpec = tween(durationMillis = animationDuration)
+                                        )
+
+                                        if (shouldClose) {
+                                            onDismiss()
+                                        }
+                                    }
+                                }
+                            ) { change, dragAmount ->
+                                change.consume()
+
+                                scope.launch {
+                                    val newOffset =
+                                        offset.value + if (currentDrawerSide == DrawerSide.BOTTOM) dragAmount.y else dragAmount.x
+
+                                    val clampedOffset = when (currentDrawerSide) {
+                                        DrawerSide.LEFT -> newOffset.coerceIn(-drawerWidthPx, 0f)
+                                        DrawerSide.RIGHT -> newOffset.coerceIn(0f, drawerWidthPx)
+                                        DrawerSide.BOTTOM -> newOffset.coerceIn(0f, drawerSizeFullScreenPx)
+                                    }
+
+                                    offset.snapTo(clampedOffset)
+                                }
+                            }
+                        }
+                    }
+            )
+        }
+
+        if (floatingInfo != null) {
+            // Above the bottom drawer's start edge, or at the bottom of the content next to a side
+            // drawer. Its own 8 dp touch margin puts what it shows level with the FAB's bottom.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = if (drawerSide == DrawerSide.BOTTOM) 10.dp else 16.dp, bottom = 8.dp)
+                    .offset {
+                        IntOffset(
+                            x = if (drawerSide == DrawerSide.LEFT) (offset.value + drawerWidthPx).roundToInt() else 0,
+                            y = if (drawerSide == DrawerSide.BOTTOM) offset.value.roundToInt() - drawerSizeFullScreenPx.toInt() else 0,
+                        )
+                    }
+            ) {
+                floatingInfo()
             }
         }
 
@@ -390,14 +423,27 @@ fun CustomSideDrawerOverlay(
             x = if (drawerSide == DrawerSide.BOTTOM) 0 else if (drawerSide == DrawerSide.LEFT) 0 else offset.value.toInt() - drawerWidthPx.toInt(),
             y = if (drawerSide != DrawerSide.BOTTOM) 0 else offset.value.roundToInt() - drawerSizeFullScreenPx.toInt()
         )
+        // The menu opens upwards from the FAB (whose top is 72 dp above the bottom drawer's top edge).
+        // When the bottom drawer is pulled up so far that the menu doesn't fit above, it opens
+        // downwards from the drawer's top edge instead, over the drawer, in mirrored order.
+        val fabMenuHeightPx = with(density) { (fabActions.size * 40 + fabActions.size * 16).dp.toPx() }
+        val fabMenuOpensDown = drawerSide == DrawerSide.BOTTOM &&
+            offset.value - with(density) { 72.dp.toPx() } < fabMenuHeightPx
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.End,
-            modifier = Modifier
-                .padding(bottom = 72.dp, end = 8.dp)
-                .offset { fabOffset }
+            modifier = if (fabMenuOpensDown) {
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = 8.dp)
+                    .offset { IntOffset(0, offset.value.roundToInt()) }
+            } else {
+                Modifier
+                    .padding(bottom = 72.dp, end = 8.dp)
+                    .offset { fabOffset }
+            }
         ) {
-            for (action in fabActions) {
+            for (action in if (fabMenuOpensDown) fabActions.asReversed() else fabActions) {
                 AnimatedVisibility(visible = fabExpanded, enter = fadeIn() + slideInHorizontally(), exit = fadeOut() + slideOutHorizontally()) {
                     if (action.customIconComposable != null)
                         FabActionComposableCustom(custom = action.customIconComposable, label = action.label, onClick = { action.onClick(); fabExpanded = false })

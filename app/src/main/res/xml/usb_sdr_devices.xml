@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The USB SDRs RF Analyzer supports (the same ids as source/UsbSdrDevice.kt UsbSdrType, checked
+     by TestUsbSdrDeviceFilter). Declared for USB_DEVICE_ATTACHED (UsbAttachActivity): Android then
+     offers to open RF Analyzer when one is plugged in, which grants the USB permission. -->
+<resources>
+    <!-- HackRF -->
+    <usb-device vendor-id="7504" product-id="24713" />
+    <usb-device vendor-id="7504" product-id="24651" />
+    <usb-device vendor-id="7504" product-id="52245" />
+    <!-- RTL-SDR -->
+    <usb-device vendor-id="3034" product-id="10290" />
+    <usb-device vendor-id="3034" product-id="10296" />
+    <usb-device vendor-id="1043" product-id="26240" />
+    <usb-device vendor-id="1043" product-id="28431" />
+    <usb-device vendor-id="1112" product-id="28799" />
+    <usb-device vendor-id="3277" product-id="169" />
+    <usb-device vendor-id="3277" product-id="179" />
+    <usb-device vendor-id="3277" product-id="180" />
+    <usb-device vendor-id="3277" product-id="181" />
+    <usb-device vendor-id="3277" product-id="183" />
+    <usb-device vendor-id="3277" product-id="184" />
+    <usb-device vendor-id="3277" product-id="185" />
+    <usb-device vendor-id="3277" product-id="192" />
+    <usb-device vendor-id="3277" product-id="198" />
+    <usb-device vendor-id="3277" product-id="211" />
+    <usb-device vendor-id="3277" product-id="215" />
+    <usb-device vendor-id="3277" product-id="224" />
+    <usb-device vendor-id="5460" product-id="20512" />
+    <usb-device vendor-id="5620" product-id="305" />
+    <usb-device vendor-id="5620" product-id="307" />
+    <usb-device vendor-id="6235" product-id="1568" />
+    <usb-device vendor-id="6235" product-id="1616" />
+    <usb-device vendor-id="6235" product-id="1664" />
+    <usb-device vendor-id="7040" product-id="54163" />
+    <usb-device vendor-id="7040" product-id="54164" />
+    <usb-device vendor-id="7040" product-id="54165" />
+    <usb-device vendor-id="7040" product-id="54167" />
+    <usb-device vendor-id="7040" product-id="54168" />
+    <usb-device vendor-id="7040" product-id="54173" />
+    <usb-device vendor-id="7040" product-id="54180" />
+    <usb-device vendor-id="7040" product-id="54184" />
+    <usb-device vendor-id="7040" product-id="54191" />
+    <usb-device vendor-id="7040" product-id="54192" />
+    <usb-device vendor-id="7449" product-id="4353" />
+    <usb-device vendor-id="7449" product-id="4354" />
+    <usb-device vendor-id="7449" product-id="4355" />
+    <usb-device vendor-id="7449" product-id="4356" />
+    <usb-device vendor-id="8013" product-id="43011" />
+    <usb-device vendor-id="8013" product-id="47107" />
+    <usb-device vendor-id="8013" product-id="51203" />
+    <usb-device vendor-id="8013" product-id="53894" />
+    <usb-device vendor-id="8013" product-id="55299" />
+    <!-- Airspy -->
+    <usb-device vendor-id="7504" product-id="24737" />
+    <!-- AirspyHF -->
+    <usb-device vendor-id="1003" product-id="32780" />
+    <!-- HydraSDR -->
+    <usb-device vendor-id="14511" product-id="1" />
+</resources>

@@ -6,7 +6,7 @@ import com.mantz_it.rfanalyzer.database.Coordinates
 import com.mantz_it.rfanalyzer.database.Schedule
 import com.mantz_it.rfanalyzer.database.SourceProvider
 import com.mantz_it.rfanalyzer.database.Station
-import com.mantz_it.rfanalyzer.ui.composable.DemodulationMode
+import com.mantz_it.rfanalyzer.ui.tabs.DemodulationMode
 import com.mantz_it.rfanalyzer.ui.composable.sha256
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
@@ -24,18 +24,22 @@ import java.security.cert.X509Certificate
  * Description: Fetch stations (bookmarks) from EiBiSpace.de
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
 object EiBiStationFetcher {
     private const val TAG = "EiBiStationFetcher"
+    /** Connect and read timeout, so a stalled server can't hold the update (and block every
+     *  retry as "already running"). */
+    private const val TIMEOUT_MS = 15_000
 
     suspend fun fetchStations(url: String, oldStations: List<Station>): List<Station> = withContext(Dispatchers.IO) {
         val url = URL(url)
         Log.d(TAG, "fetchStation: Fetching $url")
         val connection = url.openConnection() as HttpsURLConnection
+        connection.connectTimeout = TIMEOUT_MS
+        connection.readTimeout = TIMEOUT_MS
         connection.requestMethod = "GET"
         connection.connect()
         val lines = connection.inputStream.bufferedReader().readLines()
@@ -67,6 +71,9 @@ object EiBiStationFetcher {
                 if ("-CW" in parts[5]) mode = DemodulationMode.CW
                 if ("LSB" in parts[2]) mode = DemodulationMode.LSB
                 if ("USB" in parts[2]) mode = DemodulationMode.USB
+                // Teleprinter broadcasts (the DWD's weather RTTY) are only named so - EiBi has no
+                // language code for them. Not NAVTEX: that is SITOR-B, which the RTTY receiver doesn't decode.
+                if (RTTY_NAME.containsMatchIn(parts[4])) mode = DemodulationMode.RTTY
                 Station(
                     name = parts[4],
                     bookmarkListId = null,
@@ -104,7 +111,6 @@ object EiBiStationFetcher {
         // 1) Check for pure digits meaning weekdays: "1245"
         if (trimmed.all { it.isDigit() }) {
             val parsed = trimmed.mapNotNull { weekdayDigits[it.toString()] }
-            //Log.d(TAG, "parseWeekday: via digits: ($trimmed): ${parsed.joinToString("")}")
             return if (parsed.isNotEmpty()) Pair(parsed.toSet(), null)
             else Pair(emptySet(), trimmed)
         }
@@ -118,7 +124,6 @@ object EiBiStationFetcher {
 
                 val startDay = weekdayShort[startDayStr]
                 val endDay = weekdayShort[endDayStr]
-                //Log.d(TAG, "parseWeekday: via range: ($trimmed): $startDay $endDay")
 
                 if (startDay != null && endDay != null) {
                     val startIndex = weekdays.indexOf(startDay)
@@ -187,7 +192,6 @@ private fun mergeSchedules(group: List<Station>): List<Station> {
                 val s1 = workingList[i]
                 val s2 = workingList[j]
                 val merged = tryMerge(s1, s2)
-                //Log.d("EiBiStationFetcher", "tryMerge [${if(merged != null) "success" else "failed"}]: s1=$s1    s2=$s2")
 
                 if (merged != null) {
                     workingList[i] = merged
@@ -241,8 +245,8 @@ private fun tryMerge(s1: Station, s2: Station): Station? {
     return null
 }
 
-// AI generated mapping from ITU country to ISO country codes
-// WARNING: This may be incorrect!
+// ITU country codes (as EiBi uses them) to ISO 3166-1 alpha-2; not checked entry by entry, may
+// contain errors.
 val ITU_TO_ISO: Map<String, String?> = mapOf(
     // ----- A -----
     "ABW" to "AW",
@@ -579,6 +583,8 @@ val ITU_TO_ISO: Map<String, String?> = mapOf(
     "ZMB" to "ZM",
     "ZWE" to "ZW"
 )
+
+private val RTTY_NAME = Regex("\\bRTTY\\b")
 
 // parsed from https://www.eibispace.de/dx/README.TXT
 val LANGUAGE_CODE_TO_STRING: Map<String, String?> = mapOf(

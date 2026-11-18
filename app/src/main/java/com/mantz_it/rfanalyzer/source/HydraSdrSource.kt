@@ -1,15 +1,11 @@
 package com.mantz_it.rfanalyzer.source
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
 import android.util.Log
-import android.widget.Toast
-import androidx.core.content.ContextCompat
 import com.mantz_it.libhydrasdr.HydraSdrDevice
+import com.mantz_it.libhydrasdr.HydraSdrDeviceInfo
+import com.mantz_it.libhydrasdr.HydraSdrGainCategory
+import com.mantz_it.libhydrasdr.HydraSdrGainType
+import com.mantz_it.libhydrasdr.HydraSdrRfPortDescriptor
 
 /**
  * <h1>RF Analyzer - HydraSdr Source</h1>
@@ -18,370 +14,174 @@ import com.mantz_it.libhydrasdr.HydraSdrDevice
  * Description: Source Class representing an HydraSdr Device in RF Analyzer
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+/** The RF ports before a device is queried (or if the query fails), see
+ * [HydraSdrSource.availableRfPorts]; once connected, the device's [HydraSdrRfPortDescriptor]
+ * list ([HydraSdrDeviceInfo]) counts. */
 enum class HydraSdrRfPort(val value: Int, val displayName: String) {
     RX0(0, "AIR_IN/ANT (RX0)"),
     RX1(1, "CABLE1 (RX1)"),
     RX2(2, "CABLE2 (RX2)")
 }
 
-class HydraSdrSource : IQSourceInterface {
+class HydraSdrSource : UsbSdrSource<HydraSdrDevice>(UsbSdrType.HYDRASDR, TAG, Signed16BitIQConverter()) {
 
     companion object {
         private const val TAG = "HydraSdrSource"
-        private const val ACTION_USB_PERMISSION = "com.mantz_it.rfanalyzer.HYDRASDR_USB_PERMISSION"
 
-        const val MIN_FREQUENCY = 24000000L
-        const val MAX_FREQUENCY = 1750000000L
-        const val MIN_LNA_GAIN = 0
-        const val MAX_LNA_GAIN = 15
-        const val MIN_MIXER_GAIN = 0
-        const val MAX_MIXER_GAIN = 15
-        const val MIN_VGA_GAIN = 0
-        const val MAX_VGA_GAIN = 15
-        const val MIN_LINEARITY_GAIN = 0
-        const val MAX_LINEARITY_GAIN = 21
-        const val MIN_SENSITIVITY_GAIN = 0
-        const val MAX_SENSITIVITY_GAIN = 21
+        const val USB_VENDOR_ID = 0x38af
+        const val USB_PRODUCT_ID = 0x0001
+
+        // Gain range before a device is queried (or for a gain type its HydraSdrDeviceInfo lacks);
+        // once connected, the bounds come from HydraSdrDeviceInfo.getGainDescriptor().
+        const val DEFAULT_MIN_GAIN = 0
+        const val DEFAULT_MAX_GAIN = 21
     }
 
-    private var hydraSdrDevice: HydraSdrDevice? = null
-    private val converter = Signed16BitIQConverter()
-    private var iqSourceCallback: IQSourceInterface.Callback? = null
-    private var sampleRate: Int = 0
-    private var frequency: Long = 0
+    // Read once at open: isOpen()/name are read from other threads (e.g. the scheduler's
+    // error path) and a USB control transfer there can race with close() freeing the native device.
+    private var versionString: String? = null
 
-    override fun getSampleRate(): Int {
-        return sampleRate
-    }
+    /** Runtime-queried device capabilities (gain ranges, RF ports, frequency range, board
+     * identity), populated once a device is open. Null before then, or if the query failed -
+     * callers should fall back to [HydraSdrDeviceInfo.DEFAULT_MIN_FREQUENCY]/[HydraSdrDeviceInfo.DEFAULT_MAX_FREQUENCY]
+     * and [DEFAULT_MIN_GAIN]/[DEFAULT_MAX_GAIN] in that case. */
+    var deviceInfo: HydraSdrDeviceInfo? = null
+        private set
 
-    override fun setSampleRate(newSampleRate: Int) {
-        sampleRate = newSampleRate
-        hydraSdrDevice?.setSampleRate(newSampleRate)
-        converter.setSampleRate(newSampleRate)
-        hydraSdrDevice?.flushBufferQueue()
-    }
-
-    override fun getFrequency(): Long {
-        return frequency + frequencyOffset
-    }
-
-    override fun setFrequency(newFrequency: Long) {
-        frequency = newFrequency - frequencyOffset
-        hydraSdrDevice?.setFrequency(frequency.toInt())
-        converter.frequency = newFrequency
-        hydraSdrDevice?.flushBufferQueue()
-    }
-
-    var advancedGainEnabled: Boolean = false
-        set(value) {
-            field = value
-            if(value) {
-                hydraSdrDevice?.setLnaGain(lnaGain)
-                hydraSdrDevice?.setMixerGain(mixerGain)
-                hydraSdrDevice?.setVgaGain(vgaGain)
-            } else {
-                hydraSdrDevice?.setLinearityGain(linearityGain)
-                hydraSdrDevice?.setSensitivityGain(sensitivityGain)
+    override var sampleRate: Int
+        get() = super.sampleRate
+        set(newSampleRate) {
+            // hydrasdr_set_samplerate() swaps the decimation filter chain (update_ddc_decimation()
+            // in hydrasdr_shared.c frees the old decimators) without synchronizing with the RX
+            // threads still using it - although the driver documents it as callable while
+            // streaming, a switch to a rate with more decimation can crash in the vendored
+            // decimator (SIGSEGV in dec_hb33_int16_process). So the change is bracketed by
+            // stop/start RX: hydrasdr_stop_rx() joins the RX threads first. getPacket() waits
+            // through the gap.
+            synchronized(streamLock) {
+                device?.stopRX()
+                super.sampleRate = newSampleRate
+                if (samplingActive) device?.startRX()
             }
         }
 
-    var lnaGain: Int = 0
+    override fun applySampleRate(device: HydraSdrDevice, sampleRate: Int): Boolean = device.setSampleRate(sampleRate)
+
+    override fun applyFrequency(device: HydraSdrDevice, frequency: Long) {
+        device.setFrequency(frequency)
+    }
+
+    override fun applySettings(device: HydraSdrDevice) {
+        applyActiveGains()
+        device.setRfBias(rfBias)
+        device.setRfPort(rfPortIndex)
+    }
+
+    // The value of every gain type ever set, active or not (unset ones: the device's default, see
+    // getGain()), so toggling advancedGainEnabled re-applies each side's last values.
+    private val gainValues = mutableMapOf<HydraSdrGainType, Int>()
+
+    /** Current value for [type], from the local cache if set, else the device-reported default,
+     * else [DEFAULT_MIN_GAIN]. */
+    fun getGain(type: HydraSdrGainType): Int =
+        gainValues[type] ?: deviceInfo?.getGainDescriptor(type)?.defaultValue ?: DEFAULT_MIN_GAIN
+
+    /** Sets [type]'s value, coerced into the device-reported range if known (else
+     * [DEFAULT_MIN_GAIN]/[DEFAULT_MAX_GAIN]). Applied to hardware immediately only if [type]'s
+     * category is currently active per [advancedGainEnabled]; always cached regardless, so a
+     * later mode switch re-applies it. Returns the actual (coerced) value stored. */
+    fun setGain(type: HydraSdrGainType, value: Int): Int {
+        val descriptor = deviceInfo?.getGainDescriptor(type)
+        val coerced = value.coerceIn(descriptor?.minValue ?: DEFAULT_MIN_GAIN, descriptor?.maxValue ?: DEFAULT_MAX_GAIN)
+        gainValues[type] = coerced
+        if (isActiveGainType(type)) {
+            device?.setGain(type, coerced)
+        }
+        return coerced
+    }
+
+    // Manual mode: every MANUAL gain. Preset mode: only the selected preset - each preset sets
+    // LNA, mixer and VGA together, so applying more than one would let the last one win.
+    private fun isActiveGainType(type: HydraSdrGainType): Boolean =
+        if (advancedGainEnabled) type.category == HydraSdrGainCategory.MANUAL else type == presetGainType
+
+    /** Writes every active gain (cached or device default) to the hardware - when
+     * [advancedGainEnabled]/[presetGainType] change and before streaming starts ([applySettings]). */
+    private fun applyActiveGains() {
+        val activeTypes = deviceInfo?.gains?.map { it.type }?.filter { isActiveGainType(it) }
+            ?: HydraSdrGainType.entries.filter { isActiveGainType(it) }
+        activeTypes.forEach { type -> device?.setGain(type, getGain(type)) }
+    }
+
+    /** The composite preset (a PRESET-category gain type, e.g. LINEARITY or SENSITIVITY) applied
+     * while [advancedGainEnabled] is off. */
+    var presetGainType: HydraSdrGainType = HydraSdrGainType.LINEARITY
         set(value) {
-            field = value.coerceIn(MIN_LNA_GAIN, MAX_LNA_GAIN)
-            if (advancedGainEnabled)
-                hydraSdrDevice?.setLnaGain(value.coerceIn(MIN_LNA_GAIN, MAX_LNA_GAIN))
+            field = value
+            if (!advancedGainEnabled) applyActiveGains()
         }
 
-    var mixerGain: Int = 0
+    /** Which gain category goes to the hardware ("Advanced Gain Control"): MANUAL (LNA/mixer/VGA-style
+     * controls) when on, the PRESET [presetGainType] (linearity/sensitivity-style) when off - of
+     * whatever gains the connected device reports. */
+    var advancedGainEnabled: Boolean = false
         set(value) {
-            field = value.coerceIn(MIN_MIXER_GAIN, MAX_MIXER_GAIN)
-            if (advancedGainEnabled)
-                hydraSdrDevice?.setMixerGain(value.coerceIn(MIN_MIXER_GAIN, MAX_MIXER_GAIN))
-        }
-
-    var vgaGain: Int = 0
-        set(value) {
-            field = value.coerceIn(MIN_VGA_GAIN, MAX_VGA_GAIN)
-            if (advancedGainEnabled)
-                hydraSdrDevice?.setVgaGain(value.coerceIn(MIN_VGA_GAIN, MAX_VGA_GAIN))
-        }
-
-    var linearityGain: Int = 0
-        set(value) {
-            field = value.coerceIn(MIN_LINEARITY_GAIN, MAX_LINEARITY_GAIN)
-            if (!advancedGainEnabled)
-                hydraSdrDevice?.setLinearityGain(value.coerceIn(MIN_LINEARITY_GAIN, MAX_LINEARITY_GAIN))
-        }
-
-    var sensitivityGain: Int = 0
-        set(value) {
-            field = value.coerceIn(MIN_SENSITIVITY_GAIN, MAX_SENSITIVITY_GAIN)
-            if (!advancedGainEnabled)
-                hydraSdrDevice?.setSensitivityGain(value.coerceIn(MIN_SENSITIVITY_GAIN, MAX_SENSITIVITY_GAIN))
+            field = value
+            applyActiveGains()
         }
 
     var rfBias: Boolean = false
         set(value) {
             field = value
-            hydraSdrDevice?.setRfBias(value)
+            device?.setRfBias(value)
         }
 
-    var rfPort: HydraSdrRfPort = HydraSdrRfPort.RX0
+    /** RF port index (matches hydrasdr_rf_port_t - a plain firmware-defined ordinal, not a fixed
+     * enum). See [availableRfPorts] for the list of ports this device actually reports. */
+    var rfPortIndex: Int = 0
         set(value) {
             field = value
-            hydraSdrDevice?.setRfPort(value.value)
+            device?.setRfPort(value)
         }
 
-    var frequencyOffset: Int = 0
-        set(value) {
-            field = value
-            converter.frequency = frequency + value
-        }
-
-    override fun open(
-        context: Context,
-        callback: IQSourceInterface.Callback?
-    ): Boolean {
-        if (hydraSdrDevice != null) {
-            Log.w(TAG, "open: hydraSdrDevice is already open (not null).")
-            return false
-        }
-        if (callback == null) {
-            Log.w(TAG, "open: callback is null.")
-            return false
-        }
-        iqSourceCallback = callback
-
-        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-        val device = usbManager.deviceList.values.firstOrNull {
-            it.vendorId == 0x38af && it.productId == 0x0001
-        }
-        if (device == null) {
-            Log.i(TAG, "open: No HydraSDR device found.")
-            usbManager.deviceList.values.forEach {
-                Log.i(TAG, "open: Unknown USB device: ${it.deviceName} (VendorId: ${it.vendorId}, ProductId: ${it.productId})")
+    /** RF ports this device reports, or [HydraSdrRfPort]'s before a device is queried. */
+    val availableRfPorts: List<HydraSdrRfPortDescriptor>
+        get() = deviceInfo?.rfPorts?.takeIf { it.isNotEmpty() }
+            ?: HydraSdrRfPort.entries.map {
+                HydraSdrRfPortDescriptor(it.value, it.displayName, HydraSdrDeviceInfo.DEFAULT_MIN_FREQUENCY, HydraSdrDeviceInfo.DEFAULT_MAX_FREQUENCY, false)
             }
-            return false
-        }
-        Log.i(TAG, "open: device=$device (vendorid: ${device.vendorId} productId: ${device.productId})")
-        if (usbManager.hasPermission(device)) {
-            openHydraSdrDevice(device, context)
+
+    override fun openDevice(fd: Int) = HydraSdrDevice.open(fd)
+
+    override fun onDeviceOpened(device: HydraSdrDevice) {
+        versionString = device.getVersionString()
+        Log.i(TAG, "open: HydraSDR Board Version String: ${versionString ?: "<unknown>"}")
+        deviceInfo = device.getDeviceInfo()
+        if (deviceInfo == null) {
+            Log.w(TAG, "open: Failed to query device info - falling back to generic default bounds.")
         } else {
-            // Register broadcast receiver BEFORE requesting permission
-            val usbPermissionReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    if (ACTION_USB_PERMISSION == intent.action) {
-                        synchronized(this) {
-                            val device = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-                            if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                                if (device != null) {
-                                    Log.i(TAG, "USB permission granted for device: ${device.productName}")
-                                    openHydraSdrDevice(device, context)
-                                }
-                            } else {
-                                Log.w(TAG, "USB permission denied for device: ${device?.productName}")
-                                Toast.makeText(context, "USB permission denied.", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-                    context.unregisterReceiver(this)
-                }
-            }
-            val filter = IntentFilter(ACTION_USB_PERMISSION)
-            ContextCompat.registerReceiver(context, usbPermissionReceiver, filter,ContextCompat.RECEIVER_NOT_EXPORTED)
-
-            // Request permission
-            // Note: setting the package name of the inner intent makes it explicit
-            // From Android 14 it is required that mutable PendingIntents have explicit inner intents!
-            val innerIntent = Intent(ACTION_USB_PERMISSION)
-            innerIntent.setPackage(context.packageName)
-            val permissionIntent = android.app.PendingIntent.getBroadcast(context, 0, innerIntent, android.app.PendingIntent.FLAG_MUTABLE)
-            Log.i(TAG, "open: requesting permission for device: $device")
-            usbManager.requestPermission(device, permissionIntent)
-        }
-        return true
-    }
-
-    private fun openHydraSdrDevice(device: UsbDevice, context: Context): Boolean {
-        var errorMsg: String? = null
-        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-        if (usbManager.hasPermission(device)) {
-            val connection = usbManager.openDevice(device)
-            if (connection != null) {
-                val (deviceHandle, hydrasdrError) = HydraSdrDevice.open(connection.fileDescriptor)
-                if (deviceHandle != null) {
-                    hydraSdrDevice = deviceHandle
-                    Log.i(TAG,"openHydraSdrDevice: HydraSDR Board Version String: ${deviceHandle.getVersionString() ?: "<unknown>"}")
-                    iqSourceCallback?.onIQSourceReady(this)
-                    return true
-                } else if (hydrasdrError != null) {
-                    Log.w(TAG, "openHydraSdrDevice: Error on HydraSdrDevice.open: $hydrasdrError")
-                    errorMsg = hydrasdrError.toString()
-                }
-            } else {
-                Log.w(TAG, "openHydraSdrDevice: Error opening USB connection.")
-                errorMsg = "Error opening USB connection."
-            }
-        } else {
-            Log.w(TAG, "openHydraSdrDevice: No permission to open HydraSDR device.")
-            errorMsg = "No permission"
-        }
-        iqSourceCallback?.onIQSourceError(this, "Failed to open HydraSDR device ($errorMsg)")
-        Toast.makeText(context, "Failed to open HydraSDR device ($errorMsg).", Toast.LENGTH_SHORT).show()
-        return false
-    }
-
-    override fun isOpen(): Boolean {
-        hydraSdrDevice?.let {
-            val versionString = it.getVersionString()
-            if (versionString != null)
-                return true
-        }
-        return false
-    }
-
-    override fun close(): Boolean {
-        hydraSdrDevice?.let {
-            return it.close()
-        }
-        return true
-    }
-
-    override fun getName(): String? {
-        hydraSdrDevice?.let {
-            val versionString = it.getVersionString()
-            if (versionString != null)
-                return versionString
-        }
-        return "HydraSDR"
-    }
-
-    override fun getMaxFrequency(): Long {
-        return MAX_FREQUENCY + frequencyOffset
-    }
-
-    override fun getMinFrequency(): Long {
-        return MIN_FREQUENCY + frequencyOffset
-    }
-
-    override fun getNextHigherOptimalSampleRate(sampleRate: Int): Int {
-        val supportedRates = getSupportedSampleRates() ?: return sampleRate
-        return supportedRates.firstOrNull { it > sampleRate } ?: supportedRates.lastOrNull() ?: sampleRate
-    }
-
-    override fun getNextLowerOptimalSampleRate(sampleRate: Int): Int {
-        val supportedRates = getSupportedSampleRates() ?: return sampleRate
-        return supportedRates.reversed().firstOrNull { it < sampleRate } ?: supportedRates.firstOrNull() ?: sampleRate
-    }
-
-    override fun getSupportedSampleRates(): IntArray? {
-        val supportedSampleRates = hydraSdrDevice?.getSupportedSampleRates()
-        return if (supportedSampleRates != null && supportedSampleRates.isNotEmpty()) {
-            supportedSampleRates.sorted().toIntArray()
-        } else {
-            listOf(0).toIntArray()
+            Log.i(TAG, "open: deviceInfo=$deviceInfo")
         }
     }
 
-    override fun getPacketSize(): Int {
-        return HydraSdrDevice.BUFFER_SIZE
-    }
+    override val name: String
+        get() = deviceInfo?.let { "${it.boardName} (FW: ${it.firmwareVersion})" } ?: versionString ?: "HydraSDR"
 
-    override fun getBytesPerSample(): Int {
-        return 4
-    }
+    override val maxFrequency: Long
+        get() = (deviceInfo?.maxFrequency ?: HydraSdrDeviceInfo.DEFAULT_MAX_FREQUENCY) + frequencyOffset
 
-    override fun getPacket(timeout: Int): ByteArray? {
-        if (hydraSdrDevice == null)
-            Log.w(TAG, "getPacket: hydrasdrDevice is null.")
-        val packet = hydraSdrDevice?.getSampleBuffer()
-        if (packet == null && !(hydraSdrDevice?.isStreaming() ?: false)) {
-            Log.w(TAG, "getPacket: hydrasdrDevice did not return a packet and is not streaming. report source error..")
-            iqSourceCallback?.onIQSourceError(this, "HydraSdr stopped streaming")
-            return null
-        }
-        return packet
-    }
+    override val minFrequency: Long
+        get() = (deviceInfo?.minFrequency ?: HydraSdrDeviceInfo.DEFAULT_MIN_FREQUENCY) + frequencyOffset
 
-    override fun returnPacket(buffer: ByteArray?) {
-        if (buffer == null)
-            return
-        if (hydraSdrDevice == null)
-            Log.w(TAG, "returnPacket: hydrasdrDevice is null.")
-        hydraSdrDevice?.returnSampleBuffer(buffer)
-    }
+    override val supportedSampleRates: IntArray
+        get() = device?.getSupportedSampleRates()?.takeIf { it.isNotEmpty() }?.sorted()?.toIntArray() ?: intArrayOf(0)
 
-    override fun startSampling() {
-        if (hydraSdrDevice == null)
-            Log.w(TAG, "startSampling: hydrasdrDevice is null.")
-        hydraSdrDevice?.setSampleRate(sampleRate)
-        hydraSdrDevice?.setFrequency(frequency.toInt())
-        if (advancedGainEnabled) {
-            hydraSdrDevice?.setVgaGain(vgaGain)
-            hydraSdrDevice?.setLnaGain(lnaGain)
-            hydraSdrDevice?.setMixerGain(mixerGain)
-        } else {
-            hydraSdrDevice?.setLinearityGain(linearityGain)
-            hydraSdrDevice?.setSensitivityGain(sensitivityGain)
-        }
-        hydraSdrDevice?.setRfBias(rfBias)
-        hydraSdrDevice?.setRfPort(rfPort.value)
-        hydraSdrDevice?.startRX()
-    }
+    override val packetSize: Int
+        get() = HydraSdrDevice.BUFFER_SIZE
 
-    override fun stopSampling() {
-        if (hydraSdrDevice == null)
-            Log.w(TAG, "stopSampling: hydrasdrDevice is null.")
-        hydraSdrDevice?.stopRX()
-    }
-
-    override fun fillPacketIntoSamplePacket(
-        packet: ByteArray?,
-        samplePacket: SamplePacket?
-    ): Int {
-        if (packet == null || samplePacket == null) {
-            Log.w(TAG, "fillPacketIntoSamplePacket: packet or samplePacket is null.")
-            return 0
-        }
-        return converter.fillPacketIntoSamplePacket(packet, samplePacket)
-    }
-
-    override fun fillPacketIntoInterleavedBuffer(packet: ByteArray?, interleavedBuffer: FloatArray?): Boolean {
-        if (packet == null || interleavedBuffer == null) {
-            Log.w(TAG, "fillPacketIntoInterleavedBuffer: packet or interleavedBuffer is null.")
-            return false
-        }
-        return converter.fillPacketIntoInterleavedBuffer(packet, interleavedBuffer)
-    }
-
-    override fun mixPacketIntoSamplePacket(
-        packet: ByteArray?,
-        samplePacket: SamplePacket?,
-        channelFrequency: Long
-    ): Int {
-        if (packet == null || samplePacket == null) {
-            Log.w(TAG, "mixPacketIntoSamplePacket: packet or samplePacket is null.")
-            return 0
-        }
-        return converter.mixPacketIntoSamplePacket(packet, samplePacket, channelFrequency)
-    }
-
+    override val bytesPerSample: Int
+        get() = 4
 }

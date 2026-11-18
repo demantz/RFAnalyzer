@@ -5,7 +5,7 @@
 # WAV header to a HackRF IQ file.
 #
 # usage: 
-# ./prepWAV.py <IQ-file IN> <WAV-file OUT>
+# ./prepWAV.py <IQ-file IN> <WAV-file OUT> <sample rate>
 #
 # Author:  Dennis Mantz
 # Date:    18.04.2015

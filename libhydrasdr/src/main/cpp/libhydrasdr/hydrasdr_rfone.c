@@ -370,7 +370,7 @@ static int rfone_get_device_info(struct hydrasdr_device* dev,
 	/* Structure version for compatibility */
 	info->struct_version_major = 1;
 	info->struct_version_minor = 0;
-	info->struct_version_revision = 0;
+	info->struct_version_revision = 1;
 
 	/* Board ID */
 	result = hydrasdr_generic_board_id_read(dev, &board_id);
@@ -479,6 +479,7 @@ static int rfone_get_device_info(struct hydrasdr_device* dev,
 			info->current_sample_type = (uint32_t)stream->sample_type;
 			info->current_packing = stream->packing_enabled ? 1 : 0;
 			info->bandwidth_auto_selected = stream->bandwidth_explicitly_set ? 0 : 1;
+			info->current_adc_bits = stream->adc_bits;
 		}
 	}
 

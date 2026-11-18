@@ -1,24 +1,32 @@
 package com.mantz_it.rfanalyzer
 
-import android.app.Application
-import android.test.ApplicationTestCase
 import com.mantz_it.rfanalyzer.dsp.ComplexFirFilter
 import com.mantz_it.rfanalyzer.dsp.FirFilter.Companion.createLowPass
-import com.mantz_it.rfanalyzer.source.SamplePacket
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
 import com.mantz_it.rfanalyzer.ui.composable.toTimeSpanString
 import java.util.Locale
 import kotlin.math.cos
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import kotlin.math.sin
 
 /**
- * [Testing Fundamentals](http://d.android.com/tools/testing/testing_android.html)
+ * <h1>RF Analyzer - Application Tests</h1>
+ *
+ * Module:      ApplicationTest.kt
+ * Description: Instrumented tests of small helpers: the text of toTimeSpanString(), the output of
+ *              FirFilter low-pass filters against stored values and their speed on the device, and
+ *              the creation of ComplexFirFilter band-pass filters. testLocation prints the ISO
+ *              country codes with their names.
+ *
+ * @author Dennis Mantz
+ * Copyright (C) 2025 Dennis Mantz
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
-class ApplicationTest : ApplicationTestCase<Application?>(Application::class.java) {
-    @Throws(Exception::class)
-    public override fun setUp() {
-        super.setUp()
-    }
 
+class ApplicationTest {
+    @Test
     fun testLocation() {
         val locales = Locale.getISOCountries()
             .map { code -> Locale("", code) }
@@ -31,6 +39,7 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
         }
     }
 
+    @Test
     fun testTimeSpanToString() {
         val duration = 4L * 24 * 60 * 60 * 1000 +
                 11L * 60 * 60 * 1000 +
@@ -38,11 +47,9 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
                 53L * 1000
         val text = duration.toTimeSpanString()
         assertEquals("4 days, 11 hours, 1 minute and 53 seconds", text)
-
-        //val duration2 = 4L * 24 * 60 * 60 * 1000 + 11L * 60 * 1000
-        //assertEquals(getUsageTimeStr(duration2.toInt()/1000), duration2.toTimeSpanString())
     }
 
+    @Test
     fun testFirFilter() {
         val samples = 128
         val reIn = FloatArray(samples)
@@ -68,16 +75,6 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
 
         filter.filter(`in`, out, 0, `in`.size())
 
-//        println("float[] reOutExpected = {")
-//        for (i in 0..<out.size()) {
-//        	print("${reOut[i]}f, ")
-//        }
-//        println("\n};")
-//        println("float[] imOutExpected = {")
-//        for (i in 0..<out.size()) {
-//        	print("${imOut[i]}f, ")
-//        }
-//        println("\n};")
         val reOutExpected = floatArrayOf(
             1.7833801E-4f,            5.6521903E-4f,
             -0.008516869f,
@@ -152,6 +149,7 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
         }
     }
 
+    @Test
     fun testFirFilter2() {
         val samples = 64
         val reIn = FloatArray(samples)
@@ -177,17 +175,6 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
 
         filter.filter(`in`, out, 0, `in`.size())
 
-        //println("float[] reOutExpected = {")
-        //for (i in 0..<out.size()) {
-        //	print("${reOut[i]}f, ")
-        //}
-        //println("\n};")
-        //println("float[] imOutExpected = {")
-        //for (i in 0..<out.size()) {
-        //	print("${imOut[i]}f, ")
-        //}
-        //println("\n};")
-
         val reOutExpected = floatArrayOf(
             -9.0414577E-4f, -0.005165519f, -0.011364181f, -0.005235526f, 0.04240741f, 0.15844727f, 0.3370772f, 0.52623874f, 0.65431756f, 0.67847294f, 0.6059719f, 0.4669314f, 0.2750504f, 0.027459646f, -0.25864854f, -0.5279595f, -0.72069085f, -0.8192188f, -0.8463746f, -0.8192188f, -0.7206908f, -0.52852917f, -0.26154414f, 0.022224117f, 0.27527937f, 0.4925698f, 0.6847314f, 0.8329541f, 0.8908228f, 0.83295405f, 0.6847314f, 0.49256986f, 0.27527937f, 0.022224123f, -0.2615441f, -0.52852917f, -0.72069085f, -0.8192188f, -0.8463746f, -0.8192188f, -0.7206908f, -0.52852917f, -0.26154414f, 0.022224117f, 0.27527937f, 0.4925698f, 0.6847314f, 0.8329541f, 0.8908228f, 0.83295405f, 0.6847314f, 0.49256986f, 0.27527937f, 0.022224123f, -0.2615441f, -0.52852917f, -0.72069085f, -0.8192188f, -0.8463746f, -0.8192188f, -0.7206908f, -0.52852917f, -0.26154414f
         )
@@ -201,6 +188,7 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
         }
     }
 
+    @Test
     fun testFirFilterPerformance() {
         val samples = 1000000
         val reIn = FloatArray(samples)
@@ -236,12 +224,12 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
 
         println("FirFilter performance test: Filtering " + samples + " samples took " + durationMs + " ms.")
 
-        // Assert that the filtering operation doesn't exceed a certain threshold (e.g., 650 ms on my Pixel 4a 5G on Android 12)
-        // exact measures where around 624ms
+        // Threshold from a Pixel 4a 5G (Android 12), which took about 624 ms.
         assertTrue("Filter operation took too long: " + durationMs + " ms", durationMs < 650)
     }
 
 
+    @Test
     fun testComplexFirFilter() {
         val samples = 32
         val reIn = FloatArray(samples)
@@ -264,21 +252,10 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
 
         val filter =
             ComplexFirFilter.createBandPass(1, 1f, sampleRate.toFloat(), -450f, -50f, 50f, 60f)
-        println("Created filter with " + filter!!.getNumberOfTaps() + " taps!")
-
-        //FFT fft1 = new FFT(samples);
-
-        //System.out.println("Before FILTER:");
-        //spectrum(fft1, reIn, imIn);
-
-        //filter.filter(in, out, 0, in.size());
-
-        //FFT fft2 = new FFT(samples);
-
-        //System.out.println("After FILTER:");
-        //spectrum(fft2, reOut, imOut);
+        println("Created filter with " + filter!!.numberOfTaps + " taps!")
     }
 
+    @Test
     fun testComplexFirFilter2() {
         val samples = 32
         val reIn = FloatArray(samples)
@@ -299,68 +276,11 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
 
         val filter =
             ComplexFirFilter.createBandPass(1, 1f, sampleRate.toFloat(), 50f, 450f, 50f, 60f)
-        println("Created filter with " + filter!!.getNumberOfTaps() + " taps!")
-
-        //FFT fft1 = new FFT(samples);
-
-        //System.out.println("Before FILTER:");
-        //spectrum(fft1, reIn, imIn);
-
-        //filter.filter(in, out, 0, in.size());
-
-        //FFT fft2 = new FFT(samples);
-
-        //System.out.println("After FILTER:");
-        //spectrum(fft2, reOut, imOut);
+        println("Created filter with " + filter!!.numberOfTaps + " taps!")
     }
 
     companion object {
-        //public void testFFT() throws Exception {
-        //	// Test the FFT to make sure it's working
-        //	int N = 8;
-        //	FFT fft = new FFT(N);
-        //	float[] window = fft.getWindow();
-        //	float[] re = new float[N];
-        //	float[] im = new float[N];
-        //	// Impulse
-        //	re[0] = 1; im[0] = 0;
-        //	for(int i=1; i<N; i++)
-        //		re[i] = im[i] = 0;
-        //	beforeAfter(fft, re, im);
-        //	// Nyquist
-        //	for(int i=0; i<N; i++) {
-        //		re[i] = (float)Math.pow(-1, i);
-        //		im[i] = 0;
-        //	}
-        //	beforeAfter(fft, re, im);
-        //	// Single sin
-        //	for(int i=0; i<N; i++) {
-        //		re[i] = (float)Math.cos(2*Math.PI*i / N);
-        //		im[i] = 0;
-        //	}
-        //	beforeAfter(fft, re, im);
-        //	// Ramp
-        //	for(int i=0; i<N; i++) {
-        //		re[i] = i;
-        //		im[i] = 0;
-        //	}
-        //	beforeAfter(fft, re, im);
-        //	long time = System.currentTimeMillis();
-        //	double iter = 30000;
-        //	for(int i=0; i<iter; i++)
-        //		fft.fft(re,im);
-        //	time = System.currentTimeMillis() - time;
-        //	System.out.println("Averaged " + (time/iter) + "ms per iteration");
-        //}
-        //protected static void beforeAfter(FFT fft, float[] re, float[] im) {
-        //	System.out.println("Before: ");
-        //	printReIm(re, im);
-        //	//fft.applyWindow(re, im);
-        //	fft.fft(re, im);
-        //	System.out.println("After: ");
-        //	printReIm(re, im);
-        //}
-        protected fun printReIm(re: FloatArray, im: FloatArray) {
+        private fun printReIm(re: FloatArray, im: FloatArray) {
             print("Re: [")
             for (i in re.indices) print(((re[i] * 1000).toInt() / 1000.0).toString() + " ")
 
@@ -368,30 +288,6 @@ class ApplicationTest : ApplicationTestCase<Application?>(Application::class.jav
             for (i in im.indices) print(((im[i] * 1000).toInt() / 1000.0).toString() + " ")
 
             println("]")
-        } //protected static void spectrum(FFT fft, float[] re, float[] im) {
-        //	//fft.applyWindow(re, im);
-        //	int length = re.length;
-        //	float[] reDouble = new float[length];
-        //	float[] imDouble = new float[length];
-        //	float[] mag = new float[length];
-        //	for (int i = 0; i < length; i++) {
-        //		reDouble[i] = re[i];
-        //		imDouble[i] = im[i];
-        //	}
-        //	fft.fft(reDouble, imDouble);
-        //	// Calculate the logarithmic magnitude:
-        //	for (int i = 0; i < length; i++) {
-        //		// We have to flip both sides of the fft to draw it centered on the screen:
-        //		int targetIndex = (i+length/2) % length;
-        //		// Calc the magnitude = log(  re^2 + im^2  )
-        //		// note that we still have to divide re and im by the fft size
-        //		mag[targetIndex] = (float) Math.log(Math.pow(reDouble[i]/fft.n,2) + Math.pow(imDouble[i]/fft.n,2));
-        //	}
-        //	System.out.print("Spectrum: [");
-        //	for (int i = 0; i < length; i++) {
-        //		System.out.print(" " + (int) mag[i]);
-        //	}
-        //	System.out.println("]");
-        //}
+        }
     }
 }

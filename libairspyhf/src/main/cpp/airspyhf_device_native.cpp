@@ -5,6 +5,7 @@
 #include <mutex>
 #include <unordered_map>
 #include "libairspyhf/airspyhf.h"
+#include "sample_handoff.h"
 
 /**
  * <h1>RF Analyzer - airspyHF device native code</h1>
@@ -40,16 +41,14 @@
 // ============================================================
 // Globals
 // ============================================================
-static JavaVM *g_vm = NULL;
-static jobject g_airspyHFDeviceObj = NULL;
-static jmethodID g_getEmptyBufferMethod = NULL;
-static jmethodID g_onSamplesReadyMethod = NULL;
+// Hands the transfers of the RX callback to AirspyHFDevice (bound at start, released at stop/close).
+static SampleHandoff g_handoff;
 
 // ============================================================
 // JNI: Cache JavaVM
 // ============================================================
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-    g_vm = vm;
+    g_handoff.init(vm);
     return JNI_VERSION_1_6;
 }
 
@@ -61,7 +60,6 @@ struct DeviceWrapperState {
     bool starting = false;     // set while start in progress
     bool stopping = false;     // set while stop in progress
     bool streaming = false;    // set if we think device is streaming
-    jobject globalRef = nullptr; // JNI global ref to Java AirspyHFDevice instance
 };
 
 // global structures to hold states
@@ -79,17 +77,11 @@ static DeviceWrapperState* get_or_create_state(jlong nativePtr) {
 }
 
 // helper: remove & free state (call when device is truly closed)
-static void free_state(jlong nativePtr, JNIEnv* env) {
+static void free_state(jlong nativePtr) {
     std::lock_guard<std::mutex> lock(g_states_mutex);
     auto it = g_states.find(nativePtr);
     if (it == g_states.end()) return;
-    DeviceWrapperState* s = it->second;
-    // delete global ref if still present
-    if (s->globalRef != nullptr && env != nullptr) {
-        env->DeleteGlobalRef(s->globalRef);
-        s->globalRef = nullptr;
-    }
-    delete s;
+    delete it->second;
     g_states.erase(it);
 }
 
@@ -117,7 +109,7 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_getLibraryVersionString(
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeOpenFd(
         JNIEnv* env,
-        jclass /* clazz */, // For static methods, it's jclass
+        jclass /* clazz */,
         jint fd) {
     struct airspyhf_device* device = nullptr;
     LOGI("Attempting to open Airspy device with fd: %d", fd);
@@ -165,7 +157,7 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeClose(
     }
     LOGI("nativeClose: Closing AirspyHF device, pointer: %p", device);
 
-    // Ensure device is stopped before closing (defensive — prevents close while streaming)
+    // Stop a running stream before closing
     airspyhf_stop(device);
 
     int result = airspyhf_close(device);
@@ -174,7 +166,8 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeClose(
     }
 
     // Free wrapper state AFTER airspyhf_close()
-    free_state(nativePtr, env);
+    g_handoff.unbind(env);
+    free_state(nativePtr);
     LOGI("nativeClose: wrapper state freed for device %p", device);
 
     return result;
@@ -340,7 +333,6 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeGetSamplerates(
         return AIRSPYHF_SUCCESS; // No error, just no sample rates
     }
 
-    // Allocate a temporary buffer to hold the sample rates
     auto* rates_buffer = new uint32_t[num_samplerates];
 
     result = airspyhf_get_samplerates(device, rates_buffer, num_samplerates);
@@ -350,7 +342,6 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeGetSamplerates(
         return result;
     }
 
-    // Get the List.add method
     jclass listClass = env->GetObjectClass(list_samplerates);
     jmethodID addMethod = env->GetMethodID(listClass, "add", "(Ljava/lang/Object;)Z");
     jclass integerClass = env->FindClass("java/lang/Integer");
@@ -374,32 +365,9 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeGetSamplerates(
 // Airspy RX callback (runs on AirspyHF’s thread)
 // ============================================================
 static int airspyhf_callback(airspyhf_transfer_t *transfer) {
-    JNIEnv *env = nullptr;
-
-    if (g_airspyHFDeviceObj == nullptr) {
-        LOGE("airspyhf_callback: g_airspyHFDeviceObj is null");
-        return 0;
-    }
-
-    if (g_vm->AttachCurrentThread(&env, nullptr) != 0) {
-        LOGE("airspyhf_callback: Failed to attach Airspy thread to JVM");
-        return 0;
-    }
-
-    // Request an empty buffer from Kotlin (blocks if none free)
-    jbyteArray buffer = (jbyteArray)env->CallObjectMethod(g_airspyHFDeviceObj, g_getEmptyBufferMethod);
-
-    // Copy samples into buffer
-    jbyte *buf_ptr = env->GetByteArrayElements(buffer, nullptr);
-    memcpy(buf_ptr, transfer->samples, transfer->sample_count * sizeof(airspyhf_complex_float_t));
-    env->ReleaseByteArrayElements(buffer, buf_ptr, 0);
-
-    // Notify Kotlin that samples are ready
-    env->CallVoidMethod(g_airspyHFDeviceObj, g_onSamplesReadyMethod, buffer);
-
-    // Release local ref to avoid leaks
-    env->DeleteLocalRef(buffer);
-
+    // dropped_samples counts the samples the driver dropped before this transfer (not cumulative)
+    g_handoff.deliverCountingDrops(transfer->samples, static_cast<size_t>(transfer->sample_count) * sizeof(airspyhf_complex_float_t),
+                                   transfer->dropped_samples);
     return 0;
 }
 
@@ -429,46 +397,30 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeStartRX(JNIEnv *env, jobject
             LOGI("nativeStartRX: device already streaming, returning success");
             return AIRSPYHF_SUCCESS;
         }
-        st->starting = true; // mark we are starting (cleared below)
+        st->starting = true; // cleared below
     }
 
-    // Create global ref and resolve Java method IDs BEFORE calling into library.
-    // We do this here so callbacks have a stable jobject during streaming.
-    jobject newGlobalRef = env->NewGlobalRef(thiz);
-    if (newGlobalRef == nullptr) {
-        LOGE("nativeStartRX: NewGlobalRef failed");
+    // Bind the Java object BEFORE calling into the library, so callbacks have it during streaming.
+    if (!g_handoff.bind(env, thiz)) {
+        LOGE("nativeStartRX: AirspyHFDevice lacks the sample callbacks");
         std::lock_guard<std::mutex> lock(st->m);
         st->starting = false;
         return AIRSPYHF_ERROR;
     }
 
-    // Keep global reference to AirspyHFDevice instance
-    g_airspyHFDeviceObj = newGlobalRef;
-
-    // Resolve Java methods for airspyhf_callback()
-    jclass cls = env->GetObjectClass(thiz);
-    g_getEmptyBufferMethod = env->GetMethodID(cls, "getEmptyBuffer", "()[B");
-    g_onSamplesReadyMethod = env->GetMethodID(cls, "onSamplesReady", "([B)V");
-
-    // Call the library start function (this may create threads inside the lib)
     int result = airspyhf_start(device, airspyhf_callback, nullptr);
 
-    // Update wrapper state after the library call
     {
         std::lock_guard<std::mutex> lock(st->m);
         st->starting = false;
         if (result == AIRSPYHF_SUCCESS) {
             st->streaming = true;
-            st->globalRef = newGlobalRef; // keep the ref for later delete
             LOGI("nativeStartRX: AirspyHF streaming started (device=%p)", (void*)device);
         } else {
-            // start failed — clean up the global ref we created
+            // The device stays open: nativeStopRX()/nativeClose() own its lifecycle, and the
+            // Kotlin side still holds the pointer.
             LOGE("nativeStartRX: airspyhf_start() failed: %d", result);
-            airspyhf_close(device);
-            g_airspyHFDeviceObj = nullptr;
-            g_getEmptyBufferMethod = nullptr;
-            g_onSamplesReadyMethod = nullptr;
-            env->DeleteGlobalRef(newGlobalRef);
+            g_handoff.unbind(env);
         }
     }
 
@@ -499,39 +451,24 @@ Java_com_mantz_1it_libairspyhf_AirspyHFDevice_nativeStopRX(JNIEnv *env, jobject 
         if (!st->streaming) {
             // Not streaming — nothing to do. Still attempt to tidy up any leftover ref.
             LOGI("nativeStopRX: device not streaming (no-op)");
-            if (st->globalRef) {
-                env->DeleteGlobalRef(st->globalRef);
-                st->globalRef = nullptr;
-            }
-            // Optionally free per-device state if you know the device will be closed.
-            // free_state(nativePtr, env);
+            g_handoff.unbind(env);
             return AIRSPYHF_ERROR;
         }
         st->stopping = true;
     }
 
-    // Now call library stop (this will attempt to stop threads and cancel transfers)
+    // Stops the driver's threads and cancels the transfers
     int result = airspyhf_stop(device);
 
-    // Clear state and delete JNI global ref
+    // Clear state, then release the Java object
     {
         std::lock_guard<std::mutex> lock(st->m);
         st->stopping = false;
         st->streaming = false;
-
-        if (st->globalRef) {
-            // Delete the per-device ref we created in start
-            env->DeleteGlobalRef(st->globalRef);
-            st->globalRef = nullptr;
-            g_airspyHFDeviceObj = nullptr;
-        }
-
     }
+    g_handoff.unbind(env);
 
     LOGI("nativeStopRX: AirspyHF streaming stopped (device=%p), result=%d", (void*)device, result);
-
-    // optionally free state now if you know device is about to be closed; otherwise keep it.
-    // free_state(nativePtr, env);
 
     return result;
 }

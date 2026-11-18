@@ -10,8 +10,8 @@ bookmark various information about stations and bands:
 Station and band bookmarks can be sorted into lists and viewed as list or
 as overlay elements directly inside the FFT plot. In both cases filtering can
 be done based on frequency range, mode or search terms. Stations and bands can
-also be marked as favorites which are quickly accessible from the [Demodulation
-Tab](./demodulation.md#bookmarks).
+also be marked as favorites which are quickly accessible from the [Bookmark
+Favorites Dialog](#bookmark-favorites-dialog).
 
 Additionally, it is possible to access online station lists. Currently supported are:
 
@@ -44,7 +44,10 @@ The Bookmark Favorites Dialog provides quick access to your most important
 bookmarked stations and bands without leaving the main screen of the app. It
 displays a list of stations and bands that you have marked with the Heart icon
 (your Favorites). Tapping a station in this dialog immediately tunes the radio
-to the stored frequency and applies the saved demodulation settings. Tapping a
+to the stored frequency and applies the saved demodulation settings. Tuning to
+a station - from here, from its label in the FFT or from the Bookmark Manager -
+also starts the analyzer if it is stopped and the source is ready (a file
+chosen, a server set, or the SDR plugged in). Tapping a
 band moves your viewport to exactly the start and end of the band if your SDR
 bandwidth (sample rate) supports it.
 
@@ -71,7 +74,9 @@ actions:
 
 - **Delete**: Remove the list and all its contents.
 - **Edit**: Rename the list or change its color.
-- **Export**: Save the contents of this specific list to a JSON file.
+- **Export**: Opens the export sheet for this list: **Export** saves its
+  stations or bands as a JSON file, **Share** sends the file to another app.
+  The file keeps the list membership.
 - **Copy/Move**: Batch process the stations or bands within the list to organize them into a different list.
 
 ### Manage Online Lists
@@ -98,7 +103,7 @@ The card also displays the time of the last successful download.
 ### Create and Edit Stations
 
 To create a new station bookmark, either press the floating Plus-Button on the
-bottom right cornor of the station page of the bookmark manager or the action
+bottom right corner of the station page of the bookmark manager or the action
 "Add Station Bookmark" from the menu that pops up when you press the bookmark
 button on the main screen of the app. To edit a station, first expand a station
 entry by tapping on it once, then press the three-dot menu button on the bottom
@@ -123,7 +128,7 @@ sections:
 
 Note that not all sections are enabled by default for simplicity. You can
 always add sections from the bottom of the "Edit Station" dialog if they are
-missing. Sections which are empty are not saved. Some section require
+missing. Sections which are empty are not saved. Some sections require
 additional explanation:
 
 #### Station Frequency, Bandwidth and Mode
@@ -135,6 +140,19 @@ For further information about these parameters refer to:
 - [Bandwidth](./demodulation.md#zoom-and-bandwidth)
 - Mode = [Demodulation Mode](./demodulation.md#demodulation-mode)
 
+#### Settings from a Station
+
+Tuning to a station moves the view only if the station isn't visible in it.
+
+When you tune to the station, mode and bandwidth are applied for good. The
+squelch setting below only holds while you stay on the station: the
+Demodulation tab shows **Settings from "…" until you tune away**. As soon as you
+tune away (the channel leaves the station's bandwidth), change the mode or the
+source, your own setting applies again - so tuning on to other signals never
+leaves the demodulator silently on the station's value. Tap **✕** on the notice
+to return to your settings right away; changing the value by hand makes it your
+own setting.
+
 #### Address
 
 The address section contains a field for the country and the address line of a
@@ -144,7 +162,7 @@ name of the park or summit.
 
 If the station bookmark has an address set, you can view the location on a map
 by pressing the "Open in Maps" action from the three-dot menu of the station
-card. Note that this action will only take the address fro this section if no
+card. Note that this action will only take the address from this section if no
 Coordinates section is available, otherwise it will use the exact coordinates.
 
 #### Coordinates
@@ -159,7 +177,7 @@ card.
 
 #### Call Sign
 
-This field is intented to hold an (amateur radio) callsign.
+This field is intended to hold an (amateur radio) callsign.
 In broadcasting and radio communications, a call sign is a unique identifier
 for a transmitter station. ITU prefix is usually used to identify a country,
 and the rest of the call sign is an individual station in that country.
@@ -171,18 +189,19 @@ Setting](./demodulation.md#squelch-control) will be enabled or disabled when tun
 on this station. The following options are available:
 
 - **Squelch Enabled**: The squelch setting will automatically *turn on* and be
-  set to the specified value when the station is selected and tuned.
+  set to the specified value when the station is selected and tuned - while you
+  stay on the station (see [Settings from a Station](#settings-from-a-station)).
 - **Squelch Disabled**: The squelch setting will automatically be *turned off*
-  when this station is selected (if it was previously enabled).
+  when this station is selected (if it was previously enabled), again while you
+  stay on the station.
 - **Squelch Section not selected**: If the squelch section is not selected, the
   squelch setting of the demodulator is untouched when selecting and tuning to
   this station.
 
 
-Note that the squelch threshold is specified in
-[dbFS](./advanced.md#understanding-db-dbm-and-dbfs). Therefore the threshold
-might be different depending on the SDR, gain and antenna. RF Analyzer does
-not (yet) automatically compensate for that.
+The squelch level is specified in dB above the noise floor, so it fits every
+SDR, gain and antenna. (Bookmarks from before RF Analyzer measured it that way
+had an absolute level; they get the default of 10 dB.)
 
 #### Schedule
 
@@ -271,7 +290,7 @@ You can control how bookmarks appear as visual overlays on the waterfall:
   bands into a single file.
 - **Restore**: Overwrites your current database with a backup file. 
 
-!!! warn "Warning: Data Loss"
+!!! warning "Warning: Data Loss"
     The restore action is irrecoverable; always create a fresh backup before restoring.
 
 ### Import and Export
@@ -286,11 +305,16 @@ Supported import formats/sources are:
 - **SDR++ JSON**: Import the `frequency_manager_config.json` file from the
   SDR++ root directory.
 
-With the option **Import Default Band Plans**, a set of prepared band plans
-can be imported:
+With the option **Import Default Lists**, prepared band plans can be imported.
+The region is preselected from your [location](./settings.md#location)
+("your location"); tick the lists you want:
 
-- Amateur Radio Band Plans (IARU Band Plans for your specific region)
-- ISM, Maritime and Air Bands
+- **Amateur Radio Band Plan** (IARU band plan for the selected region)
+- **License-Free Bands** (CB, PMR446/FRS/MURS, GMRS and similar allocations for
+  the selected region)
+- **ISM, Maritime and Air Band Plan**
+
+A message says which lists were imported.
 
 Finally, if you upgraded from RF Analyzer version 1.13, the option **Legacy
 Import** will be available to migrate your old bookmark database into the new
@@ -305,11 +329,11 @@ imported file was chosen and parsed:
 - **Import as is**: Import as is. If the imported file contains names of
   lists for bands and stations, they will be sorted into those
   respectively. Should a list not yet exist, it is created automatically.
-  If there are stations or bands which do not have a list name set, a new
-  list with a default name will be created for them.
-- **Import into single list**: This mode lets you chose an existing
+  Stations or bands without a list name go into the file's list if it holds
+  only one, otherwise into a new list named "Imported (*format*) *date*".
+- **Import into single list**: This mode lets you choose an existing
   list for stations and another existing list for all bands which are
-  imported. All list information from the imported file are droped and not
+  imported. All list information from the imported file are dropped and not
   used.
 - **Import with prefix**: Imported stations and bands will be placed into
   lists as specified in the imported file (just as with option *Import as
@@ -320,7 +344,8 @@ imported file was chosen and parsed:
 ### EiBi Database
 
 A highly respected community database for international shortwave broadcasting.
-It includes station names, languages, and complex seasonal schedules.
+It includes station names, languages, and complex seasonal schedules. Teleprinter
+broadcasts (such as the DWD's weather RTTY) are tuned in USB.
 
 Visit [eibispace.de](http://eibispace.de) for more information.
 
@@ -334,6 +359,8 @@ and will update as amateur radio operators move between different parks and
 frequencies. Enable a reasonable periodic update to keep up with the latest
 activity and be able to match transmissions from activators to their spot data.
 
+Spots of digital modes (FT8, FT4, RTTY, PSK31, JS8, "DATA") are tuned in USB.
+
 For configuration of periodic updates and other general instructions about
 online lists see [Online Lists](./bookmarks.md#manage-online-lists).
 
@@ -342,6 +369,24 @@ online lists see [Online Lists](./bookmarks.md#manage-online-lists).
 Real-time activity for Summits-on-the-Air. Similar to
 [POTA](./bookmarks.md#pota-spots), these entries help you find "activators"
 transmitting from mountain tops around the world.
+
+For configuration of periodic updates and other general instructions about
+online lists see [Online Lists](./bookmarks.md#manage-online-lists).
+
+### Digital Stations
+
+The presets of the digital modes, curated for RF Analyzer: FT8 and PSK31 bands,
+APRS and HF packet frequencies, Meshtastic, MeshCore and LoRaWAN channels,
+paging networks, R09 cities, weather RTTY and more - each with the mode,
+bandwidth and settings it needs. Only the stations for your area are listed (see
+[Location](./settings.md#location)); they change when your country or region
+changes.
+
+RF Analyzer ships a copy of this list, so it works without a network, and
+checks for a newer one once a week (the list is maintained on
+[GitHub](https://github.com/demantz/rfanalyzer_lists), where corrections and
+additions are welcome). This list is only available while the RF Analyzer
+Digital Extension is installed.
 
 For configuration of periodic updates and other general instructions about
 online lists see [Online Lists](./bookmarks.md#manage-online-lists).

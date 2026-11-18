@@ -1,38 +1,28 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.mantz_it.nativedsp"
-    compileSdk = 36
+    compileSdk {
+        version = release(37)
+    }
 
     defaultConfig {
         minSdk = 28
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
 
-        // This is necessary for ndk v27 to build 16KB Page-Size compatible libs:
-        // https://developer.android.com/guide/practices/page-sizes
         externalNativeBuild {
             cmake {
-                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+                // 16 KB page sizes: NDK r28+ aligns the load segments by default, but newer Android
+                // versions also require the RELRO segment to end on a 16 KB boundary.
+                // https://developer.android.com/guide/practices/page-sizes
+                arguments += listOf("-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,common-page-size=16384")
             }
         }
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     externalNativeBuild {
         cmake {
             path("src/main/cpp/CMakeLists.txt")
@@ -45,15 +35,8 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-    }
-}
-
 dependencies {
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.annotation)
     androidTestImplementation(libs.androidx.espresso.core)
 }

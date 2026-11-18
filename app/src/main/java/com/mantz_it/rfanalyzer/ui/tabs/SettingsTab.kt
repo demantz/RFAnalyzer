@@ -1,0 +1,316 @@
+package com.mantz_it.rfanalyzer.ui.tabs
+
+import androidx.compose.ui.Alignment
+import com.mantz_it.rfanalyzer.location.UserLocation
+import com.mantz_it.rfanalyzer.location.summary
+import com.mantz_it.rfanalyzer.ui.composable.OutlinedBox
+import android.net.Uri
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mantz_it.rfanalyzer.LogcatLogger
+import androidx.compose.ui.res.painterResource
+import com.mantz_it.rfanalyzer.R
+import com.mantz_it.rfanalyzer.ui.ColorTheme
+import com.mantz_it.rfanalyzer.ui.RFAnalyzerTheme
+import com.mantz_it.rfanalyzer.ui.composable.LocalShowHelp
+import com.mantz_it.rfanalyzer.ui.composable.OutlinedEnumDropDown
+import com.mantz_it.rfanalyzer.ui.composable.OutlinedSlider
+import com.mantz_it.rfanalyzer.ui.composable.OutlinedSteppedSlider
+import com.mantz_it.rfanalyzer.ui.composable.OutlinedSwitch
+import com.mantz_it.rfanalyzer.ui.composable.ScrollableColumnWithFadingEdge
+import com.mantz_it.rfanalyzer.ui.composable.rememberCreateFilePicker
+
+/**
+ * <h1>RF Analyzer - Settings Tab</h1>
+ *
+ * Module:      SettingsTab.kt
+ * Description: A Tab in the Control Drawer. Contains general app settings.
+ *
+ * @author Dennis Mantz
+ * Copyright (C) 2025 Dennis Mantz
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
+
+
+enum class ScreenOrientation(val displayName: String) {
+    AUTO("AUTO"),
+    PORTRAIT("Portrait"),
+    LANDSCAPE("Landscape"),
+    REVERSE_PORTRAIT("Reverse Portrait"),
+    REVERSE_LANDSCAPE("Reverse Landscape")
+}
+
+enum class FontSize(val displayName: String, val stationLabelFontSize: Float) {
+    SMALL("Small", 30f),
+    NORMAL("Normal", 40f),
+    LARGE("Large", 50f)
+
+    ;
+
+    val bandLabelFontSize: Float
+        get() = stationLabelFontSize * 0.65f
+    val subBandLabelFontSize: Float
+        get() = stationLabelFontSize * 0.55f
+}
+
+enum class ControlDrawerSide(val displayName: String) {
+    RIGHT("Right"),
+    LEFT("Left"),
+}
+
+data class SettingsTabActions(
+    val onScreenOrientationChanged: (ScreenOrientation) -> Unit,
+    val onFontSizeChanged: (FontSize) -> Unit,
+    val onKeepChannelCenteredChanged: (Boolean) -> Unit,
+    val onColorThemeChanged: (ColorTheme) -> Unit,
+    val onLongPressHelpEnabledChanged: (Boolean) -> Unit,
+    val onControlDrawerSideChanged: (ControlDrawerSide) -> Unit,
+    val onReverseTuningWheelChanged: (Boolean) -> Unit,
+    val onStartAnalyzerOnUsbAttachChanged: (Boolean) -> Unit,
+    val onEnableLowPerformanceModeChanged: (Boolean) -> Unit,
+    val onLocationClicked: () -> Unit,
+    val onLowPerformanceModeFilterQualityChanged: (Float) -> Unit,
+    val onShowDebugInformationChanged: (Boolean) -> Unit,
+    val onLoggingEnabledChanged: (Boolean) -> Unit,
+    val onShowLogClicked: () -> Unit,
+    val onSaveLogToFileClicked: (Uri) -> Unit,
+    val onShareLogClicked: () -> Unit,
+    val onDeleteLogClicked: () -> Unit,
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsTabComposable(
+    screenOrientation: ScreenOrientation,
+    fontSize: FontSize,
+    keepChannelCentered: Boolean,
+    colorTheme: ColorTheme,
+    longPressHelpEnabled: Boolean,
+    reverseTuningWheel: Boolean,
+    startAnalyzerOnUsbAttach: Boolean,
+    controlDrawerSide: ControlDrawerSide,
+    enableLowPerformanceMode: Boolean,
+    lowPerformanceModeFilterQuality: Float,
+    showDebugInformation: Boolean,
+    loggingEnabled: Boolean,
+    location: UserLocation,
+    settingsTabActions: SettingsTabActions
+) {
+    val destinationFileChooser = rememberCreateFilePicker(
+        suggestedFileName = LogcatLogger.logfileName,
+        mimeType = "text/plain",
+        onAbort = { },
+        onFileCreated = { destUri -> settingsTabActions.onSaveLogToFileClicked(destUri) })
+    ScrollableColumnWithFadingEdge {
+        OutlinedBox(
+            label = "Location",
+            onClick = settingsTabActions.onLocationClicked,
+            helpSubPath = "settings.html#location",
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.align(Alignment.CenterStart).padding(start = 6.dp, top = 6.dp, bottom = 8.dp)) {
+                Text(location.summary(), fontSize = 16.sp)
+                location.locator?.let { Text("Position: $it", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        }
+        OutlinedEnumDropDown(
+            label = "Screen Orientation",
+            selectedEnum = screenOrientation,
+            enumClass = ScreenOrientation::class,
+            getDisplayName = { it.displayName },
+            onSelectionChanged = settingsTabActions.onScreenOrientationChanged,
+            helpSubPath = "settings.html#screen-orientation"
+        )
+        OutlinedEnumDropDown(
+            label = "App Color Theme",
+            selectedEnum = colorTheme,
+            enumClass = ColorTheme::class,
+            getDisplayName = { it.displayName },
+            onSelectionChanged = settingsTabActions.onColorThemeChanged,
+            helpSubPath = "settings.html#app-color-theme"
+        )
+        OutlinedSteppedSlider(
+            label = "Font Size (FFT Plot)",
+            steps = FontSize.entries,
+            selectedStepIndex = fontSize.ordinal,
+            onSelectedStepIndexChanged = { settingsTabActions.onFontSizeChanged(FontSize.entries[it.toInt()]) },
+            formatValue = { value -> value.displayName },
+            helpSubPath = "settings.html#font-size-fft-plot"
+        )
+        OutlinedSwitch(
+            label = "Keep Channel Centered",
+            helpText = "Always center the viewport around the channel selector",
+            isChecked = keepChannelCentered,
+            helpSubPath = "settings.html#keep-channel-centered",
+            onCheckedChange = settingsTabActions.onKeepChannelCenteredChanged
+        )
+        OutlinedSwitch(
+            label = "Context Help System",
+            helpText = "If enabled, long pressing on the label of a UI element navigates to the user manual",
+            isChecked = longPressHelpEnabled,
+            onCheckedChange = settingsTabActions.onLongPressHelpEnabledChanged,
+            helpSubPath = "settings.html#context-help-system"
+        )
+        OutlinedSwitch(
+            label = "Reverse Tuning Wheel",
+            helpText = "If enabled, the tuning wheel direction is reversed. This might feel more natural for some users",
+            isChecked = reverseTuningWheel,
+            onCheckedChange = settingsTabActions.onReverseTuningWheelChanged,
+            helpSubPath = "settings.html#reverse-tuning-wheel"
+        )
+        OutlinedSwitch(
+            label = "Start When an SDR Is Plugged In",
+            helpText = "Plugging in a USB SDR starts the analyzer with it - while the app is in front, and by opening the app if it isn't running",
+            isChecked = startAnalyzerOnUsbAttach,
+            onCheckedChange = settingsTabActions.onStartAnalyzerOnUsbAttachChanged,
+            helpSubPath = "settings.html#start-when-an-sdr-is-plugged-in"
+        )
+        OutlinedEnumDropDown(
+            label = "Control Drawer Alignment (Landscape)",
+            selectedEnum = controlDrawerSide,
+            enumClass = ControlDrawerSide::class,
+            getDisplayName = { it.displayName },
+            onSelectionChanged = settingsTabActions.onControlDrawerSideChanged,
+            helpSubPath = "settings.html#control-drawer-alignment-landscape"
+        )
+        OutlinedSwitch(
+            label = "Low-Performance Mode",
+            helpText = "This mode reduces the CPU load of the application. Use it on older, less capable devices. Restart Analyzer after changing this setting. Then reduce the filter quality until the audio does not stutter anymore. Aliasing will increase though.",
+            isChecked = enableLowPerformanceMode,
+            onCheckedChange = settingsTabActions.onEnableLowPerformanceModeChanged,
+            helpSubPath = "settings.html#low-performance-mode",
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 15.dp)) {
+                Text("Signal Filter Quality:")
+                OutlinedSlider(
+                    label = "",
+                    unit = "%",
+                    unitInLabel = false,
+                    minValue = 1f,
+                    maxValue = 99f,
+                    decimalPlaces = 0,
+                    value = lowPerformanceModeFilterQuality * 100,
+                    onValueChanged = { value -> settingsTabActions.onLowPerformanceModeFilterQualityChanged(value/100) },
+                    showOutline = false
+                )
+            }
+        }
+        OutlinedSwitch(
+            label = "Show Debug Information",
+            helpText = "Displays additional information in the FFT text area",
+            isChecked = showDebugInformation,
+            onCheckedChange = settingsTabActions.onShowDebugInformationChanged,
+            helpSubPath = "settings.html#show-debug-information"
+        )
+        OutlinedSwitch(
+            label = "Logging",
+            helpText = "Logs the application's command-line output (Logcat) to a file",
+            isChecked = loggingEnabled,
+            onCheckedChange = settingsTabActions.onLoggingEnabledChanged,
+            helpSubPath = "settings.html#logging"
+        ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = settingsTabActions.onShowLogClicked,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.padding(end = 3.dp)
+                ) {
+                    Text("View Log", modifier = Modifier.padding(horizontal = 6.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.text_snippet),
+                        contentDescription = "View log file"
+                    )
+                }
+                Button(
+                    onClick = destinationFileChooser,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.padding(horizontal = 3.dp).weight(1f)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.file_save),
+                        contentDescription = "Save log file"
+                    )
+                }
+                Button(
+                    onClick = settingsTabActions.onShareLogClicked,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.padding(horizontal = 3.dp).weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share log file"
+                    )
+                }
+                Button(
+                    onClick = settingsTabActions.onDeleteLogClicked,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.weight(1f).padding(start = 3.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete log file"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@Preview
+fun SettingsTabPreview() {
+    CompositionLocalProvider(LocalShowHelp provides {}) {
+        RFAnalyzerTheme {
+            SettingsTabComposable(
+                screenOrientation = ScreenOrientation.AUTO,
+                fontSize = FontSize.NORMAL,
+                keepChannelCentered = false,
+                colorTheme = ColorTheme.RFANALYZER_DARK,
+                longPressHelpEnabled = true,
+                reverseTuningWheel = false,
+                startAnalyzerOnUsbAttach = false,
+                controlDrawerSide = ControlDrawerSide.RIGHT,
+                loggingEnabled = true,
+                showDebugInformation = true,
+                location = UserLocation(),
+                settingsTabActions = SettingsTabActions(
+                    onScreenOrientationChanged = { },
+                    onFontSizeChanged = { },
+                    onKeepChannelCenteredChanged = { },
+                    onColorThemeChanged = { },
+                    onLongPressHelpEnabledChanged = { },
+                    onReverseTuningWheelChanged = { },
+                    onStartAnalyzerOnUsbAttachChanged = { },
+                    onControlDrawerSideChanged = { },
+                    onShowDebugInformationChanged = { },
+                    onLoggingEnabledChanged = { },
+                    onShowLogClicked = { },
+                    onSaveLogToFileClicked = { },
+                    onShareLogClicked = { },
+                    onDeleteLogClicked = { },
+                    onEnableLowPerformanceModeChanged = {},
+                    onLocationClicked = { },
+                    onLowPerformanceModeFilterQualityChanged = {},
+                ),
+                enableLowPerformanceMode = true,
+                lowPerformanceModeFilterQuality = 0.7f,
+            )
+        }
+    }
+}

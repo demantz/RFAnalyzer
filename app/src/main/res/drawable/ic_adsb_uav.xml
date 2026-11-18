@@ -1,0 +1,16 @@
+<!--
+     ADS-B map marker: Unmanned aircraft (quadcopter).
+     Nose points up (0deg = north), matching the heading convention used for iconRotate in
+     MaplibreView. A single solid shape, because the map draws it as a tintable SDF image; every
+     subpath winds the same way so overlapping parts do not punch holes.
+     Original artwork for RF Analyzer.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M2.5,5.5 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0 Z M15.5,5.5 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0 Z M2.5,18.5 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0 Z M15.5,18.5 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0 Z M4.93,6.07 L6.07,4.93 L19.07,17.93 L17.93,19.07 Z M17.93,4.93 L19.07,6.07 L6.07,19.07 L4.93,17.93 Z M10,10 h4 v4 h-4 Z"/>
+</vector>

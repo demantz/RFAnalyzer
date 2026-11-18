@@ -1,8 +1,8 @@
 # About the App
 
-RF Analyzer is an open source spectrum analyzer that lets you use you
+RF Analyzer is an open source spectrum analyzer that lets you use your
 SDR hardware together with an Android device. A detailed description
-can be found in the [manual](https://demantz.github.io/RFAnalyzer/index.html)
+can be found in the [manual](https://demantz.github.io/RFAnalyzer/index.html).
 
 Changelog: [changelog.txt](https://raw.githubusercontent.com/demantz/RFAnalyzer/master/changelog.txt)
 
@@ -45,7 +45,7 @@ on Google Play:
 
 ## Reporting Bugs
 
-If you find any bugs or translation mistakes or if you want to request
+If you find any bugs or if you want to request
 a new feature please use the GitHub page of the project:
 [https://github.com/demantz/RFAnalyzer/issues](https://github.com/demantz/RFAnalyzer/issues)
 
@@ -53,78 +53,28 @@ Alternatively you could write me an email to **rfanalyzerapp -at- gmail.com**
 
 ## Privacy Policy
 
-*Last updated: November 11, 2026*
-
-This policy covers the apps RF Analyzer and RF Analyzer Digital Extension by Dennis Mantz
-(DM4NTZ). Contact: rfanalyzerapp -at- gmail.com
-
-Neither app has user accounts, advertising, analytics or a crash-reporting service, and neither
-sends data to the developer. Google Play may give the developer anonymous crash and performance
-statistics, depending on your device settings. If you write to the developer, your message is
-used only to answer it.
-
-### RF Analyzer
-
-- **Data on your device:** settings, bookmarks, station lists, recordings and the packets decoded
-  in the Digital tab stay on your device. If backups are enabled, Android may include settings
-  and bookmarks in your device backup in your Google account; decoded packets are excluded from
-  cloud backups. Recordings and exports leave the device only where you share or save them.
-- **Location:** RF Analyzer estimates your country on the device (mobile network, SIM, time zone,
-  language) to choose band plans and station lists. Optionally you can enter a grid locator or
-  allow access to the device location, for the map, distances and nearby stations. Your location
-  is not sent anywhere; it is stored with your captures only if you turn that on.
-- **Internet connections:** RF Analyzer connects only to the servers below. Each of them sees
-  your IP address and what is requested, under its own privacy policy:
-    - SDR servers you connect to (rtl_tcp, KiwiSDR - KiwiSDR operators can see the frequency you
-      listen to) and the public KiwiSDR list (kiwisdr.com)
-    - map tiles from OpenFreeMap (openfreemap.org) for the area you view
-    - station lists: the digital station list (demantz.github.io, GitHub Pages; updated
-      automatically) and, if you enable them, EiBi (afu-base.de), POTA (pota.app) and SOTA
-      (sota.org.uk)
-    - time servers (time.android.com, pool.ntp.org) for FT8's clock correction
-  your IP address and what is requested, under its own privacy policy:
-    - SDR servers you connect to (rtl_tcp, KiwiSDR - KiwiSDR operators can see the frequency you
-      listen to) and the public KiwiSDR list (kiwisdr.com)
-    - map tiles from OpenFreeMap (openfreemap.org) for the area you view
-    - station lists: the digital station list (demantz.github.io, GitHub Pages; updated
-      automatically) and, if you enable them, EiBi (afu-base.de), POTA (pota.app) and SOTA
-      (sota.org.uk)
-    - time servers (time.android.com, pool.ntp.org) for FT8's clock correction
-    - links you tap (e.g. QRZ.com, aprs.fi, FlightAware) open in your browser
-- **Purchases** (Google Play version): processed by Google Play under Google's privacy policy;
-  the developer receives only the order information Google Play provides, no payment details.
-
-### RF Analyzer Digital Extension
-
-The extension (com.mantz_it.rfanalyzer_digital) decodes digital radio modes for RF Analyzer on
-the same device. It has no internet access (it doesn't request Android's INTERNET permission).
-It processes the radio samples RF Analyzer passes to it in memory only and returns the decoded
-results to RF Analyzer, which stores and shows them as described above. The only thing the
-extension stores itself is whether you have seen its tutorial.
+RF Analyzer has no accounts, no ads and no analytics, and your data stays on your device. The
+details for RF Analyzer and the RF Analyzer Digital Extension are in the
+[Privacy Policy](./legal/privacy.md). The [Terms of Use](./legal/terms.md) and the
+[Imprint](./legal/imprint.md) are in the Legal section of this manual.
 
 ## License
 
-[GPL version 2 or higher](http://www.gnu.org/licenses/gpl.html)
+RF Analyzer is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either
+[version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html) of the License or (at your
+option) any later version. Some parts are derived from GNU Radio
+([GPL version 3](https://www.gnu.org/licenses/gpl-3.0.html) or later) and RDS Surveyor
+([LGPL version 3](https://www.gnu.org/licenses/lgpl-3.0.html) or later), so the app as a whole is
+distributed under the GPL version 3 or later.
 
-```
-This application is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-This application is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-```
+This application is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
 Get the source code of the app on [GitHub](https://github.com/demantz/RFAnalyzer)
 
-Copyright &copy; 2025 Dennis Mantz
+Copyright &copy; 2014-2026 Dennis Mantz
 
 ### PFFFT License
 
@@ -291,5 +241,98 @@ IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+### librtlsdr
+
+Copyright (C) 2012-2014 by Steve Markgraf, Dimitri Stolnikov and contributors
+(osmocom rtl-sdr). Licensed under the GNU General Public License, version 2 or
+later.
+
+### libusb
+
+Copyright (C) the libusb contributors. Licensed under the GNU Lesser General
+Public License, version 2.1 or later. [libusb.info](https://libusb.info)
+
+### OkHttp
+
+Copyright 2019 Square, Inc. Licensed under the Apache License, Version 2.0.
+[square.github.io/okhttp](https://square.github.io/okhttp/)
+
+### MapLibre (Maps)
+
+MapLibre Native and MapLibre Compose, copyright the MapLibre contributors, BSD
+licenses. [maplibre.org](https://maplibre.org)
+
+Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)
+(ODbL), map tiles by [OpenFreeMap](https://openfreemap.org) and ©
+[OpenMapTiles](https://openmaptiles.org).
+
+### GNU Radio (Filters, Resampler, Window Functions)
+
+The FIR filters with their filter design, the rational resampler and the window functions are
+derived from [GNU Radio](https://www.gnuradio.org). Copyright (C) 2002-2013 Free Software
+Foundation, Inc. Licensed under the GNU General Public License, version 3 or later.
+
+### gqrx (Waterfall Colors)
+
+The GQRX color map is the default waterfall color table of [gqrx](https://gqrx.dk), which comes
+from CuteSDR.
+
+```
+Copyright 2010 Moe Wheatley. All rights reserved.
+Copyright 2011-2013 Alexandru Csete OZ9AEC
+
+Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice, this list of
+      conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice, this list
+      of conditions and the following disclaimer in the documentation and/or other materials
+      provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY Moe Wheatley ``AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Moe Wheatley OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those of the
+authors and should not be interpreted as representing official policies, either expressed
+or implied, of Moe Wheatley.
+```
+
+### multimon-ng (POCSAG)
+
+The alphanumeric and numeric readings of POCSAG pages follow
+[multimon-ng](https://github.com/EliasOenal/multimon-ng). Copyright (C) 1996 Thomas Sailer and the
+multimon-ng contributors. Licensed under the GNU General Public License, version 2 or later.
+
+### RDS Surveyor (RDS Traffic Message Channel)
+
+The ALERT-C (RDS Traffic Message Channel) event and supplementary-information tables, and the
+formulas that turn a traffic message's quantifiers, durations, times and route lengths into text,
+are derived from [RDS Surveyor](https://github.com/ChristopheJacquet/RdsSurveyor). Copyright (c)
+2009, 2010 Christophe Jacquet and the RDS Surveyor contributors. Licensed under the GNU Lesser
+General Public License, version 3 or later.
+
+### Map Marker Icons
+
+The airplane and generic transmitter icons used for map markers (ADS-B aircraft,
+FT8/mesh/KiwiSDR positions) are based on Google's
+[Material Icons](https://fonts.google.com/icons) ("flight" and "cell_tower",
+Outlined style), licensed under the
+[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+The APRS symbol icons are sourced from the aprs.fi APRS symbol index and graphics
+set via [aprs-tools.temporarilyoffline.com](https://aprs-tools.temporarilyoffline.com/get-symbol.html)
+(index: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); graphics
+published for APRS application use) - see the in-app About screen for the full
+attribution.
 
 

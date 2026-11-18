@@ -40,7 +40,6 @@ import com.mantz_it.rfanalyzer.ui.RFAnalyzerTheme
  * Description: Custom Icons for the App
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2026 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -291,10 +290,10 @@ val IconFrequencyFilter: ImageVector
             viewportWidth = 24f,
             viewportHeight = 24f
         ).apply {
-            // 1. The Text "Hz" (Larger, Lower, Centered, Corrected 'z')
+            // 1. The Text "Hz"
             // Occupies roughly x=7 to x=17, y=2 to y=8
             path(fill = SolidColor(Color.Black)) {
-                // Letter H (Capital, taller)
+                // Letter H
                 moveTo(7f, 2f)
                 horizontalLineToRelative(1.5f)
                 verticalLineToRelative(2.5f)
@@ -309,36 +308,36 @@ val IconFrequencyFilter: ImageVector
                 horizontalLineTo(7f)
                 close()
 
-                // Letter z (Lowercase height, correct orientation)
+                // Letter z (lowercase height)
                 moveTo(17f, 3.5f)
                 horizontalLineToRelative(-4f)
                 verticalLineTo(5f)
-                horizontalLineToRelative(2.2f) // Start diagonal overlap
-                lineTo(13f, 7f) // Diagonal down to right
+                horizontalLineToRelative(2.2f)
+                lineTo(13f, 7f) // diagonal down to the left
                 verticalLineToRelative(1f)
                 horizontalLineToRelative(4f)
                 verticalLineToRelative(-1.5f)
-                horizontalLineToRelative(-2.2f) // Start diagonal overlap back
-                lineTo(17f, 5f) // Diagonal up to left
+                horizontalLineToRelative(-2.2f)
+                lineTo(17f, 5f) // diagonal up to the right
                 close()
             }
 
-            // 2. The Filter Range Arrows (Triangles pointing inward) - UNTOUCHED
+            // 2. The Filter Range Arrows (Triangles pointing inward)
             path(fill = SolidColor(Color.Black)) {
-                // Left Triangle (Points Right) tip at x=8, y=9
+                // Left Triangle (Points Right) tip at x=6, y=9
                 moveTo(6f, 9f)
                 lineTo(2f, 6f)
                 lineTo(2f, 12f)
                 close()
 
-                // Right Triangle (Points Left) tip at x=16, y=9
+                // Right Triangle (Points Left) tip at x=18, y=9
                 moveTo(18f, 9f)
                 lineTo(22f, 6f)
                 lineTo(22f, 12f)
                 close()
             }
 
-            // 3. The Frequency Scale (Ruler at the bottom) - UNTOUCHED
+            // 3. The Frequency Scale (Ruler at the bottom)
             path(
                 fill = SolidColor(Color.Black),
                 pathFillType = PathFillType.EvenOdd

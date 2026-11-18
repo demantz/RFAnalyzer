@@ -1,5 +1,33 @@
 CHANGELOG - RF Analyzer
 
+version 2.3
+- Sources:
+  - Built-in RTL-SDR driver (incl. RTL-SDR Blog V4): the separate driver app is no longer needed
+  - KiwiSDR web receivers as a source, with a list and a map of the public receivers
+  - Every USB SDR is recognized when plugged in; optional start when an SDR is plugged in;
+    automatic restart after a short USB dropout
+  - rtl_tcp and KiwiSDR ride out network stalls, their audio plays without gaps
+  - Gain modes for Airspy and HydraSDR; fixes for HackRF, Airspy and HydraSDR
+  - RTL-SDR without frequency limits (0 Hz - 3 GHz)
+  - Android 17: local network permission for rtl_tcp and KiwiSDR in the local network
+- Spectrum: true dBFS levels, automatic FFT size, smoother waterfall with much lower CPU use,
+  quick tune & zoom (long-press empty space in the spectrum or waterfall)
+- Demodulation: new mode picker, a squelch for every mode (in dB above the noise, keeps the start
+  of a transmission), a tune step per mode, fixed CW, new audio path with less CPU use
+- Recording: baseband recording (the demodulated channel); recordings continue in the background
+  and when the app is swiped away; an interrupted recording can be kept at the next start
+- Bookmarks: band plans for your ITU region, license-free (CB, PMR446, FRS, GMRS), ISM, maritime
+  and air band lists, sharing, POTA/SOTA fixes, demodulation settings per station
+- Privacy: location, KiwiSDR password and recordings stay out of Android's cloud backup; the
+  manual has a Legal section and loads no fonts from Google
+- Changed by the update: squelch settings start out off; the FFT size is chosen automatically
+  (Manual FFT Size in the Display tab to pick one)
+
+version 2.2.1
+- FFT pipeline rework: overlapping FFT, much higher frame rates, steadier waterfall
+- Import of SDR# BandPlan.xml files
+- Bug fixes (out-of-memory with large FFT sizes, crashes)
+
 version 2.2
 - Bookmarks:
   - Bookmarks for Stations and Bands

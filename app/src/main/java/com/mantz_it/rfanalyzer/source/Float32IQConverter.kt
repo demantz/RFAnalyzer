@@ -1,36 +1,49 @@
 package com.mantz_it.rfanalyzer.source
 
+import android.util.Log
+import com.mantz_it.nativedsp.NativeIQMixerFloat
+import com.mantz_it.rfanalyzer_ipc.SamplePacket
+
 /**
- * RF Analyzer - complex float 32-bit IQ Converter
+ * <h1>RF Analyzer - Complex Float 32-Bit IQ Converter</h1>
  *
  * Module:      Float32IQConverter.kt
- * Description: Converts interleaved complex float (CF32) IQ samples directly
- *              into SamplePackets, optionally mixing them to baseband.
+ * Description: Interleaved little-endian complex float (CF32) IQ samples, as the AirspyHF
+ *              delivers them: copied to the FFT feed, or mixed to baseband into SamplePackets.
+ *
+ * Performance: mixPacketIntoSamplePacket()'s per-sample loop runs natively (NativeIQMixerFloat,
+ * nativedsp/src/main/cpp/iq_float_mixer.c). The Kotlin loop below is the fallback when the native
+ * library can't be loaded (a plain JVM unit test).
  *
  * @author Dennis Mantz
- *
  * Copyright (C) 2025 Dennis Mantz
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-class Float32IQConverter : IQConverter() {
+class Float32IQConverter(
+    // Tests only: the Kotlin loop even when the native mixer is available, to compare the two.
+    forceKotlinFallback: Boolean = false
+) : IQConverter() {
+    companion object {
+        private const val LOGTAG = "Float32IQConverter"
+    }
 
     // Sin/Cos lookup tables
     private var cosLut: FloatArray? = null
     private var sinLut: FloatArray? = null
+
+    private val nativeMixer: NativeIQMixerFloat? = if (forceKotlinFallback) {
+        null
+    } else {
+        try {
+            NativeIQMixerFloat()
+        } catch (e: Throwable) {
+            Log.w(LOGTAG, "Native IQMixerFloat unavailable, falling back to Kotlin implementation: ${e.message}")
+            null
+        }
+    }
+
+    /** Whether the native mixer runs (not the Kotlin fallback). For tests. */
+    val isUsingNative: Boolean get() = nativeMixer != null
 
     override fun generateLookupTable() {
         // Not needed for float data
@@ -63,54 +76,48 @@ class Float32IQConverter : IQConverter() {
             cosLut = cosArr
             sinLut = sinArr
             cosineIndex = 0
+
+            nativeMixer?.setNcoTable(cosArr, sinArr, bestLength)
         }
     }
 
-    override fun fillPacketIntoSamplePacket(packet: ByteArray, samplePacket: SamplePacket): Int {
-        val capacity = samplePacket.capacity()
-        val startIndex = samplePacket.size()
-        if (startIndex >= capacity) return 0
-
-        val re = samplePacket.re()
-        val im = samplePacket.im()
-
-        // Interpret the ByteArray as FloatArray without copying
-        val floatBuf = java.nio.ByteBuffer.wrap(packet)
-            .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-            .asFloatBuffer()
-
-        val samplesAvailable = floatBuf.remaining() / 2
-        val samplesToCopy = minOf(samplesAvailable, capacity - startIndex)
-
-        var i = 0
-        var outIdx = startIndex
-        while (i < samplesToCopy) {
-            re[outIdx] = floatBuf.get() // I
-            im[outIdx] = floatBuf.get() // Q
-            i++
-            outIdx++
-        }
-
-        samplePacket.setSize(startIndex + samplesToCopy)
-        samplePacket.setSampleRate(sampleRate)
-        samplePacket.setFrequency(frequency)
-        return samplesToCopy
-    }
-
-    override fun fillPacketIntoInterleavedBuffer(packet: ByteArray, interleavedBuffer: FloatArray): Boolean {
-        if (interleavedBuffer.size < packet.size / 4) return false
-        // Interpret the ByteArray as FloatArray without copying
+    override fun fillPacketIntoInterleavedBuffer(packet: ByteArray, interleavedBuffer: FloatArray, validByteCount: Int): Boolean {
+        val floatCount = validByteCount.coerceIn(0, packet.size) / 4
+        if (interleavedBuffer.size < floatCount) return false
+        // Interpret the ByteArray as FloatArray without copying, then copy into the output buffer
         java.nio.ByteBuffer.wrap(packet)
             .order(java.nio.ByteOrder.LITTLE_ENDIAN)
             .asFloatBuffer()
-            .get(interleavedBuffer) // then copy into output buffer
+            .get(interleavedBuffer, 0, floatCount)
         return true
     }
 
-    override fun mixPacketIntoSamplePacket(packet: ByteArray, samplePacket: SamplePacket, channelFrequency: Long): Int {
+    override fun mixPacketIntoSamplePacket(packet: ByteArray, samplePacket: SamplePacket, channelFrequency: Long, validByteCount: Int): Int {
+        val length = validByteCount.coerceIn(0, packet.size)
         val mixFrequency = (frequency - channelFrequency).toInt()
         generateMixerLookupTable(mixFrequency)
 
+        val count: Int
+        if (nativeMixer != null) {
+            val outOffset = samplePacket.size()
+            val (_, produced) = nativeMixer.mix(
+                packet, 0, length,
+                samplePacket.re(), samplePacket.im(), outOffset, samplePacket.capacity()
+            )
+            count = produced
+            samplePacket.setSize(outOffset + count)
+        } else {
+            count = mixPacketIntoSamplePacketKotlinFallback(packet, length, samplePacket)
+        }
+        samplePacket.sampleRate = sampleRate
+        samplePacket.frequency = channelFrequency
+        stampFromClock(samplePacket)
+        return count
+    }
+
+    /** The Kotlin engine, used when native is unavailable (sample rate, frequency and timestamp
+     * are set by mixPacketIntoSamplePacket()). */
+    private fun mixPacketIntoSamplePacketKotlinFallback(packet: ByteArray, length: Int, samplePacket: SamplePacket): Int {
         val capacity = samplePacket.capacity()
         val startIndex = samplePacket.size()
         if (startIndex >= capacity) return 0
@@ -122,7 +129,7 @@ class Float32IQConverter : IQConverter() {
         val cLen = cosArr.size
         var cIdx = cosineIndex
 
-        val floatBuf = java.nio.ByteBuffer.wrap(packet)
+        val floatBuf = java.nio.ByteBuffer.wrap(packet, 0, length)
             .order(java.nio.ByteOrder.LITTLE_ENDIAN)
             .asFloatBuffer()
 
@@ -132,7 +139,7 @@ class Float32IQConverter : IQConverter() {
         var i = 0
         var outIdx = startIndex
 
-        // Mix: (I + jQ) * e^{-jωt} = (I*cos - Q*sin) + j(Q*cos + I*sin)
+        // Mix: (I + jQ) * e^{jωt} = (I*cos - Q*sin) + j(Q*cos + I*sin), ω of frequency - channelFrequency
         while (i < samplesToCopy) {
             val I = floatBuf.get()
             val Q = floatBuf.get()
@@ -152,8 +159,11 @@ class Float32IQConverter : IQConverter() {
 
         cosineIndex = cIdx
         samplePacket.setSize(startIndex + samplesToCopy)
-        samplePacket.setSampleRate(sampleRate)
-        samplePacket.setFrequency(channelFrequency)
         return samplesToCopy
+    }
+
+    /** Frees native resources. Safe to call even if the Kotlin fallback engine is in use. */
+    override fun close() {
+        nativeMixer?.close()
     }
 }

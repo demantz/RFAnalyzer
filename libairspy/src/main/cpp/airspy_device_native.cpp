@@ -1,8 +1,10 @@
 #include <jni.h>
+#include <mutex>
 #include <string>
 #include <android/log.h>
 #include <libusb.h>
 #include "libairspy/airspy.h"
+#include "sample_handoff.h"
 
 /**
  * <h1>RF Analyzer - airspy device native code</h1>
@@ -37,16 +39,18 @@
 // ============================================================
 // Globals
 // ============================================================
-static JavaVM *g_vm = NULL;
-static jobject g_airspyDeviceObj = NULL;
-static jmethodID g_getEmptyBufferMethod = NULL;
-static jmethodID g_onSamplesReadyMethod = NULL;
+// Hands the transfers of the RX callback to AirspyDevice (bound at start, released at stop/close).
+static SampleHandoff g_handoff;
+
+// Serializes start/stop/close/sample-rate changes: they arrive from different threads (UI collector,
+// Scheduler shutdown, service stop), and two concurrent stops would both join the driver's threads.
+static std::mutex g_stateMutex;
 
 // ============================================================
 // JNI: Cache JavaVM
 // ============================================================
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-    g_vm = vm;
+    g_handoff.init(vm);
     return JNI_VERSION_1_6;
 }
 
@@ -74,7 +78,7 @@ Java_com_mantz_1it_libairspy_AirspyDevice_getLibraryVersionString(
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_mantz_1it_libairspy_AirspyDevice_nativeOpenFd(
         JNIEnv* env,
-        jclass /* clazz */, // For static methods, it's jclass
+        jclass /* clazz */,
         jint fd) {
     struct airspy_device* device = nullptr;
     LOGI("Attempting to open Airspy device with fd: %d", fd);
@@ -123,11 +127,13 @@ Java_com_mantz_1it_libairspy_AirspyDevice_nativeClose(
         LOGE("nativeClose: Invalid native pointer or device already closed");
         return AIRSPY_ERROR_INVALID_PARAM;
     }
+    std::lock_guard<std::mutex> lock(g_stateMutex);
     LOGI("Closing Airspy device, pointer: %p", device);
-    int result = airspy_close(device);
+    int result = airspy_close(device); // also stops a running stream
     if (result != AIRSPY_SUCCESS) {
         LOGE("Failed to close Airspy device, error: %d", result);
     }
+    g_handoff.unbind(env);
     return result;
 }
 
@@ -332,7 +338,6 @@ Java_com_mantz_1it_libairspy_AirspyDevice_nativeGetSamplerates(
         return AIRSPY_SUCCESS; // No error, just no sample rates
     }
 
-    // Allocate a temporary buffer to hold the sample rates
     auto* rates_buffer = new uint32_t[num_samplerates];
 
     result = airspy_get_samplerates(device, rates_buffer, num_samplerates);
@@ -342,7 +347,6 @@ Java_com_mantz_1it_libairspy_AirspyDevice_nativeGetSamplerates(
         return result;
     }
 
-    // Get the List.add method
     jclass listClass = env->GetObjectClass(list_samplerates);
     jmethodID addMethod = env->GetMethodID(listClass, "add", "(Ljava/lang/Object;)Z");
     jclass integerClass = env->FindClass("java/lang/Integer");
@@ -366,32 +370,10 @@ Java_com_mantz_1it_libairspy_AirspyDevice_nativeGetSamplerates(
 // Airspy RX callback (runs on Airspy’s thread)
 // ============================================================
 static int airspy_callback(airspy_transfer *transfer) {
-    JNIEnv *env = nullptr;
-
-    if (g_airspyDeviceObj == nullptr) {
-        LOGE("airspy_callback: g_airspyHFDeviceObj is null");
-        return 0;
-    }
-
-    if (g_vm->AttachCurrentThread(&env, nullptr) != 0) {
-        LOGE("airspy_callback: Failed to attach Airspy thread to JVM");
-        return 0;
-    }
-
-    // Request an empty buffer from Kotlin (blocks if none free)
-    jbyteArray buffer = (jbyteArray)env->CallObjectMethod(g_airspyDeviceObj, g_getEmptyBufferMethod);
-
-    // Copy samples into buffer
-    jbyte *buf_ptr = env->GetByteArrayElements(buffer, nullptr);
-    memcpy(buf_ptr, transfer->samples, transfer->sample_count * sizeof(int16_t) * 2);
-    env->ReleaseByteArrayElements(buffer, buf_ptr, 0);
-
-    // Notify Kotlin that samples are ready
-    env->CallVoidMethod(g_airspyDeviceObj, g_onSamplesReadyMethod, buffer);
-
-    // Release local ref to avoid leaks
-    env->DeleteLocalRef(buffer);
-
+    // INT16_IQ: sample_count IQ pairs of 2 x int16. dropped_samples counts the samples the driver
+    // dropped before this transfer (not cumulative).
+    g_handoff.deliverCountingDrops(transfer->samples, static_cast<size_t>(transfer->sample_count) * sizeof(int16_t) * 2,
+                                   transfer->dropped_samples);
     return 0;
 }
 
@@ -408,19 +390,19 @@ Java_com_mantz_1it_libairspy_AirspyDevice_nativeStartRX(JNIEnv *env, jobject thi
         return AIRSPY_ERROR_INVALID_PARAM;
     }
 
-    // Keep global reference to AirspyDevice instance
-    g_airspyDeviceObj = env->NewGlobalRef(thiz);
+    std::lock_guard<std::mutex> lock(g_stateMutex);
 
-    // Resolve Java methods for airspy_callback()
-    jclass cls = env->GetObjectClass(thiz);
-    g_getEmptyBufferMethod = env->GetMethodID(cls, "getEmptyBuffer", "()[B");
-    g_onSamplesReadyMethod = env->GetMethodID(cls, "onSamplesReady", "([B)V");
+    if (!g_handoff.bind(env, thiz)) {
+        LOGE("nativeStartRX: AirspyDevice lacks the sample callbacks");
+        return AIRSPY_ERROR_OTHER;
+    }
 
-    // Start streaming with callback
     int result = airspy_start_rx(device, airspy_callback, nullptr);
     if (result != AIRSPY_SUCCESS) {
         LOGE("airspy_start_rx() failed: %d", result);
-        airspy_close(device);
+        // The device stays open: nativeStopRX()/nativeClose() own its lifecycle, and the Kotlin
+        // side still holds the pointer.
+        g_handoff.unbind(env);
         return result;
     }
 
@@ -440,14 +422,11 @@ Java_com_mantz_1it_libairspy_AirspyDevice_nativeStopRX(JNIEnv *env, jobject thiz
         return AIRSPY_ERROR_INVALID_PARAM;
     }
 
-    // Stop streaming
-    airspy_stop_rx(device);
+    std::lock_guard<std::mutex> lock(g_stateMutex);
 
-    // Free global ref
-    if (g_airspyDeviceObj) {
-        env->DeleteGlobalRef(g_airspyDeviceObj);
-        g_airspyDeviceObj = nullptr;
-    }
+    // Stop streaming (joins the driver's threads, so no callback is running afterwards)
+    airspy_stop_rx(device);
+    g_handoff.unbind(env);
 
     LOGI("nativeStopRX: Airspy streaming stopped");
     return 0;

@@ -26,5 +26,9 @@ app/src/main/assets/docs
 tags
 *.swp
 
-# tmp
-ipc
+# simpleperf traces (large, re-recordable)
+perf-results/
+
+# signing keys never belong in the repository
+*.jks
+*.keystore

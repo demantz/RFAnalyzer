@@ -1,21 +1,8 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# R8 rules for the release build (on top of proguard-android-optimize.txt).
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# The IPC contract (rfanalyzer_ipc): its Parcelables cross to the digital extension by class name
+# (the sealed DigitalDemodParams, the Event bundles), its AIDL stubs by interface descriptor. The
+# extension keeps them the same way - every name must stay as it is in both apps, a renamed class
+# fails in the extension with a ClassNotFoundException.
+-keep class com.mantz_it.rfanalyzer_ipc.** { *; }
+-keep interface com.mantz_it.rfanalyzer_ipc.** { *; }

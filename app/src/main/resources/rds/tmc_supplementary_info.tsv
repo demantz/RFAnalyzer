@@ -1,0 +1,236 @@
+# Derived from RdsSurveyor (LGPL-3.0), https://github.com/ChristopheJacquet/RdsSurveyor
+# (its SIL.DAT). Community-maintained, NOT an official ISO 14819 export - see LICENSE-RDSSURVEYOR.md.
+code	text
+1	heavy lorries are recommended to avoid the area
+2	follow signs
+3	follow diversion signs
+4	diversion in operation
+5	no suitable diversion available
+6	diversion is no longer recommended
+7	for exceptional loads only
+8	for heavy vehicles only
+9	for cars and light vehicles only
+10	snowploughs in use
+11	gritting vehicles in use
+12	drive carefully
+13	keep your distance
+14	observe signals
+15	overtake with care
+16	cross junction with care
+17	no overtaking
+18	use headlights
+19	use fog lights
+20	do not leave your vehicle
+21	switch off engine
+22	close all windows. Turn off heater and vents
+23	test your brakes
+24	winter equipment recommended
+25	snow chains recommended
+26	snow chains mandatory
+27	keep to the left
+28	keep to the right
+29	use hard shoulder as lane
+30	do not drive on the hard shoulder
+31	in the opposite direction
+32	in the opposing lanes
+33	in the overtaking lane
+34	in the crawler lane
+35	in the right lane
+36	in the middle lane
+37	in the left lane
+38	on the roadway
+39	police directing traffic
+40	police in attendance
+41	extra police patrols in operation
+42	rescue and recovery work in progress
+43	look out for flagman
+44	why not park-and-ride?
+45	why not try public transport?
+46	only travel if absolutely necessary
+47	increased risk of accident
+48	on bridges
+49	in shaded areas
+50	entering or leaving tunnels
+51	winter closure
+52	batch service in progress
+53	the north
+54	the north-east
+55	the east
+56	the south-east
+57	the south
+58	the south-west
+59	the west
+60	the north-west
+61	follow special diversion markers
+62	do not follow diversion signs
+63	follow local diversion
+64	compulsory diversion in operation
+65	for petrol-engined vehicles only
+66	for diesel-engined vehicles only
+67	for LPG vehicles only
+68	local drivers are recommended to avoid the area
+69	for 4-wheel-drive with snow tyres or chains only
+70	in the median
+71	for cars only
+72	for light vehicles only
+73	for vehicles with catalytic converters
+74	for vehicles without catalytic converters
+75	for cars with trailers only
+76	for cars with caravans only
+77	for vehicles with trailers only
+78	for heavy lorries only
+79	for buses only
+80	for articulated vehicles only
+81	for high-sided vehicles only
+82	for hazardous loads only
+83	for abnormal loads only
+84	with even-numbered registration plates
+85	with odd-numbered registration plates
+86	for all vehicles
+88	for through traffic
+89	for rail services
+90	on the underground
+91	danger
+92	repairs in progress
+93	pilot car in operation
+94	emergency vehicles at scene
+95	traffic being directed around accident area
+96	danger of explosion
+97	danger of fire
+98	radiation hazard
+99	toxic leak
+100	firemen directing traffic
+101	police speed checks in operation
+102	mandatory speed limit in force
+103	speed limit in force for heavy vehicles
+104	reduce your speed
+105	observe speed limits
+106	observe recommended speed
+107	snow chains required
+108	snow chains or tyres required
+109	helicopter rescue in progress
+110	several accidents have taken place
+111	drive with extreme caution
+112	approach with care
+113	increase normal following distance
+114	do not allow unnecessary gaps
+115	follow the vehicle in front, smoothly
+116	do not slow down unnecessarily
+117	observe signs
+118	use hazard warning lights
+119	no smoking
+120	no naked flames
+121	switch off mobile phones and two-way radios
+122	allow emergency vehicles to pass
+123	clear a lane for emergency vehicles
+124	pull over to the edge of the roadway
+125	wait for escort vehicle
+126	in emergency, wait for police patrol
+128	stop at next safe place
+129	clear a lane for snowploughs and gritting vehicles
+131	use right lane
+132	use left lane
+133	heavy vehicles use right lane
+134	heavy vehicles use left lane
+136	stop at next service area
+141	on the right
+142	in the centre
+143	on the left
+144	in the bus lane
+145	in the carpool lane
+146	on the hard shoulder
+147	in the emergency lane
+148	on the opposite carriageway
+149	in the heavy vehicle lane
+150	in the local lane
+151	due to heat
+152	due to frost
+153	for ferry service
+154	for roads in
+155	in the through traffic lane
+156	in the express lane
+157	in the connecting carriageway
+158	in the parallel carriageway
+159	in the right-hand parallel carriageway
+160	in the left-hand parallel carriageway
+161	in tunnels
+162	on slip roads
+163	at high altitudes
+164	in low-lying areas
+165	around a bend in the road
+166	over the crest of a hill
+167	in the city centre
+168	in the inner city area
+169	in the slow vehicle lane
+170	in the turning lane
+171	due to an earlier accident
+172	due to shear weight of traffic
+173	due to large numbers of visitors
+174	due to holiday traffic
+175	due to technical problems
+176	towards town
+177	from town
+178	on entry into the country
+179	on leaving the country
+180	do not throw out any burning objects
+181	traffic wardens directing traffic
+185	due to falling ice
+191	snow tyres recommended
+192	snow tyres mandatory
+195	use through traffic lanes
+196	use local traffic lanes
+197	use left-hand parallel carriageway
+198	use right-hand parallel carriageway
+199	use heavy vehicle lane
+200	due to an earlier incident
+201	why not ride share?
+202	is this your no-ride day?
+203	due to an earlier event
+204	please use rail service
+205	please use underground service
+206	please use tram service
+207	please use bus service
+208	for a limited time
+209	your parking ticket covers the return ride
+210	avoid the rush hour
+211	for holiday traffic
+212	for residents
+213	several times
+214	during the day time
+215	during off-peak periods
+216	during the night
+217	until further notice
+218	for arrivals
+219	for departures
+220	access only
+221	only
+222	except
+223	for long distance traffic
+224	for local traffic
+225	for regional traffic
+226	unconfirmed report
+227	on manual payment lanes
+231	sorry for any delay
+232	for roads leading towards
+233	for roads from
+234	we are grateful for your cooperation
+235	Traffic queue length decreasing at an average rate of 10 km/h
+236	Traffic queue length decreasing at an average rate of 20 km/h
+237	Traffic queue length decreasing at an average rate of 30 km/h
+238	Traffic queue length decreasing at an average rate of 40 km/h
+239	leave your vehicle. Proceed to next save place
+240	for visitors
+241	in the roadworks area
+242	from
+243	to
+244	in
+245	Traffic queue length increasing
+246	Traffic queue length increasing at an average rate of 10 km/h
+247	Traffic queue length increasing at an average rate of 20 km/h
+248	Traffic queue length increasing at an average rate of 30 km/h
+249	Traffic queue length increasing at an average rate of 40 km/h
+250	very frequent service
+251	frequent service
+252	fairly frequent service
+253	regular service
+255	Traffic queue length decreasing
